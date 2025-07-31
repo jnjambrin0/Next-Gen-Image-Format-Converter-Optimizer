@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator
+from pydantic import Field, field_validator, ConfigDict
 from typing import List, Optional
 import os
 
@@ -131,39 +131,43 @@ class Settings(BaseSettings):
         default=30, description="Days to retain conversion history"
     )
 
-    @validator("env")
+    @field_validator("env")
+    @classmethod
     def validate_env(cls, v):
         allowed = ["development", "production", "testing"]
         if v not in allowed:
             raise ValueError(f"env must be one of {allowed}")
         return v
 
-    @validator("log_level")
+    @field_validator("log_level")
+    @classmethod
     def validate_log_level(cls, v):
         allowed = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in allowed:
             raise ValueError(f"log_level must be one of {allowed}")
         return v.upper()
 
-    @validator("api_port")
+    @field_validator("api_port")
+    @classmethod
     def validate_port(cls, v):
         if not 1 <= v <= 65535:
             raise ValueError("api_port must be between 1 and 65535")
         return v
 
-    @validator("cors_origins", pre=True)
+    @field_validator("cors_origins", mode="before")
+    @classmethod
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-
-        # Custom env prefix
-        env_prefix = "IMAGE_CONVERTER_"
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        env_prefix="IMAGE_CONVERTER_",
+        protected_namespaces=("settings_",),
+    )
 
 
 settings = Settings()
