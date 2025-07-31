@@ -1,0 +1,243 @@
+{
+  "default_presets": [
+    {
+      "id": "web_optimized",
+      "name": "Web Optimized",
+      "description": "Balanced quality and file size for web delivery",
+      "category": "web",
+      "settings": {
+        "output_format": "webp",
+        "quality": 85,
+        "resize": {
+          "max_width": 1920,
+          "max_height": 1080,
+          "maintain_aspect_ratio": true
+        },
+        "strip_metadata": true,
+        "optimize": true,
+        "advanced": {
+          "effort": 4,
+          "progressive": true
+        }
+      }
+    },
+    {
+      "id": "thumbnail_square",
+      "name": "Square Thumbnail",
+      "description": "Small square thumbnails for galleries",
+      "category": "thumbnail",
+      "settings": {
+        "output_format": "jpeg",
+        "quality": 75,
+        "resize": {
+          "width": 200,
+          "height": 200,
+          "fit": "cover",
+          "position": "center"
+        },
+        "strip_metadata": true,
+        "optimize": true
+      }
+    },
+    {
+      "id": "social_media_facebook",
+      "name": "Facebook/Meta Share",
+      "description": "Optimized for Facebook and Meta platforms",
+      "category": "social",
+      "settings": {
+        "output_format": "jpeg",
+        "quality": 85,
+        "resize": {
+          "width": 1200,
+          "height": 630,
+          "fit": "cover",
+          "background": "#ffffff"
+        },
+        "strip_metadata": true,
+        "optimize": true
+      }
+    },
+    {
+      "id": "social_media_instagram",
+      "name": "Instagram Post",
+      "description": "Square format for Instagram feed",
+      "category": "social",
+      "settings": {
+        "output_format": "jpeg",
+        "quality": 90,
+        "resize": {
+          "width": 1080,
+          "height": 1080,
+          "fit": "cover"
+        },
+        "strip_metadata": true,
+        "optimize": true
+      }
+    },
+    {
+      "id": "social_media_twitter",
+      "name": "Twitter/X Post",
+      "description": "Optimized for Twitter/X timeline",
+      "category": "social",
+      "settings": {
+        "output_format": "jpeg",
+        "quality": 85,
+        "resize": {
+          "width": 1200,
+          "height": 675,
+          "fit": "cover"
+        },
+        "strip_metadata": true,
+        "optimize": true
+      }
+    },
+    {
+      "id": "high_quality_archive",
+      "name": "Archive Quality",
+      "description": "Maximum quality for long-term storage",
+      "category": "archive",
+      "settings": {
+        "output_format": "png",
+        "quality": 100,
+        "strip_metadata": false,
+        "preserve_icc_profile": true,
+        "optimize": false
+      }
+    },
+    {
+      "id": "print_300dpi",
+      "name": "Print Ready (300 DPI)",
+      "description": "High resolution for professional printing",
+      "category": "print",
+      "settings": {
+        "output_format": "tiff",
+        "quality": 100,
+        "dpi": 300,
+        "strip_metadata": false,
+        "preserve_icc_profile": true,
+        "color_space": "CMYK"
+      }
+    },
+    {
+      "id": "email_attachment",
+      "name": "Email Attachment",
+      "description": "Reduced size for email compatibility",
+      "category": "communication",
+      "settings": {
+        "output_format": "jpeg",
+        "quality": 80,
+        "resize": {
+          "max_width": 1024,
+          "max_height": 768,
+          "maintain_aspect_ratio": true
+        },
+        "strip_metadata": true,
+        "optimize": true,
+        "max_file_size": 2097152
+      }
+    },
+    {
+      "id": "mobile_optimized",
+      "name": "Mobile Optimized",
+      "description": "Optimized for mobile devices and apps",
+      "category": "mobile",
+      "settings": {
+        "output_format": "webp",
+        "quality": 80,
+        "resize": {
+          "max_width": 1080,
+          "max_height": 1920,
+          "maintain_aspect_ratio": true
+        },
+        "strip_metadata": true,
+        "optimize": true,
+        "advanced": {
+          "effort": 4,
+          "progressive": true
+        }
+      }
+    },
+    {
+      "id": "ultra_compression",
+      "name": "Ultra Compression",
+      "description": "Maximum compression for minimal file size",
+      "category": "compression",
+      "settings": {
+        "output_format": "avif",
+        "quality": 50,
+        "resize": {
+          "max_width": 1280,
+          "max_height": 720,
+          "maintain_aspect_ratio": true
+        },
+        "strip_metadata": true,
+        "optimize": true,
+        "advanced": {
+          "effort": 9,
+          "chroma_subsampling": "4:2:0"
+        }
+      }
+    }
+  ],
+  "user_presets": [
+    {
+      "id": "user_preset_001",
+      "name": "My Blog Images",
+      "description": "Custom settings for my blog",
+      "created_by": "user123",
+      "created_at": "2025-07-31T10:00:00Z",
+      "settings": {
+        "output_format": "webp",
+        "quality": 88,
+        "resize": {
+          "max_width": 1200,
+          "maintain_aspect_ratio": true
+        },
+        "strip_metadata": true,
+        "watermark": {
+          "text": "© MyBlog 2025",
+          "position": "bottom-right",
+          "opacity": 0.5
+        }
+      }
+    }
+  ],
+  "preset_categories": [
+    {
+      "id": "web",
+      "name": "Web & Online",
+      "description": "Optimized for websites and online platforms",
+      "icon": "globe"
+    },
+    {
+      "id": "social",
+      "name": "Social Media",
+      "description": "Platform-specific social media formats",
+      "icon": "share"
+    },
+    {
+      "id": "print",
+      "name": "Print & Publishing",
+      "description": "High quality for print production",
+      "icon": "printer"
+    },
+    {
+      "id": "archive",
+      "name": "Archive & Backup",
+      "description": "Maximum quality for long-term storage",
+      "icon": "archive"
+    },
+    {
+      "id": "mobile",
+      "name": "Mobile & Apps",
+      "description": "Optimized for mobile devices",
+      "icon": "smartphone"
+    },
+    {
+      "id": "compression",
+      "name": "Size Reduction",
+      "description": "Maximum compression for storage savings",
+      "icon": "compress"
+    }
+  ]
+}

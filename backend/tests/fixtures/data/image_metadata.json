@@ -1,0 +1,237 @@
+{
+  "sample_metadata": {
+    "photo_with_exif": {
+      "format": "JPEG",
+      "width": 1920,
+      "height": 1080,
+      "mode": "RGB",
+      "file_size": 245678,
+      "has_transparency": false,
+      "has_animation": false,
+      "detected_content_type": "photograph",
+      "exif": {
+        "Make": "Canon",
+        "Model": "EOS 5D Mark IV",
+        "DateTime": "2025:07:31 14:30:00",
+        "DateTimeOriginal": "2025:07:31 14:30:00",
+        "ExposureTime": "1/125",
+        "FNumber": 2.8,
+        "ISO": 200,
+        "FocalLength": 50.0,
+        "LensModel": "EF 24-70mm f/2.8L II USM",
+        "Artist": "Test Photographer",
+        "Copyright": "Test Copyright 2025",
+        "Software": "Adobe Lightroom 12.0"
+      },
+      "gps": {
+        "latitude": 37.7749,
+        "longitude": -122.4194,
+        "altitude": 10.0,
+        "latitude_ref": "N",
+        "longitude_ref": "W"
+      },
+      "iptc": {
+        "keywords": ["landscape", "sunset", "mountains"],
+        "caption": "Beautiful sunset over mountains",
+        "credit": "Test Photographer",
+        "source": "Personal Collection"
+      }
+    },
+    "screenshot": {
+      "format": "PNG",
+      "width": 1440,
+      "height": 900,
+      "mode": "RGB",
+      "file_size": 123456,
+      "has_transparency": false,
+      "has_animation": false,
+      "detected_content_type": "screenshot",
+      "dpi": [144, 144],
+      "color_profile": "sRGB"
+    },
+    "illustration_with_alpha": {
+      "format": "PNG",
+      "width": 800,
+      "height": 800,
+      "mode": "RGBA",
+      "file_size": 89012,
+      "has_transparency": true,
+      "has_animation": false,
+      "detected_content_type": "illustration",
+      "transparency_info": {
+        "alpha_channel": true,
+        "transparent_pixels_percent": 45.2
+      }
+    },
+    "animated_gif": {
+      "format": "GIF",
+      "width": 500,
+      "height": 500,
+      "mode": "P",
+      "file_size": 567890,
+      "has_transparency": true,
+      "has_animation": true,
+      "detected_content_type": "illustration",
+      "animation_info": {
+        "frame_count": 3,
+        "duration": 1500,
+        "loop_count": 0,
+        "frame_durations": [500, 500, 500]
+      }
+    },
+    "document_scan": {
+      "format": "PNG",
+      "width": 2480,
+      "height": 3508,
+      "mode": "RGB",
+      "file_size": 345678,
+      "has_transparency": false,
+      "has_animation": false,
+      "detected_content_type": "document",
+      "dpi": [300, 300],
+      "detected_text_regions": 15,
+      "is_monochrome": false
+    },
+    "cmyk_print_image": {
+      "format": "JPEG",
+      "width": 3000,
+      "height": 2000,
+      "mode": "CMYK",
+      "file_size": 1234567,
+      "has_transparency": false,
+      "has_animation": false,
+      "detected_content_type": "photograph",
+      "color_space": "CMYK",
+      "color_profile": "US Web Coated (SWOP) v2",
+      "dpi": [300, 300]
+    }
+  },
+  "content_detection_results": {
+    "photograph": {
+      "content_type": "photograph",
+      "confidence": 0.95,
+      "characteristics": {
+        "has_faces": true,
+        "face_count": 2,
+        "has_nature": true,
+        "is_landscape": true,
+        "dominant_colors": ["#87CEEB", "#228B22", "#8B4513"],
+        "brightness": 0.65,
+        "contrast": 0.72,
+        "sharpness": 0.88
+      },
+      "optimization_suggestions": {
+        "recommended_formats": ["webp", "avif", "jpeg"],
+        "recommended_quality": 85,
+        "can_strip_metadata": true,
+        "resize_suggestion": {
+          "max_dimension": 2048,
+          "reason": "No significant detail loss"
+        }
+      }
+    },
+    "screenshot": {
+      "content_type": "screenshot",
+      "confidence": 0.98,
+      "characteristics": {
+        "has_text": true,
+        "has_ui_elements": true,
+        "is_computer_generated": true,
+        "dominant_colors": ["#FFFFFF", "#F0F0F0", "#333333"],
+        "has_sharp_edges": true,
+        "color_count": 45
+      },
+      "optimization_suggestions": {
+        "recommended_formats": ["png", "webp"],
+        "recommended_quality": 95,
+        "can_strip_metadata": true,
+        "use_lossless": true
+      }
+    },
+    "illustration": {
+      "content_type": "illustration",
+      "confidence": 0.92,
+      "characteristics": {
+        "is_vector_style": true,
+        "has_gradients": true,
+        "has_transparency": true,
+        "dominant_colors": ["#FF6B6B", "#4ECDC4", "#45B7D1"],
+        "color_count": 128,
+        "has_text": false
+      },
+      "optimization_suggestions": {
+        "recommended_formats": ["png", "webp", "svg"],
+        "recommended_quality": 90,
+        "preserve_transparency": true,
+        "can_strip_metadata": true
+      }
+    },
+    "document": {
+      "content_type": "document",
+      "confidence": 0.96,
+      "characteristics": {
+        "has_text": true,
+        "text_density": 0.85,
+        "is_monochrome": false,
+        "has_tables": true,
+        "has_signatures": true,
+        "dominant_colors": ["#FFFFFF", "#000000", "#0000FF"],
+        "page_layout": "portrait"
+      },
+      "optimization_suggestions": {
+        "recommended_formats": ["pdf", "png", "tiff"],
+        "recommended_quality": 95,
+        "use_compression": "zip",
+        "preserve_text_clarity": true,
+        "can_convert_to_monochrome": true
+      }
+    }
+  },
+  "processing_metrics": {
+    "small_image": {
+      "dimensions": [640, 480],
+      "input_size": 98304,
+      "processing_times": {
+        "jpeg_to_webp": 0.125,
+        "jpeg_to_avif": 0.456,
+        "png_to_jpeg": 0.089,
+        "resize_50_percent": 0.067
+      },
+      "compression_ratios": {
+        "jpeg_to_webp": 0.65,
+        "jpeg_to_avif": 0.45,
+        "png_to_jpeg": 0.72
+      }
+    },
+    "medium_image": {
+      "dimensions": [1920, 1080],
+      "input_size": 567890,
+      "processing_times": {
+        "jpeg_to_webp": 0.456,
+        "jpeg_to_avif": 1.234,
+        "png_to_jpeg": 0.234,
+        "resize_50_percent": 0.189
+      },
+      "compression_ratios": {
+        "jpeg_to_webp": 0.58,
+        "jpeg_to_avif": 0.42,
+        "png_to_jpeg": 0.68
+      }
+    },
+    "large_image": {
+      "dimensions": [4000, 3000],
+      "input_size": 3456789,
+      "processing_times": {
+        "jpeg_to_webp": 1.567,
+        "jpeg_to_avif": 4.321,
+        "png_to_jpeg": 0.789,
+        "resize_50_percent": 0.567
+      },
+      "compression_ratios": {
+        "jpeg_to_webp": 0.55,
+        "jpeg_to_avif": 0.38,
+        "png_to_jpeg": 0.65
+      }
+    }
+  }
+}

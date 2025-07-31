@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+.venv
+.pytest_cache/
+.coverage
+.mypy_cache/
+*.log
+
+# Node
+node_modules/
+npm-debug.log*
+dist/
+.eslintcache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+tests/
+.bmad-core/
+.claude/
+.ai/

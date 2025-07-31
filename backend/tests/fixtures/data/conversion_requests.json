@@ -1,0 +1,200 @@
+{
+  "valid_requests": [
+    {
+      "name": "basic_webp_conversion",
+      "description": "Basic JPEG to WebP conversion",
+      "request": {
+        "output_format": "webp",
+        "quality": 85,
+        "strip_metadata": true
+      }
+    },
+    {
+      "name": "resize_with_aspect_ratio",
+      "description": "Resize image maintaining aspect ratio",
+      "request": {
+        "output_format": "jpeg",
+        "quality": 90,
+        "resize": {
+          "width": 1200,
+          "height": null,
+          "maintain_aspect_ratio": true
+        }
+      }
+    },
+    {
+      "name": "thumbnail_generation",
+      "description": "Generate small thumbnail with center crop",
+      "request": {
+        "output_format": "jpeg",
+        "quality": 75,
+        "resize": {
+          "width": 200,
+          "height": 200,
+          "fit": "cover",
+          "position": "center"
+        },
+        "strip_metadata": true
+      }
+    },
+    {
+      "name": "avif_high_quality",
+      "description": "High quality AVIF conversion",
+      "request": {
+        "output_format": "avif",
+        "quality": 95,
+        "advanced": {
+          "effort": 9,
+          "chroma_subsampling": "4:4:4"
+        }
+      }
+    },
+    {
+      "name": "social_media_optimized",
+      "description": "Optimized for social media sharing",
+      "request": {
+        "output_format": "jpeg",
+        "quality": 85,
+        "resize": {
+          "width": 1200,
+          "height": 630,
+          "fit": "cover",
+          "background": "#ffffff"
+        },
+        "strip_metadata": true,
+        "optimize": true
+      }
+    },
+    {
+      "name": "preserve_metadata",
+      "description": "Convert while preserving all metadata",
+      "request": {
+        "output_format": "png",
+        "strip_metadata": false,
+        "preserve_icc_profile": true,
+        "preserve_orientation": true
+      }
+    },
+    {
+      "name": "progressive_jpeg",
+      "description": "Create progressive JPEG for web",
+      "request": {
+        "output_format": "jpeg",
+        "quality": 80,
+        "advanced": {
+          "progressive": true,
+          "optimize_coding": true
+        }
+      }
+    },
+    {
+      "name": "batch_conversion",
+      "description": "Batch convert multiple files",
+      "request": {
+        "files": ["photo1.jpg", "photo2.png", "photo3.bmp"],
+        "output_format": "webp",
+        "quality": 85,
+        "parallel": true,
+        "max_workers": 4
+      }
+    }
+  ],
+  "invalid_requests": [
+    {
+      "name": "unsupported_format",
+      "description": "Request with unsupported output format",
+      "request": {
+        "output_format": "bpg",
+        "quality": 85
+      },
+      "expected_error": "UNSUPPORTED_FORMAT"
+    },
+    {
+      "name": "invalid_quality",
+      "description": "Quality value out of range",
+      "request": {
+        "output_format": "jpeg",
+        "quality": 150
+      },
+      "expected_error": "INVALID_PARAMETER"
+    },
+    {
+      "name": "conflicting_resize",
+      "description": "Conflicting resize parameters",
+      "request": {
+        "output_format": "png",
+        "resize": {
+          "width": 800,
+          "height": 600,
+          "maintain_aspect_ratio": true,
+          "fit": "fill"
+        }
+      },
+      "expected_error": "INVALID_PARAMETER"
+    },
+    {
+      "name": "missing_required",
+      "description": "Missing required output format",
+      "request": {
+        "quality": 85
+      },
+      "expected_error": "MISSING_PARAMETER"
+    }
+  ],
+  "edge_cases": [
+    {
+      "name": "extreme_dimensions",
+      "description": "Request extreme output dimensions",
+      "request": {
+        "output_format": "jpeg",
+        "resize": {
+          "width": 50000,
+          "height": 50000
+        }
+      }
+    },
+    {
+      "name": "zero_quality",
+      "description": "Minimum quality setting",
+      "request": {
+        "output_format": "jpeg",
+        "quality": 0
+      }
+    },
+    {
+      "name": "empty_batch",
+      "description": "Batch request with no files",
+      "request": {
+        "files": [],
+        "output_format": "webp"
+      }
+    },
+    {
+      "name": "all_options",
+      "description": "Request with all possible options",
+      "request": {
+        "output_format": "webp",
+        "quality": 85,
+        "resize": {
+          "width": 1920,
+          "height": 1080,
+          "fit": "contain",
+          "background": "#000000",
+          "position": "center",
+          "maintain_aspect_ratio": true
+        },
+        "strip_metadata": true,
+        "preserve_icc_profile": false,
+        "preserve_orientation": true,
+        "optimize": true,
+        "advanced": {
+          "effort": 6,
+          "compression_level": 6,
+          "progressive": true,
+          "chroma_subsampling": "4:2:0",
+          "dithering": 0.5
+        }
+      }
+    }
+  ]
+}

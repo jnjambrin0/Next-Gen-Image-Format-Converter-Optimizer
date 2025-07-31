@@ -1,0 +1,183 @@
+{
+  "client_errors": {
+    "400": {
+      "invalid_format": {
+        "status": "error",
+        "error_code": "INVALID_FORMAT",
+        "message": "Unsupported file format",
+        "details": "The file format 'xyz' is not supported. Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF, AVIF",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_abc123"
+      },
+      "invalid_parameter": {
+        "status": "error",
+        "error_code": "INVALID_PARAMETER",
+        "message": "Invalid parameter value",
+        "details": "Quality must be between 0 and 100",
+        "field": "quality",
+        "provided_value": 150,
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_def456"
+      },
+      "missing_required_field": {
+        "status": "error",
+        "error_code": "MISSING_REQUIRED_FIELD",
+        "message": "Required field missing",
+        "details": "The field 'output_format' is required",
+        "field": "output_format",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_ghi789"
+      },
+      "file_too_large": {
+        "status": "error",
+        "error_code": "FILE_TOO_LARGE",
+        "message": "File size exceeds limit",
+        "details": "File size 156MB exceeds maximum allowed size of 100MB",
+        "provided_size": 163577856,
+        "max_size": 104857600,
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_jkl012"
+      }
+    },
+    "404": {
+      "file_not_found": {
+        "status": "error",
+        "error_code": "FILE_NOT_FOUND",
+        "message": "File not found",
+        "details": "The requested file 'abc123' was not found or has expired",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_mno345"
+      },
+      "preset_not_found": {
+        "status": "error",
+        "error_code": "PRESET_NOT_FOUND",
+        "message": "Preset not found",
+        "details": "The preset 'custom_preset_999' does not exist",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_pqr678"
+      }
+    },
+    "409": {
+      "file_already_processing": {
+        "status": "error",
+        "error_code": "FILE_ALREADY_PROCESSING",
+        "message": "File is already being processed",
+        "details": "A conversion for this file is already in progress",
+        "file_id": "file_abc123",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_stu901"
+      }
+    },
+    "422": {
+      "corrupted_file": {
+        "status": "error",
+        "error_code": "CORRUPTED_FILE",
+        "message": "File appears to be corrupted",
+        "details": "Unable to read image data. The file may be corrupted or incomplete",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_vwx234"
+      },
+      "unsupported_color_space": {
+        "status": "error",
+        "error_code": "UNSUPPORTED_COLOR_SPACE",
+        "message": "Unsupported color space",
+        "details": "LAB color space is not supported for WebP output",
+        "input_color_space": "LAB",
+        "output_format": "webp",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_yza567"
+      }
+    }
+  },
+  "server_errors": {
+    "500": {
+      "internal_error": {
+        "status": "error",
+        "error_code": "INTERNAL_ERROR",
+        "message": "An internal error occurred",
+        "details": "An unexpected error occurred while processing your request. Please try again later",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_bcd890"
+      },
+      "conversion_failed": {
+        "status": "error",
+        "error_code": "CONVERSION_FAILED",
+        "message": "Image conversion failed",
+        "details": "Failed to convert image due to an internal error",
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_efg123"
+      }
+    },
+    "503": {
+      "service_unavailable": {
+        "status": "error",
+        "error_code": "SERVICE_UNAVAILABLE",
+        "message": "Service temporarily unavailable",
+        "details": "The service is currently under maintenance. Please try again in a few minutes",
+        "retry_after": 300,
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_hij456"
+      },
+      "resource_exhausted": {
+        "status": "error",
+        "error_code": "RESOURCE_EXHAUSTED",
+        "message": "Server resources exhausted",
+        "details": "Too many concurrent conversions. Please try again later",
+        "retry_after": 60,
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_klm789"
+      }
+    },
+    "504": {
+      "processing_timeout": {
+        "status": "error",
+        "error_code": "PROCESSING_TIMEOUT",
+        "message": "Processing timeout",
+        "details": "Image processing took too long and was terminated",
+        "timeout_seconds": 300,
+        "timestamp": "2025-07-31T12:00:00Z",
+        "request_id": "req_nop012"
+      }
+    }
+  },
+  "validation_errors": {
+    "schema_validation": {
+      "status": "error",
+      "error_code": "VALIDATION_ERROR",
+      "message": "Request validation failed",
+      "details": "The request body does not match the expected schema",
+      "errors": [
+        {
+          "field": "resize.width",
+          "message": "Must be a positive integer",
+          "provided": -100
+        },
+        {
+          "field": "quality",
+          "message": "Must be between 0 and 100",
+          "provided": 150
+        }
+      ],
+      "timestamp": "2025-07-31T12:00:00Z",
+      "request_id": "req_qrs345"
+    }
+  },
+  "security_errors": {
+    "suspicious_file": {
+      "status": "error",
+      "error_code": "SUSPICIOUS_FILE",
+      "message": "File rejected for security reasons",
+      "details": "The uploaded file was rejected due to security concerns",
+      "timestamp": "2025-07-31T12:00:00Z",
+      "request_id": "req_tuv678"
+    },
+    "path_traversal_attempt": {
+      "status": "error",
+      "error_code": "SECURITY_VIOLATION",
+      "message": "Security violation detected",
+      "details": "Invalid file path detected",
+      "timestamp": "2025-07-31T12:00:00Z",
+      "request_id": "req_wxy901"
+    }
+  }
+}
