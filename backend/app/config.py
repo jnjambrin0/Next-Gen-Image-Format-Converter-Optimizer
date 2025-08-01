@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field, field_validator, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Dict
 import os
 
 
@@ -86,6 +86,38 @@ class Settings(BaseSettings):
     )
     sandbox_uid: Optional[int] = Field(default=None, description="Sandbox user ID")
     sandbox_gid: Optional[int] = Field(default=None, description="Sandbox group ID")
+    sandbox_strictness: str = Field(
+        default="standard", 
+        description="Sandbox strictness level: standard, strict, paranoid"
+    )
+    # Sandbox resource limits per strictness level
+    sandbox_limits_standard: Dict[str, int] = Field(
+        default={
+            "memory_mb": 512,
+            "cpu_percent": 80,
+            "timeout_seconds": 30,
+            "max_output_mb": 100,
+        },
+        description="Resource limits for standard sandbox mode"
+    )
+    sandbox_limits_strict: Dict[str, int] = Field(
+        default={
+            "memory_mb": 256,
+            "cpu_percent": 60,
+            "timeout_seconds": 20,
+            "max_output_mb": 50,
+        },
+        description="Resource limits for strict sandbox mode"
+    )
+    sandbox_limits_paranoid: Dict[str, int] = Field(
+        default={
+            "memory_mb": 128,
+            "cpu_percent": 40,
+            "timeout_seconds": 10,
+            "max_output_mb": 25,
+        },
+        description="Resource limits for paranoid sandbox mode"
+    )
 
     # ML Models
     ml_models_path: str = Field(default="./ml_models", description="Path to ML models")
@@ -162,6 +194,14 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
+        return v
+
+    @field_validator("sandbox_strictness")
+    @classmethod
+    def validate_sandbox_strictness(cls, v):
+        allowed = ["standard", "strict", "paranoid"]
+        if v not in allowed:
+            raise ValueError(f"sandbox_strictness must be one of {allowed}")
         return v
 
     model_config = ConfigDict(

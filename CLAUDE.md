@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**VERY IMPORTANT**: If during development you discover or learn something that would be important to add to this CLAUDE.md file, you must ask the user for confirmation before adding it. This ensures that important project knowledge stays updated and accessible.
+
 ## Project Overview
 
 Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only image conversion tool with advanced optimization capabilities. All processing happens on the user's machine with no external network requests.
@@ -139,6 +141,17 @@ pytest backend/tests/security/
 - Automatic EXIF/metadata removal by default
 - Memory explicitly cleared after processing
 
+## Security Implementation Details
+
+- **Sandbox Architecture**: Three-layer system (SecuritySandbox → SecurityEngine → ProcessSandbox)
+- **Strictness Levels**: Configurable via `IMAGE_CONVERTER_SANDBOX_STRICTNESS` (standard/strict/paranoid)
+  - standard: 512MB RAM, 80% CPU, 30s timeout
+  - strict: 256MB RAM, 60% CPU, 20s timeout
+  - paranoid: 128MB RAM, 40% CPU, 10s timeout
+- **Privacy-Aware Logging**: Security audit logs contain no PII (filenames, paths, or content)
+- **Resource Tracking**: Actual CPU/memory usage tracked per conversion
+- **Sandbox Control**: Enable/disable via `IMAGE_CONVERTER_ENABLE_SANDBOXING` env var
+
 ## API Endpoints (Planned)
 
 - `POST /api/convert` - Convert single image
@@ -162,17 +175,20 @@ pytest backend/tests/security/
 ### Frontend (JavaScript)
 
 1. **ESLint Configuration**: The project uses ESLint with the following key rules:
+
    - `curly: ['error', 'all']` - Always use curly braces, even for single-line blocks
    - `no-console` warnings except for `console.warn` and `console.error`
    - `no-unused-vars` with `argsIgnorePattern: '^_'` for unused parameters
    - Prettier integration for consistent formatting
 
-2. **Prettier Configuration**: 
+2. **Prettier Configuration**:
+
    - Automatically formats code on save (if configured in IDE)
    - Run `npm run format` to format all files
    - Prettier runs through ESLint for unified tooling
 
 3. **Common Linting Fixes**:
+
    - Wrap case blocks with curly braces when declaring variables: `case 'value': { ... }`
    - Prefix unused function parameters with underscore: `(newState, _oldState) => {}`
    - Always use curly braces for if statements, even single-line

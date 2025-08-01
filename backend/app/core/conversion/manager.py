@@ -2,9 +2,11 @@
 
 import asyncio
 import time
-from typing import Dict, Type, Optional, Any, Tuple
+from typing import Dict, Type, Optional, Any, Tuple, List
 from io import BytesIO
 from datetime import datetime, timezone
+import tempfile
+import os
 import structlog
 
 from app.models.conversion import (
@@ -24,6 +26,8 @@ from app.core.exceptions import (
 )
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.conversion.image_processor import ImageProcessor
+from app.core.security.engine import SecurityEngine
+from app.config import settings
 
 logger = structlog.get_logger()
 
@@ -38,6 +42,7 @@ class ConversionManager:
         """Initialize conversion manager."""
         self.format_handlers: Dict[str, Type[BaseFormatHandler]] = {}
         self.image_processor = ImageProcessor()
+        self.security_engine = SecurityEngine() if settings.enable_sandboxing else None
         self._initialize_handlers()
 
     def _initialize_handlers(self) -> None:
@@ -92,18 +97,40 @@ class ConversionManager:
             # Validate input
             await self._validate_input(input_data, input_format)
 
+            # Security scan if enabled
+            if self.security_engine and settings.enable_sandboxing:
+                scan_report = await self.security_engine.scan_file(input_data)
+                if not scan_report["is_safe"]:
+                    raise ConversionError(
+                        f"Security scan failed: {', '.join(scan_report['threats_found'])}"
+                    )
+
             # Get handlers
             input_handler = self._get_handler(input_format.lower())
             output_handler = self._get_handler(request.output_format.lower())
 
-            # Load image
-            image = await self._load_image(input_data, input_handler)
+            # Choose conversion method based on sandboxing
+            if self.security_engine and settings.enable_sandboxing:
+                # Sandboxed conversion
+                output_data = await self._process_sandboxed(
+                    input_data, input_format, request, result
+                )
+            else:
+                # Direct conversion (legacy mode)
+                # Load image
+                image = await self._load_image(input_data, input_handler)
 
-            # Process image
-            settings = request.settings or ConversionSettings()
-            # Update quality_settings in result to reflect what was actually used
-            result.quality_settings = settings.model_dump()
-            output_data = await self._process_image(image, output_handler, settings)
+                # Process image
+                conversion_settings = request.settings or ConversionSettings()
+                # Update quality_settings in result to reflect what was actually used
+                result.quality_settings = conversion_settings.model_dump()
+                output_data = await self._process_image(image, output_handler, conversion_settings)
+
+            # Strip metadata if requested
+            if self.security_engine and (request.settings and request.settings.strip_metadata):
+                output_data = await self.security_engine.strip_metadata(
+                    output_data, request.output_format
+                )
 
             # Update result
             result.output_size = len(output_data)
@@ -142,6 +169,132 @@ class ConversionManager:
             )
 
             raise
+
+    async def _process_sandboxed(
+        self,
+        input_data: bytes,
+        input_format: str,
+        request: ConversionRequest,
+        result: ConversionResult,
+    ) -> bytes:
+        """
+        Process image conversion in a sandboxed environment.
+        
+        Args:
+            input_data: Input image data
+            input_format: Input format name
+            request: Conversion request
+            result: Result object to update
+            
+        Returns:
+            Converted image data
+        """
+        # Create sandbox for this conversion
+        sandbox = self.security_engine.create_sandbox(
+            conversion_id=result.id,
+            strictness=settings.sandbox_strictness
+        )
+        
+        try:
+            # Write input data to temporary file
+            with tempfile.NamedTemporaryFile(
+                suffix=f".{input_format}",
+                delete=False
+            ) as input_file:
+                input_file.write(input_data)
+                input_path = input_file.name
+                
+            # Create output file path
+            output_path = input_path.replace(
+                f".{input_format}",
+                f"_converted.{request.output_format}"
+            )
+            
+            # Build conversion command
+            command = self._build_conversion_command(
+                input_path,
+                output_path,
+                input_format,
+                request.output_format,
+                request.settings or ConversionSettings()
+            )
+            
+            # Execute conversion in sandbox
+            sandbox_result, process_sandbox = await self.security_engine.execute_sandboxed_conversion(
+                sandbox=sandbox,
+                conversion_id=result.id,
+                command=command,
+            )
+            
+            # Read output file
+            if os.path.exists(output_path):
+                with open(output_path, 'rb') as f:
+                    output_data = f.read()
+            else:
+                raise ConversionFailedError("Conversion produced no output file")
+                
+            # Update result with sandbox metrics
+            result.quality_settings.update({
+                "sandbox_execution_time": process_sandbox.execution_time,
+                "sandbox_memory_used_mb": process_sandbox.actual_usage.get("memory_mb", 0),
+                "sandbox_violations": process_sandbox.security_violations,
+            })
+            
+            return output_data
+            
+        finally:
+            # Cleanup
+            self.security_engine.cleanup_sandbox(result.id)
+            
+            # Remove temporary files
+            for path in [input_path, output_path]:
+                try:
+                    if os.path.exists(path):
+                        os.unlink(path)
+                except Exception as e:
+                    logger.warning(f"Failed to cleanup temp file {path}: {e}")
+                    
+    def _build_conversion_command(
+        self,
+        input_path: str,
+        output_path: str,
+        input_format: str,
+        output_format: str,
+        settings: ConversionSettings,
+    ) -> List[str]:
+        """
+        Build the image conversion command.
+        
+        This uses ImageMagick's convert command for now.
+        In production, this would use the actual format handlers.
+        
+        Args:
+            input_path: Input file path
+            output_path: Output file path
+            input_format: Input format
+            output_format: Output format
+            settings: Conversion settings
+            
+        Returns:
+            Command list for subprocess
+        """
+        # Basic convert command
+        command = ["convert", input_path]
+        
+        # Add quality setting if applicable
+        if output_format.lower() in ["jpeg", "jpg", "webp"]:
+            command.extend(["-quality", str(settings.quality)])
+            
+        # Add optimization if requested
+        if settings.optimize:
+            command.append("-strip")  # Remove metadata
+            if output_format.lower() in ["png"]:
+                command.extend(["-define", "png:compression-level=9"])
+                
+        # Add output path
+        command.append(output_path)
+        
+        return command
 
     async def _validate_input(self, input_data: bytes, input_format: str) -> None:
         """Validate input data."""
