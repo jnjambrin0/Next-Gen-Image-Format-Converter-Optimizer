@@ -54,8 +54,12 @@ class ResourceLimitError(ImageConverterError):
         )
 
 
+# Deprecated: Use UnsupportedFormatError instead
 class FormatNotSupportedError(ImageConverterError):
-    """Raised when image format is not supported."""
+    """Raised when image format is not supported.
+    
+    DEPRECATED: Use UnsupportedFormatError instead for consistency.
+    """
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(
@@ -78,4 +82,31 @@ class ConfigurationError(ImageConverterError):
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(
             message=message, error_code="CONV007", status_code=500, details=details
+        )
+
+
+class InvalidImageError(ImageConverterError):
+    """Raised when image data is invalid or corrupted."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV101", status_code=400, details=details
+        )
+
+
+class UnsupportedFormatError(ImageConverterError):
+    """Raised when image format is not supported."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV102", status_code=415, details=details
+        )
+
+
+class ConversionFailedError(ImageConverterError):
+    """Raised when image conversion process fails."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV103", status_code=500, details=details
         )

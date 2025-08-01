@@ -6,6 +6,7 @@ python-multipart==0.0.6
 # Image processing
 Pillow==10.1.0
 pillow-heif==0.13.1
+pillow-avif-plugin==1.4.1
 
 # Utilities
 structlog==23.2.0
