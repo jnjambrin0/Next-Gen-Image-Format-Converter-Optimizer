@@ -165,6 +165,23 @@ class Settings(BaseSettings):
     retain_history_days: int = Field(
         default=30, description="Days to retain conversion history"
     )
+    
+    # Logging Configuration
+    logging_enabled: bool = Field(
+        default=True, description="Enable file logging (False for paranoia mode)"
+    )
+    log_dir: str = Field(
+        default="./logs", description="Directory for log files"
+    )
+    max_log_size_mb: int = Field(
+        default=10, description="Maximum size of each log file in MB"
+    )
+    log_backup_count: int = Field(
+        default=3, description="Number of backup log files to keep"
+    )
+    log_retention_hours: int = Field(
+        default=24, description="Hours to retain log files"
+    )
 
     @field_validator("env")
     @classmethod

@@ -374,6 +374,18 @@ class SecuritySandbox:
                 limit_mb=self.config.max_memory_mb,
                 violations=self._memory_violations,
             )
+            
+            # Record security event for violation
+            try:
+                from app.api.routes.monitoring import security_tracker
+                asyncio.create_task(security_tracker.record_resource_limit_event(
+                    resource_type="memory",
+                    limit=float(self.config.max_memory_mb),
+                    attempted=float(current_memory_mb),
+                    unit="MB"
+                ))
+            except Exception:
+                pass  # Don't fail if tracking fails
 
             # Check if we've exceeded violation threshold
             if self._memory_violations >= self.config.memory_violation_threshold:

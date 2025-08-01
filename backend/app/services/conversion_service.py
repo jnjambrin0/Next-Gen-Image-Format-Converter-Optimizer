@@ -18,6 +18,7 @@ from app.models.conversion import (
 )
 from app.models.requests import ConversionApiRequest
 from app.core.exceptions import ConversionError, InvalidImageError
+from app.api.routes.monitoring import stats_collector
 
 logger = structlog.get_logger()
 
@@ -73,19 +74,46 @@ class ConversionService:
                 settings=request.settings,
             )
 
+            # Track start time for stats
+            start_time = asyncio.get_event_loop().time()
+            
             # Perform conversion with timeout
             timeout = timeout or 30.0  # Default 30 seconds
-            result, output_data = await asyncio.wait_for(
-                self.conversion_manager.convert_with_output(
-                    input_data=image_data,
+            try:
+                result, output_data = await asyncio.wait_for(
+                    self.conversion_manager.convert_with_output(
+                        input_data=image_data,
+                        input_format=request.input_format,
+                        request=core_request,
+                        timeout=None,  # Don't pass timeout to conversion_manager
+                    ),
+                    timeout=timeout,
+                )
+                
+                # Record successful conversion stats
+                processing_time = asyncio.get_event_loop().time() - start_time
+                await stats_collector.record_conversion(
                     input_format=request.input_format,
-                    request=core_request,
-                    timeout=None,  # Don't pass timeout to conversion_manager
-                ),
-                timeout=timeout,
-            )
-
-            return result, output_data
+                    output_format=request.output_format,
+                    input_size=len(image_data),
+                    processing_time=processing_time,
+                    success=True
+                )
+                
+                return result, output_data
+                
+            except asyncio.TimeoutError:
+                # Record timeout failure
+                processing_time = asyncio.get_event_loop().time() - start_time
+                await stats_collector.record_conversion(
+                    input_format=request.input_format,
+                    output_format=request.output_format,
+                    input_size=len(image_data),
+                    processing_time=processing_time,
+                    success=False,
+                    error_type="timeout"
+                )
+                raise
 
         except asyncio.TimeoutError:
             logger.error(
@@ -96,10 +124,32 @@ class ConversionService:
             raise
 
         except Exception as e:
+            # Record other failures (if not already recorded)
+            if not isinstance(e, asyncio.TimeoutError):
+                processing_time = asyncio.get_event_loop().time() - start_time
+                error_type = type(e).__name__.lower()
+                if "memory" in str(e).lower():
+                    error_type = "memory_limit"
+                elif "invalid" in str(e).lower():
+                    error_type = "invalid_input"
+                elif "unsupported" in str(e).lower():
+                    error_type = "unsupported_format"
+                else:
+                    error_type = "conversion_error"
+                    
+                await stats_collector.record_conversion(
+                    input_format=request.input_format,
+                    output_format=request.output_format,
+                    input_size=len(image_data),
+                    processing_time=processing_time,
+                    success=False,
+                    error_type=error_type
+                )
+            
             logger.error(
                 "Conversion service error",
                 error=str(e),
-                filename=request.filename,
+                error_type=type(e).__name__,
                 input_format=request.input_format,
                 output_format=request.output_format,
             )

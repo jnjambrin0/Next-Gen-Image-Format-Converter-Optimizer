@@ -20,11 +20,46 @@ from .utils.logging import setup_logging
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    setup_logging(log_level=settings.log_level, json_logs=settings.env == "production")
+    setup_logging(
+        log_level=settings.log_level, 
+        json_logs=settings.env == "production",
+        enable_file_logging=getattr(settings, "logging_enabled", True),
+        log_dir=getattr(settings, "log_dir", "./logs"),
+        max_log_size_mb=getattr(settings, "max_log_size_mb", 10),
+        backup_count=getattr(settings, "log_backup_count", 3),
+        retention_hours=getattr(settings, "log_retention_hours", 24)
+    )
     print(f"Starting {settings.app_name} API on port {settings.api_port}")
+    
+    # Run network isolation check
+    from .core.monitoring.network_check import startup_network_check
+    startup_network_check()
+    
+    # Schedule periodic log cleanup
+    if getattr(settings, "logging_enabled", True):
+        import asyncio
+        from .utils.logging import cleanup_old_logs
+        
+        async def periodic_log_cleanup():
+            while True:
+                await asyncio.sleep(3600)  # Run every hour
+                try:
+                    cleanup_old_logs(
+                        log_dir=getattr(settings, "log_dir", "./logs"),
+                        retention_hours=getattr(settings, "log_retention_hours", 24)
+                    )
+                except Exception as e:
+                    print(f"Log cleanup error: {e}")
+        
+        # Start background task
+        cleanup_task = asyncio.create_task(periodic_log_cleanup())
+    
     yield
+    
     # Shutdown
     print(f"Shutting down {settings.app_name} API")
+    if getattr(settings, "logging_enabled", True) and 'cleanup_task' in locals():
+        cleanup_task.cancel()
 
 
 app = FastAPI(

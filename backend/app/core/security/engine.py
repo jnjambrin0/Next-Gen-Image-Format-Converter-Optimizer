@@ -29,6 +29,7 @@ from app.core.constants import (
     HEIF_AVIF_BRANDS,
     MAX_IMAGE_PIXELS
 )
+from app.models.security_event import SecurityEvent, SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()
 
@@ -50,7 +51,16 @@ class SecurityEngine:
         self._sandboxes: Dict[str, ProcessSandbox] = {}
         self._sandbox_lock = threading.Lock()  # Thread-safe access to _sandboxes
         self._metadata_stripper = MetadataStripper()
+        self._security_tracker = None
         self._configure_logging()
+    
+    @property
+    def security_tracker(self):
+        """Lazy load security tracker to avoid circular imports."""
+        if self._security_tracker is None:
+            from app.api.routes.monitoring import security_tracker
+            self._security_tracker = security_tracker
+        return self._security_tracker
 
     def _configure_logging(self) -> None:
         """Configure structured security logging."""
@@ -107,6 +117,17 @@ class SecurityEngine:
             strictness=strictness,
             resource_limits=resource_limits,
         )
+        
+        # Record security event
+        asyncio.create_task(self.security_tracker.record_sandbox_event(
+            event_type="create",
+            severity=SecuritySeverity.INFO,
+            conversion_id=conversion_id,
+            strictness=strictness,
+            memory_limit_mb=resource_limits["memory_mb"],
+            cpu_limit_percent=resource_limits["cpu_percent"],
+            timeout_seconds=resource_limits["timeout_seconds"]
+        ))
 
         return sandbox
 
@@ -295,13 +316,22 @@ class SecurityEngine:
         Returns:
             Tuple of (processed_image_data, metadata_summary)
         """
-        return await self._metadata_stripper.process_metadata_for_conversion(
+        result = await self._metadata_stripper.process_metadata_for_conversion(
             image_data,
             input_format,
             strip_metadata,
             preserve_metadata,
             preserve_gps
         )
+        
+        # Record metadata stripping event if metadata was removed
+        if result[1].get("metadata_removed") and result[1].get("fields_removed"):
+            asyncio.create_task(self.security_tracker.record_metadata_event(
+                removed_fields=result[1]["fields_removed"],
+                input_format=input_format
+            ))
+        
+        return result
 
     async def verify_process_isolation(
         self, sandbox: SecuritySandbox

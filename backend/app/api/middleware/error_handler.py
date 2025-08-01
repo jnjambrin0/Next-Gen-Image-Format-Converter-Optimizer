@@ -5,11 +5,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import traceback
 import uuid
 from typing import Dict, Any
-import logging
+import structlog
 
 from ...core.exceptions import ImageConverterError
+from ..routes.monitoring import error_reporter
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 async def error_handler_middleware(request: Request, call_next):
@@ -34,6 +35,16 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
             "type": "InternalServerError",
         },
     }
+    
+    # Record error for local monitoring (privacy-safe)
+    try:
+        context = {
+            "correlation_id": correlation_id,
+            "error_type": type(exc).__name__,
+        }
+        await error_reporter.record_error(exc, context)
+    except Exception as e:
+        logger.warning("Failed to record error", error=str(e))
 
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -46,14 +57,11 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
             "details": exc.details,
         }
         status_code = exc.status_code
-        logger.warning(
-            f"Application error: {exc.message}",
-            extra={
-                "correlation_id": correlation_id,
-                "error_code": exc.error_code,
-                "error_type": exc.__class__.__name__,
-            },
-        )
+        logger.bind(
+            correlation_id=correlation_id,
+            error_code=exc.error_code,
+            error_type=exc.__class__.__name__,
+        ).warning("Application error", message=exc.message)
 
     # Handle FastAPI validation errors
     elif isinstance(exc, RequestValidationError):
@@ -64,10 +72,10 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
             "details": {"validation_errors": exc.errors()},
         }
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-        logger.warning(
-            "Request validation error",
-            extra={"correlation_id": correlation_id, "validation_errors": exc.errors()},
-        )
+        logger.bind(
+            correlation_id=correlation_id,
+            validation_errors=exc.errors()
+        ).warning("Request validation error")
 
     # Handle Starlette HTTP exceptions
     elif isinstance(exc, StarletteHTTPException):
@@ -77,20 +85,18 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
             "type": "HTTPException",
         }
         status_code = exc.status_code
-        logger.warning(
-            f"HTTP exception: {exc.detail}",
-            extra={"correlation_id": correlation_id, "status_code": exc.status_code},
-        )
+        logger.bind(
+            correlation_id=correlation_id,
+            status_code=exc.status_code
+        ).warning("HTTP exception", detail=exc.detail)
 
     # Handle all other exceptions
     else:
-        logger.error(
-            f"Unexpected error: {str(exc)}",
-            extra={
-                "correlation_id": correlation_id,
-                "traceback": traceback.format_exc(),
-            },
-        )
+        logger.bind(
+            correlation_id=correlation_id,
+            error_type=type(exc).__name__,
+            traceback=traceback.format_exc(),
+        ).error("Unexpected error", error=str(exc))
 
     return JSONResponse(
         status_code=status_code,

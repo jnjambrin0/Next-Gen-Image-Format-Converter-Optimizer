@@ -147,13 +147,18 @@ pytest backend/tests/security/
 
 ## Security Implementation Details
 
-- **Sandbox Architecture**: Three-layer system (SecuritySandbox → SecurityEngine → ProcessSandbox)
+- **Sandbox Architecture**: Three-layer system with distinct responsibilities:
+  - `SecurityEngine` - Orchestrates security operations, creates sandboxes, manages metadata
+  - `SecuritySandbox` - Manages resource limits, memory tracking, process isolation  
+  - `sandboxed_convert.py` - Isolated subprocess for actual image conversion
 - **Strictness Levels**: Configurable via `IMAGE_CONVERTER_SANDBOX_STRICTNESS` (standard/strict/paranoid)
-  - standard: 512MB RAM, 80% CPU, 30s timeout
-  - strict: 256MB RAM, 60% CPU, 20s timeout
-  - paranoid: 128MB RAM, 40% CPU, 10s timeout
+  - standard: 512MB RAM, 80% CPU, 30s timeout, 3 memory violations allowed, no memory locking
+  - strict: 256MB RAM, 60% CPU, 20s timeout, 2 memory violations allowed, memory locking enabled
+  - paranoid: 128MB RAM, 40% CPU, 10s timeout, 1 memory violation allowed, memory locking enabled
 - **Privacy-Aware Logging**: Security audit logs contain no PII (filenames, paths, or content)
-- **Resource Tracking**: Actual CPU/memory usage tracked per conversion
+- **Resource Tracking**: Actual CPU/memory usage tracked per conversion with violation detection
+- **Secure Memory Management**: 5-pass overwrite patterns (0x00, 0xFF, 0xAA, 0x55, 0x00) for clearing sensitive data
+- **Memory Page Locking**: Cross-platform mlock() implementation with graceful fallbacks
 - **Sandbox Control**: Enable/disable via `IMAGE_CONVERTER_ENABLE_SANDBOXING` env var
 
 ## Critical Implementation Details
@@ -210,6 +215,40 @@ command = [sys.executable, "-m", "app.core.conversion.sandboxed_convert", ...]
 ```
 
 **Why**: Module execution can trigger logging initialization that contaminates stdout with log messages, breaking binary data streams.
+
+### 3. Privacy-Aware Logging Pattern
+**CRITICAL**: Security and error messages MUST NEVER include filenames, paths, or user content:
+
+```python
+# CORRECT: Generic error messages without PII
+raise SecurityError("Filename contains dangerous patterns")
+logger.warning("Memory limit violation detected", current_mb=150, limit_mb=100)
+
+# WRONG: Including filenames or paths (contains PII)
+raise SecurityError(f"Invalid filename: {filename}")
+logger.error(f"Failed to process file: {file_path}")
+```
+
+**Why**: Filenames and paths may contain Personally Identifiable Information (PII). All logging must be privacy-aware.
+
+### 4. Secure Memory Management Pattern
+**CRITICAL**: Memory allocated for image processing must be explicitly cleared with overwrite patterns:
+
+```python
+# CORRECT: Secure memory clearing
+def secure_clear(buffer):
+    if isinstance(buffer, bytearray):
+        # Multiple overwrite passes for security
+        patterns = [0x00, 0xFF, 0xAA, 0x55, 0x00]
+        for pattern in patterns:
+            for i in range(len(buffer)):
+                buffer[i] = pattern
+
+# WRONG: Just setting to None (memory may persist)
+buffer = None
+```
+
+**Why**: Image data may contain sensitive information. Secure clearing prevents memory-based data recovery attacks.
 
 ### Quick Testing
 ```bash
