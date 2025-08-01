@@ -2,6 +2,9 @@ export const UIStates = {
   IDLE: 'idle',
   DRAGGING: 'dragging',
   PROCESSING: 'processing',
+  UPLOADING: 'uploading',
+  CONVERTING: 'converting',
+  DOWNLOADING: 'downloading',
   SUCCESS: 'success',
   ERROR: 'error',
 }
@@ -67,5 +70,17 @@ export class UIStateManager {
 
   isError() {
     return this.currentState === UIStates.ERROR
+  }
+
+  isUploading() {
+    return this.currentState === UIStates.UPLOADING
+  }
+
+  isConverting() {
+    return this.currentState === UIStates.CONVERTING
+  }
+
+  isDownloading() {
+    return this.currentState === UIStates.DOWNLOADING
   }
 }

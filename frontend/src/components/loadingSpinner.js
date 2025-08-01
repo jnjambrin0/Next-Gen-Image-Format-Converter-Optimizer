@@ -1,18 +1,26 @@
-export function createLoadingSpinner() {
+export function createLoadingSpinner(statusText = null) {
   const spinner = document.createElement('div')
-  spinner.className = 'flex items-center justify-center py-4'
+  spinner.className = 'flex flex-col items-center justify-center py-4'
 
   const spinnerElement = document.createElement('div')
   spinnerElement.className = 'animate-spin rounded-full h-8 w-8 border-b-2 border-primary'
   spinnerElement.setAttribute('role', 'status')
-  spinnerElement.setAttribute('aria-label', 'Loading')
+  spinnerElement.setAttribute('aria-label', statusText || 'Loading')
 
   const srOnly = document.createElement('span')
   srOnly.className = 'sr-only'
-  srOnly.textContent = 'Loading...'
+  srOnly.textContent = statusText || 'Loading...'
 
   spinnerElement.appendChild(srOnly)
   spinner.appendChild(spinnerElement)
+
+  // Add status text if provided
+  if (statusText) {
+    const textElement = document.createElement('p')
+    textElement.className = 'mt-3 text-sm text-gray-600'
+    textElement.textContent = statusText
+    spinner.appendChild(textElement)
+  }
 
   return spinner
 }

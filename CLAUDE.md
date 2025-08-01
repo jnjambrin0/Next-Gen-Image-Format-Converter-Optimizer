@@ -9,7 +9,7 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
 ## Architecture Summary
 
 - **Architecture Pattern**: Monolithic with modular internals
-- **Backend**: FastAPI (Python 3.11+) running on port 8000
+- **Backend**: FastAPI (Python 3.11+) running on port 8080
 - **Frontend**: Vanilla JS with Vite build system
 - **Core Modules**:
   - Conversion Manager: Orchestrates image processing
@@ -30,7 +30,7 @@ source .venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run development server
-uvicorn main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8080
 
 # Run tests
 pytest
@@ -47,6 +47,10 @@ mypy .
 ```bash
 # Navigate to frontend directory
 cd frontend
+
+# Setup environment variables
+cp .env.example .env
+# Edit .env to set backend port if different from 8080
 
 # Install dependencies (when available)
 npm install
@@ -67,6 +71,15 @@ npm run format
 npm run test
 npm run test:coverage
 ```
+
+#### Environment Configuration
+
+The frontend uses environment variables for backend configuration:
+
+- `VITE_API_PORT`: Backend API port (default: 8080)
+- `VITE_API_HOST`: Backend API host (default: localhost)
+
+See `frontend/ENV_CONFIG.md` for detailed configuration instructions.
 
 ### Testing
 
