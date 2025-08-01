@@ -1,0 +1,43 @@
+export function createLoadingSpinner() {
+  const spinner = document.createElement('div')
+  spinner.className = 'flex items-center justify-center py-4'
+
+  const spinnerElement = document.createElement('div')
+  spinnerElement.className = 'animate-spin rounded-full h-8 w-8 border-b-2 border-primary'
+  spinnerElement.setAttribute('role', 'status')
+  spinnerElement.setAttribute('aria-label', 'Loading')
+
+  const srOnly = document.createElement('span')
+  srOnly.className = 'sr-only'
+  srOnly.textContent = 'Loading...'
+
+  spinnerElement.appendChild(srOnly)
+  spinner.appendChild(spinnerElement)
+
+  return spinner
+}
+
+export function createProgressBar(progress = 0) {
+  const container = document.createElement('div')
+  container.className = 'w-full bg-gray-200 rounded-full h-2.5 mt-4'
+
+  const progressBar = document.createElement('div')
+  progressBar.className = 'bg-primary h-2.5 rounded-full transition-all duration-300'
+  progressBar.style.width = `${progress}%`
+  progressBar.setAttribute('role', 'progressbar')
+  progressBar.setAttribute('aria-valuenow', progress)
+  progressBar.setAttribute('aria-valuemin', '0')
+  progressBar.setAttribute('aria-valuemax', '100')
+
+  container.appendChild(progressBar)
+
+  return container
+}
+
+export function updateProgressBar(container, progress) {
+  const bar = container.querySelector('[role="progressbar"]')
+  if (bar) {
+    bar.style.width = `${progress}%`
+    bar.setAttribute('aria-valuenow', progress)
+  }
+}

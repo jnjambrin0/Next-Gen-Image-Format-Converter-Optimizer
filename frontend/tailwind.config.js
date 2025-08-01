@@ -1,24 +1,45 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          'Inter',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
+      },
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93bbfd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          DEFAULT: '#0066CC',
+          50: '#e6f0ff',
+          100: '#b3d1ff',
+          200: '#80b3ff',
+          300: '#4d94ff',
+          400: '#1a75ff',
+          500: '#0066CC',
+          600: '#0052a3',
+          700: '#003d7a',
+          800: '#002952',
+          900: '#001429',
+        },
+        success: {
+          DEFAULT: '#00AA44',
+          50: '#e6f7ed',
+          100: '#b3e6c9',
+          200: '#80d5a6',
+          300: '#4dc482',
+          400: '#1ab35e',
+          500: '#00AA44',
+          600: '#008836',
+          700: '#006628',
+          800: '#00441b',
+          900: '#00220d',
         },
       },
       animation: {
@@ -37,7 +58,5 @@ export default {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [require('@tailwindcss/forms')],
 }

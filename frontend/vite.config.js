@@ -20,7 +20,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'lucide': ['lucide'],
+          lucide: ['lucide'],
         },
       },
     },
