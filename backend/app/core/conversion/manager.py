@@ -28,6 +28,7 @@ from app.core.exceptions import (
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.conversion.image_processor import ImageProcessor
 from app.core.security.engine import SecurityEngine
+from app.core.security.memory import SecureMemoryManager, secure_memory_context
 from app.config import settings
 
 logger = structlog.get_logger()
@@ -44,6 +45,7 @@ class ConversionManager:
         self.format_handlers: Dict[str, Type[BaseFormatHandler]] = {}
         self.image_processor = ImageProcessor()
         self.security_engine = SecurityEngine() if settings.enable_sandboxing else None
+        self._memory_manager: Optional[SecureMemoryManager] = None
         self._initialize_handlers()
 
     def _initialize_handlers(self) -> None:
@@ -62,6 +64,47 @@ class ConversionManager:
         # Register output handlers
         self.register_handler("webp", WebPHandler)
         self.register_handler("avif", AVIFHandler)
+
+    def _estimate_memory_requirements(self, input_size: int, input_format: str, output_format: str) -> int:
+        """
+        Estimate memory requirements for conversion.
+        
+        Args:
+            input_size: Size of input image in bytes
+            output_format: Target output format
+            
+        Returns:
+            Estimated memory requirement in MB
+        """
+        # Base calculation: assume worst case 4 bytes per pixel (RGBA)
+        # Estimate pixel count from file size (rough approximation)
+        estimated_pixels = input_size * 10  # Conservative multiplier
+        
+        # Memory needed for:
+        # 1. Input image in memory (decompressed)
+        # 2. Working copies during processing 
+        # 3. Output image buffer
+        base_memory_mb = (estimated_pixels * 4 * 3) / (1024 * 1024)  # 3 copies, 4 bytes each
+        
+        # Add format-specific overhead
+        format_multipliers = {
+            "avif": 1.5,  # More complex encoding
+            "webp": 1.2,  # Moderate complexity
+            "jpeg": 1.0,  # Standard
+            "png": 1.1,   # Lossless compression
+        }
+        
+        multiplier = format_multipliers.get(output_format.lower(), 1.2)
+        estimated_mb = int(base_memory_mb * multiplier)
+        
+        # Minimum 64MB, maximum 1GB
+        return max(64, min(estimated_mb, 1024))
+
+    def _initialize_memory_manager(self, max_memory_mb: int) -> None:
+        """Initialize memory manager with specified limits."""
+        if not self._memory_manager:
+            self._memory_manager = SecureMemoryManager(max_memory_mb)
+            logger.debug("Memory manager initialized", max_memory_mb=max_memory_mb)
 
     def register_handler(
         self, format_name: str, handler_class: Type[BaseFormatHandler]
@@ -85,6 +128,14 @@ class ConversionManager:
         """
         start_time = time.time()
 
+        # Estimate memory requirements
+        estimated_memory_mb = self._estimate_memory_requirements(
+            len(input_data), input_format, request.output_format
+        )
+        
+        # Initialize memory manager with estimated requirements
+        self._initialize_memory_manager(estimated_memory_mb)
+
         # Initialize result
         result = ConversionResult(
             input_format=InputFormat(input_format.lower()),
@@ -93,6 +144,9 @@ class ConversionManager:
             status=ConversionStatus.PROCESSING,
             quality_settings=request.settings.model_dump() if request.settings else {},
         )
+        
+        # Add memory estimation to quality settings
+        result.quality_settings['estimated_memory_mb'] = estimated_memory_mb
 
         try:
             # Validate input
@@ -164,6 +218,15 @@ class ConversionManager:
             result.processing_time = time.time() - start_time
             result.status = ConversionStatus.COMPLETED
             result.completed_at = datetime.now(timezone.utc)
+            
+            # Add memory usage statistics if available
+            if self._memory_manager:
+                memory_stats = self._memory_manager.get_memory_stats()
+                result.quality_settings.update({
+                    'actual_memory_mb': memory_stats.get('current_usage_mb', 0),
+                    'peak_memory_mb': memory_stats.get('peak_memory_mb', 0),
+                    'memory_utilization_percent': memory_stats.get('memory_utilization_percent', 0),
+                })
 
             logger.info(
                 "Image conversion completed",
@@ -196,6 +259,21 @@ class ConversionManager:
             )
 
             raise
+            
+        finally:
+            # Ensure memory cleanup
+            self._cleanup_memory()
+
+    def _cleanup_memory(self) -> None:
+        """Clean up memory manager resources."""
+        if self._memory_manager:
+            try:
+                self._memory_manager.cleanup_all()
+                logger.debug("Conversion memory cleaned up")
+            except Exception as e:
+                logger.warning(f"Failed to cleanup memory manager: {e}")
+            finally:
+                self._memory_manager = None
 
     async def _process_sandboxed(
         self,

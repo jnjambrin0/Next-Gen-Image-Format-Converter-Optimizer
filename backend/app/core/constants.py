@@ -60,6 +60,7 @@ ERROR_CODES = {
     'METADATA_ERROR': 'Metadata processing failed',
     'SAVE_ERROR': 'Failed to save output',
     'OUTPUT_ERROR': 'Output validation failed',
+    'SECURITY_VIOLATION': 'Security policy violation detected',
     'UNEXPECTED_ERROR': 'Unexpected system error'
 }
 

@@ -15,6 +15,7 @@ import io
 
 from app.core.security.sandbox import SecuritySandbox, SecurityError, SandboxConfig
 from app.core.security.metadata import MetadataStripper
+from app.core.security.memory import SecureMemoryManager, secure_memory_context
 from app.models.process_sandbox import ProcessSandbox
 from app.core.exceptions import ConversionError
 from app.config import settings
@@ -73,7 +74,7 @@ class SecurityEngine:
         # Get resource limits based on strictness level
         resource_limits = self._get_resource_limits(strictness)
 
-        # Create sandbox config
+        # Create sandbox config with enhanced memory features
         config = SandboxConfig(
             max_memory_mb=resource_limits["memory_mb"],
             max_cpu_percent=resource_limits["cpu_percent"],
@@ -81,6 +82,9 @@ class SecurityEngine:
             max_output_size_mb=resource_limits["max_output_mb"],
             sandbox_uid=settings.sandbox_uid,
             sandbox_gid=settings.sandbox_gid,
+            enable_memory_tracking=True,
+            enable_memory_locking=strictness in ["strict", "paranoid"],
+            memory_violation_threshold=3 if strictness == "standard" else 2 if strictness == "strict" else 1,
         )
 
         # Create and return sandbox

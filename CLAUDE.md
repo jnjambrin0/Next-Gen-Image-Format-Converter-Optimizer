@@ -140,6 +140,10 @@ pytest backend/tests/security/
 - Resource limits enforced (CPU, memory, time)
 - Automatic EXIF/metadata removal by default
 - Memory explicitly cleared after processing
+- **Privacy-Aware Logging Rules**:
+  - NEVER include filenames, file paths, or user-provided names in log messages or errors
+  - Use generic messages like "Invalid filename" instead of including the actual filename
+  - This applies to ALL error messages, debug logs, and system outputs
 
 ## Security Implementation Details
 
@@ -172,6 +176,40 @@ pytest backend/tests/security/
 - `app/core/constants.py` - All system constants (limits, formats, security patterns)
 - `app/core/conversion/sandboxed_convert.py` - Isolated conversion subprocess
 - `app/utils/logging.py` - Logging configuration (MUST use stderr)
+
+## Critical Architectural Patterns
+
+### 1. Metadata Processing MUST Happen Before Conversion
+**CRITICAL**: Always process metadata (EXIF, GPS, etc.) on the INPUT image before format conversion, never on the output.
+
+```python
+# CORRECT: Process metadata before conversion
+processed_input, metadata_summary = await security_engine.analyze_and_process_metadata(
+    input_data, 
+    input_format,  # Use INPUT format, not output
+    ...
+)
+output_data = await convert_image(processed_input, ...)
+
+# WRONG: Process metadata after conversion
+output_data = await convert_image(input_data, ...)
+# Metadata is already lost during conversion!
+```
+
+**Why**: Many format conversions (e.g., JPEG→WebP) automatically lose metadata during conversion. Processing after conversion gives incorrect results about what metadata existed in the original image.
+
+### 2. Sandboxed Script Execution Pattern
+**CRITICAL**: The sandboxed conversion script MUST be executed directly, NOT as a module:
+
+```python
+# CORRECT: Direct script execution
+command = [sys.executable, "/path/to/sandboxed_convert.py", ...]
+
+# WRONG: Module execution (will break due to logging initialization)
+command = [sys.executable, "-m", "app.core.conversion.sandboxed_convert", ...]
+```
+
+**Why**: Module execution can trigger logging initialization that contaminates stdout with log messages, breaking binary data streams.
 
 ### Quick Testing
 ```bash

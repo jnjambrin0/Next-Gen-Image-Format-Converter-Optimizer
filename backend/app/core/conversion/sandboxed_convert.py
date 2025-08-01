@@ -83,9 +83,55 @@ def validate_quality(quality_str):
         raise ValueError(f"Invalid quality parameter: {e}")
 
 
+def check_file_system_writes():
+    """Check for unexpected file writes during conversion."""
+    import tempfile
+    temp_dir = tempfile.gettempdir()
+    
+    # List of directories to monitor for unexpected writes
+    monitored_dirs = [temp_dir, "/tmp", "/var/tmp"]
+    initial_file_counts = {}
+    
+    for dir_path in monitored_dirs:
+        try:
+            if os.path.exists(dir_path):
+                file_count = len([f for f in os.listdir(dir_path) 
+                                if os.path.isfile(os.path.join(dir_path, f))])
+                initial_file_counts[dir_path] = file_count
+        except (OSError, PermissionError):
+            pass  # Skip if can't access directory
+            
+    return initial_file_counts
+
+
+def verify_no_file_writes(initial_counts):
+    """Verify no unexpected files were created."""
+    import tempfile
+    temp_dir = tempfile.gettempdir()
+    
+    monitored_dirs = [temp_dir, "/tmp", "/var/tmp"]
+    
+    for dir_path in monitored_dirs:
+        if dir_path in initial_counts:
+            try:
+                if os.path.exists(dir_path):
+                    current_count = len([f for f in os.listdir(dir_path) 
+                                       if os.path.isfile(os.path.join(dir_path, f))])
+                    if current_count > initial_counts[dir_path]:
+                        write_error("SECURITY_VIOLATION", 
+                                  f"Unexpected file creation detected in {dir_path}")
+                        return False
+            except (OSError, PermissionError):
+                pass
+                
+    return True
+
+
 def main():
     """Main conversion function with security hardening."""
     try:
+        # Check initial file system state
+        initial_file_counts = check_file_system_writes()
         # Parse command line arguments
         if len(sys.argv) < 4:
             write_error("ARGS_ERROR", "Missing arguments")
@@ -188,13 +234,31 @@ def main():
         sys.stdout.buffer.write(output_data)
         sys.stdout.buffer.flush()
         
-        # Clean up
+        # Clean up - secure memory clearing
         try:
+            # Clear sensitive buffers before closing
+            if hasattr(input_buffer, 'getvalue'):
+                buffer_data = input_buffer.getvalue()
+                if isinstance(buffer_data, (bytearray, memoryview)):
+                    # Securely overwrite buffer contents
+                    for i in range(len(buffer_data)):
+                        buffer_data[i] = 0
+            
+            # Close resources
             image.close()
             input_buffer.close()
             output_buffer.close()
+            
+            # Clear variables
+            input_data = None
+            output_data = None
+            
         except:
             pass  # Cleanup errors should not fail the conversion
+        
+        # Verify no unexpected file writes occurred
+        if not verify_no_file_writes(initial_file_counts):
+            sys.exit(1)
         
         # Success
         sys.exit(0)

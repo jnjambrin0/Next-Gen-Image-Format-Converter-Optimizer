@@ -11,6 +11,10 @@ from typing import Dict, List, Optional, Any, Tuple, Union
 import structlog
 
 from app.core.exceptions import ConversionError
+from app.core.security.memory import (
+    SecureMemoryManager,
+    MemoryError as SecureMemoryError,
+)
 
 logger = structlog.get_logger()
 
@@ -33,6 +37,9 @@ class SandboxConfig:
         sandbox_uid: Optional[int] = None,
         sandbox_gid: Optional[int] = None,
         allowed_paths: Optional[List[str]] = None,
+        enable_memory_tracking: bool = True,
+        enable_memory_locking: bool = True,
+        memory_violation_threshold: int = 3,
     ):
         self.max_memory_mb = max_memory_mb
         self.max_cpu_percent = max_cpu_percent
@@ -41,6 +48,9 @@ class SandboxConfig:
         self.sandbox_uid = sandbox_uid
         self.sandbox_gid = sandbox_gid
         self.allowed_paths = allowed_paths or []
+        self.enable_memory_tracking = enable_memory_tracking
+        self.enable_memory_locking = enable_memory_locking
+        self.memory_violation_threshold = memory_violation_threshold
 
         # Blocked commands that pose security risks
         self.blocked_commands = {
@@ -102,6 +112,9 @@ class SecuritySandbox:
         """Initialize security sandbox with configuration."""
         self.config = config or SandboxConfig()
         self._temp_dirs: List[Path] = []
+        self._memory_manager: Optional[SecureMemoryManager] = None
+        self._memory_violations: int = 0
+        self._peak_memory_mb: float = 0.0
 
     def __enter__(self):
         """Context manager entry."""
@@ -110,6 +123,7 @@ class SecuritySandbox:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit - cleanup resources."""
         self._cleanup_temp_dirs()
+        self._cleanup_memory()
 
     def create_sandbox(
         self, resource_limits: Optional[Dict[str, Any]] = None
@@ -212,7 +226,7 @@ class SecuritySandbox:
         # Check for injection attempts
         dangerous_patterns = [";", "&&", "||", "|", "`", "$", "\n", "\r"]
         if any(pattern in filename for pattern in dangerous_patterns):
-            raise SecurityError(f"Invalid filename: {filename}")
+            raise SecurityError("Filename contains dangerous patterns")
 
         # Remove null bytes
         filename = filename.replace("\x00", "")
@@ -297,6 +311,80 @@ class SecuritySandbox:
                 logger.warning(f"Failed to cleanup temp directory {temp_dir}: {e}")
         self._temp_dirs.clear()
 
+    def _cleanup_memory(self) -> None:
+        """Clean up memory resources."""
+        if self._memory_manager:
+            try:
+                self._memory_manager.cleanup_all()
+                logger.debug("Memory manager cleaned up")
+            except Exception as e:
+                logger.warning(f"Failed to cleanup memory manager: {e}")
+            finally:
+                self._memory_manager = None
+
+    def _initialize_memory_manager(self) -> None:
+        """Initialize memory manager if enabled."""
+        if self.config.enable_memory_tracking and not self._memory_manager:
+            try:
+                self._memory_manager = SecureMemoryManager(
+                    max_memory_mb=self.config.max_memory_mb
+                )
+                logger.debug(
+                    "Memory manager initialized",
+                    max_memory_mb=self.config.max_memory_mb,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to initialize memory manager: {e}")
+
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """Get current memory statistics."""
+        stats = {
+            "memory_violations": self._memory_violations,
+            "peak_memory_mb": self._peak_memory_mb,
+            "memory_limit_mb": self.config.max_memory_mb,
+            "memory_tracking_enabled": self.config.enable_memory_tracking,
+            "memory_locking_enabled": self.config.enable_memory_locking,
+        }
+
+        if self._memory_manager:
+            stats.update(self._memory_manager.get_memory_stats())
+
+        return stats
+
+    def _check_memory_violation(self, current_memory_mb: float) -> bool:
+        """
+        Check if current memory usage violates limits.
+
+        Args:
+            current_memory_mb: Current memory usage in MB
+
+        Returns:
+            True if violation detected
+        """
+        # Update peak memory tracking
+        if current_memory_mb > self._peak_memory_mb:
+            self._peak_memory_mb = current_memory_mb
+
+        # Check for violation
+        if current_memory_mb > self.config.max_memory_mb:
+            self._memory_violations += 1
+            logger.warning(
+                "Memory limit violation detected",
+                current_mb=current_memory_mb,
+                limit_mb=self.config.max_memory_mb,
+                violations=self._memory_violations,
+            )
+
+            # Check if we've exceeded violation threshold
+            if self._memory_violations >= self.config.memory_violation_threshold:
+                raise SecureMemoryError(
+                    f"Memory violations exceeded threshold: {self._memory_violations} >= {self.config.memory_violation_threshold}"
+                )
+
+            return True
+
+        return False
+
     def _set_resource_limits(self) -> None:
         """Set resource limits for the subprocess."""
         try:
@@ -349,6 +437,9 @@ class SecuritySandbox:
             TimeoutError: If command exceeds timeout
             MemoryError: If command exceeds memory limit
         """
+        # Initialize memory manager if needed
+        self._initialize_memory_manager()
+
         # Validate command
         self.validate_command(command)
 
@@ -395,8 +486,14 @@ class SecuritySandbox:
                 if len(stdout) > actual_max_output * 1024 * 1024:
                     raise ValueError(f"Output too large: {len(stdout)} bytes")
 
-                # Try to get resource usage info
+                # Try to get resource usage info with memory monitoring
                 resource_usage = self._get_process_resource_usage(process.pid)
+
+                # Check memory violations if tracking is enabled
+                if self.config.enable_memory_tracking:
+                    memory_mb = resource_usage.get("memory_mb", 0)
+                    if memory_mb > 0:
+                        self._check_memory_violation(memory_mb)
 
                 result = {
                     "output": stdout,
@@ -406,6 +503,9 @@ class SecuritySandbox:
                     "memory_used_mb": resource_usage.get("memory_mb", 0),
                     "cpu_time": resource_usage.get("cpu_time", 0),
                     "wall_time": wall_time,
+                    "peak_memory_mb": self._peak_memory_mb,
+                    "memory_violations": self._memory_violations,
+                    "memory_tracking_enabled": self.config.enable_memory_tracking,
                 }
 
                 if process.returncode == -9:  # SIGKILL
