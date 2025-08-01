@@ -53,6 +53,12 @@ class ConversionSettings(BaseModel):
     strip_metadata: bool = Field(
         default=True, description="Remove EXIF and other metadata"
     )
+    preserve_metadata: bool = Field(
+        default=False, description="Preserve non-GPS metadata (overrides strip_metadata)"
+    )
+    preserve_gps: bool = Field(
+        default=False, description="Preserve GPS location data (only if preserve_metadata is True)"
+    )
     optimize: bool = Field(
         default=True, description="Apply format-specific optimizations"
     )
@@ -93,6 +99,7 @@ class ConversionResult(BaseModel):
     error_message: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
+    metadata_removed: bool = Field(default=False, description="Whether metadata was stripped from the image")
 
     @property
     def compression_ratio(self) -> Optional[float]:

@@ -97,11 +97,17 @@ def sanitize_filename(filename: str) -> str:
     },
     summary="Convert an image to a different format",
     description="""
-    Convert an uploaded image to a different format with optional quality settings.
+    Convert an uploaded image to a different format with optional quality and metadata settings.
     
     - **file**: The image file to convert (multipart/form-data)
     - **output_format**: Target format (webp, avif, etc.)
     - **quality**: Optional quality setting (1-100, default: 85)
+    - **strip_metadata**: Remove EXIF and other metadata (default: true)
+    - **preserve_metadata**: Preserve non-GPS metadata (overrides strip_metadata, default: false)
+    - **preserve_gps**: Preserve GPS location data (only if preserve_metadata is true, default: false)
+    
+    By default, all metadata including GPS data is removed for privacy. 
+    To keep metadata but remove GPS, set preserve_metadata=true and preserve_gps=false.
     """,
 )
 async def convert_image(
@@ -110,6 +116,15 @@ async def convert_image(
     output_format: OutputFormat = Form(..., description="Target image format"),
     quality: Optional[int] = Form(
         85, ge=1, le=100, description="Output quality (1-100)"
+    ),
+    strip_metadata: Optional[bool] = Form(
+        True, description="Remove EXIF and other metadata (default: true)"
+    ),
+    preserve_metadata: Optional[bool] = Form(
+        False, description="Preserve non-GPS metadata (overrides strip_metadata)"
+    ),
+    preserve_gps: Optional[bool] = Form(
+        False, description="Preserve GPS location data (only if preserve_metadata is true)"
     ),
 ):
     """Convert an image to a different format."""
@@ -198,7 +213,9 @@ async def convert_image(
                 output_format=output_format,
                 settings=ConversionSettings(
                     quality=quality,
-                    strip_metadata=True,
+                    strip_metadata=strip_metadata,
+                    preserve_metadata=preserve_metadata,
+                    preserve_gps=preserve_gps,
                     optimize=True,
                 ),
             )
@@ -246,6 +263,7 @@ async def convert_image(
                 output_size=len(output_data),
                 compression_ratio=round(len(output_data) / file_size, 3),
                 processing_time=result.processing_time,
+                metadata_removed=result.metadata_removed,
                 correlation_id=request.state.correlation_id,
             )
 
@@ -258,6 +276,7 @@ async def convert_image(
                     "X-Conversion-Id": result.id,
                     "X-Processing-Time": str(result.processing_time),
                     "X-Compression-Ratio": str(result.compression_ratio),
+                    "X-Metadata-Removed": str(result.metadata_removed),
                 },
             )
 

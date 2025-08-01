@@ -69,7 +69,7 @@ def setup_logging(log_level: str = "INFO", json_logs: bool = True) -> None:
     # Configure standard library logging
     logging.basicConfig(
         format="%(message)s",
-        stream=sys.stdout,
+        stream=sys.stderr,  # Use stderr to avoid polluting stdout
         level=getattr(logging, log_level.upper()),
     )
 

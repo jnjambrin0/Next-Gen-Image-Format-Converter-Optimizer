@@ -152,6 +152,36 @@ pytest backend/tests/security/
 - **Resource Tracking**: Actual CPU/memory usage tracked per conversion
 - **Sandbox Control**: Enable/disable via `IMAGE_CONVERTER_ENABLE_SANDBOXING` env var
 
+## Critical Implementation Details
+
+### Image Conversion Architecture
+- **NO ImageMagick Required**: The sandboxed conversion uses Python subprocess with PIL/Pillow
+- **Sandboxed Script**: `app/core/conversion/sandboxed_convert.py` - standalone conversion script
+- **Execution Method**: Must run with `python script.py` directly, NOT as module (`-m`) to avoid logging initialization
+- **Error Format**: Sandboxed errors are returned as JSON on stderr:
+  ```json
+  {"error_code": "CODE", "message": "description", "type": "sandboxed_conversion_error"}
+  ```
+
+### Logging Configuration
+- **CRITICAL**: Logging MUST use stderr, not stdout (`app/utils/logging.py:72`)
+- Logging to stdout will contaminate subprocess output and break conversions
+- Format: `stream=sys.stderr  # NOT sys.stdout`
+
+### Key Configuration Files
+- `app/core/constants.py` - All system constants (limits, formats, security patterns)
+- `app/core/conversion/sandboxed_convert.py` - Isolated conversion subprocess
+- `app/utils/logging.py` - Logging configuration (MUST use stderr)
+
+### Quick Testing
+```bash
+# Test all format conversions
+python test_conversion.py
+
+# Test specific format
+python test_conversion.py png
+```
+
 ## API Endpoints (Planned)
 
 - `POST /api/convert` - Convert single image

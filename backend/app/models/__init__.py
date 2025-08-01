@@ -11,7 +11,7 @@ from app.models.conversion import (
 )
 from app.models.requests import BatchConversionRequest
 from app.models.responses import (
-    ConversionResponse,
+    ConversionApiResponse,
     BatchConversionResponse,
     ErrorResponse,
     HealthResponse,
@@ -30,7 +30,7 @@ __all__ = [
     # Request models
     "BatchConversionRequest",
     # Response models
-    "ConversionResponse",
+    "ConversionApiResponse",
     "BatchConversionResponse",
     "ErrorResponse",
     "HealthResponse",

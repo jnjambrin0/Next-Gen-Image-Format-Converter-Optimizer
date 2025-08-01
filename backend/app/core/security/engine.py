@@ -3,6 +3,8 @@
 import os
 import tempfile
 import asyncio
+import json
+import threading
 from typing import Dict, Any, Optional, Tuple, List
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,9 +14,20 @@ from PIL.ExifTags import TAGS
 import io
 
 from app.core.security.sandbox import SecuritySandbox, SecurityError, SandboxConfig
+from app.core.security.metadata import MetadataStripper
 from app.models.process_sandbox import ProcessSandbox
 from app.core.exceptions import ConversionError
 from app.config import settings
+from app.core.constants import (
+    SANDBOX_TIMEOUTS,
+    SANDBOX_MEMORY_LIMITS, 
+    SANDBOX_CPU_LIMITS,
+    SANDBOX_OUTPUT_LIMITS,
+    IMAGE_MAGIC_BYTES,
+    SUSPICIOUS_PATTERNS,
+    HEIF_AVIF_BRANDS,
+    MAX_IMAGE_PIXELS
+)
 
 logger = structlog.get_logger()
 
@@ -34,6 +47,8 @@ class SecurityEngine:
     def __init__(self):
         """Initialize the security engine."""
         self._sandboxes: Dict[str, ProcessSandbox] = {}
+        self._sandbox_lock = threading.Lock()  # Thread-safe access to _sandboxes
+        self._metadata_stripper = MetadataStripper()
         self._configure_logging()
 
     def _configure_logging(self) -> None:
@@ -77,7 +92,10 @@ class SecurityEngine:
             conversion_id=conversion_id,
             resource_limits=resource_limits,
         )
-        self._sandboxes[conversion_id] = process_sandbox
+        
+        # Thread-safe sandbox tracking
+        with self._sandbox_lock:
+            self._sandboxes[conversion_id] = process_sandbox
 
         logger.info(
             "Created sandbox for conversion",
@@ -98,28 +116,12 @@ class SecurityEngine:
         Returns:
             Resource limit configuration
         """
-        limits = {
-            "standard": {
-                "memory_mb": 512,
-                "cpu_percent": 80,
-                "timeout_seconds": 30,
-                "max_output_mb": 100,
-            },
-            "strict": {
-                "memory_mb": 256,
-                "cpu_percent": 60,
-                "timeout_seconds": 20,
-                "max_output_mb": 50,
-            },
-            "paranoid": {
-                "memory_mb": 128,
-                "cpu_percent": 40,
-                "timeout_seconds": 10,
-                "max_output_mb": 25,
-            },
+        return {
+            "memory_mb": SANDBOX_MEMORY_LIMITS.get(strictness, SANDBOX_MEMORY_LIMITS["standard"]),
+            "cpu_percent": SANDBOX_CPU_LIMITS.get(strictness, SANDBOX_CPU_LIMITS["standard"]),
+            "timeout_seconds": SANDBOX_TIMEOUTS.get(strictness, SANDBOX_TIMEOUTS["standard"]),
+            "max_output_mb": SANDBOX_OUTPUT_LIMITS.get(strictness, SANDBOX_OUTPUT_LIMITS["standard"]),
         }
-
-        return limits.get(strictness, limits["standard"])
 
     async def scan_file(self, file_data: bytes) -> Dict[str, Any]:
         """
@@ -136,7 +138,14 @@ class SecurityEngine:
             "threats_found": [],
             "file_size": len(file_data),
             "scan_time": datetime.now(timezone.utc).isoformat(),
+            "detected_format": None,
         }
+
+        # Early exit: Check minimum file size first
+        if len(file_data) < 8:
+            report["is_safe"] = False
+            report["threats_found"].append("File too small to be a valid image")
+            return report
 
         # Check file size
         max_size = settings.max_file_size
@@ -145,21 +154,81 @@ class SecurityEngine:
             report["threats_found"].append(
                 f"File exceeds maximum size of {max_size} bytes"
             )
+            # Continue scanning even if too large to detect other threats
 
-        # Check for suspicious patterns (basic checks)
-        suspicious_patterns = [
-            b"<script",  # JavaScript injection
-            b"<?php",  # PHP code
-            b"#!/",  # Shell scripts
-            b"\x00",  # Null bytes
-        ]
-
-        for pattern in suspicious_patterns:
-            if pattern in file_data[:1024]:  # Check first 1KB
+        # Check for patterns only if they appear at the very beginning
+        # This avoids false positives from binary image data
+        for pattern in SUSPICIOUS_PATTERNS:
+            if file_data.startswith(pattern):
                 report["is_safe"] = False
                 report["threats_found"].append(
                     f"Suspicious pattern detected: {pattern.decode('utf-8', errors='ignore')}"
                 )
+        
+        # Verify it's a valid image by checking magic bytes
+        
+        # Check if file starts with any known image signature
+        is_valid_image = False
+        detected_format = None
+        
+        for signature, format_name in IMAGE_MAGIC_BYTES.items():
+            if file_data.startswith(signature):
+                # Special handling for container formats
+                if format_name == "WebP/RIFF":
+                    # Check if it's actually WebP
+                    if len(file_data) > 12 and file_data[8:12] == b"WEBP":
+                        is_valid_image = True
+                        detected_format = "WebP"
+                    # Could be other RIFF format, continue checking
+                    continue
+                elif format_name == "HEIF/AVIF":
+                    # Check ftyp box for specific format
+                    if len(file_data) >= 12:
+                        ftyp = file_data[8:12]
+                        detected_format = HEIF_AVIF_BRANDS.get(ftyp)
+                        if detected_format:
+                            is_valid_image = True
+                        # Could be other ISO format, continue checking
+                        continue
+                else:
+                    is_valid_image = True
+                    detected_format = format_name
+                    break
+        
+        # PIL verification fallback
+        if not is_valid_image and len(file_data) > 0:
+            # Try to open with PIL as a final check with security limits
+            try:
+                # Set PIL security limits
+                Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS  # Prevents decompression bombs
+                
+                # Use a limited BytesIO buffer
+                img_buffer = io.BytesIO(file_data[:1024*1024])  # Only check first 1MB
+                
+                img = Image.open(img_buffer)
+                # Verify format without decompressing
+                img.verify()
+                
+                # Check if it's actually an image format
+                if hasattr(img, 'format') and img.format is not None:
+                    is_valid_image = True
+                    detected_format = img.format
+            except Image.DecompressionBombError:
+                report["is_safe"] = False
+                report["threats_found"].append("Potential decompression bomb detected")
+            except Exception as e:
+                # Log the specific error for debugging but don't expose it
+                logger.debug(f"PIL verification failed: {str(e)}")
+                pass
+        
+        if not is_valid_image and "File too small" not in str(report.get("threats_found", [])):
+            report["is_safe"] = False
+            report["threats_found"].append("File does not appear to be a valid image format")
+        
+        # Log detected format if valid
+        if is_valid_image and detected_format:
+            logger.debug(f"Detected image format: {detected_format}")
+            report["detected_format"] = detected_format
 
         # Log security scan
         logger.info(
@@ -167,71 +236,68 @@ class SecurityEngine:
             is_safe=report["is_safe"],
             threats_count=len(report["threats_found"]),
             file_size=report["file_size"],
+            detected_format=report.get("detected_format"),
         )
 
         return report
 
-    async def strip_metadata(self, image_data: bytes, format: str) -> bytes:
+    async def strip_metadata(
+        self,
+        image_data: bytes,
+        format: str,
+        preserve_metadata: bool = False,
+        preserve_gps: bool = False
+    ) -> Tuple[bytes, Dict[str, Any]]:
         """
         Remove EXIF and other metadata from image.
+        
+        DEPRECATED: Use analyze_and_process_metadata instead.
 
         Args:
             image_data: Raw image data
             format: Image format
+            preserve_metadata: If True, keep non-GPS metadata
+            preserve_gps: If True, keep GPS data (only if preserve_metadata is also True)
 
         Returns:
-            Image data with metadata stripped
+            Tuple of (stripped image data, metadata summary)
         """
-        try:
-            # Load image
-            image = Image.open(io.BytesIO(image_data))
-
-            # Get image mode and convert if necessary
-            if image.mode == "RGBA" and format.upper() in ["JPEG", "JPG"]:
-                # Convert RGBA to RGB for JPEG
-                rgb_image = Image.new("RGB", image.size, (255, 255, 255))
-                rgb_image.paste(
-                    image, mask=image.split()[3] if len(image.split()) == 4 else None
-                )
-                image = rgb_image
-
-            # Create new image without metadata
-            output_buffer = io.BytesIO()
-
-            # Save without metadata
-            save_kwargs = {
-                "format": format.upper() if format.upper() != "JPG" else "JPEG",
-                "optimize": True,
-            }
-
-            # Add quality for JPEG
-            if format.upper() in ["JPEG", "JPG"]:
-                save_kwargs["quality"] = 85
-                save_kwargs["progressive"] = True
-
-            image.save(output_buffer, **save_kwargs)
-
-            # Get stripped image data
-            output_buffer.seek(0)
-            stripped_data = output_buffer.read()
-
-            # Clean up
-            image.close()
-            output_buffer.close()
-
-            logger.info(
-                "Metadata stripped from image",
-                original_size=len(image_data),
-                stripped_size=len(stripped_data),
-                format=format,
-            )
-
-            return stripped_data
-
-        except Exception as e:
-            logger.error(f"Failed to strip metadata: {e}")
-            # Return original data if stripping fails
-            return image_data
+        return await self._metadata_stripper.analyze_and_strip_metadata(
+            image_data, format, preserve_metadata, preserve_gps
+        )
+    
+    async def analyze_and_process_metadata(
+        self,
+        image_data: bytes,
+        input_format: str,
+        strip_metadata: bool,
+        preserve_metadata: bool,
+        preserve_gps: bool,
+    ) -> Tuple[bytes, Dict[str, Any]]:
+        """
+        Analyze and process metadata for image conversion.
+        
+        This method handles metadata analysis and optional stripping
+        before image conversion, ensuring accurate tracking of what
+        metadata was present in the original image.
+        
+        Args:
+            image_data: Raw image data
+            input_format: Input image format
+            strip_metadata: If True, remove metadata (unless preserve_metadata overrides)
+            preserve_metadata: If True, keep non-GPS metadata (overrides strip_metadata)
+            preserve_gps: If True, keep GPS data (only if preserve_metadata is True)
+            
+        Returns:
+            Tuple of (processed_image_data, metadata_summary)
+        """
+        return await self._metadata_stripper.process_metadata_for_conversion(
+            image_data,
+            input_format,
+            strip_metadata,
+            preserve_metadata,
+            preserve_gps
+        )
 
     async def verify_process_isolation(
         self, sandbox: SecuritySandbox
@@ -359,11 +425,13 @@ class SecurityEngine:
         Returns:
             Tuple of (output_data, process_sandbox_record)
         """
-        process_sandbox = self._sandboxes.get(conversion_id)
-        if not process_sandbox:
-            raise ConversionError(
-                f"No sandbox record found for conversion {conversion_id}"
-            )
+        # Thread-safe access to sandbox
+        with self._sandbox_lock:
+            process_sandbox = self._sandboxes.get(conversion_id)
+            if not process_sandbox:
+                raise ConversionError(
+                    f"No sandbox record found for conversion {conversion_id}"
+                )
 
         try:
             # Execute command in sandbox
@@ -374,6 +442,44 @@ class SecurityEngine:
 
             # Update process sandbox record
             process_sandbox.process_id = str(result.get("process_id", "unknown"))
+            
+            # Check for conversion errors
+            if result["returncode"] != 0:
+                # Try to parse JSON error from stderr
+                error_message = "Conversion failed"
+                try:
+                    stderr_str = result.get("stderr", b"").decode("utf-8", errors="ignore")
+                    if stderr_str:
+                        # Look for JSON error message
+                        for line in stderr_str.strip().split("\n"):
+                            if line.startswith("{") and "error_code" in line:
+                                error_data = json.loads(line)
+                                error_message = f"{error_data.get('error_code', 'UNKNOWN')}: {error_data.get('message', 'Unknown error')}"
+                                break
+                except Exception:
+                    # If we can't parse the error, use raw stderr
+                    error_message = f"Conversion failed with code {result['returncode']}"
+                
+                process_sandbox.mark_completed(
+                    exit_code=result["returncode"],
+                    actual_usage={
+                        "memory_mb": result.get("memory_used_mb", 0),
+                        "cpu_seconds": result.get("cpu_time", 0),
+                        "wall_time_seconds": result.get("wall_time", 0),
+                    },
+                    error_message=error_message,
+                )
+                
+                logger.error(
+                    "Sandboxed conversion failed",
+                    conversion_id=conversion_id,
+                    error=error_message,
+                    exit_code=result["returncode"],
+                )
+                
+                raise ConversionError(error_message)
+            
+            # Mark successful completion
             process_sandbox.mark_completed(
                 exit_code=result["returncode"],
                 actual_usage={
@@ -429,22 +535,23 @@ class SecurityEngine:
         Args:
             conversion_id: Conversion UUID
         """
-        if conversion_id in self._sandboxes:
-            process_sandbox = self._sandboxes[conversion_id]
+        with self._sandbox_lock:
+            if conversion_id in self._sandboxes:
+                process_sandbox = self._sandboxes[conversion_id]
 
-            # Ensure sandbox is marked as completed
-            if process_sandbox.end_time is None:
-                process_sandbox.mark_completed(
-                    exit_code=-1,
-                    actual_usage={},
-                    error_message="Sandbox cleanup forced",
-                )
+                # Ensure sandbox is marked as completed
+                if process_sandbox.end_time is None:
+                    process_sandbox.mark_completed(
+                        exit_code=-1,
+                        actual_usage={},
+                        error_message="Sandbox cleanup forced",
+                    )
 
-            # Log final audit entry
-            logger.info("Sandbox cleanup completed", **process_sandbox.to_audit_log())
+                # Log final audit entry
+                logger.info("Sandbox cleanup completed", **process_sandbox.to_audit_log())
 
-            # Remove from tracking
-            del self._sandboxes[conversion_id]
+                # Remove from tracking
+                del self._sandboxes[conversion_id]
 
     def get_sandbox_history(self, limit: int = 100) -> List[Dict[str, Any]]:
         """

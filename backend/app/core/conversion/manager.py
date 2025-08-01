@@ -2,6 +2,7 @@
 
 import asyncio
 import time
+import sys
 from typing import Dict, Type, Optional, Any, Tuple, List
 from io import BytesIO
 from datetime import datetime, timezone
@@ -97,8 +98,8 @@ class ConversionManager:
             # Validate input
             await self._validate_input(input_data, input_format)
 
-            # Security scan if enabled
-            if self.security_engine and settings.enable_sandboxing:
+            # Security scan (always enabled for safety)
+            if self.security_engine:
                 scan_report = await self.security_engine.scan_file(input_data)
                 if not scan_report["is_safe"]:
                     raise ConversionError(
@@ -108,29 +109,55 @@ class ConversionManager:
             # Get handlers
             input_handler = self._get_handler(input_format.lower())
             output_handler = self._get_handler(request.output_format.lower())
+            
+            # Handle metadata analysis and stripping BEFORE conversion
+            conversion_settings = request.settings or ConversionSettings()
+            processed_input_data = input_data
+            
+            if self.security_engine:
+                # Analyze and optionally strip metadata from input image
+                processed_input_data, metadata_summary = await self.security_engine.analyze_and_process_metadata(
+                    input_data,
+                    input_format,
+                    strip_metadata=conversion_settings.strip_metadata,
+                    preserve_metadata=conversion_settings.preserve_metadata,
+                    preserve_gps=conversion_settings.preserve_gps
+                )
+                
+                # Update result with metadata information
+                result.metadata_removed = len(metadata_summary.get('metadata_removed', [])) > 0
+                result.quality_settings['metadata_summary'] = metadata_summary
+                
+                if metadata_summary.get('gps_removed'):
+                    logger.info("GPS data removed from image", conversion_id=result.id)
+                    
+                logger.info(
+                    "Metadata processing completed",
+                    conversion_id=result.id,
+                    had_metadata=any([
+                        metadata_summary.get('had_exif', False),
+                        metadata_summary.get('had_gps', False),
+                        metadata_summary.get('had_xmp', False),
+                        metadata_summary.get('had_iptc', False)
+                    ]),
+                    metadata_removed=result.metadata_removed
+                )
 
             # Choose conversion method based on sandboxing
             if self.security_engine and settings.enable_sandboxing:
-                # Sandboxed conversion
+                # Sandboxed conversion with pre-processed input
                 output_data = await self._process_sandboxed(
-                    input_data, input_format, request, result
+                    processed_input_data, input_format, request, result
                 )
             else:
-                # Direct conversion (legacy mode)
+                # Direct conversion (legacy mode) with pre-processed input
                 # Load image
-                image = await self._load_image(input_data, input_handler)
+                image = await self._load_image(processed_input_data, input_handler)
 
                 # Process image
-                conversion_settings = request.settings or ConversionSettings()
                 # Update quality_settings in result to reflect what was actually used
-                result.quality_settings = conversion_settings.model_dump()
+                result.quality_settings.update(conversion_settings.model_dump())
                 output_data = await self._process_image(image, output_handler, conversion_settings)
-
-            # Strip metadata if requested
-            if self.security_engine and (request.settings and request.settings.strip_metadata):
-                output_data = await self.security_engine.strip_metadata(
-                    output_data, request.output_format
-                )
 
             # Update result
             result.output_size = len(output_data)
@@ -189,49 +216,33 @@ class ConversionManager:
         Returns:
             Converted image data
         """
-        # Create sandbox for this conversion
-        sandbox = self.security_engine.create_sandbox(
-            conversion_id=result.id,
-            strictness=settings.sandbox_strictness
-        )
-        
+        sandbox = None
         try:
-            # Write input data to temporary file
-            with tempfile.NamedTemporaryFile(
-                suffix=f".{input_format}",
-                delete=False
-            ) as input_file:
-                input_file.write(input_data)
-                input_path = input_file.name
-                
-            # Create output file path
-            output_path = input_path.replace(
-                f".{input_format}",
-                f"_converted.{request.output_format}"
+            # Create sandbox for this conversion
+            sandbox = self.security_engine.create_sandbox(
+                conversion_id=result.id,
+                strictness=settings.sandbox_strictness
             )
-            
             # Build conversion command
             command = self._build_conversion_command(
-                input_path,
-                output_path,
+                "",  # Not used anymore
+                "",  # Not used anymore
                 input_format,
                 request.output_format,
                 request.settings or ConversionSettings()
             )
             
-            # Execute conversion in sandbox
-            sandbox_result, process_sandbox = await self.security_engine.execute_sandboxed_conversion(
+            # Execute conversion in sandbox with input data via stdin
+            output_data, process_sandbox = await self.security_engine.execute_sandboxed_conversion(
                 sandbox=sandbox,
                 conversion_id=result.id,
                 command=command,
+                input_data=input_data,  # Pass image data via stdin
             )
             
-            # Read output file
-            if os.path.exists(output_path):
-                with open(output_path, 'rb') as f:
-                    output_data = f.read()
-            else:
-                raise ConversionFailedError("Conversion produced no output file")
+            # Validate output
+            if not output_data:
+                raise ConversionFailedError("Conversion produced no output")
                 
             # Update result with sandbox metrics
             result.quality_settings.update({
@@ -242,17 +253,26 @@ class ConversionManager:
             
             return output_data
             
-        finally:
-            # Cleanup
-            self.security_engine.cleanup_sandbox(result.id)
+        except Exception as e:
+            logger.error(
+                "Sandboxed conversion failed",
+                conversion_id=result.id,
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            raise
             
-            # Remove temporary files
-            for path in [input_path, output_path]:
+        finally:
+            # Ensure cleanup happens even if an exception occurs
+            if sandbox:
                 try:
-                    if os.path.exists(path):
-                        os.unlink(path)
-                except Exception as e:
-                    logger.warning(f"Failed to cleanup temp file {path}: {e}")
+                    self.security_engine.cleanup_sandbox(result.id)
+                except Exception as cleanup_error:
+                    logger.warning(
+                        "Failed to cleanup sandbox",
+                        conversion_id=result.id,
+                        error=str(cleanup_error)
+                    )
                     
     def _build_conversion_command(
         self,
@@ -265,12 +285,11 @@ class ConversionManager:
         """
         Build the image conversion command.
         
-        This uses ImageMagick's convert command for now.
-        In production, this would use the actual format handlers.
+        Metadata stripping is handled by SecurityEngine after conversion.
         
         Args:
-            input_path: Input file path
-            output_path: Output file path
+            input_path: Input file path (not used)
+            output_path: Output file path (not used)
             input_format: Input format
             output_format: Output format
             settings: Conversion settings
@@ -278,21 +297,19 @@ class ConversionManager:
         Returns:
             Command list for subprocess
         """
-        # Basic convert command
-        command = ["convert", input_path]
-        
-        # Add quality setting if applicable
-        if output_format.lower() in ["jpeg", "jpg", "webp"]:
-            command.extend(["-quality", str(settings.quality)])
-            
-        # Add optimization if requested
-        if settings.optimize:
-            command.append("-strip")  # Remove metadata
-            if output_format.lower() in ["png"]:
-                command.extend(["-define", "png:compression-level=9"])
-                
-        # Add output path
-        command.append(output_path)
+        # Use Python to run our sandboxed conversion script
+        # Run the script directly to avoid module imports that might initialize logging
+        script_path = os.path.join(
+            os.path.dirname(__file__),
+            "sandboxed_convert.py"
+        )
+        command = [
+            sys.executable,  # Use the same Python interpreter
+            script_path,
+            input_format,
+            output_format,
+            str(settings.quality)
+        ]
         
         return command
 
@@ -324,14 +341,34 @@ class ConversionManager:
                 f"Format '{format_name}' is not supported",
                 details={"format": format_name},
             )
-        return handler_class()
+        
+        # Create handler instance
+        handler = handler_class()
+        
+        # Validate handler actually supports the format
+        if not handler.can_handle(format_name):
+            raise UnsupportedFormatError(
+                f"Handler {handler_class.__name__} cannot handle format '{format_name}'",
+                details={"format": format_name, "handler": handler_class.__name__},
+            )
+        
+        return handler
 
     async def _load_image(self, input_data: bytes, handler: BaseFormatHandler) -> Any:
         """Load image using handler."""
         try:
+            # Validate image data first
+            if not handler.validate_image(input_data):
+                raise InvalidImageError(
+                    "Image validation failed",
+                    details={"handler": handler.__class__.__name__}
+                )
+            
             # Run in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, handler.load_image, input_data)
+        except InvalidImageError:
+            raise
         except Exception as e:
             raise ConversionFailedError(
                 f"Failed to load image: {str(e)}", details={"error": str(e)}
