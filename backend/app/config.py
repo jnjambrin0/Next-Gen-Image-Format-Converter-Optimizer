@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     max_upload_size: int = Field(
         default=104857600, description="Max upload size in bytes (100MB)"
     )
+    max_file_size: int = Field(
+        default=52428800, description="Max file size in bytes (50MB)"
+    )
     allowed_input_formats: List[str] = Field(
         default=[
             "jpg",
@@ -67,10 +70,10 @@ class Settings(BaseSettings):
 
     # Performance
     conversion_timeout: int = Field(
-        default=300, description="Conversion timeout in seconds"
+        default=30, description="Conversion timeout in seconds"
     )
     max_concurrent_conversions: int = Field(
-        default=4, description="Max concurrent conversions"
+        default=10, description="Max concurrent conversions"
     )
     memory_limit_mb: int = Field(
         default=512, description="Memory limit per conversion in MB"

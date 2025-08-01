@@ -1,0 +1,187 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only image conversion tool with advanced optimization capabilities. All processing happens on the user's machine with no external network requests.
+
+## Architecture Summary
+
+- **Architecture Pattern**: Monolithic with modular internals
+- **Backend**: FastAPI (Python 3.11+) running on port 8000
+- **Frontend**: Vanilla JS with Vite build system
+- **Core Modules**:
+  - Conversion Manager: Orchestrates image processing
+  - Security Engine: Process sandboxing and isolation
+  - Intelligence Engine: ML-based content detection (ONNX Runtime)
+  - Processing Engine: Image manipulation (Pillow/libvips)
+
+## Development Commands
+
+### Backend Setup and Development
+
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies (when available)
+pip install -r requirements.txt
+
+# Run development server
+uvicorn main:app --reload --port 8000
+
+# Run tests
+pytest
+
+# Format code
+black .
+
+# Type checking (if mypy configured)
+mypy .
+```
+
+### Frontend Development
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies (when available)
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run linting
+npm run lint
+
+# Format code with Prettier
+npm run format
+
+# Run tests (Vitest)
+npm run test
+npm run test:coverage
+```
+
+### Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=. --cov-report=html
+
+# Run specific test file
+pytest backend/tests/unit/test_conversion.py
+
+# Run integration tests only
+pytest backend/tests/integration/
+
+# Run security tests (requires Docker)
+pytest backend/tests/security/
+```
+
+## Key Architecture Decisions
+
+1. **Local-Only Processing**: No network requests, all ML models and processing happen locally
+2. **Process Sandboxing**: Each conversion runs in isolated subprocess with restricted permissions
+3. **Memory-Only Processing**: No temporary files on disk, all processing in RAM
+4. **Format Support**:
+   - Input: JPEG, PNG, WebP, HEIF/HEIC, BMP, TIFF, GIF, AVIF
+   - Output: WebP, AVIF, JPEG XL, HEIF, PNG (optimized), JPEG (optimized), WebP2, JPEG 2000
+5. **Content Detection**: Local ML model classifies images (photo/illustration/screenshot/document)
+6. **Metadata Handling**: EXIF data removed by default for privacy
+
+## Project Structure
+
+```
+/
+├── backend/            # Backend API (FastAPI)
+├── frontend/           # Frontend web UI
+├── docs/               # Documentation
+│   ├── architecture/   # Technical architecture docs
+│   ├── prd/           # Product requirements
+│   └── stories/       # User story files
+├── backend/tests/      # Test suite
+│   ├── unit/          # Unit tests
+│   ├── integration/   # Integration tests
+│   ├── security/      # Security tests
+│   └── fixtures/      # Test images and data
+├── ml_models/         # Local ML models
+└── scripts/           # Utility scripts
+```
+
+## Security Considerations
+
+- All image processing happens in sandboxed subprocesses
+- No network access from sandboxed processes
+- Limited filesystem access (read input, write output only)
+- Resource limits enforced (CPU, memory, time)
+- Automatic EXIF/metadata removal by default
+- Memory explicitly cleared after processing
+
+## API Endpoints (Planned)
+
+- `POST /api/convert` - Convert single image
+- `POST /api/batch` - Batch conversion
+- `GET /api/health` - Health check
+- `GET /api/formats` - Supported formats
+- `POST /api/detect` - Content type detection
+- `GET /api/presets` - Available presets
+
+## Development Guidelines
+
+1. Follow security-first principles - assume all input is potentially malicious
+2. Write tests for all new functionality (80% coverage minimum)
+3. Use type hints for all Python code
+4. Document all API endpoints with OpenAPI
+5. Keep dependencies minimal and audit regularly
+6. Performance target: <2 seconds for 10MB images
+
+## Code Quality and Formatting
+
+### Frontend (JavaScript)
+
+1. **ESLint Configuration**: The project uses ESLint with the following key rules:
+   - `curly: ['error', 'all']` - Always use curly braces, even for single-line blocks
+   - `no-console` warnings except for `console.warn` and `console.error`
+   - `no-unused-vars` with `argsIgnorePattern: '^_'` for unused parameters
+   - Prettier integration for consistent formatting
+
+2. **Prettier Configuration**: 
+   - Automatically formats code on save (if configured in IDE)
+   - Run `npm run format` to format all files
+   - Prettier runs through ESLint for unified tooling
+
+3. **Common Linting Fixes**:
+   - Wrap case blocks with curly braces when declaring variables: `case 'value': { ... }`
+   - Prefix unused function parameters with underscore: `(newState, _oldState) => {}`
+   - Always use curly braces for if statements, even single-line
+   - Use `import.meta.url` instead of `__dirname` in ES modules
+
+4. **Test Environment Setup**:
+   - Use `.eslintrc.cjs` (CommonJS format) for ESLint config
+   - Add test globals in ESLint overrides for test files
+   - Vitest provides `describe`, `it`, `expect`, `beforeEach`, `afterEach`, `vi` globals
+
+### Backend (Python)
+
+1. **Black Formatter**: Use `black .` for consistent Python formatting
+2. **Type Hints**: Required for all function parameters and return values
+3. **Docstrings**: Use Google-style docstrings for all public functions
+
+## Important Note for Claude Code
+
+When working on tasks or solving problems, if you discover important information that differs from or should be added to this CLAUDE.md file (such as new commands, architectural changes, or updated development workflows), you MUST:
+
+1. Inform the user about the discrepancy or missing information
+2. Suggest the specific modifications or additions needed for CLAUDE.md
+3. After user confirmation, update this file accordingly
+
+This ensures that future Claude Code instances always have the most accurate and up-to-date information about the project.
