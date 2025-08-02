@@ -26,10 +26,156 @@ logging.disable(logging.CRITICAL)
 os.environ['PYTHONUNBUFFERED'] = '1'
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
+# Block network access by overriding socket module
+import socket
+
+# Store original functions for internal use if needed
+_original_socket = socket.socket
+_original_getaddrinfo = socket.getaddrinfo
+_original_gethostbyname = socket.gethostbyname
+_original_gethostbyaddr = socket.gethostbyaddr
+_original_gethostname = socket.gethostname
+_original_getfqdn = socket.getfqdn
+
+# Import error messages from constants for consistency
+# We'll import these after setting up the path below
+NETWORK_BLOCKED_MSG = "Network access is disabled in sandboxed environment"
+DNS_BLOCKED_MSG = "DNS resolution is disabled in sandboxed environment"
+UDP_BLOCKED_MSG = "UDP sockets are disabled in sandboxed environment"
+
+# Override all DNS and socket functions
+def _blocked_socket(*args, **kwargs):
+    """Block all socket creation."""
+    raise OSError(NETWORK_BLOCKED_MSG)
+
+def _blocked_dns(*args, **kwargs):
+    """Block all DNS resolution."""
+    raise socket.gaierror(DNS_BLOCKED_MSG)
+
+# Apply blocks
+socket.socket = _blocked_socket
+socket.create_connection = _blocked_socket
+socket.getaddrinfo = _blocked_dns
+socket.gethostbyname = _blocked_dns
+socket.gethostbyaddr = _blocked_dns
+socket.gethostname = lambda: "localhost"
+socket.getfqdn = lambda x="": "localhost"
+
+# Block urllib to prevent any HTTP requests
+try:
+    import urllib.request
+    urllib.request.urlopen = lambda *args, **kwargs: (_ for _ in ()).throw(
+        OSError(NETWORK_BLOCKED_MSG)
+    )
+except ImportError:
+    pass
+
+try:
+    import urllib2
+    urllib2.urlopen = lambda *args, **kwargs: (_ for _ in ()).throw(
+        OSError(NETWORK_BLOCKED_MSG)
+    )
+except ImportError:
+    pass
+
+# Block requests library if present
+try:
+    import requests
+    
+    def _blocked_request(*args, **kwargs):
+        raise OSError(NETWORK_BLOCKED_MSG)
+    
+    requests.get = _blocked_request
+    requests.post = _blocked_request
+    requests.put = _blocked_request
+    requests.delete = _blocked_request
+    requests.head = _blocked_request
+    requests.options = _blocked_request
+    requests.request = _blocked_request
+except ImportError:
+    pass
+
+# Block WebRTC and P2P libraries
+# List of P2P/WebRTC modules to block
+P2P_MODULES = [
+    "pyp2p",
+    "p2p",
+    "libp2p",
+    "webrtc",
+    "aiortc",
+    "peerjs",
+    "simple-peer",
+    "webtorrent",
+    "bittorrent",
+    "libtorrent",
+    "torrent",
+    "dht",
+    "kademlia",
+    "ipfs",
+    "pyipfs",
+    "dat",
+    "hypercore",
+    "scuttlebutt",
+    "gun",
+    "orbit-db"
+]
+
+# Create a custom import hook to block P2P modules
+class P2PBlocker:
+    def find_module(self, fullname, path=None):
+        # Block exact matches and submodules
+        for blocked in P2P_MODULES:
+            if fullname == blocked or fullname.startswith(blocked + "."):
+                return self
+        return None
+    
+    def load_module(self, fullname):
+        raise ImportError(f"P2P/WebRTC module '{fullname}' is blocked in sandboxed environment")
+
+# Install the import blocker
+import sys
+sys.meta_path.insert(0, P2PBlocker())
+
+# Also block specific WebRTC/P2P related functionality
+try:
+    # Block asyncio event loops that might be used for P2P
+    import asyncio
+    _original_new_event_loop = asyncio.new_event_loop
+    
+    def _blocked_event_loop():
+        # Allow event loop but monitor for P2P usage
+        loop = _original_new_event_loop()
+        # Could add additional restrictions here
+        return loop
+    
+    asyncio.new_event_loop = _blocked_event_loop
+except ImportError:
+    pass
+
+# Block UDP sockets (commonly used for P2P)
+_original_socket_call = _original_socket
+
+def _restricted_socket(family=-1, type=-1, proto=-1, fileno=None):
+    """Restrict socket creation - block UDP which is commonly used for P2P."""
+    # Block UDP sockets
+    if type == socket.SOCK_DGRAM:
+        raise OSError(UDP_BLOCKED_MSG)
+    # All sockets are blocked anyway by earlier override
+    raise OSError(NETWORK_BLOCKED_MSG)
+
+# Apply additional socket restrictions
+socket.socket = _restricted_socket
+
 # Now import PIL with decompression bomb protection
 from PIL import Image
 
-# Import constants (need to add path to sys.path first)
+# Import constants from parent application
+# This sandboxed script runs as a subprocess and needs access to the app's constants.
+# We add the project root to sys.path to enable imports from the app module.
+# This is safe because:
+# 1. The script runs in a restricted subprocess with limited permissions
+# 2. Network access is already blocked before any imports
+# 3. Only specific constants are imported, not executable code
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from app.core.constants import (
     MAX_IMAGE_PIXELS, 

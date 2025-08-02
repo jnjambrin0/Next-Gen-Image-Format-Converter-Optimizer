@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from .health import router as health_router
 from .conversion import router as conversion_router
 from .monitoring import router as monitoring_router
+from .security import router as security_router
 
 api_router = APIRouter(prefix="/api")
 
@@ -9,5 +10,6 @@ api_router = APIRouter(prefix="/api")
 api_router.include_router(health_router, tags=["health"])
 api_router.include_router(conversion_router, tags=["conversion"])
 api_router.include_router(monitoring_router, tags=["monitoring"])
+api_router.include_router(security_router, tags=["security"])
 
 __all__ = ["api_router"]

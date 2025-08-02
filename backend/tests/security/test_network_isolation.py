@@ -8,10 +8,10 @@ import unittest.mock as mock
 from unittest.mock import patch, MagicMock
 import asyncio
 import logging
-from backend.app.main import app
-from backend.app.core.conversion.manager import ConversionManager
-from backend.app.core.monitoring.stats import StatsCollector
-from backend.app.utils.logging import setup_logging, get_logger
+from app.main import app
+from app.core.conversion.manager import ConversionManager
+from app.core.monitoring.stats import StatsCollector
+from app.utils.logging import setup_logging, get_logger
 
 
 class TestNetworkIsolation:
@@ -89,7 +89,7 @@ class TestNetworkIsolation:
         )
         
         # These should work without network
-        from backend.app.models.conversion import ConversionRequest, ConversionSettings
+        from app.models.conversion import ConversionRequest, ConversionSettings
         
         request = ConversionRequest(
             output_format="webp",
@@ -135,7 +135,7 @@ class TestNetworkIsolation:
         """Test that startup doesn't make network connections."""
         mock_connection.side_effect = RuntimeError("Network blocked")
         
-        from backend.app.main import app
+        from app.main import app
         from fastapi.testclient import TestClient
         
         # Creating test client should not make network connections
@@ -201,7 +201,7 @@ class TestNetworkIsolation:
     
     def test_localhost_only_binding(self):
         """Verify API only binds to localhost by default."""
-        from backend.app.config import settings
+        from app.config import settings
         
         # In production, should bind to localhost only
         # 0.0.0.0 is acceptable for development but should be documented

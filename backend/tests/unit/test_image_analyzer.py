@@ -275,7 +275,7 @@ class TestImageAnalyzer:
         mock_session.side_effect = Exception("Model file not found")
 
         # Act & Assert
-        from backend.app.core.intelligence.analyzer import ImageAnalyzer
+        from app.core.intelligence.analyzer import ImageAnalyzer
 
         analyzer = ImageAnalyzer(fallback_mode=True)
 

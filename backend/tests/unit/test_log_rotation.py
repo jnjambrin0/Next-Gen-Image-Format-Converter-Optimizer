@@ -4,7 +4,7 @@ import tempfile
 import time
 import logging
 from pathlib import Path
-from backend.app.utils.logging import setup_logging, cleanup_old_logs
+from app.utils.logging import setup_logging, cleanup_old_logs
 from datetime import datetime, timedelta
 
 

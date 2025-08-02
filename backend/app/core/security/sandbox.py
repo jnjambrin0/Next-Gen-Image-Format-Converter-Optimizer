@@ -86,6 +86,19 @@ class SandboxConfig:
             "pkill",
             "service",
             "systemctl",
+            "dig",
+            "nslookup",
+            "host",
+            "ping",
+            "traceroute",
+            "tracert",
+            "arp",
+            "ifconfig",
+            "ip",
+            "route",
+            "netstat",
+            "ss",
+            "lsof",
         }
 
         # Environment variables to remove for security

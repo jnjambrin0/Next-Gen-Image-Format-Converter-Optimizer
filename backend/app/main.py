@@ -31,9 +31,52 @@ async def lifespan(app: FastAPI):
     )
     print(f"Starting {settings.app_name} API on port {settings.api_port}")
     
-    # Run network isolation check
-    from .core.monitoring.network_check import startup_network_check
-    startup_network_check()
+    # Initialize stats collector and inject into conversion service
+    from .core.monitoring.stats import stats_collector
+    from .services.conversion_service import conversion_service
+    conversion_service.stats_collector = stats_collector
+    
+    # Run enhanced network isolation verification
+    if settings.network_verification_enabled:
+        from .core.security.network_verifier import NetworkStrictness, verify_network_at_startup
+        from .core.monitoring.security_events import SecurityEventTracker
+        
+        # Map string to enum
+        strictness_map = {
+            "standard": NetworkStrictness.STANDARD,
+            "strict": NetworkStrictness.STRICT,
+            "paranoid": NetworkStrictness.PARANOID
+        }
+        strictness = strictness_map.get(
+            settings.network_verification_strictness, 
+            NetworkStrictness.STANDARD
+        )
+        
+        # Initialize security tracker if needed
+        security_tracker = None
+        if strictness != NetworkStrictness.STANDARD:
+            security_tracker = SecurityEventTracker(
+                db_path=settings.database_url.replace("sqlite:///", "")
+                if settings.database_url.startswith("sqlite:///")
+                else None
+            )
+        
+        # Perform network verification
+        network_status = await verify_network_at_startup(strictness, security_tracker)
+        
+        # Store status for later access
+        app.state.network_status = network_status
+        
+        # Log results
+        if not network_status["isolated"]:
+            print(f"WARNING: Network isolation issues detected: {network_status['warnings']}")
+        else:
+            print(f"Network isolation verified ({strictness.value} mode)")
+    else:
+        # Basic check from original implementation
+        from .core.monitoring.network_check import startup_network_check
+        startup_network_check()
+        app.state.network_status = {"isolated": True, "verified": False}
     
     # Schedule periodic log cleanup
     if getattr(settings, "logging_enabled", True):

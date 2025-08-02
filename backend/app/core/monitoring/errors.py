@@ -15,7 +15,7 @@ import hashlib
 import traceback
 import os
 
-from backend.app.utils.logging import get_logger, filter_sensitive_data
+from app.utils.logging import get_logger, filter_sensitive_data
 
 logger = get_logger(__name__)
 

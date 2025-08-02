@@ -10,13 +10,15 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from threading import Lock
 
-from backend.app.models.security_event import (
+from app.models.security_event import (
     SecurityEvent,
     SecurityEventType,
     SecuritySeverity,
     SecurityEventSummary,
 )
-from backend.app.utils.logging import get_logger
+from app.utils.logging import get_logger
+from app.core.security.rate_limiter import SecurityEventRateLimiter
+from app.core.security.types import RateLimitConfig
 
 logger = get_logger(__name__)
 
@@ -27,15 +29,18 @@ class SecurityEventTracker:
     No PII is stored in security events.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None, rate_limit_config: Optional[RateLimitConfig] = None):
         """
         Initialize security event tracker.
 
         Args:
             db_path: Path to SQLite database (uses memory if None)
+            rate_limit_config: Rate limiting configuration
         """
         self.db_path = db_path or ":memory:"
         self._lock = Lock()
+        self._rate_limiter = SecurityEventRateLimiter(rate_limit_config)
+        self._rate_limited_events = 0
         self._init_database()
 
     def _init_database(self):
@@ -51,11 +56,17 @@ class SecurityEventTracker:
                     event_type TEXT NOT NULL,
                     severity TEXT NOT NULL,
                     details TEXT,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_timestamp (timestamp),
-                    INDEX idx_type_severity (event_type, severity)
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
+            )
+            
+            # Create indexes separately
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timestamp ON security_events (timestamp)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_type_severity ON security_events (event_type, severity)"
             )
 
     @contextmanager
@@ -80,8 +91,19 @@ class SecurityEventTracker:
             event: Security event to record
 
         Returns:
-            Event ID
+            Event ID (-1 if rate limited)
         """
+        # Check rate limit
+        if not self._rate_limiter.should_allow_event(event.event_type.value):
+            self._rate_limited_events += 1
+            logger.warning(
+                "Security event rate limited",
+                event_type=event.event_type.value,
+                severity=event.severity.value,
+                rate_limited_count=self._rate_limited_events
+            )
+            return -1
+        
         try:
             with self._lock:
                 with self._get_db() as conn:
@@ -379,3 +401,9 @@ class SecurityEventTracker:
                 else "stable"
             ),
         }
+    
+    def get_rate_limit_stats(self) -> Dict[str, Any]:
+        """Get rate limiting statistics."""
+        stats = self._rate_limiter.get_stats()
+        stats["rate_limited_events_total"] = self._rate_limited_events
+        return stats

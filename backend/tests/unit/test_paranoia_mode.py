@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
-from backend.app.main import app
-from backend.app.config import settings
+from app.main import app
+from app.config import settings
 
 
 class TestParanoiaMode:
@@ -117,7 +117,7 @@ class TestParanoiaMode:
     def test_paranoia_mode_environment_variable(self):
         """Test that paranoia mode can be set via environment variable."""
         import os
-        from backend.app.config import Settings
+        from app.config import Settings
         
         # Set environment variable
         os.environ["IMAGE_CONVERTER_LOGGING_ENABLED"] = "false"

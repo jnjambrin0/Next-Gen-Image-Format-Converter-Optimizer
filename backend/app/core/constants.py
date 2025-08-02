@@ -129,3 +129,19 @@ PROCESS_POOL_SIZE = 2
 # Monitoring and metrics
 METRICS_ENABLED = True
 HEALTH_CHECK_TIMEOUT = 5.0
+
+# Network Monitoring Constants
+NETWORK_VIOLATION_THRESHOLD = 3  # Number of violations before process termination
+PROCESS_TERMINATION_GRACE_PERIOD = 2  # seconds to wait before SIGKILL
+DEFAULT_MONITORING_INTERVAL = 5  # seconds between connection checks
+MONITORING_JITTER_PERCENT = 0.1  # 10% jitter to prevent thundering herd
+
+# Network Blocking Messages
+NETWORK_BLOCKED_MSG = "Network access is disabled in sandboxed environment"
+DNS_BLOCKED_MSG = "DNS resolution is disabled in sandboxed environment"
+UDP_BLOCKED_MSG = "UDP sockets are disabled in sandboxed environment"
+P2P_MODULE_BLOCKED_MSG = "P2P/WebRTC module '{}' is blocked in sandboxed environment"
+
+# Network Verification
+NETWORK_CHECK_TIMEOUT = 1  # seconds for DNS resolution timeout
+NETWORK_BASELINE_MAX_CONNECTIONS = 100  # Maximum baseline connections to track

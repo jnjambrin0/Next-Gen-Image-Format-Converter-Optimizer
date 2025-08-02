@@ -18,7 +18,7 @@ from app.models.conversion import (
 )
 from app.models.requests import ConversionApiRequest
 from app.core.exceptions import ConversionError, InvalidImageError
-from app.api.routes.monitoring import stats_collector
+# Removed circular import - stats_collector will be injected or imported elsewhere
 
 logger = structlog.get_logger()
 
@@ -29,6 +29,8 @@ class ConversionService:
     def __init__(self):
         """Initialize conversion service."""
         self.conversion_manager = ConversionManager()
+        # Initialize stats_collector as None - will be set later to avoid circular import
+        self.stats_collector = None
         self._mime_to_format = {
             "image/jpeg": ["jpeg", "jpg"],
             "image/png": ["png"],
@@ -92,7 +94,8 @@ class ConversionService:
                 
                 # Record successful conversion stats
                 processing_time = asyncio.get_event_loop().time() - start_time
-                await stats_collector.record_conversion(
+                if self.stats_collector:
+                    await self.stats_collector.record_conversion(
                     input_format=request.input_format,
                     output_format=request.output_format,
                     input_size=len(image_data),
@@ -105,7 +108,8 @@ class ConversionService:
             except asyncio.TimeoutError:
                 # Record timeout failure
                 processing_time = asyncio.get_event_loop().time() - start_time
-                await stats_collector.record_conversion(
+                if self.stats_collector:
+                    await self.stats_collector.record_conversion(
                     input_format=request.input_format,
                     output_format=request.output_format,
                     input_size=len(image_data),
@@ -137,7 +141,8 @@ class ConversionService:
                 else:
                     error_type = "conversion_error"
                     
-                await stats_collector.record_conversion(
+                if self.stats_collector:
+                    await self.stats_collector.record_conversion(
                     input_format=request.input_format,
                     output_format=request.output_format,
                     input_size=len(image_data),
@@ -337,4 +342,8 @@ class ConversionService:
             return "image/avif"
         else:
             return "application/octet-stream"
+
+
+# Create singleton instance
+conversion_service = ConversionService()
 

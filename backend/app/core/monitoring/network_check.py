@@ -5,7 +5,7 @@ Network isolation verification for privacy-focused operation.
 import socket
 import sys
 from typing import List, Dict, Any
-from backend.app.utils.logging import get_logger
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -54,7 +54,7 @@ class NetworkIsolationChecker:
 
         # Check API binding configuration
         try:
-            from backend.app.config import settings
+            from app.config import settings
 
             findings["api_binding"] = settings.api_host
 

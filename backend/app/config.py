@@ -1,7 +1,28 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field, field_validator, ConfigDict
-from typing import List, Optional, Dict
+from pydantic_settings import BaseSettings, NoDecode
+from pydantic import Field, field_validator, ConfigDict, BeforeValidator
+from typing import List, Optional, Dict, Annotated
 import os
+
+
+def parse_comma_list(v):
+    """Parse comma-separated string into list, handling both string and list inputs."""
+    if isinstance(v, str):
+        # Handle empty strings
+        if not v:
+            return []
+        # Split by comma and strip whitespace
+        return [item.strip() for item in v.split(",") if item.strip()]
+    elif isinstance(v, list):
+        # If already a list, return as-is
+        return v
+    else:
+        # For any other type, try to convert to string first
+        return parse_comma_list(str(v))
+
+
+# Type alias for comma-separated list fields
+# NoDecode prevents pydantic-settings from trying to parse as JSON
+CommaList = Annotated[List[str], NoDecode, BeforeValidator(parse_comma_list)]
 
 
 class Settings(BaseSettings):
@@ -24,7 +45,7 @@ class Settings(BaseSettings):
         default="your-secret-key-here-change-in-production",
         description="Secret key for security operations",
     )
-    cors_origins: List[str] = Field(
+    cors_origins: CommaList = Field(
         default=["http://localhost:5173", "http://localhost:3000"],
         description="Allowed CORS origins",
     )
@@ -42,7 +63,7 @@ class Settings(BaseSettings):
     max_file_size: int = Field(
         default=52428800, description="Max file size in bytes (50MB)"
     )
-    allowed_input_formats: List[str] = Field(
+    allowed_input_formats: CommaList = Field(
         default=[
             "jpg",
             "jpeg",
@@ -57,7 +78,7 @@ class Settings(BaseSettings):
         ],
         description="Allowed input image formats",
     )
-    allowed_output_formats: List[str] = Field(
+    allowed_output_formats: CommaList = Field(
         default=["webp", "avif", "jpeg", "png", "heif", "jxl", "webp2", "jp2"],
         description="Allowed output image formats",
     )
@@ -182,6 +203,27 @@ class Settings(BaseSettings):
     log_retention_hours: int = Field(
         default=24, description="Hours to retain log files"
     )
+    
+    # Network Isolation
+    network_verification_enabled: bool = Field(
+        default=True, description="Enable network isolation verification"
+    )
+    network_verification_strictness: str = Field(
+        default="standard", 
+        description="Network verification strictness: standard, strict, paranoid"
+    )
+    network_monitoring_enabled: bool = Field(
+        default=False, 
+        description="Enable real-time network monitoring (strict/paranoid modes)"
+    )
+    network_monitoring_interval: int = Field(
+        default=5, 
+        description="Network monitoring check interval in seconds"
+    )
+    terminate_on_network_violation: bool = Field(
+        default=False,
+        description="Terminate processes on network violation (paranoid mode only)"
+    )
 
     @field_validator("env")
     @classmethod
@@ -206,12 +248,8 @@ class Settings(BaseSettings):
             raise ValueError("api_port must be between 1 and 65535")
         return v
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+    # Note: The parse_cors_origins validator is no longer needed since we're using
+    # the CommaList type with BeforeValidator for all List[str] fields
 
     @field_validator("sandbox_strictness")
     @classmethod
@@ -219,6 +257,14 @@ class Settings(BaseSettings):
         allowed = ["standard", "strict", "paranoid"]
         if v not in allowed:
             raise ValueError(f"sandbox_strictness must be one of {allowed}")
+        return v
+
+    @field_validator("network_verification_strictness")
+    @classmethod
+    def validate_network_strictness(cls, v):
+        allowed = ["standard", "strict", "paranoid"]
+        if v not in allowed:
+            raise ValueError(f"network_verification_strictness must be one of {allowed}")
         return v
 
     model_config = ConfigDict(

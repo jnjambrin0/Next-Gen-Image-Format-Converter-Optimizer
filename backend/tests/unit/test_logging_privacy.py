@@ -1,5 +1,5 @@
 import pytest
-from backend.app.utils.logging import filter_sensitive_data, cleanup_old_logs
+from app.utils.logging import filter_sensitive_data, cleanup_old_logs
 import os
 import tempfile
 from datetime import datetime, timedelta

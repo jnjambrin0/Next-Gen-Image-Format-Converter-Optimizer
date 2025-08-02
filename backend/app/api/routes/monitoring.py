@@ -6,14 +6,19 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from backend.app.core.monitoring.stats import StatsCollector
-from backend.app.core.monitoring.errors import ErrorReporter
-from backend.app.core.monitoring.security_events import SecurityEventTracker
-from backend.app.utils.logging import get_logger
-from backend.app.config import settings
+from app.core.monitoring.stats import StatsCollector
+from app.core.monitoring.errors import ErrorReporter
+from app.core.monitoring.security_events import SecurityEventTracker
+from app.utils.logging import get_logger
+from app.config import settings
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
+
+# Import for system info
+import platform
+import os
+import psutil
 
 # Global stats collector instance
 stats_collector = StatsCollector(
@@ -152,7 +157,7 @@ async def toggle_paranoia_mode(enable: bool = Query(description="Enable or disab
         settings.logging_enabled = not enable
         
         # Reconfigure logging
-        from backend.app.utils.logging import setup_logging
+        from app.utils.logging import setup_logging
         setup_logging(
             log_level=settings.log_level,
             json_logs=True,
@@ -364,6 +369,126 @@ async def cleanup_security_events(
     except Exception as e:
         logger.error("Failed to cleanup security events", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to cleanup security events")
+
+
+@router.get("/system/info", response_model=Dict[str, Any])
+async def get_system_info():
+    """
+    Get system information including network isolation status.
+    
+    Returns:
+        System information with:
+        - Platform details
+        - Resource usage
+        - Network isolation status
+        - Security configuration
+    """
+    try:
+        # Get basic system info
+        system_info = {
+            "platform": {
+                "system": platform.system(),
+                "release": platform.release(),
+                "version": platform.version(),
+                "architecture": platform.machine(),
+                "processor": platform.processor(),
+                "python_version": platform.python_version()
+            },
+            "resources": {
+                "cpu_count": os.cpu_count(),
+                "memory": {}
+            }
+        }
+        
+        # Get memory info if psutil available
+        try:
+            import psutil
+            memory = psutil.virtual_memory()
+            system_info["resources"]["memory"] = {
+                "total_mb": memory.total // (1024 * 1024),
+                "available_mb": memory.available // (1024 * 1024),
+                "percent_used": memory.percent
+            }
+            
+            # Get CPU usage
+            system_info["resources"]["cpu_percent"] = psutil.cpu_percent(interval=0.1)
+        except ImportError:
+            pass
+        
+        # Get network isolation status from app state
+        from fastapi import Request
+        from starlette.requests import Request as StarletteRequest
+        
+        # We need the request context to access app state
+        # This is a limitation - we'll document it
+        system_info["network_isolation"] = {
+            "enabled": settings.network_verification_enabled,
+            "strictness": settings.network_verification_strictness,
+            "monitoring_enabled": settings.network_monitoring_enabled,
+            "status": "Check /api/security/network-status for details"
+        }
+        
+        # Security configuration
+        system_info["security"] = {
+            "sandboxing_enabled": settings.enable_sandboxing,
+            "sandbox_strictness": settings.sandbox_strictness,
+            "metadata_stripping_default": settings.strip_metadata_default,
+            "rate_limit_per_minute": settings.rate_limit_per_minute
+        }
+        
+        # Application info
+        system_info["application"] = {
+            "name": settings.app_name,
+            "environment": settings.env,
+            "debug_mode": settings.debug,
+            "api_port": settings.api_port,
+            "api_host": settings.api_host
+        }
+        
+        return {
+            "status": "success",
+            "data": system_info,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    except Exception as e:
+        logger.error("Failed to get system info", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve system information")
+
+
+@router.get("/logging/config", response_model=Dict[str, Any])
+async def get_logging_config():
+    """
+    Get current logging configuration.
+    
+    Returns:
+        Logging configuration including privacy settings
+    """
+    try:
+        config = {
+            "log_level": settings.log_level,
+            "logging_enabled": settings.logging_enabled,
+            "anonymize_logs": settings.anonymize_logs,
+            "log_dir": settings.log_dir if settings.logging_enabled else None,
+            "max_log_size_mb": settings.max_log_size_mb,
+            "log_backup_count": settings.log_backup_count,
+            "log_retention_hours": settings.log_retention_hours,
+            "privacy_features": {
+                "pii_filtering": True,
+                "filename_masking": True,
+                "ip_anonymization": True,
+                "metadata_stripping": True
+            }
+        }
+        
+        return {
+            "status": "success",
+            "data": config
+        }
+    
+    except Exception as e:
+        logger.error("Failed to get logging config", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to retrieve logging configuration")
 
 
 # Export modules for use in other parts of the application

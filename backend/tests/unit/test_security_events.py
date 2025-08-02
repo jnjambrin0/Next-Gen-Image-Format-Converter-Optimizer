@@ -1,8 +1,8 @@
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from backend.app.core.monitoring.security_events import SecurityEventTracker
-from backend.app.models.security_event import (
+from app.core.monitoring.security_events import SecurityEventTracker
+from app.models.security_event import (
     SecurityEvent, SecurityEventType, SecuritySeverity
 )
 
@@ -205,7 +205,7 @@ class TestSecurityEventTracker:
     
     def test_event_summary_model(self):
         """Test SecurityEventSummary model."""
-        from backend.app.models.security_event import SecurityEventSummary
+        from app.models.security_event import SecurityEventSummary
         
         summary = SecurityEventSummary(
             time_period_hours=24,

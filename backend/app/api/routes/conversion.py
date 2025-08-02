@@ -18,15 +18,12 @@ from app.core.exceptions import (
 from app.models.conversion import OutputFormat, ConversionSettings
 from app.models.requests import ConversionApiRequest
 from app.models.responses import ConversionApiResponse, ErrorResponse
-from app.services.conversion_service import ConversionService
+from app.services.conversion_service import conversion_service
 from app.config import settings
 
 logger = structlog.get_logger()
 
 router = APIRouter()
-
-# Initialize conversion service
-conversion_service = ConversionService()
 
 # Semaphore for concurrent request limiting
 conversion_semaphore = asyncio.Semaphore(settings.max_concurrent_conversions)
