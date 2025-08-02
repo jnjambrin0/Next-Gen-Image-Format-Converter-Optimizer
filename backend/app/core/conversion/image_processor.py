@@ -89,6 +89,12 @@ class ImageProcessor:
         Returns:
             Format name (lowercase)
         """
+        # First try magic byte detection for better accuracy
+        detected_format = self._detect_format_by_magic_bytes(image_data)
+        if detected_format:
+            return detected_format.lower()
+        
+        # Fall back to PIL detection
         try:
             with io.BytesIO(image_data) as buffer:
                 with Image.open(buffer) as img:
@@ -101,6 +107,35 @@ class ImageProcessor:
             raise InvalidImageError(
                 f"Failed to detect image format: {str(e)}", details={"error": str(e)}
             )
+    
+    def _detect_format_by_magic_bytes(self, data: bytes) -> Optional[str]:
+        """Detect format by checking magic bytes."""
+        if len(data) < 12:
+            return None
+            
+        # Check common formats first (most likely)
+        if data[0:2] == b"\xFF\xD8":
+            return "jpeg"
+        elif data[0:8] == b"\x89PNG\r\n\x1a\n":
+            return "png"
+        elif data[0:4] == b"RIFF" and len(data) > 12 and data[8:12] == b"WEBP":
+            return "webp"
+        elif data[0:6] in (b"GIF87a", b"GIF89a"):
+            return "gif"
+        elif data[0:2] == b"BM":
+            return "bmp"
+        elif data[0:4] in (b"II*\x00", b"MM\x00*"):
+            return "tiff"
+        
+        # Check HEIF/AVIF (both use ftyp box)
+        if len(data) > 12 and data[4:8] == b"ftyp":
+            brand = data[8:12]
+            if brand in (b"avif", b"avis"):
+                return "avif"
+            elif brand in (b"heic", b"heix", b"hevc", b"hevx", b"mif1", b"msf1"):
+                return "heif"
+        
+        return None
 
     def get_image_info(self, image_data: bytes) -> dict:
         """

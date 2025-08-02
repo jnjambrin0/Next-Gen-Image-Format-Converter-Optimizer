@@ -1,28 +1,28 @@
-from pydantic_settings import BaseSettings, NoDecode
-from pydantic import Field, field_validator, ConfigDict, BeforeValidator
-from typing import List, Optional, Dict, Annotated
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from typing import List, Optional, Dict, Any, Union
 import os
 
-
-def parse_comma_list(v):
-    """Parse comma-separated string into list, handling both string and list inputs."""
-    if isinstance(v, str):
-        # Handle empty strings
-        if not v:
-            return []
-        # Split by comma and strip whitespace
-        return [item.strip() for item in v.split(",") if item.strip()]
-    elif isinstance(v, list):
-        # If already a list, return as-is
-        return v
-    else:
-        # For any other type, try to convert to string first
-        return parse_comma_list(str(v))
-
-
-# Type alias for comma-separated list fields
-# NoDecode prevents pydantic-settings from trying to parse as JSON
-CommaList = Annotated[List[str], NoDecode, BeforeValidator(parse_comma_list)]
+# Import constants to avoid magic numbers
+try:
+    from app.core.constants import (
+        SANDBOX_MEMORY_LIMITS,
+        SANDBOX_CPU_LIMITS,
+        SANDBOX_TIMEOUTS,
+        SANDBOX_OUTPUT_LIMITS,
+        ERROR_RETENTION_DAYS,
+        DEFAULT_MONITORING_INTERVAL,
+        MONITORING_INTERVAL_SECONDS
+    )
+except ImportError:
+    # Fallback values if constants can't be imported (e.g., during initial setup)
+    SANDBOX_MEMORY_LIMITS = {"standard": 512, "strict": 256, "paranoid": 128}
+    SANDBOX_CPU_LIMITS = {"standard": 80, "strict": 60, "paranoid": 40}
+    SANDBOX_TIMEOUTS = {"standard": 30, "strict": 20, "paranoid": 10}
+    SANDBOX_OUTPUT_LIMITS = {"standard": 100, "strict": 50, "paranoid": 25}
+    ERROR_RETENTION_DAYS = 30
+    DEFAULT_MONITORING_INTERVAL = 5
+    MONITORING_INTERVAL_SECONDS = 5.0
 
 
 class Settings(BaseSettings):
@@ -45,8 +45,8 @@ class Settings(BaseSettings):
         default="your-secret-key-here-change-in-production",
         description="Secret key for security operations",
     )
-    cors_origins: CommaList = Field(
-        default=["http://localhost:5173", "http://localhost:3000"],
+    cors_origins: Union[str, List[str]] = Field(
+        default="http://localhost:5173,http://localhost:3000",
         description="Allowed CORS origins",
     )
     max_request_size: int = Field(
@@ -63,23 +63,12 @@ class Settings(BaseSettings):
     max_file_size: int = Field(
         default=52428800, description="Max file size in bytes (50MB)"
     )
-    allowed_input_formats: CommaList = Field(
-        default=[
-            "jpg",
-            "jpeg",
-            "png",
-            "gif",
-            "webp",
-            "bmp",
-            "tiff",
-            "heic",
-            "heif",
-            "avif",
-        ],
+    allowed_input_formats: Union[str, List[str]] = Field(
+        default="jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif,avif",
         description="Allowed input image formats",
     )
-    allowed_output_formats: CommaList = Field(
-        default=["webp", "avif", "jpeg", "png", "heif", "jxl", "webp2", "jp2"],
+    allowed_output_formats: Union[str, List[str]] = Field(
+        default="webp,avif,jpeg,png,heif,jxl,webp2,jp2",
         description="Allowed output image formats",
     )
     temp_dir: str = Field(
@@ -91,15 +80,15 @@ class Settings(BaseSettings):
 
     # Performance
     conversion_timeout: int = Field(
-        default=30, description="Conversion timeout in seconds"
+        default=SANDBOX_TIMEOUTS["standard"], description="Conversion timeout in seconds"
     )
     max_concurrent_conversions: int = Field(
         default=10, description="Max concurrent conversions"
     )
     memory_limit_mb: int = Field(
-        default=512, description="Memory limit per conversion in MB"
+        default=SANDBOX_MEMORY_LIMITS["standard"], description="Memory limit per conversion in MB"
     )
-    cpu_limit_percent: int = Field(default=80, description="CPU limit percentage")
+    cpu_limit_percent: int = Field(default=SANDBOX_CPU_LIMITS["standard"], description="CPU limit percentage")
 
     # Process Sandboxing
     enable_sandboxing: bool = Field(
@@ -114,28 +103,28 @@ class Settings(BaseSettings):
     # Sandbox resource limits per strictness level
     sandbox_limits_standard: Dict[str, int] = Field(
         default={
-            "memory_mb": 512,
-            "cpu_percent": 80,
-            "timeout_seconds": 30,
-            "max_output_mb": 100,
+            "memory_mb": SANDBOX_MEMORY_LIMITS["standard"],
+            "cpu_percent": SANDBOX_CPU_LIMITS["standard"],
+            "timeout_seconds": SANDBOX_TIMEOUTS["standard"],
+            "max_output_mb": SANDBOX_OUTPUT_LIMITS["standard"],
         },
         description="Resource limits for standard sandbox mode"
     )
     sandbox_limits_strict: Dict[str, int] = Field(
         default={
-            "memory_mb": 256,
-            "cpu_percent": 60,
-            "timeout_seconds": 20,
-            "max_output_mb": 50,
+            "memory_mb": SANDBOX_MEMORY_LIMITS["strict"],
+            "cpu_percent": SANDBOX_CPU_LIMITS["strict"],
+            "timeout_seconds": SANDBOX_TIMEOUTS["strict"],
+            "max_output_mb": SANDBOX_OUTPUT_LIMITS["strict"],
         },
         description="Resource limits for strict sandbox mode"
     )
     sandbox_limits_paranoid: Dict[str, int] = Field(
         default={
-            "memory_mb": 128,
-            "cpu_percent": 40,
-            "timeout_seconds": 10,
-            "max_output_mb": 25,
+            "memory_mb": SANDBOX_MEMORY_LIMITS["paranoid"],
+            "cpu_percent": SANDBOX_CPU_LIMITS["paranoid"],
+            "timeout_seconds": SANDBOX_TIMEOUTS["paranoid"],
+            "max_output_mb": SANDBOX_OUTPUT_LIMITS["paranoid"],
         },
         description="Resource limits for paranoid sandbox mode"
     )
@@ -184,7 +173,7 @@ class Settings(BaseSettings):
         default=True, description="Anonymize sensitive data in logs"
     )
     retain_history_days: int = Field(
-        default=30, description="Days to retain conversion history"
+        default=ERROR_RETENTION_DAYS, description="Days to retain conversion history"
     )
     
     # Logging Configuration
@@ -217,7 +206,7 @@ class Settings(BaseSettings):
         description="Enable real-time network monitoring (strict/paranoid modes)"
     )
     network_monitoring_interval: int = Field(
-        default=5, 
+        default=DEFAULT_MONITORING_INTERVAL, 
         description="Network monitoring check interval in seconds"
     )
     terminate_on_network_violation: bool = Field(
@@ -248,9 +237,6 @@ class Settings(BaseSettings):
             raise ValueError("api_port must be between 1 and 65535")
         return v
 
-    # Note: The parse_cors_origins validator is no longer needed since we're using
-    # the CommaList type with BeforeValidator for all List[str] fields
-
     @field_validator("sandbox_strictness")
     @classmethod
     def validate_sandbox_strictness(cls, v):
@@ -267,13 +253,41 @@ class Settings(BaseSettings):
             raise ValueError(f"network_verification_strictness must be one of {allowed}")
         return v
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         env_prefix="IMAGE_CONVERTER_",
         protected_namespaces=("settings_",),
+        # Disable JSON parsing for environment variables
+        env_parse_none_str=None,
+        json_schema_serialization_defaults_required=True,
     )
+    
+    @field_validator('cors_origins', 'allowed_input_formats', 'allowed_output_formats', mode='before')
+    @classmethod
+    def parse_comma_separated_list(cls, v):
+        """Parse comma-separated string into list."""
+        if isinstance(v, str):
+            # Handle empty strings
+            if not v:
+                return []
+            # Split by comma and strip whitespace
+            return [item.strip() for item in v.split(",") if item.strip()]
+        elif isinstance(v, list):
+            # If already a list, return as-is
+            return v
+        else:
+            # For any other type, try to convert to string first
+            return cls.parse_comma_separated_list(str(v))
+    
+    def __init__(self, **values):
+        super().__init__(**values)
+        # Ensure list fields are lists after initialization
+        for field in ['cors_origins', 'allowed_input_formats', 'allowed_output_formats']:
+            val = getattr(self, field)
+            if isinstance(val, str):
+                setattr(self, field, self.parse_comma_separated_list(val))
 
 
 settings = Settings()

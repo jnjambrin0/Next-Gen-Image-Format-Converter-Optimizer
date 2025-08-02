@@ -15,6 +15,15 @@ from threading import Lock
 import os
 
 from app.utils.logging import get_logger
+from app.core.constants import (
+    HOURLY_STATS_RETENTION_HOURS,
+    DAILY_STATS_RETENTION_DAYS,
+    MAX_PROCESSING_TIMES_MEMORY,
+    FILE_SIZE_CATEGORIES,
+    KB_TO_BYTES_FACTOR,
+    MB_TO_BYTES_FACTOR,
+    DB_CHECK_SAME_THREAD
+)
 
 logger = get_logger(__name__)
 
@@ -94,14 +103,12 @@ class StatsCollector:
         self._daily_stats: Dict[str, ConversionStats] = defaultdict(ConversionStats)
         self._all_time_stats = ConversionStats()
 
-        # Size buckets for distribution
-        self.size_buckets = [
-            ("tiny", 0, 100 * 1024),  # 0-100KB
-            ("small", 100 * 1024, 1024 * 1024),  # 100KB-1MB
-            ("medium", 1024 * 1024, 10 * 1024 * 1024),  # 1MB-10MB
-            ("large", 10 * 1024 * 1024, 50 * 1024 * 1024),  # 10MB-50MB
-            ("huge", 50 * 1024 * 1024, float("inf")),  # 50MB+
-        ]
+        # Size buckets for distribution (using file size categories from constants)
+        self.size_buckets = []
+        prev_limit = 0
+        for category, limit in FILE_SIZE_CATEGORIES.items():
+            self.size_buckets.append((category.lower(), prev_limit, limit))
+            prev_limit = limit
 
         if self.persist_to_db:
             self._init_database()
@@ -133,7 +140,7 @@ class StatsCollector:
     @contextmanager
     def _get_db(self):
         """Get database connection context manager."""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         try:
             yield conn
             conn.commit()
@@ -210,7 +217,7 @@ class StatsCollector:
                 )
 
                 # Record processing time (limit to prevent memory issues)
-                if len(stats.processing_times) < 1000:
+                if len(stats.processing_times) < MAX_PROCESSING_TIMES_MEMORY:
                     stats.processing_times.append(processing_time)
                 else:
                     # Keep a rolling window of recent times
@@ -317,7 +324,7 @@ class StatsCollector:
         return stats
 
     async def cleanup_old_stats(
-        self, hourly_retention: int = 168, daily_retention: int = 90
+        self, hourly_retention: int = HOURLY_STATS_RETENTION_HOURS, daily_retention: int = DAILY_STATS_RETENTION_DAYS
     ):
         """
         Clean up old statistics.
@@ -386,3 +393,7 @@ class StatsCollector:
             hourly_removed=len(hourly_keys_to_remove),
             daily_removed=len(daily_keys_to_remove),
         )
+
+
+# Create singleton instance
+stats_collector = StatsCollector()

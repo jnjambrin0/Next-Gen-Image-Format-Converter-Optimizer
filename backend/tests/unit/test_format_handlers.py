@@ -148,6 +148,201 @@ class TestJPEGHandler:
         assert params_high["subsampling"] == 0  # High quality uses 4:4:4
 
 
+class TestHeifHandler:
+    """Test suite for HEIF/HEIC format handler."""
+
+    @pytest.fixture
+    def heif_handler(self):
+        """Create a HEIF handler instance."""
+        try:
+            from app.core.conversion.formats.heif_handler import HeifHandler
+            return HeifHandler()
+        except ImportError:
+            pytest.skip("HEIF support not available")
+
+    def test_can_handle_heif_formats(self, heif_handler):
+        """Test HEIF handler recognizes HEIF/HEIC formats."""
+        assert heif_handler.can_handle("heif") is True
+        assert heif_handler.can_handle("heic") is True
+        assert heif_handler.can_handle("heix") is True
+        assert heif_handler.can_handle("hevc") is True
+        assert heif_handler.can_handle("jpeg") is False
+
+    def test_validate_heif_magic_bytes(self, heif_handler):
+        """Test validation of HEIF magic bytes."""
+        # Create minimal HEIF header with ftyp box
+        heif_header = b"\x00\x00\x00\x18ftyp" + b"heic" + b"\x00" * 12
+        assert heif_handler.validate_image(heif_header) is True
+        
+        # Test other HEIF brands
+        heif_header_mif1 = b"\x00\x00\x00\x18ftyp" + b"mif1" + b"\x00" * 12
+        assert heif_handler.validate_image(heif_header_mif1) is True
+        
+        # Test invalid data
+        assert heif_handler.validate_image(b"not heif") is False
+
+
+class TestBmpHandler:
+    """Test suite for BMP format handler."""
+
+    @pytest.fixture
+    def bmp_handler(self):
+        """Create a BMP handler instance."""
+        from app.core.conversion.formats.bmp_handler import BmpHandler
+        return BmpHandler()
+
+    @pytest.fixture
+    def sample_bmp_image(self):
+        """Create a sample BMP image."""
+        img = Image.new("RGB", (50, 50), color="yellow")
+        buffer = BytesIO()
+        img.save(buffer, format="BMP")
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    def test_can_handle_bmp_formats(self, bmp_handler):
+        """Test BMP handler recognizes BMP formats."""
+        assert bmp_handler.can_handle("bmp") is True
+        assert bmp_handler.can_handle("dib") is True
+        assert bmp_handler.can_handle("png") is False
+
+    def test_validate_valid_bmp(self, bmp_handler, sample_bmp_image):
+        """Test validation of valid BMP data."""
+        assert bmp_handler.validate_image(sample_bmp_image) is True
+
+    def test_validate_invalid_bmp(self, bmp_handler):
+        """Test validation of invalid BMP data."""
+        assert bmp_handler.validate_image(b"not a bmp") is False
+        assert bmp_handler.validate_image(b"") is False
+
+    def test_load_bmp_image(self, bmp_handler, sample_bmp_image):
+        """Test loading BMP image."""
+        img = bmp_handler.load_image(sample_bmp_image)
+        assert isinstance(img, Image.Image)
+        assert img.mode == "RGB"
+        assert img.size == (50, 50)
+
+    def test_save_bmp_from_rgba(self, bmp_handler):
+        """Test saving RGBA image as BMP (no transparency support)."""
+        rgba_img = Image.new("RGBA", (30, 30), (255, 0, 0, 128))
+        output_buffer = BytesIO()
+        settings = ConversionSettings()
+        
+        bmp_handler.save_image(rgba_img, output_buffer, settings)
+        
+        output_buffer.seek(0)
+        saved_img = Image.open(output_buffer)
+        assert saved_img.format == "BMP"
+        assert saved_img.mode == "RGB"  # Alpha removed
+
+
+class TestTiffHandler:
+    """Test suite for TIFF format handler."""
+
+    @pytest.fixture
+    def tiff_handler(self):
+        """Create a TIFF handler instance."""
+        from app.core.conversion.formats.tiff_handler import TiffHandler
+        return TiffHandler()
+
+    @pytest.fixture
+    def sample_tiff_image(self):
+        """Create a sample TIFF image."""
+        img = Image.new("RGB", (60, 60), color="purple")
+        buffer = BytesIO()
+        img.save(buffer, format="TIFF")
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    def test_can_handle_tiff_formats(self, tiff_handler):
+        """Test TIFF handler recognizes TIFF formats."""
+        assert tiff_handler.can_handle("tiff") is True
+        assert tiff_handler.can_handle("tif") is True
+        assert tiff_handler.can_handle("jpeg") is False
+
+    def test_validate_valid_tiff(self, tiff_handler, sample_tiff_image):
+        """Test validation of valid TIFF data."""
+        assert tiff_handler.validate_image(sample_tiff_image) is True
+
+    def test_validate_tiff_magic_bytes(self, tiff_handler):
+        """Test validation of TIFF magic bytes."""
+        # Little-endian TIFF
+        assert tiff_handler.validate_image(b"II*\x00" + b"\x00" * 10) is False  # Too short but has header
+        # Big-endian TIFF  
+        assert tiff_handler.validate_image(b"MM\x00*" + b"\x00" * 10) is False  # Too short but has header
+        # Invalid
+        assert tiff_handler.validate_image(b"XXXX") is False
+
+    def test_load_tiff_image(self, tiff_handler, sample_tiff_image):
+        """Test loading TIFF image."""
+        img = tiff_handler.load_image(sample_tiff_image)
+        assert isinstance(img, Image.Image)
+        assert img.mode == "RGB"
+        assert img.size == (60, 60)
+
+    def test_save_tiff_with_compression(self, tiff_handler):
+        """Test saving TIFF with compression."""
+        img = Image.new("RGB", (100, 100), color="cyan")
+        output_buffer = BytesIO()
+        settings = ConversionSettings(optimize=True)
+        
+        tiff_handler.save_image(img, output_buffer, settings)
+        
+        output_buffer.seek(0)
+        saved_img = Image.open(output_buffer)
+        assert saved_img.format == "TIFF"
+
+
+class TestGifHandler:
+    """Test suite for GIF format handler."""
+
+    @pytest.fixture
+    def gif_handler(self):
+        """Create a GIF handler instance."""
+        from app.core.conversion.formats.gif_handler import GifHandler
+        return GifHandler()
+
+    @pytest.fixture
+    def sample_gif_image(self):
+        """Create a sample GIF image."""
+        img = Image.new("P", (40, 40))
+        img.putpalette([i//3 for i in range(768)])  # Create palette
+        buffer = BytesIO()
+        img.save(buffer, format="GIF")
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    def test_can_handle_gif_format(self, gif_handler):
+        """Test GIF handler recognizes GIF format."""
+        assert gif_handler.can_handle("gif") is True
+        assert gif_handler.can_handle("png") is False
+
+    def test_validate_gif_magic_bytes(self, gif_handler):
+        """Test validation of GIF magic bytes."""
+        assert gif_handler.validate_image(b"GIF87a" + b"\x00" * 10) is False  # Has header but invalid
+        assert gif_handler.validate_image(b"GIF89a" + b"\x00" * 10) is False  # Has header but invalid
+        assert gif_handler.validate_image(b"NOTGIF") is False
+
+    def test_load_gif_image(self, gif_handler, sample_gif_image):
+        """Test loading GIF image."""
+        img = gif_handler.load_image(sample_gif_image)
+        assert isinstance(img, Image.Image)
+        assert img.mode in ("RGB", "RGBA")  # Converted from P mode
+
+    def test_save_gif_from_rgb(self, gif_handler):
+        """Test saving RGB image as GIF."""
+        rgb_img = Image.new("RGB", (50, 50), color="orange")
+        output_buffer = BytesIO()
+        settings = ConversionSettings()
+        
+        gif_handler.save_image(rgb_img, output_buffer, settings)
+        
+        output_buffer.seek(0)
+        saved_img = Image.open(output_buffer)
+        assert saved_img.format == "GIF"
+        assert saved_img.mode == "P"  # Converted to palette mode
+
+
 class TestPNGHandler:
     """Test suite for PNG format handler."""
 

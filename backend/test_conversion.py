@@ -13,6 +13,16 @@ test_cases = [
     ('JPEG', 'PNG', 'jpeg', 'png'),
     ('PNG', 'JPEG', 'png', 'jpeg'),
     ('WEBP', 'PNG', 'webp', 'png'),
+    # New format tests
+    ('BMP', 'PNG', 'bmp', 'png'),
+    ('TIFF', 'JPEG', 'tiff', 'jpeg'),
+    ('GIF', 'PNG', 'gif', 'png'),
+    ('BMP', 'WEBP', 'bmp', 'webp'),
+    ('TIFF', 'WEBP', 'tiff', 'webp'),
+    ('GIF', 'WEBP', 'gif', 'webp'),
+    ('WEBP', 'BMP', 'webp', 'bmp'),
+    ('PNG', 'TIFF', 'png', 'tiff'),
+    ('JPEG', 'GIF', 'jpeg', 'gif'),
 ]
 
 if len(sys.argv) > 1:

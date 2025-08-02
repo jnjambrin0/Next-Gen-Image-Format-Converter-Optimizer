@@ -15,14 +15,26 @@ from app.core.security.memory import (
     SecureMemoryManager,
     MemoryError as SecureMemoryError,
 )
+from app.core.security.errors import (
+    SandboxSecurityError,
+    SecurityErrorCode,
+    create_sandbox_error,
+    handle_security_errors
+)
+from app.core.constants import (
+    SANDBOX_MEMORY_LIMITS,
+    SANDBOX_CPU_LIMITS,
+    SANDBOX_TIMEOUTS,
+    SANDBOX_OUTPUT_LIMITS,
+    KB_TO_BYTES_FACTOR,
+    MB_TO_BYTES_FACTOR,
+    COMMAND_NAME_MAX_LENGTH,
+    PROCESS_NICE_LEVEL,
+    MEMORY_CHECK_INTERVAL,
+    MAX_MEMORY_VIOLATIONS
+)
 
 logger = structlog.get_logger()
-
-
-class SecurityError(Exception):
-    """Exception raised for security violations."""
-
-    pass
 
 
 class SandboxConfig:
@@ -30,16 +42,16 @@ class SandboxConfig:
 
     def __init__(
         self,
-        max_memory_mb: int = 512,
-        max_cpu_percent: int = 80,
-        timeout_seconds: int = 30,
-        max_output_size_mb: int = 100,
+        max_memory_mb: int = SANDBOX_MEMORY_LIMITS["standard"],
+        max_cpu_percent: int = SANDBOX_CPU_LIMITS["standard"],
+        timeout_seconds: int = SANDBOX_TIMEOUTS["standard"],
+        max_output_size_mb: int = SANDBOX_OUTPUT_LIMITS["standard"],
         sandbox_uid: Optional[int] = None,
         sandbox_gid: Optional[int] = None,
         allowed_paths: Optional[List[str]] = None,
         enable_memory_tracking: bool = True,
         enable_memory_locking: bool = True,
-        memory_violation_threshold: int = 3,
+        memory_violation_threshold: int = MAX_MEMORY_VIOLATIONS["standard"],
     ):
         self.max_memory_mb = max_memory_mb
         self.max_cpu_percent = max_cpu_percent
@@ -188,16 +200,25 @@ class SecuritySandbox:
 
         # Check for path traversal attempts
         if ".." in normalized or normalized.startswith("/"):
-            raise SecurityError(f"Path traversal detected: {path}")
+            raise create_sandbox_error(
+                "Path traversal detected",
+                code=SecurityErrorCode.PATH_TRAVERSAL_ATTEMPT
+            )
 
         # Check for null bytes (common in injection attacks)
         if "\x00" in path:
-            raise SecurityError(f"Null byte in path: {path}")
+            raise create_sandbox_error(
+                "Null byte in path",
+                code=SecurityErrorCode.PATH_TRAVERSAL_ATTEMPT
+            )
 
         # Check for dangerous characters
         dangerous_chars = ["|", "&", ";", "`", "$", "(", ")"]
         if any(char in path for char in dangerous_chars):
-            raise SecurityError(f"Dangerous characters in path: {path}")
+            raise create_sandbox_error(
+                "Dangerous characters in path",
+                code=SecurityErrorCode.PATH_TRAVERSAL_ATTEMPT
+            )
 
     def validate_command(self, command: List[str]) -> None:
         """
@@ -210,18 +231,28 @@ class SecuritySandbox:
             SecurityError: If command is unsafe
         """
         if not command:
-            raise SecurityError("Empty command")
+            raise create_sandbox_error(
+                "Empty command",
+                code=SecurityErrorCode.SANDBOX_PROCESS_ERROR
+            )
 
         cmd_name = os.path.basename(command[0]).lower()
 
         # Check against blocked commands
         if cmd_name in self.config.blocked_commands:
-            raise SecurityError(f"Forbidden command: {cmd_name}")
+            raise create_sandbox_error(
+                "Forbidden command",
+                code=SecurityErrorCode.SANDBOX_VIOLATION,
+                command=cmd_name
+            )
 
         # Check all arguments for injection attempts
         for arg in command:
             if any(char in arg for char in ["|", "&", ";", "`", "$"]):
-                raise SecurityError(f"Command injection attempt detected: {arg}")
+                raise create_sandbox_error(
+                    "Command injection attempt detected",
+                    code=SecurityErrorCode.SANDBOX_VIOLATION
+                )
 
     def sanitize_filename(self, filename: str) -> str:
         """
@@ -239,7 +270,10 @@ class SecuritySandbox:
         # Check for injection attempts
         dangerous_patterns = [";", "&&", "||", "|", "`", "$", "\n", "\r"]
         if any(pattern in filename for pattern in dangerous_patterns):
-            raise SecurityError("Filename contains dangerous patterns")
+            raise create_sandbox_error(
+                "Filename contains dangerous patterns",
+                code=SecurityErrorCode.SUSPICIOUS_FILE_CONTENT
+            )
 
         # Remove null bytes
         filename = filename.replace("\x00", "")
@@ -250,7 +284,7 @@ class SecuritySandbox:
         )
         sanitized = "".join(c if c in safe_chars else "_" for c in filename)
 
-        return sanitized[:255]  # Limit length
+        return sanitized[:COMMAND_NAME_MAX_LENGTH]  # Limit length
 
     def validate_file_access(self, path: str, mode: str = "read") -> None:
         """
@@ -281,7 +315,10 @@ class SecuritySandbox:
         normalized_path = os.path.normpath(path)
         for sys_path in system_paths:
             if normalized_path.startswith(sys_path):
-                raise SecurityError(f"Access denied to system path: {path}")
+                raise create_sandbox_error(
+                    "Access denied to system path",
+                    code=SecurityErrorCode.INVALID_FILE_ACCESS
+                )
 
     def _create_secure_environment(self) -> Dict[str, str]:
         """Create a secure environment for subprocess execution."""
@@ -414,7 +451,7 @@ class SecuritySandbox:
         """Set resource limits for the subprocess."""
         try:
             # Set memory limit (in bytes)
-            memory_limit = self.config.max_memory_mb * 1024 * 1024
+            memory_limit = self.config.max_memory_mb * MB_TO_BYTES_FACTOR
             resource.setrlimit(resource.RLIMIT_AS, (memory_limit, memory_limit))
 
             # Set CPU time limit
@@ -422,7 +459,7 @@ class SecuritySandbox:
             resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))
 
             # Set file size limit to prevent disk exhaustion
-            file_limit = self.config.max_output_size_mb * 1024 * 1024
+            file_limit = self.config.max_output_size_mb * MB_TO_BYTES_FACTOR
             resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))
 
             # Drop privileges if configured
@@ -508,8 +545,13 @@ class SecuritySandbox:
                 wall_time = time.time() - start_time
 
                 # Check output size
-                if len(stdout) > actual_max_output * 1024 * 1024:
-                    raise ValueError(f"Output too large: {len(stdout)} bytes")
+                if len(stdout) > actual_max_output * MB_TO_BYTES_FACTOR:
+                    raise create_sandbox_error(
+                        f"Output too large: {len(stdout)} bytes",
+                        code=SecurityErrorCode.SANDBOX_OUTPUT_VIOLATION,
+                        output_size=len(stdout),
+                        limit=actual_max_output * MB_TO_BYTES_FACTOR
+                    )
 
                 # Try to get resource usage info with memory monitoring
                 resource_usage = self._get_process_resource_usage(process.pid)
@@ -535,9 +577,15 @@ class SecuritySandbox:
 
                 if process.returncode == -9:  # SIGKILL
                     if b"Memory limit exceeded" in stderr:
-                        raise MemoryError("Memory limit exceeded")
+                        raise create_sandbox_error(
+                            "Memory limit exceeded",
+                            code=SecurityErrorCode.SANDBOX_MEMORY_VIOLATION
+                        )
                     else:
-                        raise TimeoutError("Process killed (likely timeout)")
+                        raise create_sandbox_error(
+                            "Process killed (likely timeout)",
+                            code=SecurityErrorCode.SANDBOX_TIMEOUT
+                        )
 
                 logger.info(
                     "Sandboxed command completed",
@@ -557,7 +605,11 @@ class SecuritySandbox:
                 except ProcessLookupError:
                     pass
                 process.kill()
-                raise TimeoutError(f"Execution timeout after {actual_timeout} seconds")
+                raise create_sandbox_error(
+                    f"Execution timeout after {actual_timeout} seconds",
+                    code=SecurityErrorCode.SANDBOX_TIMEOUT,
+                    timeout=actual_timeout
+                )
 
         finally:
             # Ensure process is cleaned up
@@ -604,7 +656,7 @@ class SecuritySandbox:
                         if line.startswith("VmRSS:"):
                             # Extract memory in KB and convert to MB
                             memory_kb = int(line.split()[1])
-                            usage["memory_mb"] = memory_kb / 1024
+                            usage["memory_mb"] = memory_kb / KB_TO_BYTES_FACTOR
                             break
 
         except Exception as e:

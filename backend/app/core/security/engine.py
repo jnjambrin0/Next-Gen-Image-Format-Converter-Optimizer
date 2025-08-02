@@ -13,7 +13,7 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 import io
 
-from app.core.security.sandbox import SecuritySandbox, SecurityError, SandboxConfig
+from app.core.security.sandbox import SecuritySandbox, SandboxConfig
 from app.core.security.metadata import MetadataStripper
 from app.core.security.memory import SecureMemoryManager, secure_memory_context
 from app.models.process_sandbox import ProcessSandbox
@@ -27,7 +27,12 @@ from app.core.constants import (
     IMAGE_MAGIC_BYTES,
     SUSPICIOUS_PATTERNS,
     HEIF_AVIF_BRANDS,
-    MAX_IMAGE_PIXELS
+    MAX_IMAGE_PIXELS,
+    MAX_MEMORY_VIOLATIONS,
+    MIN_VALIDATION_FILE_SIZE,
+    IMAGE_BUFFER_CHECK_LIMIT,
+    STDERR_TRUNCATION_LENGTH,
+    MAX_SECURITY_EVENTS
 )
 from app.models.security_event import SecurityEvent, SecurityEventType, SecuritySeverity
 
@@ -94,7 +99,7 @@ class SecurityEngine:
             sandbox_gid=settings.sandbox_gid,
             enable_memory_tracking=True,
             enable_memory_locking=strictness in ["strict", "paranoid"],
-            memory_violation_threshold=3 if strictness == "standard" else 2 if strictness == "strict" else 1,
+            memory_violation_threshold=MAX_MEMORY_VIOLATIONS.get(strictness, MAX_MEMORY_VIOLATIONS["standard"]),
         )
 
         # Create and return sandbox
@@ -167,7 +172,7 @@ class SecurityEngine:
         }
 
         # Early exit: Check minimum file size first
-        if len(file_data) < 8:
+        if len(file_data) < MIN_VALIDATION_FILE_SIZE:
             report["is_safe"] = False
             report["threats_found"].append("File too small to be a valid image")
             return report
@@ -228,7 +233,7 @@ class SecurityEngine:
                 Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS  # Prevents decompression bombs
                 
                 # Use a limited BytesIO buffer
-                img_buffer = io.BytesIO(file_data[:1024*1024])  # Only check first 1MB
+                img_buffer = io.BytesIO(file_data[:IMAGE_BUFFER_CHECK_LIMIT])  # Only check first 1MB
                 
                 img = Image.open(img_buffer)
                 # Verify format without decompressing
@@ -509,6 +514,7 @@ class SecurityEngine:
                     conversion_id=conversion_id,
                     error=error_message,
                     exit_code=result["returncode"],
+                    stderr=result.get("stderr", b"").decode("utf-8", errors="replace")[:STDERR_TRUNCATION_LENGTH],  # First 500 chars of stderr
                 )
                 
                 raise ConversionError(error_message)
@@ -587,7 +593,7 @@ class SecurityEngine:
                 # Remove from tracking
                 del self._sandboxes[conversion_id]
 
-    def get_sandbox_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_sandbox_history(self, limit: int = MAX_SECURITY_EVENTS) -> List[Dict[str, Any]]:
         """
         Get recent sandbox execution history for monitoring.
 

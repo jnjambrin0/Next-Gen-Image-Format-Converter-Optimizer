@@ -19,6 +19,13 @@ from app.models.security_event import (
 from app.utils.logging import get_logger
 from app.core.security.rate_limiter import SecurityEventRateLimiter
 from app.core.security.types import RateLimitConfig
+from app.core.constants import (
+    DEFAULT_MONITORING_HOURS,
+    SECURITY_EVENT_RETENTION_DAYS,
+    MAX_RECENT_EVENTS_DISPLAY,
+    DB_CHECK_SAME_THREAD,
+    SECURITY_EVENT_TABLE_NAME
+)
 
 logger = get_logger(__name__)
 
@@ -72,7 +79,7 @@ class SecurityEventTracker:
     @contextmanager
     def _get_db(self):
         """Get database connection context manager."""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
         try:
             yield conn
@@ -135,7 +142,7 @@ class SecurityEventTracker:
             logger.error(f"Failed to record security event: {e}")
             return -1
 
-    def get_event_summary(self, hours: int = 24) -> SecurityEventSummary:
+    def get_event_summary(self, hours: int = DEFAULT_MONITORING_HOURS) -> SecurityEventSummary:
         """
         Get summary of security events.
 
@@ -195,9 +202,9 @@ class SecurityEventTracker:
                 FROM security_events
                 WHERE timestamp > ? AND event_type = ?
                 ORDER BY timestamp DESC
-                LIMIT 10
+                LIMIT ?
             """,
-                (cutoff_time, SecurityEventType.VIOLATION.value),
+                (cutoff_time, SecurityEventType.VIOLATION.value, MAX_RECENT_EVENTS_DISPLAY),
             )
 
             for row in cursor:
@@ -303,7 +310,7 @@ class SecurityEventTracker:
 
         return await self.record_event(event)
 
-    async def cleanup_old_events(self, retention_days: int = 90):
+    async def cleanup_old_events(self, retention_days: int = SECURITY_EVENT_RETENTION_DAYS):
         """
         Clean up old security events.
 

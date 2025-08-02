@@ -216,6 +216,21 @@ command = [sys.executable, "-m", "app.core.conversion.sandboxed_convert", ...]
 
 **Why**: Module execution can trigger logging initialization that contaminates stdout with log messages, breaking binary data streams.
 
+**Socket Blocking in Sandbox**: When implementing network blocking, NEVER replace `socket.socket` with a function:
+
+```python
+# CORRECT: Use a class that preserves inheritance
+class BlockedSocket(original_socket):
+    def __init__(self, *args, **kwargs):
+        raise OSError("Network access disabled")
+socket.socket = BlockedSocket
+
+# WRONG: Replacing with function breaks SSL and other modules
+socket.socket = lambda *args: raise OSError("Network disabled")
+```
+
+**Why**: Many Python modules (like SSL) expect `socket.socket` to be a class they can inherit from. Replacing it with a function causes `TypeError: function() argument 'code' must be code, not str`.
+
 ### 3. Privacy-Aware Logging Pattern
 **CRITICAL**: Security and error messages MUST NEVER include filenames, paths, or user content:
 
@@ -249,6 +264,49 @@ buffer = None
 ```
 
 **Why**: Image data may contain sensitive information. Secure clearing prevents memory-based data recovery attacks.
+
+### 5. Database Initialization Pattern
+**CRITICAL**: Database directories must exist before initializing trackers:
+
+```python
+# CORRECT: Ensure data directory exists in startup
+import os
+os.makedirs("./data", exist_ok=True)
+# Then initialize trackers
+security_tracker = SecurityEventTracker(db_path="./data/security.db")
+
+# WRONG: Initialize without ensuring directory exists
+security_tracker = SecurityEventTracker(db_path="./data/security.db")
+# Will fail with "no such table" errors
+```
+
+**Why**: SQLite cannot create database files in non-existent directories. The trackers will fail silently and report "no such table" errors during operations.
+
+### 6. Singleton Service Pattern
+**CRITICAL**: To avoid circular imports, services must follow this pattern:
+
+```python
+# CORRECT: In service file (e.g., conversion_service.py)
+class ConversionService:
+    def __init__(self):
+        self.stats_collector = None  # Will be injected
+        
+# Create singleton at module level
+conversion_service = ConversionService()
+
+# In main.py startup:
+from app.services.conversion_service import conversion_service
+from app.core.monitoring.stats import stats_collector
+conversion_service.stats_collector = stats_collector
+
+# WRONG: Direct import in __init__ causes circular dependency
+class ConversionService:
+    def __init__(self):
+        from app.core.monitoring.stats import stats_collector  # Circular!
+        self.stats_collector = stats_collector
+```
+
+**Why**: Direct imports in `__init__` can create circular dependencies. Use dependency injection pattern instead.
 
 ### Quick Testing
 ```bash

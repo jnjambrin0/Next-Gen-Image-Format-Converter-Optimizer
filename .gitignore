@@ -1,6 +1,8 @@
 .bmad-core
 .claude
 
+backend/data/
+
 docs/prd
 docs/architecture
 docs/prd.md

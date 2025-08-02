@@ -2,6 +2,7 @@
 Enhanced network isolation verification for startup and runtime.
 """
 
+import asyncio
 import os
 import socket
 import subprocess
@@ -14,6 +15,12 @@ from app.core.monitoring.network_check import NetworkIsolationChecker
 from app.core.monitoring.security_events import SecurityEventTracker
 from app.models.security_event import SecurityEventType, SecuritySeverity
 from app.core.security.types import NetworkStatus, VerificationResult
+from app.core.security.errors import (
+    VerificationError,
+    SecurityErrorCode,
+    create_verification_error,
+    create_network_error
+)
 from app.core.constants import NETWORK_CHECK_TIMEOUT
 from app.core.security.metrics import SecurityMetricsCollector
 
@@ -233,36 +240,21 @@ class NetworkVerifier(NetworkIsolationChecker):
             for domain in test_domains:
                 try:
                     # This should fail if DNS is properly blocked
-                    # Note: socket.getaddrinfo doesn't support timeout parameter directly
-                    # Using thread-based timeout for DNS resolution
-                    import threading
-                    
-                    dns_result = [None]
-                    dns_error = [None]
-                    
-                    def resolve_dns():
-                        try:
-                            dns_result[0] = socket.getaddrinfo(domain, 80)
-                        except Exception as e:
-                            dns_error[0] = e
-                    
-                    thread = threading.Thread(target=resolve_dns, daemon=True)
-                    thread.start()
-                    thread.join(timeout=NETWORK_CHECK_TIMEOUT)
-                    
-                    if thread.is_alive():
-                        # Timeout occurred
-                        raise socket.timeout("DNS resolution timed out")
-                    elif dns_error[0]:
-                        # DNS resolution failed (expected)
-                        raise dns_error[0]
-                    elif dns_result[0]:
-                        # DNS resolution succeeded (not expected)
-                        result["passed"] = False
-                        result["warnings"].append(f"DNS resolution succeeded for {domain}")
+                    # Using asyncio for timeout handling
+                    loop = asyncio.get_event_loop()
+                    await asyncio.wait_for(
+                        loop.run_in_executor(None, socket.getaddrinfo, domain, 80),
+                        timeout=NETWORK_CHECK_TIMEOUT
+                    )
+                    # If we reach here, DNS resolution succeeded (not expected)
+                    result["passed"] = False
+                    result["warnings"].append(f"DNS resolution succeeded for {domain}")
                 
-                except (socket.gaierror, socket.timeout):
-                    # Expected - DNS should be blocked
+                except asyncio.TimeoutError:
+                    # Expected - DNS should be blocked or timeout
+                    pass
+                except socket.gaierror:
+                    # Expected - DNS resolution failed
                     pass
         
         except Exception as e:

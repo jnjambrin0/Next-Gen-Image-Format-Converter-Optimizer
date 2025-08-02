@@ -7,6 +7,13 @@ from typing import Dict, Optional
 from threading import Lock
 
 from app.core.security.types import RateLimitConfig
+from app.core.constants import (
+    RATE_LIMIT_EVENTS_PER_MINUTE,
+    RATE_LIMIT_EVENTS_PER_HOUR,
+    RATE_LIMIT_BURST_SIZE,
+    RATE_LIMIT_HOUR_BURST_DIVISOR,
+    RATE_LIMIT_TOKEN_REFILL_AMOUNT
+)
 
 
 class TokenBucket:
@@ -70,9 +77,9 @@ class SecurityEventRateLimiter:
         if config is None:
             # Default configuration
             config = {
-                "max_events_per_minute": 60,
-                "max_events_per_hour": 1000,
-                "burst_size": 10,
+                "max_events_per_minute": RATE_LIMIT_EVENTS_PER_MINUTE,
+                "max_events_per_hour": RATE_LIMIT_EVENTS_PER_HOUR,
+                "burst_size": RATE_LIMIT_BURST_SIZE,
                 "enabled": True
             }
         
@@ -87,7 +94,7 @@ class SecurityEventRateLimiter:
         
         self.hour_bucket = TokenBucket(
             rate=config["max_events_per_hour"] / 3600.0,  # tokens per second
-            capacity=config["max_events_per_hour"] // 10  # 10% burst capacity
+            capacity=config["max_events_per_hour"] // RATE_LIMIT_HOUR_BURST_DIVISOR  # 10% burst capacity
         )
         
         # Track rate limit violations
@@ -119,7 +126,7 @@ class SecurityEventRateLimiter:
         if not allowed:
             if minute_ok:
                 # Restore minute token if hour limit hit
-                self.minute_bucket.tokens += 1
+                self.minute_bucket.tokens += RATE_LIMIT_TOKEN_REFILL_AMOUNT
             
             with self.lock:
                 self.violations_count += 1

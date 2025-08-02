@@ -9,13 +9,23 @@ from contextlib import contextmanager
 from typing import Optional, Dict, Any, Union, List, Tuple
 import structlog
 
+from app.core.security.errors import (
+    MemorySecurityError,
+    SecurityErrorCode
+)
+
 logger = structlog.get_logger()
 
 
-class MemoryError(Exception):
+class MemoryError(MemorySecurityError):
     """Exception raised for memory-related security violations."""
-
-    pass
+    
+    def __init__(self, message: str, **details):
+        super().__init__(
+            code=SecurityErrorCode.MEMORY_TRACKING_ERROR,
+            message=message,
+            details=details
+        )
 
 
 class SecureMemoryManager:

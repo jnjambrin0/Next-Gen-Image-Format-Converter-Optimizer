@@ -23,51 +23,9 @@ from app.core.constants import (
 )
 from app.core.security.types import ConnectionInfo, ViolationStats
 from app.core.security.metrics import SecurityMetricsCollector
+from app.core.security.parsers import parse_connections, NetworkConnection
 
 logger = structlog.get_logger()
-
-
-class NetworkConnection:
-    """Represents a network connection."""
-    
-    def __init__(
-        self,
-        protocol: str,
-        local_addr: str,
-        local_port: int,
-        remote_addr: str,
-        remote_port: int,
-        state: str,
-        pid: Optional[int] = None,
-        process_name: Optional[str] = None
-    ):
-        self.protocol = protocol
-        self.local_addr = local_addr
-        self.local_port = local_port
-        self.remote_addr = remote_addr
-        self.remote_port = remote_port
-        self.state = state
-        self.pid = pid
-        self.process_name = process_name
-        self.detected_at = datetime.now()
-    
-    def is_localhost(self) -> bool:
-        """Check if connection is to localhost."""
-        localhost_addrs = ["127.0.0.1", "::1", "localhost"]
-        return (
-            self.remote_addr in localhost_addrs or
-            self.local_addr in localhost_addrs
-        )
-    
-    def to_dict(self) -> ConnectionInfo:
-        """Convert to dictionary for logging (privacy-aware)."""
-        return {
-            "protocol": self.protocol,
-            "is_localhost": self.is_localhost(),
-            "state": self.state,
-            "has_pid": self.pid is not None,
-            "detected_at": self.detected_at.isoformat()
-        }
 
 
 class NetworkMonitor:
@@ -219,14 +177,14 @@ class NetworkMonitor:
     
     async def _get_current_connections(self) -> List[NetworkConnection]:
         """Get current network connections."""
-        connections = []
-        
         try:
             # Use ss if available, otherwise netstat
             if os.path.exists("/usr/bin/ss"):
                 cmd = ["ss", "-tunap"]
+                cmd_name = "ss"
             else:
                 cmd = ["netstat", "-tunap"]
+                cmd_name = "netstat"
             
             # Run command
             result = await asyncio.create_subprocess_exec(
@@ -237,113 +195,17 @@ class NetworkMonitor:
             stdout, _ = await result.communicate()
             output = stdout.decode("utf-8", errors="ignore")
             
-            # Parse output
-            for line in output.split('\n')[1:]:  # Skip header
-                conn = self._parse_connection_line(line)
-                if conn:
-                    connections.append(conn)
+            # Parse output using the parser utility
+            connections = parse_connections(output, cmd_name)
+            return connections
         
         except Exception as e:
             logger.error(f"Failed to get network connections: {e}")
-        
-        return connections
-    
-    def _parse_connection_line(self, line: str) -> Optional[NetworkConnection]:
-        """Parse a connection line from ss/netstat output."""
-        try:
-            parts = line.split()
-            if len(parts) < 5:
-                return None
-            
-            # Parse based on tool output format
-            if "tcp" in parts[0] or "udp" in parts[0]:
-                protocol = parts[0]
-                
-                # Find the state column (LISTEN, ESTAB, etc.)
-                state_idx = -1
-                for i, part in enumerate(parts):
-                    if part in ["LISTEN", "ESTAB", "ESTABLISHED", "TIME_WAIT", "CLOSE_WAIT", "SYN_SENT"]:
-                        state_idx = i
-                        break
-                
-                if state_idx == -1:
-                    return None
-                
-                state = parts[state_idx]
-                
-                # Parse addresses - find patterns with colons
-                local = None
-                remote = None
-                
-                # Look for address:port patterns in the entire line
-                for i, part in enumerate(parts):
-                    if ":" in part and i != state_idx and not part.startswith("users:"):
-                        # Skip numeric values that might look like addresses
-                        if "." in part or "::" in part or part.count(":") > 1:
-                            if not local:
-                                local = part
-                            elif not remote:
-                                remote = part
-                                break
-                
-                if not local:
-                    return None
-                
-                # Extract address and port
-                local_addr, local_port = self._parse_address(local)
-                remote_addr, remote_port = self._parse_address(remote if remote else "*")
-                
-                # Try to get PID and process name
-                pid = None
-                process_name = None
-                for part in parts[6:]:
-                    if "pid=" in part:
-                        pid = int(part.split("=")[1].split(",")[0])
-                    elif "/" in part and pid is None:
-                        # Format: "1234/python"
-                        pid_proc = part.split("/")
-                        if pid_proc[0].isdigit():
-                            pid = int(pid_proc[0])
-                            process_name = pid_proc[1] if len(pid_proc) > 1 else None
-                
-                return NetworkConnection(
-                    protocol=protocol,
-                    local_addr=local_addr,
-                    local_port=local_port,
-                    remote_addr=remote_addr,
-                    remote_port=remote_port,
-                    state=state,
-                    pid=pid,
-                    process_name=process_name
-                )
-        
-        except Exception:
-            return None
-        
-        return None
-    
-    def _parse_address(self, addr_str: str) -> Tuple[str, int]:
-        """Parse address string into IP and port."""
-        if not addr_str or addr_str == "*":
-            return "*", 0
-        
-        # Handle IPv6
-        if "[" in addr_str:
-            # Format: [::1]:8080
-            addr = addr_str.split("]")[0].replace("[", "")
-            port = int(addr_str.split("]:")[-1]) if "]:" in addr_str else 0
-            return addr, port
-        
-        # Handle IPv4
-        if ":" in addr_str:
-            parts = addr_str.rsplit(":", 1)
-            return parts[0], int(parts[1]) if parts[1].isdigit() else 0
-        
-        return addr_str, 0
+            return []
     
     def _get_connection_id(self, conn: NetworkConnection) -> str:
         """Get unique identifier for a connection."""
-        return f"{conn.protocol}:{conn.local_addr}:{conn.local_port}-{conn.remote_addr}:{conn.remote_port}"
+        return conn.get_connection_id()
     
     def _is_our_process(self, pid: int) -> bool:
         """Check if PID belongs to our process tree."""
@@ -354,7 +216,7 @@ class NetworkMonitor:
             # Check if it's a child process
             with open(f"/proc/{pid}/stat", "r") as f:
                 stat = f.read().split()
-                ppid = int(stat[3])  # Parent PID is 4th field
+                ppid = int(stat[3])  # Parent PID is 4th field (0-based index)
                 return ppid == self._our_pid or self._is_our_process(ppid)
         except Exception:
             return False

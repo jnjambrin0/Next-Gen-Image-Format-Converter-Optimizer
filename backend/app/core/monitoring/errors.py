@@ -16,6 +16,16 @@ import traceback
 import os
 
 from app.utils.logging import get_logger, filter_sensitive_data
+from app.core.constants import (
+    ERROR_MESSAGE_MAX_LENGTH,
+    ERROR_SIGNATURE_HASH_LENGTH,
+    DEFAULT_MONITORING_HOURS,
+    ERROR_RETENTION_DAYS,
+    MAX_TOP_ERRORS_DISPLAY,
+    MAX_CATEGORY_ERRORS_DISPLAY,
+    DB_CHECK_SAME_THREAD,
+    ERROR_EVENT_TABLE_NAME
+)
 
 logger = get_logger(__name__)
 
@@ -107,7 +117,7 @@ class ErrorReporter:
     @contextmanager
     def _get_db(self):
         """Get database connection context manager."""
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
         try:
             yield conn
@@ -180,8 +190,8 @@ class ErrorReporter:
         )
 
         # Truncate if too long
-        if len(sanitized_msg) > 200:
-            sanitized_msg = sanitized_msg[:197] + "..."
+        if len(sanitized_msg) > ERROR_MESSAGE_MAX_LENGTH:
+            sanitized_msg = sanitized_msg[:ERROR_MESSAGE_MAX_LENGTH - 3] + "..."
 
         return sanitized_msg
 
@@ -207,7 +217,7 @@ class ErrorReporter:
                     signature_parts.append(f"{match.group(1)}:{match.group(2)}")
 
         signature = "|".join(signature_parts)
-        return hashlib.sha256(signature.encode()).hexdigest()[:16]
+        return hashlib.sha256(signature.encode()).hexdigest()[:ERROR_SIGNATURE_HASH_LENGTH]
 
     async def record_error(
         self, error: Exception, context: Optional[Dict[str, Any]] = None
@@ -308,7 +318,7 @@ class ErrorReporter:
         except Exception as e:
             logger.error(f"Failed to persist error report: {e}")
 
-    def get_error_summary(self, hours: int = 24) -> Dict[str, Any]:
+    def get_error_summary(self, hours: int = DEFAULT_MONITORING_HOURS) -> Dict[str, Any]:
         """
         Get summary of errors in the specified time period.
 
@@ -346,9 +356,9 @@ class ErrorReporter:
                 WHERE last_seen > ?
                 GROUP BY error_type
                 ORDER BY total DESC
-                LIMIT 20
+                LIMIT ?
             """,
-                (cutoff_time,),
+                (cutoff_time, MAX_TOP_ERRORS_DISPLAY),
             )
 
             for row in cursor:
@@ -376,9 +386,9 @@ class ErrorReporter:
                 FROM error_reports
                 WHERE last_seen > ?
                 ORDER BY count DESC
-                LIMIT 10
+                LIMIT ?
             """,
-                (cutoff_time,),
+                (cutoff_time, MAX_CATEGORY_ERRORS_DISPLAY),
             )
 
             for row in cursor:
@@ -439,7 +449,7 @@ class ErrorReporter:
 
         return None
 
-    async def cleanup_old_errors(self, retention_days: int = 30):
+    async def cleanup_old_errors(self, retention_days: int = ERROR_RETENTION_DAYS):
         """
         Clean up old error reports.
 

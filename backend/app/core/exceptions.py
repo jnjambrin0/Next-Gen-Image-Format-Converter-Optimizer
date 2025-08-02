@@ -110,3 +110,63 @@ class ConversionFailedError(ImageConverterError):
         super().__init__(
             message=message, error_code="CONV103", status_code=500, details=details
         )
+
+
+# Format-specific exceptions
+class FormatError(ImageConverterError):
+    """Base class for format-specific errors."""
+    pass
+
+
+class WebPDecodingError(FormatError):
+    """Raised when WebP decoding fails."""
+
+    def __init__(self, message: str = "Failed to decode WebP image", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV201", status_code=422, details=details
+        )
+
+
+class HeifDecodingError(FormatError):
+    """Raised when HEIF/HEIC decoding fails."""
+
+    def __init__(self, message: str = "Failed to decode HEIF/HEIC image", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV202", status_code=422, details=details
+        )
+
+
+class BmpDecodingError(FormatError):
+    """Raised when BMP decoding fails."""
+
+    def __init__(self, message: str = "Failed to decode BMP image", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV203", status_code=422, details=details
+        )
+
+
+class TiffDecodingError(FormatError):
+    """Raised when TIFF decoding fails."""
+
+    def __init__(self, message: str = "Failed to decode TIFF image", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV204", status_code=422, details=details
+        )
+
+
+class GifDecodingError(FormatError):
+    """Raised when GIF decoding fails."""
+
+    def __init__(self, message: str = "Failed to decode GIF image", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV205", status_code=422, details=details
+        )
+
+
+class AvifDecodingError(FormatError):
+    """Raised when AVIF decoding fails."""
+
+    def __init__(self, message: str = "Failed to decode AVIF image", details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="CONV206", status_code=422, details=details
+        )

@@ -36,6 +36,10 @@ async def lifespan(app: FastAPI):
     from .services.conversion_service import conversion_service
     conversion_service.stats_collector = stats_collector
     
+    # Ensure data directory exists for database files
+    import os
+    os.makedirs("./data", exist_ok=True)
+    
     # Run enhanced network isolation verification
     if settings.network_verification_enabled:
         from .core.security.network_verifier import NetworkStrictness, verify_network_at_startup

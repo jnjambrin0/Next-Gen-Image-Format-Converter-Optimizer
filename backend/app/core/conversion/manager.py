@@ -55,15 +55,23 @@ class ConversionManager:
         from app.core.conversion.formats.png_handler import PNGHandler
         from app.core.conversion.formats.webp_handler import WebPHandler
         from app.core.conversion.formats.avif_handler import AVIFHandler
+        from app.core.conversion.formats.heif_handler import HeifHandler
+        from app.core.conversion.formats.bmp_handler import BmpHandler
+        from app.core.conversion.formats.tiff_handler import TiffHandler
+        from app.core.conversion.formats.gif_handler import GifHandler
 
-        # Register input handlers
+        # Register handlers (all handlers support both input and output)
         self.register_handler("jpeg", JPEGHandler)
         self.register_handler("jpg", JPEGHandler)
         self.register_handler("png", PNGHandler)
-
-        # Register output handlers
         self.register_handler("webp", WebPHandler)
         self.register_handler("avif", AVIFHandler)
+        self.register_handler("heif", HeifHandler)
+        self.register_handler("heic", HeifHandler)
+        self.register_handler("bmp", BmpHandler)
+        self.register_handler("tiff", TiffHandler)
+        self.register_handler("tif", TiffHandler)
+        self.register_handler("gif", GifHandler)
 
     def _estimate_memory_requirements(self, input_size: int, input_format: str, output_format: str) -> int:
         """

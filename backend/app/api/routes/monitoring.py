@@ -26,14 +26,18 @@ stats_collector = StatsCollector(
     db_path="./data/stats.db" if settings.env == "production" else None
 )
 
+# Ensure data directory exists
+import os
+os.makedirs("./data", exist_ok=True)
+
 # Global error reporter instance
 error_reporter = ErrorReporter(
-    db_path="./data/errors.db" if settings.env == "production" else None
+    db_path="./data/errors.db"  # Always use file-based DB for now
 )
 
 # Global security event tracker instance
 security_tracker = SecurityEventTracker(
-    db_path="./data/security.db" if settings.env == "production" else None
+    db_path="./data/security.db"  # Always use file-based DB for now
 )
 
 

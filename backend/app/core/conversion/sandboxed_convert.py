@@ -43,6 +43,12 @@ NETWORK_BLOCKED_MSG = "Network access is disabled in sandboxed environment"
 DNS_BLOCKED_MSG = "DNS resolution is disabled in sandboxed environment"
 UDP_BLOCKED_MSG = "UDP sockets are disabled in sandboxed environment"
 
+# Create a blocking socket class that preserves inheritance
+class BlockedSocket(_original_socket):
+    """Socket class that blocks all operations."""
+    def __init__(self, *args, **kwargs):
+        raise OSError(NETWORK_BLOCKED_MSG)
+
 # Override all DNS and socket functions
 def _blocked_socket(*args, **kwargs):
     """Block all socket creation."""
@@ -52,8 +58,8 @@ def _blocked_dns(*args, **kwargs):
     """Block all DNS resolution."""
     raise socket.gaierror(DNS_BLOCKED_MSG)
 
-# Apply blocks
-socket.socket = _blocked_socket
+# Apply blocks - use the class for socket.socket to preserve inheritance
+socket.socket = BlockedSocket
 socket.create_connection = _blocked_socket
 socket.getaddrinfo = _blocked_dns
 socket.gethostbyname = _blocked_dns
