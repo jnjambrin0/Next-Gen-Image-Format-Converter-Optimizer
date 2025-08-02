@@ -16,9 +16,9 @@ from app.core.security.memory import (
     MemoryError as SecureMemoryError,
 )
 from app.core.security.errors import (
-    SandboxSecurityError,
-    SecurityErrorCode,
+    SecurityError,
     create_sandbox_error,
+    create_file_error,
     handle_security_errors
 )
 from app.core.constants import (
@@ -200,24 +200,24 @@ class SecuritySandbox:
 
         # Check for path traversal attempts
         if ".." in normalized or normalized.startswith("/"):
-            raise create_sandbox_error(
-                "Path traversal detected",
-                code=SecurityErrorCode.PATH_TRAVERSAL_ATTEMPT
+            raise create_file_error(
+                operation="path_traversal",
+                reason="Path traversal detected"
             )
 
         # Check for null bytes (common in injection attacks)
         if "\x00" in path:
-            raise create_sandbox_error(
-                "Null byte in path",
-                code=SecurityErrorCode.PATH_TRAVERSAL_ATTEMPT
+            raise create_file_error(
+                operation="path_traversal",
+                reason="Null byte in path"
             )
 
         # Check for dangerous characters
         dangerous_chars = ["|", "&", ";", "`", "$", "(", ")"]
         if any(char in path for char in dangerous_chars):
-            raise create_sandbox_error(
-                "Dangerous characters in path",
-                code=SecurityErrorCode.PATH_TRAVERSAL_ATTEMPT
+            raise create_file_error(
+                operation="path_traversal",
+                reason="Dangerous characters in path"
             )
 
     def validate_command(self, command: List[str]) -> None:
@@ -232,8 +232,8 @@ class SecuritySandbox:
         """
         if not command:
             raise create_sandbox_error(
-                "Empty command",
-                code=SecurityErrorCode.SANDBOX_PROCESS_ERROR
+                reason="process_error",
+                details="Empty command"
             )
 
         cmd_name = os.path.basename(command[0]).lower()
@@ -241,8 +241,7 @@ class SecuritySandbox:
         # Check against blocked commands
         if cmd_name in self.config.blocked_commands:
             raise create_sandbox_error(
-                "Forbidden command",
-                code=SecurityErrorCode.SANDBOX_VIOLATION,
+                reason="forbidden_command",
                 command=cmd_name
             )
 
@@ -250,8 +249,8 @@ class SecuritySandbox:
         for arg in command:
             if any(char in arg for char in ["|", "&", ";", "`", "$"]):
                 raise create_sandbox_error(
-                    "Command injection attempt detected",
-                    code=SecurityErrorCode.SANDBOX_VIOLATION
+                    reason="command_injection",
+                    details="Command injection attempt detected"
                 )
 
     def sanitize_filename(self, filename: str) -> str:
@@ -270,9 +269,9 @@ class SecuritySandbox:
         # Check for injection attempts
         dangerous_patterns = [";", "&&", "||", "|", "`", "$", "\n", "\r"]
         if any(pattern in filename for pattern in dangerous_patterns):
-            raise create_sandbox_error(
-                "Filename contains dangerous patterns",
-                code=SecurityErrorCode.SUSPICIOUS_FILE_CONTENT
+            raise create_file_error(
+                operation="validation",
+                reason="Filename contains dangerous patterns"
             )
 
         # Remove null bytes
@@ -315,9 +314,9 @@ class SecuritySandbox:
         normalized_path = os.path.normpath(path)
         for sys_path in system_paths:
             if normalized_path.startswith(sys_path):
-                raise create_sandbox_error(
-                    "Access denied to system path",
-                    code=SecurityErrorCode.INVALID_FILE_ACCESS
+                raise create_file_error(
+                    operation="access",
+                    reason="Access denied to system path"
                 )
 
     def _create_secure_environment(self) -> Dict[str, str]:
@@ -547,8 +546,7 @@ class SecuritySandbox:
                 # Check output size
                 if len(stdout) > actual_max_output * MB_TO_BYTES_FACTOR:
                     raise create_sandbox_error(
-                        f"Output too large: {len(stdout)} bytes",
-                        code=SecurityErrorCode.SANDBOX_OUTPUT_VIOLATION,
+                        reason="output_violation",
                         output_size=len(stdout),
                         limit=actual_max_output * MB_TO_BYTES_FACTOR
                     )
@@ -578,13 +576,13 @@ class SecuritySandbox:
                 if process.returncode == -9:  # SIGKILL
                     if b"Memory limit exceeded" in stderr:
                         raise create_sandbox_error(
-                            "Memory limit exceeded",
-                            code=SecurityErrorCode.SANDBOX_MEMORY_VIOLATION
+                            reason="memory_violation",
+                            details="Memory limit exceeded"
                         )
                     else:
                         raise create_sandbox_error(
-                            "Process killed (likely timeout)",
-                            code=SecurityErrorCode.SANDBOX_TIMEOUT
+                            reason="timeout",
+                            details="Process killed (likely timeout)"
                         )
 
                 logger.info(
@@ -606,9 +604,9 @@ class SecuritySandbox:
                     pass
                 process.kill()
                 raise create_sandbox_error(
-                    f"Execution timeout after {actual_timeout} seconds",
-                    code=SecurityErrorCode.SANDBOX_TIMEOUT,
-                    timeout=actual_timeout
+                    reason="timeout",
+                    timeout=actual_timeout,
+                    details=f"Execution timeout after {actual_timeout} seconds"
                 )
 
         finally:

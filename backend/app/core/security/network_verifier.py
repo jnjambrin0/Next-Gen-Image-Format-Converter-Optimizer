@@ -16,8 +16,7 @@ from app.core.monitoring.security_events import SecurityEventTracker
 from app.models.security_event import SecurityEventType, SecuritySeverity
 from app.core.security.types import NetworkStatus, VerificationResult
 from app.core.security.errors import (
-    VerificationError,
-    SecurityErrorCode,
+    SecurityError,
     create_verification_error,
     create_network_error
 )

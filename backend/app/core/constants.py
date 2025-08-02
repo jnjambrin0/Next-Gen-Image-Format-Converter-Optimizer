@@ -130,49 +130,94 @@ PROCESS_POOL_SIZE = 2
 METRICS_ENABLED = True
 HEALTH_CHECK_TIMEOUT = 5.0
 
-# Network Monitoring Constants
-NETWORK_VIOLATION_THRESHOLD = 3  # Number of violations before process termination
-PROCESS_TERMINATION_GRACE_PERIOD = 2  # seconds to wait before SIGKILL
-DEFAULT_MONITORING_INTERVAL = 5  # seconds between connection checks
-MONITORING_JITTER_PERCENT = 0.1  # 10% jitter to prevent thundering herd
+# Network Security Configuration
+NETWORK_CONFIG = {
+    'violation_threshold': 3,
+    'termination_grace_period': 2,
+    'monitoring_interval': 5,
+    'monitoring_jitter': 0.1,
+    'check_timeout': 1,
+    'baseline_max_connections': 100,
+    'blocked_messages': {
+        'network': "Network access is disabled in sandboxed environment",
+        'dns': "DNS resolution is disabled in sandboxed environment",
+        'udp': "UDP sockets are disabled in sandboxed environment",
+        'p2p': "P2P/WebRTC module '{}' is blocked in sandboxed environment"
+    }
+}
 
-# Network Blocking Messages
-NETWORK_BLOCKED_MSG = "Network access is disabled in sandboxed environment"
-DNS_BLOCKED_MSG = "DNS resolution is disabled in sandboxed environment"
-UDP_BLOCKED_MSG = "UDP sockets are disabled in sandboxed environment"
-P2P_MODULE_BLOCKED_MSG = "P2P/WebRTC module '{}' is blocked in sandboxed environment"
+# Legacy constants for backward compatibility
+NETWORK_VIOLATION_THRESHOLD = NETWORK_CONFIG['violation_threshold']
+PROCESS_TERMINATION_GRACE_PERIOD = NETWORK_CONFIG['termination_grace_period']
+DEFAULT_MONITORING_INTERVAL = NETWORK_CONFIG['monitoring_interval']
+MONITORING_JITTER_PERCENT = NETWORK_CONFIG['monitoring_jitter']
+NETWORK_CHECK_TIMEOUT = NETWORK_CONFIG['check_timeout']
+NETWORK_BASELINE_MAX_CONNECTIONS = NETWORK_CONFIG['baseline_max_connections']
+NETWORK_BLOCKED_MSG = NETWORK_CONFIG['blocked_messages']['network']
+DNS_BLOCKED_MSG = NETWORK_CONFIG['blocked_messages']['dns']
+UDP_BLOCKED_MSG = NETWORK_CONFIG['blocked_messages']['udp']
+P2P_MODULE_BLOCKED_MSG = NETWORK_CONFIG['blocked_messages']['p2p']
 
-# Network Verification
-NETWORK_CHECK_TIMEOUT = 1  # seconds for DNS resolution timeout
-NETWORK_BASELINE_MAX_CONNECTIONS = 100  # Maximum baseline connections to track
+# Rate Limiting Configuration
+RATE_LIMIT_CONFIG = {
+    'events_per_minute': 60,
+    'events_per_hour': 1000,
+    'burst_size': 10,
+    'hour_burst_divisor': 10,
+    'token_refill_amount': 1,
+    'default_capacity': 100,
+    'default_refill_rate': 10.0
+}
 
-# Rate Limiting Constants
-RATE_LIMIT_EVENTS_PER_MINUTE = 60
-RATE_LIMIT_EVENTS_PER_HOUR = 1000
-RATE_LIMIT_BURST_SIZE = 10
-RATE_LIMIT_HOUR_BURST_DIVISOR = 10
-RATE_LIMIT_TOKEN_REFILL_AMOUNT = 1
-DEFAULT_RATE_LIMIT_CAPACITY = 100
-DEFAULT_RATE_LIMIT_REFILL_RATE = 10.0
+# Monitoring Configuration
+MONITORING_CONFIG = {
+    'default_hours': 24,
+    'error_retention_days': 30,
+    'security_retention_days': 90,
+    'hourly_stats_hours': 168,  # 7 days
+    'daily_stats_days': 90,
+    'max_processing_times': 1000,
+    'interval_seconds': 5.0,
+    'jitter_seconds': 1.0,
+    'connection_timeout': 2.0,
+    'max_baseline_connections': 50
+}
 
-# Monitoring & Retention Constants
-DEFAULT_MONITORING_HOURS = 24
-ERROR_RETENTION_DAYS = 30
-SECURITY_EVENT_RETENTION_DAYS = 90
-HOURLY_STATS_RETENTION_HOURS = 168  # 7 days
-DAILY_STATS_RETENTION_DAYS = 90
-MAX_PROCESSING_TIMES_MEMORY = 1000
-MONITORING_INTERVAL_SECONDS = 5.0
-MONITORING_JITTER_SECONDS = 1.0
-CONNECTION_CHECK_TIMEOUT = 2.0
-MAX_BASELINE_CONNECTIONS = 50
+# Legacy constants for backward compatibility
+RATE_LIMIT_EVENTS_PER_MINUTE = RATE_LIMIT_CONFIG['events_per_minute']
+RATE_LIMIT_EVENTS_PER_HOUR = RATE_LIMIT_CONFIG['events_per_hour']
+RATE_LIMIT_BURST_SIZE = RATE_LIMIT_CONFIG['burst_size']
+RATE_LIMIT_HOUR_BURST_DIVISOR = RATE_LIMIT_CONFIG['hour_burst_divisor']
+RATE_LIMIT_TOKEN_REFILL_AMOUNT = RATE_LIMIT_CONFIG['token_refill_amount']
+DEFAULT_RATE_LIMIT_CAPACITY = RATE_LIMIT_CONFIG['default_capacity']
+DEFAULT_RATE_LIMIT_REFILL_RATE = RATE_LIMIT_CONFIG['default_refill_rate']
 
-# Query & Display Limits
-MAX_TOP_ERRORS_DISPLAY = 20
-MAX_CATEGORY_ERRORS_DISPLAY = 10
-MAX_RECENT_EVENTS_DISPLAY = 10
-MAX_SECURITY_EVENTS = 100
-ERROR_MESSAGE_MAX_LENGTH = 200
+DEFAULT_MONITORING_HOURS = MONITORING_CONFIG['default_hours']
+ERROR_RETENTION_DAYS = MONITORING_CONFIG['error_retention_days']
+SECURITY_EVENT_RETENTION_DAYS = MONITORING_CONFIG['security_retention_days']
+HOURLY_STATS_RETENTION_HOURS = MONITORING_CONFIG['hourly_stats_hours']
+DAILY_STATS_RETENTION_DAYS = MONITORING_CONFIG['daily_stats_days']
+MAX_PROCESSING_TIMES_MEMORY = MONITORING_CONFIG['max_processing_times']
+MONITORING_INTERVAL_SECONDS = MONITORING_CONFIG['interval_seconds']
+MONITORING_JITTER_SECONDS = MONITORING_CONFIG['jitter_seconds']
+CONNECTION_CHECK_TIMEOUT = MONITORING_CONFIG['connection_timeout']
+MAX_BASELINE_CONNECTIONS = MONITORING_CONFIG['max_baseline_connections']
+
+# Display Configuration
+DISPLAY_CONFIG = {
+    'max_top_errors': 20,
+    'max_category_errors': 10,
+    'max_recent_events': 10,
+    'max_security_events': 100,
+    'error_message_max_length': 200
+}
+
+# Legacy constants for backward compatibility
+MAX_TOP_ERRORS_DISPLAY = DISPLAY_CONFIG['max_top_errors']
+MAX_CATEGORY_ERRORS_DISPLAY = DISPLAY_CONFIG['max_category_errors']
+MAX_RECENT_EVENTS_DISPLAY = DISPLAY_CONFIG['max_recent_events']
+MAX_SECURITY_EVENTS = DISPLAY_CONFIG['max_security_events']
+ERROR_MESSAGE_MAX_LENGTH = DISPLAY_CONFIG['error_message_max_length']
 ERROR_SIGNATURE_HASH_LENGTH = 16
 
 # Connection & Network Constants
