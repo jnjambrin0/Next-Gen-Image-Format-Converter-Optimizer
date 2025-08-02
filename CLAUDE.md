@@ -308,6 +308,49 @@ class ConversionService:
 
 **Why**: Direct imports in `__init__` can create circular dependencies. Use dependency injection pattern instead.
 
+### 7. Critical Security Patterns (MUST KNOW)
+
+#### Sandbox Path Validation
+**CRITICAL**: The sandbox blocks ALL absolute paths for security:
+
+```python
+# WRONG: Absolute paths are rejected
+sandbox.validate_path("/tmp/file.jpg")  # Raises SecurityError
+
+# CORRECT: Use relative paths
+sandbox.validate_path("output/file.jpg")  # OK
+```
+
+**Why**: Absolute paths could allow access to system files. The sandbox enforces relative paths only.
+
+#### Blocked Commands in Sandbox
+**CRITICAL**: The following commands are blocked in `SecuritySandbox.blocked_commands`:
+- Programming languages: `python`, `perl`, `ruby`, `php`, `node`
+- Shells: `bash`, `sh`, `zsh`, `fish`, `cmd`, `powershell`
+- Network tools: `curl`, `wget`, `nc`, `netcat`, `telnet`, `ssh`, `ftp`
+- Dangerous commands: `rm`, `dd`, `format`, `fdisk`, `mkfs`
+
+#### Simplified Error System
+**CRITICAL**: Use only 5 error categories, never expose PII:
+
+```python
+# CORRECT: Category-based errors without PII
+raise create_sandbox_error(reason="timeout", timeout=30)
+raise create_file_error(operation="access", reason="permission_denied")
+
+# WRONG: Don't include filenames or paths
+raise SecurityError(f"Cannot access {filename}")  # Exposes PII!
+```
+
+Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
+
+#### Architecture Constraint
+**CRITICAL**: This is a **LOCAL-ONLY** application:
+- **NEVER** add distributed features (Redis, distributed locks, etc.)
+- **NEVER** add network functionality beyond localhost API
+- **NEVER** add telemetry or external service calls
+- All processing must work completely offline
+
 ### Quick Testing
 ```bash
 # Test all format conversions

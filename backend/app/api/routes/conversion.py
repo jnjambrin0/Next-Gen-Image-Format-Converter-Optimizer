@@ -15,7 +15,7 @@ from app.core.exceptions import (
     UnsupportedFormatError,
     ConversionFailedError,
 )
-from app.models.conversion import OutputFormat, ConversionSettings
+from app.models.conversion import OutputFormat, ConversionSettings, OptimizationSettings
 from app.models.requests import ConversionApiRequest
 from app.models.responses import ConversionApiResponse, ErrorResponse
 from app.services.conversion_service import conversion_service

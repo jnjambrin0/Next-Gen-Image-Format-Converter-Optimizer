@@ -8,6 +8,7 @@ Pillow==11.3.0
 pillow-heif==1.0.0
 pillow-avif-plugin==1.5.2
 piexif==1.1.3
+jxlpy==0.9.3
 
 # Utilities
 structlog==25.4.0

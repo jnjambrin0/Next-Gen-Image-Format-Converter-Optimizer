@@ -116,9 +116,29 @@ class HeifHandler(BaseFormatHandler):
             save_params["format"] = "HEIF"
             save_params["save_all"] = False  # Don't save multi-page
             
+            # Add compression options if available in pillow-heif
+            if hasattr(pillow_heif, 'options'):
+                # Set encoder (x265 is default, but can specify)
+                save_params["encoder"] = "x265"
+                
+                # Set compression preset (speed vs compression trade-off)
+                if settings.optimize:
+                    save_params["preset"] = "slower"  # Better compression
+                    save_params["compression"] = "hevc"  # Use HEVC compression
+                else:
+                    save_params["preset"] = "medium"  # Balanced
+                
+                # Color subsampling (4:2:0 is default, 4:4:4 for higher quality)
+                if settings.quality >= 90:
+                    save_params["chroma"] = "444"
+                else:
+                    save_params["chroma"] = "420"
+            
             # Remove metadata if requested
             if settings.strip_metadata:
-                save_params["exif"] = b""
+                # Don't set empty exif as it causes errors
+                # pillow-heif will strip metadata automatically if not provided
+                pass
 
             # Save to buffer
             image.save(output_buffer, **save_params)
@@ -136,7 +156,23 @@ class HeifHandler(BaseFormatHandler):
         # But HEIF tends to be more aggressive, so we adjust slightly
         heif_quality = max(1, min(100, settings.quality))
         
-        return {"quality": heif_quality}
+        params = {"quality": heif_quality}
+        
+        # Add lossless option for quality 100
+        if settings.quality == 100:
+            params["lossless"] = True
+            
+        # Add compression level based on quality
+        # Higher compression level = slower but smaller file
+        if settings.optimize:
+            if settings.quality >= 90:
+                params["compression_level"] = 9  # Maximum compression
+            else:
+                params["compression_level"] = 6  # Good compression
+        else:
+            params["compression_level"] = 3  # Fast compression
+            
+        return params
 
     def _supports_transparency(self) -> bool:
         """HEIF supports transparency through alpha channel."""

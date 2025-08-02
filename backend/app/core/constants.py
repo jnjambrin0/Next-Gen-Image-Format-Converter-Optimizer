@@ -35,7 +35,52 @@ SUPPORTED_INPUT_FORMATS = {
 }
 
 SUPPORTED_OUTPUT_FORMATS = {
-    'jpeg', 'jpg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'tif', 'heif', 'heic', 'avif'
+    'jpeg', 'jpg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'tif', 'heif', 'heic', 'avif',
+    'jxl', 'jpegxl', 'jpeg_xl', 'jp2', 'jpeg2000', 'webp2',
+    'png_optimized', 'jpeg_optimized'
+}
+
+# Format aliases mapping to canonical names
+FORMAT_ALIASES = {
+    # JPEG variants
+    'jpg': 'jpeg',
+    'jpeg_optimized': 'jpeg_opt',
+    'jpg_optimized': 'jpeg_opt',
+    
+    # PNG variants
+    'png_optimized': 'png_opt',
+    
+    # JPEG XL variants
+    'jpegxl': 'jxl',
+    'jpeg_xl': 'jxl',
+    
+    # JPEG 2000 variants
+    'jpeg2000': 'jp2',
+    'j2k': 'jp2',
+    'jpf': 'jp2',
+    'jpx': 'jp2',
+    'jpm': 'jp2',
+    
+    # TIFF variants
+    'tif': 'tiff',
+    
+    # HEIF variants
+    'heic': 'heif',
+    'heix': 'heif',
+    'hevc': 'heif',
+    'hevx': 'heif',
+}
+
+# Canonical format list (these are the primary format names)
+CANONICAL_FORMATS = {
+    # Basic formats
+    'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff',
+    
+    # Modern formats
+    'heif', 'avif', 'jxl', 'jp2', 'webp2',
+    
+    # Optimized variants
+    'jpeg_opt', 'png_opt'
 }
 
 # Image Quality Defaults

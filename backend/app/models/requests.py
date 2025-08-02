@@ -3,7 +3,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.conversion import OutputFormat, ConversionSettings
+from app.models.conversion import OutputFormat, ConversionSettings, OptimizationSettings
 
 
 class ConversionApiRequest(BaseModel):
@@ -14,6 +14,9 @@ class ConversionApiRequest(BaseModel):
     output_format: OutputFormat = Field(..., description="Target output format")
     settings: Optional[ConversionSettings] = Field(
         None, description="Conversion settings"
+    )
+    optimization_settings: Optional[OptimizationSettings] = Field(
+        None, description="Format-specific optimization settings"
     )
 
     @field_validator("input_format")
@@ -37,6 +40,9 @@ class BatchConversionRequest(BaseModel):
     output_format: OutputFormat = Field(..., description="Target output format")
     settings: Optional[ConversionSettings] = Field(
         None, description="Conversion settings"
+    )
+    optimization_settings: Optional[OptimizationSettings] = Field(
+        None, description="Format-specific optimization settings"
     )
     parallel: bool = Field(True, description="Process images in parallel")
     max_parallel: int = Field(

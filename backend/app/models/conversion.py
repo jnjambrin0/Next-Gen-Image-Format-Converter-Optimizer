@@ -33,8 +33,13 @@ class OutputFormat(str, Enum):
     HEIF = "heif"
     JPEGXL = "jpegxl"
     JXL = "jxl"
+    JPEG_XL = "jpeg_xl"
     WEBP2 = "webp2"
     JP2 = "jp2"
+    JPEG2000 = "jpeg2000"
+    PNG_OPTIMIZED = "png_optimized"
+    JPEG_OPTIMIZED = "jpeg_optimized"
+    JPG_OPTIMIZED = "jpg_optimized"
 
 
 class ConversionStatus(str, Enum):
@@ -62,6 +67,11 @@ class ConversionSettings(BaseModel):
     optimize: bool = Field(
         default=True, description="Apply format-specific optimizations"
     )
+    # Reference to advanced optimization settings
+    optimization_preset: Optional[str] = Field(
+        default=None, 
+        description="Optimization preset: 'fast', 'balanced', 'best'"
+    )
 
     @field_validator("quality")
     @classmethod
@@ -72,6 +82,154 @@ class ConversionSettings(BaseModel):
         return v
 
 
+class OptimizationSettings(BaseModel):
+    """Format-specific optimization settings."""
+    
+    # General optimization options
+    algorithm: Optional[str] = Field(
+        None, 
+        description="Optimization algorithm (e.g., 'pngquant', 'optipng', 'mozjpeg')"
+    )
+    effort: Optional[int] = Field(
+        None, 
+        ge=1, 
+        le=10, 
+        description="Optimization effort level (1-10, higher = slower but better)"
+    )
+    
+    # Lossy compression options
+    lossless: Optional[bool] = Field(
+        None, 
+        description="Use lossless compression if available"
+    )
+    
+    # Progressive/interlaced encoding
+    progressive: Optional[bool] = Field(
+        None, 
+        description="Use progressive/interlaced encoding"
+    )
+    
+    # Format-specific options
+    # PNG options
+    png_color_type: Optional[str] = Field(
+        None, 
+        description="PNG color type: 'auto', 'grayscale', 'rgb', 'palette'"
+    )
+    png_palette_size: Optional[int] = Field(
+        None, 
+        ge=2, 
+        le=256, 
+        description="Maximum colors in PNG palette (2-256)"
+    )
+    
+    # JPEG options
+    jpeg_subsampling: Optional[str] = Field(
+        None, 
+        description="JPEG chroma subsampling: '4:4:4', '4:2:2', '4:2:0'"
+    )
+    jpeg_trellis: Optional[bool] = Field(
+        None, 
+        description="Use trellis quantization for JPEG"
+    )
+    jpeg_overshoot: Optional[bool] = Field(
+        None, 
+        description="Use overshooting for JPEG"
+    )
+    
+    # WebP/WebP2 options
+    webp_method: Optional[int] = Field(
+        None, 
+        ge=0, 
+        le=6, 
+        description="WebP compression method (0-6, higher = slower but better)"
+    )
+    webp_segments: Optional[int] = Field(
+        None, 
+        ge=1, 
+        le=4, 
+        description="WebP segment count (1-4)"
+    )
+    webp_sns: Optional[int] = Field(
+        None, 
+        ge=0, 
+        le=100, 
+        description="WebP spatial noise shaping (0-100)"
+    )
+    
+    # HEIF options
+    heif_preset: Optional[str] = Field(
+        None, 
+        description="HEIF encoder preset: 'ultrafast', 'fast', 'medium', 'slow', 'slower'"
+    )
+    heif_chroma: Optional[str] = Field(
+        None, 
+        description="HEIF chroma format: '420', '422', '444'"
+    )
+    
+    # JPEG XL options
+    jxl_distance: Optional[float] = Field(
+        None, 
+        ge=0.0, 
+        le=25.0, 
+        description="JPEG XL distance parameter (0=lossless, higher=more lossy)"
+    )
+    jxl_modular: Optional[bool] = Field(
+        None, 
+        description="Use JPEG XL modular mode"
+    )
+    
+    # JPEG 2000 options
+    jp2_rate: Optional[float] = Field(
+        None, 
+        ge=0.1, 
+        le=10.0, 
+        description="JPEG 2000 compression rate (bits per pixel)"
+    )
+    jp2_layers: Optional[int] = Field(
+        None, 
+        ge=1, 
+        le=10, 
+        description="JPEG 2000 quality layers"
+    )
+    
+    # AVIF options
+    avif_speed: Optional[int] = Field(
+        None, 
+        ge=0, 
+        le=10, 
+        description="AVIF encoding speed (0-10, higher = faster)"
+    )
+    avif_pixel_format: Optional[str] = Field(
+        None, 
+        description="AVIF pixel format: 'yuv420', 'yuv422', 'yuv444'"
+    )
+    
+    # Custom options for advanced users
+    custom_options: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, 
+        description="Custom format-specific options"
+    )
+    
+    @field_validator("algorithm")
+    @classmethod
+    def validate_algorithm(cls, v: Optional[str]) -> Optional[str]:
+        """Validate optimization algorithm."""
+        if v is None:
+            return v
+        
+        valid_algorithms = {
+            "pngquant", "optipng", "pngcrush", "advpng",
+            "mozjpeg", "jpegoptim", "jpegtran",
+            "cwebp", "gif2webp", "gifsicle",
+            "avifenc", "heif-enc", "cjxl"
+        }
+        
+        if v.lower() not in valid_algorithms:
+            raise ValueError(f"Unknown optimization algorithm: {v}")
+        
+        return v.lower()
+
+
 class ConversionRequest(BaseModel):
     """Request model for image conversion."""
 
@@ -79,6 +237,7 @@ class ConversionRequest(BaseModel):
 
     output_format: OutputFormat
     settings: Optional[ConversionSettings] = None
+    optimization_settings: Optional[OptimizationSettings] = None
 
 
 class ConversionResult(BaseModel):
