@@ -394,6 +394,51 @@ class StatsCollector:
             daily_removed=len(daily_keys_to_remove),
         )
 
+    async def track_event(self, event_name: str, event_data: Dict[str, Any]) -> None:
+        """
+        Track a custom event with associated data.
+        
+        Args:
+            event_name: Name of the event to track
+            event_data: Dictionary of event data
+        """
+        # Log the event for now - can be extended to store in DB if needed
+        logger.info(
+            "Event tracked",
+            event_name=event_name,
+            **{k: v for k, v in event_data.items() if k not in ['password', 'token', 'secret', 'event']}
+        )
+    
+    async def increment_counter(self, counter_name: str, value: int = 1) -> None:
+        """
+        Increment a named counter.
+        
+        Args:
+            counter_name: Name of the counter to increment
+            value: Amount to increment by (default 1)
+        """
+        # For now, just log - can be extended to maintain counters
+        logger.debug(
+            "Counter incremented",
+            counter=counter_name,
+            increment=value
+        )
+    
+    async def record_timing(self, metric_name: str, duration_ms: float) -> None:
+        """
+        Record a timing metric.
+        
+        Args:
+            metric_name: Name of the timing metric
+            duration_ms: Duration in milliseconds
+        """
+        # For now, just log - can be extended to calculate percentiles
+        logger.debug(
+            "Timing recorded",
+            metric=metric_name,
+            duration_ms=round(duration_ms, 2)
+        )
+
 
 # Create singleton instance
 stats_collector = StatsCollector()

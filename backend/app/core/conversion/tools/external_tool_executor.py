@@ -165,6 +165,7 @@ class ExternalToolExecutor:
             arg_count=len(args),
             has_input=input_data is not None,
             timeout=timeout
+        )
         
         # Execute in subprocess
         start_time = asyncio.get_event_loop().time()
@@ -256,6 +257,7 @@ class ExternalToolExecutor:
             arg_count=len(args),
             has_input=input_data is not None,
             timeout=timeout
+        )
         
         # Execute in subprocess
         import time

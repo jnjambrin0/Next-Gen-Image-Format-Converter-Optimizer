@@ -19,6 +19,20 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
   - Intelligence Engine: ML-based content detection (ONNX Runtime)
   - Processing Engine: Image manipulation (Pillow/libvips)
 
+## Critical Testing Pattern
+
+**CRITICAL**: When testing with sample images, ALWAYS check actual format first:
+
+```bash
+# Many sample files have wrong extensions!
+# Example: images_sample/heic/lofi_cat.heic is actually a PNG file
+
+# Test with format detection to verify actual formats:
+python test_format_detection.py
+```
+
+**Why**: The test images in `images_sample/` include intentionally misnamed files to test robustness. Never assume the extension matches the content.
+
 ## Development Commands
 
 ### Backend Setup and Development
@@ -311,7 +325,28 @@ class ConversionService:
 ### 7. Format Support Decisions
 **CRITICAL**: JPEG 2000 (JP2) is intentionally disabled. Code exists but not registered due to <1% usage and complexity. Don't "fix" this.
 
-### 8. Critical Security Patterns (MUST KNOW)
+### 8. Format Detection Architecture
+**CRITICAL**: The system uses content-based format detection, NOT extension-based:
+
+```python
+# CORRECT: Always detect format from content
+from app.services.format_detection_service import format_detection_service
+detected_format, confident = await format_detection_service.detect_format(image_data)
+actual_format = detected_format  # Use this, not the file extension
+
+# WRONG: Never trust file extensions
+if filename.endswith('.jpg'):
+    format = 'jpeg'  # WRONG! File could be misnamed
+```
+
+**Why**: Real-world files often have wrong extensions. The system detects formats using:
+1. Magic bytes (most reliable)
+2. PIL detection (fallback)
+3. Extended structure analysis
+
+**Key Service**: `app/services/format_detection_service.py` - Single source of truth for format detection.
+
+### 9. Critical Security Patterns (MUST KNOW)
 
 #### Sandbox Path Validation
 **CRITICAL**: The sandbox blocks ALL absolute paths for security:

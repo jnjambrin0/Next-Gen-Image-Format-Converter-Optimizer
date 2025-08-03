@@ -158,14 +158,20 @@ class ConversionManager:
         format_lower = format_name.lower()
         canonical_name = self._resolve_format_name(format_lower)
         
-        # Register under both the original and canonical name if different
-        self.format_handlers[format_lower] = handler_class
-        if canonical_name != format_lower:
-            self.format_handlers[canonical_name] = handler_class
-            
-        self.available_formats.add(format_lower)
-        if canonical_name != format_lower:
-            self.available_formats.add(canonical_name)
+        # Register under the canonical name
+        self.format_handlers[canonical_name] = handler_class
+        self.available_formats.add(canonical_name)
+        
+        # If format_lower is different from canonical, also register it
+        if format_lower != canonical_name:
+            self.format_handlers[format_lower] = handler_class
+            self.available_formats.add(format_lower)
+        
+        # Also register all aliases that point to this canonical format
+        for alias, target in FORMAT_ALIASES.items():
+            if target == canonical_name and alias not in self.format_handlers:
+                self.format_handlers[alias] = handler_class
+                self.available_formats.add(alias)
 
     def get_format_with_fallback(self, requested_format: str) -> Tuple[str, bool]:
         """
@@ -180,13 +186,13 @@ class ConversionManager:
         requested_lower = requested_format.lower()
         canonical_name = self._resolve_format_name(requested_lower)
         
-        # Check if requested format is directly available
+        # Prefer canonical name if available
+        if canonical_name in self.available_formats:
+            return (canonical_name, False)
+        
+        # Otherwise check if requested format is directly available
         if requested_lower in self.available_formats:
             return (requested_lower, False)
-        
-        # Check if canonical name is available
-        if canonical_name != requested_lower and canonical_name in self.available_formats:
-            return (canonical_name, False)
         
         # Check fallback chain using canonical name
         if canonical_name in self.format_fallbacks:

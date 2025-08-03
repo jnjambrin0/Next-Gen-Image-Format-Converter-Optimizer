@@ -160,7 +160,7 @@ async def convert_image(
                     status_code=400,
                     detail={
                         "error_code": "CONV201",
-                        "message": "Empty file uploaded",
+                        "message": "The uploaded file is empty. Please select a valid image file to convert.",
                         "correlation_id": request.state.correlation_id,
                     },
                 )
@@ -185,7 +185,7 @@ async def convert_image(
                     status_code=400,
                     detail={
                         "error_code": "CONV203",
-                        "message": "Filename is required",
+                        "message": "A filename is required. Please ensure your file has a valid name before uploading.",
                         "correlation_id": request.state.correlation_id,
                     },
                 )
@@ -193,12 +193,36 @@ async def convert_image(
         # Sanitize filename to prevent path traversal
         safe_filename = sanitize_filename(file.filename)
         file_ext = Path(safe_filename).suffix.lower().lstrip(".")
-        if not file_ext:
+        
+        # Try to detect format from content (more reliable than extension)
+        detected_format = None
+        try:
+            from app.services.format_detection_service import format_detection_service
+            detected_format, confident = await format_detection_service.detect_format(contents)
+            logger.info(
+                "Format detected from content",
+                detected_format=detected_format,
+                file_extension=file_ext,
+                confident=confident,
+                correlation_id=request.state.correlation_id,
+            )
+        except Exception as e:
+            logger.warning(
+                "Format detection failed, falling back to extension",
+                error=str(e),
+                file_extension=file_ext,
+                correlation_id=request.state.correlation_id,
+            )
+        
+        # Use detected format if available, otherwise fall back to extension
+        input_format = detected_format or file_ext
+        
+        if not input_format:
                 raise HTTPException(
                     status_code=400,
                     detail={
                         "error_code": "CONV204",
-                        "message": "Cannot determine file format from filename",
+                        "message": "Unable to determine the image format. The file may be corrupted or in an unsupported format. Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, AVIF.",
                         "correlation_id": request.state.correlation_id,
                     },
                 )
@@ -206,7 +230,7 @@ async def convert_image(
         # Create conversion request
         conversion_request = ConversionApiRequest(
                 filename=safe_filename,
-                input_format=file_ext,
+                input_format=input_format,
                 output_format=output_format,
                 settings=ConversionSettings(
                     quality=quality,
@@ -227,7 +251,7 @@ async def convert_image(
                     status_code=500,
                     detail={
                         "error_code": "CONV299",
-                        "message": "Conversion failed to produce output",
+                        "message": "The conversion process completed but did not produce any output. This may indicate an issue with the selected output format or image content. Please try a different output format.",
                         "correlation_id": request.state.correlation_id,
                     },
                 )
@@ -351,7 +375,7 @@ async def convert_image(
             status_code=500,
             detail={
                 "error_code": "CONV299",
-                "message": "An unexpected error occurred during conversion",
+                "message": "An unexpected error occurred during image conversion. Please verify your image file is valid and try again. If the problem persists, try converting to a different format.",
                 "correlation_id": request.state.correlation_id,
             },
         )

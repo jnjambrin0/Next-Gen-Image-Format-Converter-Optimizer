@@ -18,6 +18,7 @@ from app.models.conversion import (
 )
 from app.models.requests import ConversionApiRequest
 from app.core.exceptions import ConversionError, InvalidImageError
+from app.services.format_detection_service import format_detection_service
 # Removed circular import - stats_collector will be injected or imported elsewhere
 
 logger = structlog.get_logger()
@@ -63,21 +64,46 @@ class ConversionService:
         Raises:
             ConversionError: If conversion fails
         """
+        # Track start time for stats - moved before try to fix UnboundLocalError
+        start_time = asyncio.get_event_loop().time()
+        
         try:
-            # Validate image data before conversion
-            if not await self.validate_image(image_data, request.input_format):
-                raise InvalidImageError(
-                    f"File content does not match expected format: {request.input_format}"
+            # Detect actual format from image content
+            try:
+                detected_format, is_confident = await format_detection_service.detect_format(image_data)
+                logger.info(
+                    "Format detected",
+                    detected_format=detected_format,
+                    claimed_format=request.input_format,
+                    confident=is_confident
                 )
+                
+                # Use detected format instead of claimed format
+                actual_input_format = detected_format
+                
+                # Log if there's a mismatch (but don't fail)
+                if detected_format != request.input_format.lower():
+                    logger.warning(
+                        "Format mismatch detected",
+                        detected_format=detected_format,
+                        claimed_format=request.input_format,
+                        filename=request.filename
+                    )
+                    
+            except Exception as e:
+                logger.error(
+                    "Format detection failed",
+                    error=str(e),
+                    claimed_format=request.input_format
+                )
+                # Fall back to claimed format if detection fails
+                actual_input_format = request.input_format
 
             # Create core conversion request
             core_request = CoreConversionRequest(
                 output_format=request.output_format,
                 settings=request.settings,
             )
-
-            # Track start time for stats
-            start_time = asyncio.get_event_loop().time()
             
             # Perform conversion with timeout
             timeout = timeout or 30.0  # Default 30 seconds
@@ -85,38 +111,19 @@ class ConversionService:
                 result, output_data = await asyncio.wait_for(
                     self.conversion_manager.convert_with_output(
                         input_data=image_data,
-                        input_format=request.input_format,
+                        input_format=actual_input_format,  # Use detected format
                         request=core_request,
                         timeout=None,  # Don't pass timeout to conversion_manager
                     ),
                     timeout=timeout,
                 )
                 
-                # Record successful conversion stats
-                processing_time = asyncio.get_event_loop().time() - start_time
-                if self.stats_collector:
-                    await self.stats_collector.record_conversion(
-                    input_format=request.input_format,
-                    output_format=request.output_format,
-                    input_size=len(image_data),
-                    processing_time=processing_time,
-                    success=True
-                )
+                # Stats are already recorded in conversion_manager, no need to duplicate
                 
                 return result, output_data
                 
             except asyncio.TimeoutError:
-                # Record timeout failure
-                processing_time = asyncio.get_event_loop().time() - start_time
-                if self.stats_collector:
-                    await self.stats_collector.record_conversion(
-                    input_format=request.input_format,
-                    output_format=request.output_format,
-                    input_size=len(image_data),
-                    processing_time=processing_time,
-                    success=False,
-                    error_type="timeout"
-                )
+                # Stats are already recorded in conversion_manager
                 raise
 
         except asyncio.TimeoutError:
@@ -128,91 +135,44 @@ class ConversionService:
             raise
 
         except Exception as e:
-            # Record other failures (if not already recorded)
-            if not isinstance(e, asyncio.TimeoutError):
-                processing_time = asyncio.get_event_loop().time() - start_time
-                error_type = type(e).__name__.lower()
-                if "memory" in str(e).lower():
-                    error_type = "memory_limit"
-                elif "invalid" in str(e).lower():
-                    error_type = "invalid_input"
-                elif "unsupported" in str(e).lower():
-                    error_type = "unsupported_format"
-                else:
-                    error_type = "conversion_error"
-                    
-                if self.stats_collector:
-                    await self.stats_collector.record_conversion(
-                    input_format=request.input_format,
-                    output_format=request.output_format,
-                    input_size=len(image_data),
-                    processing_time=processing_time,
-                    success=False,
-                    error_type=error_type
-                )
-            
+            # Stats are already recorded in conversion_manager
             logger.error(
                 "Conversion service error",
                 error=str(e),
                 error_type=type(e).__name__,
-                input_format=request.input_format,
+                input_format=actual_input_format if 'actual_input_format' in locals() else request.input_format,
                 output_format=request.output_format,
             )
             raise
 
-    async def validate_image(self, image_data: bytes, expected_format: str) -> bool:
+    async def validate_image(self, image_data: bytes) -> bool:
         """
-        Validate that image data matches the expected format using magic bytes.
+        Validate that image data is a valid image.
 
         Args:
             image_data: Raw image data
-            expected_format: Expected image format
 
         Returns:
-            True if valid, False otherwise
+            True if valid image, False otherwise
         """
         if not image_data:
             return False
 
         try:
-            # Get MIME type from file content
-            if HAS_MAGIC:
-                mime_type = magic.from_buffer(image_data, mime=True)
-            else:
-                # Fallback: Check magic bytes manually for common formats
-                mime_type = self._detect_mime_type_fallback(image_data)
-            
-            # Log detected MIME type for debugging
+            # Try to detect format - if successful, it's a valid image
+            detected_format, _ = await format_detection_service.detect_format(image_data)
             logger.debug(
-                "Image validation",
-                expected_format=expected_format,
-                detected_mime=mime_type,
+                "Image validation successful",
+                detected_format=detected_format,
                 data_size=len(image_data),
             )
-            
-            # Check if detected MIME type is valid for the expected format
-            if mime_type in self._mime_to_format:
-                allowed_formats = self._mime_to_format[mime_type]
-                return expected_format.lower() in allowed_formats
-            
-            # Handle edge cases for less common formats
-            if mime_type == "application/octet-stream":
-                # Some formats might not be detected properly, do additional checks
-                # For now, log warning and allow
-                logger.warning(
-                    "Could not determine MIME type",
-                    expected_format=expected_format,
-                    detected_mime=mime_type,
-                )
-                return True
-                
-            return False
+            return True
             
         except Exception as e:
             logger.error(
                 "Error validating image",
                 error=str(e),
-                expected_format=expected_format,
+                data_size=len(image_data) if image_data else 0,
             )
             return False
 
@@ -272,6 +232,22 @@ class ConversionService:
                     "description": "TIFF image format",
                     "supports_transparency": True,
                     "supports_animation": False,
+                },
+                {
+                    "format": "heif",
+                    "mime_type": "image/heif",
+                    "extensions": [".heif", ".heic"],
+                    "description": "HEIF/HEIC image format",
+                    "supports_transparency": True,
+                    "supports_animation": True,
+                },
+                {
+                    "format": "avif",
+                    "mime_type": "image/avif",
+                    "extensions": [".avif"],
+                    "description": "AVIF image format",
+                    "supports_transparency": True,
+                    "supports_animation": True,
                 },
             ],
             "output_formats": [
@@ -340,6 +316,28 @@ class ConversionService:
             return "image/jp2"
         elif data[:12] == b'\x00\x00\x00\x20ftypavif':
             return "image/avif"
+        # Check for HEIF/HEIC formats
+        # HEIC files can have variable box sizes, check multiple positions
+        elif len(data) >= 12:
+            # Standard check at offset 4
+            if data[4:8] == b'ftyp':
+                brand = data[8:12]
+                # Common HEIF/HEIC brands
+                if brand in [b'heic', b'heix', b'hevc', b'hevx', b'mif1', b'msf1']:
+                    return "image/heif"
+            # Some HEIC files have different structure, check for 'ftyp' in first 40 bytes
+            elif b'ftyp' in data[:40]:
+                ftyp_index = data.find(b'ftyp')
+                if ftyp_index >= 0 and len(data) > ftyp_index + 8:
+                    # Get the brand after ftyp
+                    brand = data[ftyp_index + 4:ftyp_index + 8]
+                    if brand in [b'heic', b'heix', b'hevc', b'hevx', b'mif1', b'msf1']:
+                        return "image/heif"
+                    # Also check compatible brands that follow
+                    for i in range(ftyp_index + 8, min(ftyp_index + 40, len(data) - 4), 4):
+                        compat_brand = data[i:i + 4]
+                        if compat_brand in [b'heic', b'heix', b'hevc', b'hevx', b'mif1', b'msf1']:
+                            return "image/heif"
         else:
             return "application/octet-stream"
 

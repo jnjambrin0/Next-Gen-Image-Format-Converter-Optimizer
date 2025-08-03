@@ -6,7 +6,6 @@ import hashlib
 import asyncio
 from typing import Optional, Dict, Any, List, Tuple
 from pathlib import Path
-import logging
 from collections import OrderedDict
 
 import numpy as np
@@ -26,12 +25,13 @@ from app.core.security.errors_simplified import (
     handle_security_errors
 )
 from app.core.security.memory import secure_clear
+from app.utils.logging import get_logger
 from .classifiers import QuickClassifier, MLClassifier, ClassificationResult
 from .text_detector import TextDetector
 from .face_detector import FaceDetector
 from .performance_monitor import performance_monitor, PerformanceMetrics
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Constants for intelligence engine
 MAX_CACHE_SIZE = 100  # Maximum number of cached results
@@ -140,9 +140,17 @@ class IntelligenceEngine:
                     self.model_loaded = True
                     # Initialize ML classifier with the model
                     self.ml_classifier = MLClassifier(str(content_model_path))
-                    logger.info("Content classifier model loaded successfully")
+                    logger.info(
+                        "Content classifier model loaded",
+                        model_size_mb=round(model_size / 1024 / 1024, 2),
+                        provider="CPUExecutionProvider"
+                    )
             else:
-                logger.warning("Content model not found")
+                logger.info(
+                    "Content model not found - using heuristic mode",
+                    expected_path=str(content_model_path),
+                    fallback_enabled=True
+                )
                 self.fallback_mode = True
                 
             # Load face detection model (optional)
@@ -154,7 +162,10 @@ class IntelligenceEngine:
                 )
                 # Re-initialize face detector with model
                 self.face_detector = FaceDetector(model_session=self.face_detector_session)
-                logger.info("Face detector model loaded successfully")
+                logger.info(
+                    "Face detector model loaded",
+                    model_size_mb=round(face_model_path.stat().st_size / 1024 / 1024, 2)
+                )
                 
             # Load text detection model (optional)
             text_model_path = self.models_dir / "text" / "dbnet_text_detector.onnx"
@@ -165,12 +176,19 @@ class IntelligenceEngine:
                 )
                 # Re-initialize text detector with model
                 self.text_detector = TextDetector(model_session=self.text_detector_session)
-                logger.info("Text detector model loaded successfully")
+                logger.info(
+                    "Text detector model loaded",
+                    model_size_mb=round(text_model_path.stat().st_size / 1024 / 1024, 2)
+                )
                 
         except SecurityError:
             raise
         except Exception as e:
-            logger.error(f"Failed to load ML models: {str(e)}")
+            logger.warning(
+                "ML models initialization failed - using heuristic mode",
+                error_type=type(e).__name__,
+                fallback_enabled=True
+            )
             self.fallback_mode = True
             self.model_loaded = False
     
