@@ -41,6 +41,11 @@ async def lifespan(app: FastAPI):
     intelligence_service.stats_collector = stats_collector
     await intelligence_service.initialize()
     
+    # Initialize recommendation service (CRITICAL: Must be initialized for Story 3.4)
+    from .services.recommendation_service import recommendation_service as rec_service_import, RecommendationService
+    import app.services.recommendation_service as rec_module
+    rec_module.recommendation_service = RecommendationService()
+    
     # Ensure data directory exists for database files
     import os
     os.makedirs("./data", exist_ok=True)

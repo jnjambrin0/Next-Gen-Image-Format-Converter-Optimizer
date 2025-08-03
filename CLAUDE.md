@@ -322,6 +322,20 @@ class ConversionService:
 
 **Why**: Direct imports in `__init__` can create circular dependencies. Use dependency injection pattern instead.
 
+**IMPORTANT**: All new services with singleton pattern MUST be initialized in main.py during the lifespan startup. Example:
+```python
+# In main.py lifespan function:
+from .services.new_service import new_service as svc_import, NewService
+import app.services.new_service as svc_module
+svc_module.new_service = NewService()
+```
+
+**Common Services Requiring Initialization**:
+- `conversion_service` - Already initialized
+- `intelligence_service` - Already initialized  
+- `recommendation_service` - Story 3.4
+- Any future singleton services following this pattern
+
 ### 7. Format Support Decisions
 **CRITICAL**: JPEG 2000 (JP2) is intentionally disabled. Code exists but not registered due to <1% usage and complexity. Don't "fix" this.
 
