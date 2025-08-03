@@ -1,6 +1,6 @@
 """Data models for image conversion."""
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple
 from enum import Enum
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from datetime import datetime, timezone
@@ -49,6 +49,15 @@ class ConversionStatus(str, Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class ContentType(str, Enum):
+    """Detected image content type."""
+
+    PHOTO = "photo"
+    ILLUSTRATION = "illustration"
+    SCREENSHOT = "screenshot"
+    DOCUMENT = "document"
 
 
 class ConversionSettings(BaseModel):
@@ -290,4 +299,61 @@ class ImageMetadata(BaseModel):
         """Calculate aspect ratio."""
         if self.height > 0:
             return round(self.width / self.height, 3)
+        return 0.0
+
+
+class BoundingBox(BaseModel):
+    """Bounding box for detected regions."""
+
+    x: int = Field(ge=0, description="X coordinate of top-left corner")
+    y: int = Field(ge=0, description="Y coordinate of top-left corner")
+    width: int = Field(gt=0, description="Width of the bounding box")
+    height: int = Field(gt=0, description="Height of the bounding box")
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Detection confidence")
+
+    @property
+    def area(self) -> int:
+        """Calculate area of the bounding box."""
+        return self.width * self.height
+
+    @property
+    def center(self) -> Tuple[int, int]:
+        """Calculate center point of the bounding box."""
+        return (self.x + self.width // 2, self.y + self.height // 2)
+
+
+class ContentClassification(BaseModel):
+    """Classification result for image content detection."""
+
+    primary_type: ContentType = Field(description="Primary detected content type")
+    confidence: float = Field(ge=0.0, le=1.0, description="Confidence score for primary type")
+    secondary_types: Optional[List[Tuple[ContentType, float]]] = Field(
+        None, description="Secondary content types with confidence scores"
+    )
+    has_text: bool = Field(default=False, description="Whether text regions were detected")
+    text_regions: Optional[List[BoundingBox]] = Field(None, description="Detected text regions")
+    has_faces: bool = Field(default=False, description="Whether faces were detected")
+    face_regions: Optional[List[BoundingBox]] = Field(None, description="Detected face regions")
+    processing_time_ms: float = Field(description="Processing time in milliseconds")
+    
+    # Additional content analysis
+    complexity_score: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Image complexity score"
+    )
+    dominant_colors: Optional[List[str]] = Field(
+        None, description="List of dominant colors in hex format"
+    )
+    
+    @property
+    def mixed_content(self) -> bool:
+        """Check if image contains mixed content types."""
+        return self.secondary_types is not None and len(self.secondary_types) > 0
+    
+    @property
+    def text_coverage(self) -> float:
+        """Calculate percentage of image covered by text regions."""
+        if not self.text_regions:
+            return 0.0
+        # This would need image dimensions to calculate actual coverage
+        # For now, return a placeholder
         return 0.0

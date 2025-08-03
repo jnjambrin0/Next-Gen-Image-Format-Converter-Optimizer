@@ -3,6 +3,11 @@
 # Security and Processing Limits
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_IMAGE_PIXELS = 178956970  # ~178MP (same as PIL default)
+IMAGE_MAX_PIXELS = MAX_IMAGE_PIXELS  # Alias for compatibility
+
+# Intelligence Engine Limits
+INTELLIGENCE_MODEL_MAX_SIZE = 50 * 1024 * 1024  # 50MB max model size
+INTELLIGENCE_TIMEOUT_MS = 500  # 500ms timeout for classification
 
 # Sandbox Configuration
 SANDBOX_TIMEOUTS = {

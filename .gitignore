@@ -3,6 +3,14 @@
 
 backend/data/
 
+# ML Models - exclude actual model files but keep metadata
+ml_models/**/*.onnx
+ml_models/**/*.pb
+ml_models/**/*.pth
+ml_models/**/*.h5
+ml_models/**/*.tflite
+!ml_models/**/*.json
+
 docs/prd
 docs/architecture
 docs/prd.md

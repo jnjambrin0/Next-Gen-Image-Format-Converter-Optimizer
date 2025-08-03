@@ -36,6 +36,11 @@ async def lifespan(app: FastAPI):
     from .services.conversion_service import conversion_service
     conversion_service.stats_collector = stats_collector
     
+    # Initialize intelligence service
+    from .services.intelligence_service import intelligence_service
+    intelligence_service.stats_collector = stats_collector
+    await intelligence_service.initialize()
+    
     # Ensure data directory exists for database files
     import os
     os.makedirs("./data", exist_ok=True)
@@ -105,6 +110,11 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     print(f"Shutting down {settings.app_name} API")
+    
+    # Shutdown intelligence service
+    from .services.intelligence_service import intelligence_service
+    await intelligence_service.shutdown()
+    
     if getattr(settings, "logging_enabled", True) and 'cleanup_task' in locals():
         cleanup_task.cancel()
 

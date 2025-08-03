@@ -308,7 +308,10 @@ class ConversionService:
 
 **Why**: Direct imports in `__init__` can create circular dependencies. Use dependency injection pattern instead.
 
-### 7. Critical Security Patterns (MUST KNOW)
+### 7. Format Support Decisions
+**CRITICAL**: JPEG 2000 (JP2) is intentionally disabled. Code exists but not registered due to <1% usage and complexity. Don't "fix" this.
+
+### 8. Critical Security Patterns (MUST KNOW)
 
 #### Sandbox Path Validation
 **CRITICAL**: The sandbox blocks ALL absolute paths for security:
@@ -422,3 +425,101 @@ When working on tasks or solving problems, if you discover important information
 3. After user confirmation, update this file accordingly
 
 This ensures that future Claude Code instances always have the most accurate and up-to-date information about the project.
+
+## ML Detection Without Models
+
+When ML models are not available, the system uses heuristic fallbacks:
+- **Face Detection**: YCrCb color space + symmetry analysis + multi-scale sliding windows
+- **Text Detection**: Otsu thresholding + morphological operations + connected components
+- **Performance**: Keep image processing under 1200px for real-time performance
+- **Limitations**: Heuristics detect 1-2 faces max, group detection requires actual ML models
+
+## Critical Numpy Shape Patterns
+
+When working with image windows/kernels:
+- ALWAYS check shape compatibility before operations
+- Use padding for kernel operations to avoid boundary issues
+- For symmetry checks: ensure both halves have same dimensions
+- Example pattern:
+  ```python
+  # Ensure same shape before operations
+  min_width = min(left_half.shape[1], right_half.shape[1])
+  left_half = left_half[:, :min_width]
+  right_half = right_half[:, :min_width]
+  ```
+
+## Performance Constraints
+
+- Text detection on images >5MP should be skipped or downsampled
+- Face detection should process at max 1000px dimension
+- Morphological operations are O(n²) - use vectorized ops when possible
+- Multi-scale processing: use single scale for images >1000px
+
+## Testing with Real Images
+
+- Synthetic test images often fail to represent real-world scenarios
+- Group face detection requires actual ML models (heuristics detect 1-2 faces max)
+- Document text detection needs adaptive thresholding for varying lighting
+- Test expectations should allow ranges (e.g., 1-2 faces) not exact counts
+
+## Critical Intelligence Engine Security Requirements
+
+### Input Validation (MANDATORY)
+**CRITICAL**: ALL image processing MUST validate inputs to prevent DoS:
+
+```python
+# Required in ANY image processing function:
+if not isinstance(image_data, bytes):
+    raise create_file_error("invalid_input_type")
+if len(image_data) == 0:
+    raise create_file_error("empty_input")
+if len(image_data) > 100 * 1024 * 1024:  # 100MB absolute max
+    raise create_file_error("input_too_large")
+
+# For PIL Images:
+if image.width <= 0 or image.height <= 0:
+    raise create_file_error("invalid_dimensions")
+if image.width > 50000 or image.height > 50000:
+    raise create_file_error("dimensions_too_large")
+```
+
+### Concurrency Protection (MANDATORY)
+**CRITICAL**: Prevent resource exhaustion with semaphores:
+
+```python
+# Required for any resource-intensive operation:
+MAX_CONCURRENT = 10
+_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+
+async with _semaphore:
+    # Perform operation
+```
+
+### Cache Security Pattern
+**CRITICAL**: NEVER return direct cache references:
+
+```python
+# CORRECT: Deep copy prevents cache poisoning
+import copy
+result_copy = copy.deepcopy(cached_result)
+return result_copy
+
+# WRONG: Allows external modification
+return cached_result  # SECURITY VULNERABILITY!
+```
+
+### Performance Requirements
+All image processing MUST meet:
+- P99 latency < 500ms
+- Memory stable (< 50MB growth per 1000 ops)
+- Support 10+ concurrent requests
+- Graceful degradation under load
+
+## Non-Maximum Suppression Pattern
+
+For detection algorithms, use distance-based grouping in addition to IoU:
+```python
+# Group if overlapping OR centers are close
+if iou > 0.1 or center_dist < max_size * 2.0:
+    # Merge detections using weighted average by confidence
+```
