@@ -235,6 +235,93 @@ def validate_quality(quality_str):
         raise ValueError(f"Invalid quality parameter: {e}")
 
 
+# Advanced parameter whitelist for each format (Story 3.5)
+ALLOWED_ADVANCED_PARAMS = {
+    "jpeg": {
+        "progressive": {"type": bool, "default": False},
+        "subsampling": {"type": int, "values": [0, 1, 2], "default": 2},
+        "optimize": {"type": bool, "default": True}
+    },
+    "jpg": {  # Same as jpeg
+        "progressive": {"type": bool, "default": False},
+        "subsampling": {"type": int, "values": [0, 1, 2], "default": 2},
+        "optimize": {"type": bool, "default": True}
+    },
+    "png": {
+        "compress_level": {"type": int, "min": 0, "max": 9, "default": 6},
+        "progressive": {"type": bool, "default": False},
+        "optimize": {"type": bool, "default": True}
+    },
+    "webp": {
+        "lossless": {"type": bool, "default": False},
+        "method": {"type": int, "min": 0, "max": 6, "default": 4},
+        "alpha_quality": {"type": int, "min": 1, "max": 100, "default": 100}
+    }
+}
+
+
+def validate_advanced_params(params, output_format):
+    """Validate and sanitize advanced parameters for a given format.
+    
+    Args:
+        params: Dict of advanced parameters
+        output_format: Target output format
+        
+    Returns:
+        Dict of validated parameters safe to use
+    """
+    if not params or not isinstance(params, dict):
+        return {}
+        
+    format_lower = output_format.lower()
+    allowed_params = ALLOWED_ADVANCED_PARAMS.get(format_lower, {})
+    
+    if not allowed_params:
+        # Format doesn't support advanced params
+        return {}
+        
+    validated = {}
+    
+    for param_name, param_value in params.items():
+        # Skip unknown parameters (security)
+        if param_name not in allowed_params:
+            continue
+            
+        param_spec = allowed_params[param_name]
+        expected_type = param_spec["type"]
+        
+        # Type validation
+        if not isinstance(param_value, expected_type):
+            # Try to convert if possible
+            if expected_type == bool and isinstance(param_value, (int, str)):
+                try:
+                    param_value = bool(param_value) if isinstance(param_value, int) else param_value.lower() == "true"
+                except:
+                    continue
+            elif expected_type == int and isinstance(param_value, str):
+                try:
+                    param_value = int(param_value)
+                except:
+                    continue
+            else:
+                continue
+        
+        # Value validation
+        if "values" in param_spec:
+            # Must be one of allowed values
+            if param_value not in param_spec["values"]:
+                continue
+        elif "min" in param_spec and "max" in param_spec:
+            # Must be within range
+            if not param_spec["min"] <= param_value <= param_spec["max"]:
+                continue
+                
+        # Passed all validation
+        validated[param_name] = param_value
+    
+    return validated
+
+
 def check_file_system_writes():
     """Check for unexpected file writes during conversion."""
     import tempfile
@@ -294,6 +381,18 @@ def main():
             input_format = validate_format(sys.argv[1], ALLOWED_INPUT_FORMATS)
             output_format = validate_format(sys.argv[2], ALLOWED_OUTPUT_FORMATS)
             quality = validate_quality(sys.argv[3])
+            
+            # Parse optional advanced parameters (Story 3.5)
+            advanced_params = {}
+            if len(sys.argv) > 4:
+                try:
+                    raw_params = json.loads(sys.argv[4])
+                    if isinstance(raw_params, dict):
+                        # Validate parameters for security
+                        advanced_params = validate_advanced_params(raw_params, output_format)
+                except (json.JSONDecodeError, ValueError):
+                    # Invalid JSON, ignore advanced params
+                    advanced_params = {}
         except ValueError as e:
             write_error("VALIDATION_ERROR", str(e))
             sys.exit(1)
@@ -362,6 +461,20 @@ def main():
         if output_format.upper() == "PNG":
             save_kwargs["optimize"] = True
             save_kwargs["compress_level"] = PNG_COMPRESS_LEVEL
+            
+        # Apply validated advanced optimization parameters (Story 3.5)
+        # Parameters have already been validated by validate_advanced_params()
+        # so we can safely apply them
+        if advanced_params:
+            # All parameters are already validated and safe to use
+            for param_name, param_value in advanced_params.items():
+                if param_name == "lossless" and param_value and output_format.upper() == "WEBP":
+                    # Special case: remove quality for lossless WebP
+                    save_kwargs["lossless"] = True
+                    save_kwargs.pop("quality", None)
+                else:
+                    # Apply the validated parameter
+                    save_kwargs[param_name] = param_value
         
         # Skip format validation - PIL will handle this during save
         # Image.SAVE may not be populated until formats are used

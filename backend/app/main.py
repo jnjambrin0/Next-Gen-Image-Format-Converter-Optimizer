@@ -46,6 +46,13 @@ async def lifespan(app: FastAPI):
     import app.services.recommendation_service as rec_module
     rec_module.recommendation_service = RecommendationService()
     
+    # Initialize optimization service (Story 3.5)
+    from .services.optimization_service import optimization_service
+    optimization_service.stats_collector = stats_collector
+    optimization_service.set_intelligence_engine(intelligence_service.engine)
+    # Set conversion service
+    optimization_service.set_conversion_service(conversion_service)
+    
     # Ensure data directory exists for database files
     import os
     os.makedirs("./data", exist_ok=True)

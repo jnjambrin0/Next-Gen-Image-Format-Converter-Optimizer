@@ -572,3 +572,101 @@ For detection algorithms, use distance-based grouping in addition to IoU:
 if iou > 0.1 or center_dist < max_size * 2.0:
     # Merge detections using weighted average by confidence
 ```
+
+### 10. Advanced Parameter Validation in Sandboxed Conversion
+**CRITICAL**: The sandboxed conversion script MUST validate ALL advanced parameters against a whitelist to prevent parameter injection attacks:
+
+```python
+# CORRECT: Whitelist validation for advanced parameters
+ALLOWED_ADVANCED_PARAMS = {
+    "jpeg": {
+        "progressive": {"type": bool, "default": False},
+        "subsampling": {"type": int, "values": [0, 1, 2], "default": 2},
+        "optimize": {"type": bool, "default": True}
+    },
+    "webp": {
+        "lossless": {"type": bool, "default": False},
+        "method": {"type": int, "min": 0, "max": 6, "default": 4},
+        "alpha_quality": {"type": int, "min": 1, "max": 100, "default": 100}
+    }
+}
+
+# WRONG: Passing unvalidated parameters
+save_kwargs.update(advanced_params)  # SECURITY VULNERABILITY!
+```
+
+**Why**: Without validation, attackers could inject arbitrary parameters to PIL's save() method, potentially leading to code execution or file access.
+
+### 11. Quality Metrics Without Heavy Dependencies
+**CRITICAL**: The system uses estimated quality metrics instead of scikit-image to reduce container size by 200MB:
+
+```python
+# Quality estimation based on file size reduction:
+if size_reduction < 10:
+    estimated_ssim = 0.98
+    estimated_psnr = 45.0
+elif size_reduction < 30:
+    estimated_ssim = 0.95
+    estimated_psnr = 38.0
+# etc...
+```
+
+**Trade-off**: Estimates are less accurate but sufficient for user feedback. Real quality analysis would require scikit-image (200MB) or similar libraries.
+
+### 12. Service Memory Management Pattern
+**CRITICAL**: Services storing temporary data MUST implement cleanup methods:
+
+```python
+# CORRECT: Clear reference after retrieval
+def get_last_optimized_data(self) -> Optional[bytes]:
+    data = self._last_optimized_data
+    self._last_optimized_data = None  # Clear reference
+    return data
+
+# WRONG: Keeping references causes memory leaks
+def get_last_optimized_data(self) -> Optional[bytes]:
+    return self._last_optimized_data  # Memory leak!
+```
+
+**Why**: Python's garbage collector won't free memory if references are held. Explicit cleanup prevents memory exhaustion in long-running services.
+
+### 13. Global Timeout Pattern for Long Operations
+**CRITICAL**: ALL potentially long-running operations MUST have timeouts at the API level:
+
+```python
+# CORRECT: Global timeout at API endpoint
+OPTIMIZATION_TIMEOUT_SECONDS = 30
+
+try:
+    response = await asyncio.wait_for(
+        optimization_service.optimize_image(...),
+        timeout=OPTIMIZATION_TIMEOUT_SECONDS
+    )
+except asyncio.TimeoutError:
+    raise HTTPException(status_code=504, detail=f"Operation timeout after {OPTIMIZATION_TIMEOUT_SECONDS} seconds")
+
+# WRONG: Only internal timeouts (can be bypassed)
+# Relying only on service-level timeouts is insufficient
+```
+
+**Why**: Prevents DoS attacks where malicious users could hang the server with complex operations. The timeout MUST be enforced at the API boundary.
+
+### 14. Testing with Sample Images
+**CRITICAL**: Real test images are located in specific directories:
+
+```bash
+# Real sample images for testing:
+backend/images_sample/
+├── jpg/          # JPEG samples (routine.jpg, etc.)
+├── png/          # PNG samples (note: lofi_cat.png is 6.9MB)
+├── webp/         # WebP samples (astronaut-nord.webp, etc.)
+├── heic/         # HEIC samples (often misnamed - verify with format detection)
+└── other formats...
+
+# For optimization testing, use smaller images:
+- jpg/routine.jpg (reasonable size)
+- webp/astronaut-nord.webp (good for testing)
+# Avoid png/lofi_cat.png for quick tests (6.9MB)
+```
+
+**Important**: Many files have wrong extensions. Always use format detection service to verify actual format before testing.

@@ -129,7 +129,6 @@ class ConversionService:
         except asyncio.TimeoutError:
             logger.error(
                 "Conversion timeout",
-                filename=request.filename,
                 timeout=timeout,
             )
             raise
@@ -140,10 +139,81 @@ class ConversionService:
                 "Conversion service error",
                 error=str(e),
                 error_type=type(e).__name__,
-                input_format=actual_input_format if 'actual_input_format' in locals() else request.input_format,
-                output_format=request.output_format,
             )
             raise
+
+    async def convert_with_advanced_options(
+        self,
+        image_data: bytes,
+        output_format: str,
+        quality: int = 85,
+        **advanced_options
+    ) -> bytes:
+        """Convert image with advanced optimization options.
+        
+        This method is used by the optimization service for advanced conversions.
+        
+        Args:
+            image_data: Input image data
+            output_format: Target output format
+            quality: Base quality setting
+            **advanced_options: Advanced optimization parameters
+            
+        Returns:
+            Converted image data
+        """
+        # Detect input format
+        detected_format = await self._detect_format(image_data)
+        if not detected_format:
+            raise InvalidImageError("Unable to detect image format")
+            
+        # Create conversion settings
+        from app.models.conversion import ConversionSettings
+        settings = ConversionSettings(
+            quality=quality,
+            strip_metadata=True,
+            optimize=True,
+            advanced_optimization=advanced_options
+        )
+        
+        # Create conversion request with advanced options
+        core_request = CoreConversionRequest(
+            output_format=output_format,
+            settings=settings
+        )
+        
+        # Perform conversion
+        result = await self.conversion_manager.convert_image(
+            image_data,
+            detected_format,
+            core_request
+        )
+        
+        if result.status != "completed":
+            raise ConversionError(f"Conversion failed: {result.error_message}")
+            
+        # Get output data
+        output_data = getattr(result, "_output_data", None)
+        if not output_data:
+            raise ConversionError("No output data from conversion")
+            
+        return output_data
+    
+    async def _detect_format(self, image_data: bytes) -> Optional[str]:
+        """Detect image format from data.
+        
+        Args:
+            image_data: Raw image data
+            
+        Returns:
+            Detected format string or None
+        """
+        try:
+            from app.services.format_detection_service import format_detection_service
+            detected_format, _ = await format_detection_service.detect_format(image_data)
+            return detected_format
+        except Exception:
+            return None
 
     async def validate_image(self, image_data: bytes) -> bool:
         """

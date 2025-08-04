@@ -590,6 +590,11 @@ class ConversionManager:
             str(settings.quality)
         ]
         
+        # Add advanced optimization parameters if present (Story 3.5)
+        if settings.advanced_optimization:
+            import json
+            command.append(json.dumps(settings.advanced_optimization))
+        
         return command
 
     async def _validate_input(self, input_data: bytes, input_format: str) -> None:

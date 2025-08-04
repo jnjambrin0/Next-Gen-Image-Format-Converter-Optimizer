@@ -81,6 +81,12 @@ class ConversionSettings(BaseModel):
         default=None, 
         description="Optimization preset: 'fast', 'balanced', 'best'"
     )
+    
+    # Advanced optimization options (Story 3.5)
+    advanced_optimization: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Advanced optimization parameters"
+    )
 
     @field_validator("quality")
     @classmethod
