@@ -117,10 +117,16 @@ function createUploadCard() {
   fileInfo.id = 'fileInfo'
   fileInfo.className = 'mt-4 hidden'
 
+  // File list preview container
+  const fileListContainer = document.createElement('div')
+  fileListContainer.id = 'fileListPreview'
+  fileListContainer.className = 'mt-4 hidden'
+
   card.appendChild(h2)
   card.appendChild(dropzone)
   card.appendChild(errorMessage)
   card.appendChild(fileInfo)
+  card.appendChild(fileListContainer)
 
   return card
 }
@@ -142,6 +148,7 @@ function createDropzone() {
   fileInput.id = 'fileInput'
   fileInput.className = 'sr-only'
   fileInput.accept = 'image/*'
+  fileInput.multiple = true
   fileInput.setAttribute('aria-label', 'File input for image selection')
 
   // Upload icon
@@ -150,21 +157,21 @@ function createDropzone() {
   // Instructions
   const instructions = document.createElement('p')
   instructions.className = 'text-gray-600 pointer-events-none'
-  instructions.textContent = 'Drag and drop images here, or click to select'
+  instructions.textContent = 'Drag and drop images or folders here, or click to select'
 
   const formats = document.createElement('p')
   formats.className = 'text-sm text-gray-500 mt-2 pointer-events-none'
   formats.textContent = 'Supported formats: JPEG, PNG, WebP, HEIF/HEIC, BMP, TIFF, GIF, AVIF'
 
-  const maxSize = document.createElement('p')
-  maxSize.className = 'text-xs text-gray-400 mt-1 pointer-events-none'
-  maxSize.textContent = 'Maximum file size: 50MB'
+  const limits = document.createElement('p')
+  limits.className = 'text-xs text-gray-400 mt-1 pointer-events-none'
+  limits.textContent = 'Maximum: 100 files, 50MB per file'
 
   dropzone.appendChild(fileInput)
   dropzone.appendChild(icon)
   dropzone.appendChild(instructions)
   dropzone.appendChild(formats)
-  dropzone.appendChild(maxSize)
+  dropzone.appendChild(limits)
 
   return dropzone
 }

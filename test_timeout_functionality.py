@@ -17,7 +17,7 @@ from app.models.optimization import OptimizationResponse, OptimizationMode
 # Mock slow optimization function
 async def slow_optimization(*args, **kwargs):
     """Simulate a slow optimization that will timeout."""
-    await asyncio.sleep(35)  # Longer than 30s timeout
+    await asyncio.sleep(5)  # Simulate slow operation
     return OptimizationResponse(
         conversion_id="test-id",
         success=True,

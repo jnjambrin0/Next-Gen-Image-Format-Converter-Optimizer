@@ -7,13 +7,13 @@ import time
 async def slow_operation():
     """Simulate a slow operation."""
     print("Starting slow operation...")
-    await asyncio.sleep(5)  # 5 seconds
+    await asyncio.sleep(3.5)  # 3.5 seconds (slightly more than timeout)
     print("Slow operation completed")
     return "Success"
 
 async def test_timeout():
     """Test asyncio timeout functionality."""
-    print("Test 1: Operation that should timeout (3s timeout, 5s operation)")
+    print("Test 1: Operation that should timeout (3s timeout, 3.5s operation)")
     
     try:
         start = time.time()
@@ -55,7 +55,7 @@ async def test_optimization_timeout_direct():
     # Create a slow conversion function
     async def slow_conversion(*args, **kwargs):
         print("Starting slow conversion...")
-        await asyncio.sleep(35)  # Longer than 30s timeout
+        await asyncio.sleep(5)  # Simulate slow conversion
         return b"fake_result"
     
     # Set up service
@@ -77,7 +77,7 @@ async def test_optimization_timeout_direct():
                 request,
                 "jpeg"
             ),
-            timeout=30.0
+            timeout=3.0
         )
         elapsed = time.time() - start
         print(f"✗ Optimization completed in {elapsed:.1f}s - should have timed out!")

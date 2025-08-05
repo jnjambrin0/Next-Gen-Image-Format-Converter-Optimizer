@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Processing Test - Fixed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .file-input {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Batch Processing Test - URL Fix Verification</h1>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="status" class="status info">Ready to test batch processing</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>1. API Endpoint Test</h2>
+        <button onclick="testBatchAPI()">Test Batch API</button>
+        <div id="apiResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Multiple File Upload Test</h2>
+        <div class="file-input">
+            <input type="file" id="fileInput" multiple accept="image/*">
+            <button onclick="testMultipleFiles()">Upload Selected Files</button>
+        </div>
+        <div id="fileResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Test Results</h2>
+        <pre id="testLog">Test log will appear here...</pre>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        const logElement = document.getElementById('testLog');
+        const statusElement = document.getElementById('status');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+        
+        function updateStatus(message, type = 'info') {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        async function testBatchAPI() {
+            log('Testing batch API endpoint...');
+            updateStatus('Testing batch API...', 'warning');
+            
+            // Create a test file
+            const canvas = document.createElement('canvas');
+            canvas.width = 100;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(0, 0, 100, 100);
+            
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'test.png', { type: 'image/png' });
+                const formData = new FormData();
+                formData.append('files', file);
+                formData.append('output_format', 'webp');
+                
+                try {
+                    log(`Calling POST ${API_BASE}/batch/`);
+                    const response = await fetch(`${API_BASE}/batch/`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    log(`Response status: ${response.status}`);
+                    
+                    if (response.status === 202) {
+                        const data = await response.json();
+                        log('✅ SUCCESS! Batch API is working correctly', 'success');
+                        log(`Job ID: ${data.job_id}`);
+                        log(`Response: ${JSON.stringify(data, null, 2)}`);
+                        updateStatus('✅ Batch API is working!', 'success');
+                        
+                        // Test other endpoints
+                        await testOtherEndpoints(data.job_id);
+                    } else if (response.status === 404) {
+                        log('❌ ERROR: 404 Not Found - URL issue not fixed', 'error');
+                        updateStatus('❌ Batch API not found (404)', 'error');
+                    } else {
+                        log(`⚠️ Unexpected status: ${response.status}`, 'warning');
+                        const text = await response.text();
+                        log(`Response: ${text}`);
+                        updateStatus(`Unexpected status: ${response.status}`, 'warning');
+                    }
+                } catch (error) {
+                    log(`❌ ERROR: ${error.message}`, 'error');
+                    updateStatus(`Error: ${error.message}`, 'error');
+                }
+            }, 'image/png');
+        }
+        
+        async function testOtherEndpoints(jobId) {
+            log('\nTesting other batch endpoints...');
+            
+            const endpoints = [
+                { name: 'Status', url: `/batch/${jobId}/status`, method: 'GET' },
+                { name: 'Results', url: `/batch/${jobId}/results`, method: 'GET' }
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${API_BASE}${endpoint.url}`, {
+                        method: endpoint.method
+                    });
+                    if (response.ok) {
+                        log(`✅ ${endpoint.name} endpoint: ${response.status} OK`);
+                    } else {
+                        log(`⚠️ ${endpoint.name} endpoint: ${response.status}`);
+                    }
+                } catch (error) {
+                    log(`❌ ${endpoint.name} endpoint error: ${error.message}`);
+                }
+            }
+        }
+        
+        async function testMultipleFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = Array.from(fileInput.files);
+            
+            if (files.length < 2) {
+                log('⚠️ Please select at least 2 files', 'warning');
+                updateStatus('Please select at least 2 files', 'warning');
+                return;
+            }
+            
+            log(`\nTesting with ${files.length} files...`);
+            updateStatus(`Uploading ${files.length} files...`, 'info');
+            
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('files', file);
+                log(`- ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+            });
+            formData.append('output_format', 'webp');
+            formData.append('quality', '85');
+            
+            try {
+                const response = await fetch(`${API_BASE}/batch/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.status === 202) {
+                    const data = await response.json();
+                    log(`✅ Batch job created successfully!`);
+                    log(`Job ID: ${data.job_id}`);
+                    log(`WebSocket URL: ${data.websocket_url}`);
+                    updateStatus(`✅ Batch job created: ${data.job_id}`, 'success');
+                    
+                    // Poll for status
+                    setTimeout(() => pollStatus(data.job_id), 1000);
+                } else {
+                    log(`❌ Failed: ${response.status}`, 'error');
+                    const text = await response.text();
+                    log(`Response: ${text}`);
+                    updateStatus(`Failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                updateStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function pollStatus(jobId) {
+            try {
+                const response = await fetch(`${API_BASE}/batch/${jobId}/status`);
+                if (response.ok) {
+                    const status = await response.json();
+                    log(`Status: ${status.status} - ${status.completed_files}/${status.total_files} completed`);
+                    
+                    if (status.status === 'completed' || status.status === 'failed') {
+                        updateStatus(`Job ${status.status}: ${status.completed_files}/${status.total_files} files`, 
+                                   status.status === 'completed' ? 'success' : 'error');
+                    } else {
+                        // Poll again
+                        setTimeout(() => pollStatus(jobId), 2000);
+                    }
+                }
+            } catch (error) {
+                log(`Poll error: ${error.message}`);
+            }
+        }
+        
+        // Initial message
+        log('Batch Processing URL Fix Verification Test');
+        log('=========================================');
+        log('This test verifies that the batch API URLs are now correct.');
+        log('Expected: /api/batch/ (not /api/api/batch/)');
+        log('');
+        log('Click "Test Batch API" to start...');
+    </script>
+</body>
+</html>

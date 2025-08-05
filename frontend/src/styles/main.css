@@ -26,7 +26,11 @@
   }
 
   .dropzone-active {
-    @apply border-primary-500 bg-primary-50;
+    @apply border-primary-500 bg-primary-50 scale-[1.02];
+  }
+  
+  .dropzone-active * {
+    @apply pointer-events-none;
   }
 
   .fade-in {

@@ -45,7 +45,8 @@ source .venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies (when available)
 pip install -r requirements.txt
 
-# Run development server
+# Run development server (MUST be from backend/ directory)
+cd backend
 uvicorn app.main:app --reload --port 8080
 
 # Run tests
@@ -193,6 +194,9 @@ pytest backend/tests/security/
 
 ### Key Configuration Files
 - `app/core/constants.py` - All system constants (limits, formats, security patterns)
+  - `MAX_BATCH_SIZE = 100` - Maximum files per batch
+  - `MAX_BATCH_WORKERS = 10` - Maximum concurrent workers
+  - `BATCH_CHUNK_SIZE = 10` - Process files in chunks
 - `app/core/conversion/sandboxed_convert.py` - Isolated conversion subprocess
 - `app/utils/logging.py` - Logging configuration (MUST use stderr)
 
@@ -334,7 +338,26 @@ svc_module.new_service = NewService()
 - `conversion_service` - Already initialized
 - `intelligence_service` - Already initialized  
 - `recommendation_service` - Story 3.4
+- `optimization_service` - Story 3.5 (requires intelligence_engine and conversion_service)
+- `batch_service` - Story 4.1 (requires conversion_service which also injects to internal BatchManager)
 - Any future singleton services following this pattern
+
+**Batch Service Special Initialization**:
+```python
+# CRITICAL: BatchService requires double injection
+# In main.py lifespan function:
+from app.services.batch_service import batch_service
+batch_service.set_conversion_service(conversion_service)
+# The BatchManager inside also needs conversion_service injected
+```
+
+**Optimization Service Special Initialization**:
+```python
+# In main.py lifespan function (AFTER other services):
+from app.services.optimization_service import optimization_service
+optimization_service.set_intelligence_engine(intelligence_service.engine)
+optimization_service.set_conversion_service(conversion_service)
+```
 
 ### 7. Format Support Decisions
 **CRITICAL**: JPEG 2000 (JP2) is intentionally disabled. Code exists but not registered due to <1% usage and complexity. Don't "fix" this.
@@ -360,7 +383,23 @@ if filename.endswith('.jpg'):
 
 **Key Service**: `app/services/format_detection_service.py` - Single source of truth for format detection.
 
-### 9. Critical Security Patterns (MUST KNOW)
+### 9. Quality Analyzer Implementation Pattern
+**CRITICAL**: The project uses a custom SSIM/PSNR implementation to avoid heavy dependencies:
+
+```python
+# Custom quality analyzer in app/core/optimization/quality_analyzer.py
+# Implements real SSIM/PSNR calculations using numpy-based algorithms
+# Avoids 200MB scikit-image dependency while providing accurate metrics
+# Uses custom convolution for SSIM calculation (slower but dependency-free)
+```
+
+**Key Features**:
+- Real perceptual quality metrics (not estimates)
+- Pure Python/numpy implementation
+- LRU cache for repeated calculations
+- Automatic downsampling for large images (>2048px)
+
+### 10. Critical Security Patterns (MUST KNOW)
 
 #### Sandbox Path Validation
 **CRITICAL**: The sandbox blocks ALL absolute paths for security:
@@ -403,23 +442,23 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 - **NEVER** add telemetry or external service calls
 - All processing must work completely offline
 
-### Quick Testing
-```bash
-# Test all format conversions
-python test_conversion.py
 
-# Test specific format
-python test_conversion.py png
-```
-
-## API Endpoints (Planned)
+## API Endpoints
 
 - `POST /api/convert` - Convert single image
-- `POST /api/batch` - Batch conversion
-- `GET /api/health` - Health check
-- `GET /api/formats` - Supported formats
-- `POST /api/detect` - Content type detection
-- `GET /api/presets` - Available presets
+- `POST /api/batch` - Create batch conversion job (up to 100 files)
+- `GET /api/batch/{job_id}/status` - Get batch job status
+- `DELETE /api/batch/{job_id}` - Cancel entire batch job
+- `DELETE /api/batch/{job_id}/items/{file_index}` - Cancel specific file in batch
+- `POST /api/batch/{job_id}/websocket-token` - Generate new WebSocket auth token
+- `WebSocket /ws/batch/{job_id}` - Real-time progress updates for batch job
+- `GET /api/health` - Health check with network isolation status
+- `GET /api/formats` - List supported input/output formats
+- `GET /api/monitoring/stats` - Conversion statistics
+- `GET /api/monitoring/errors` - Recent errors
+- `GET /api/security/status` - Security engine status
+- `GET /api/intelligence/capabilities` - ML detection capabilities
+- `GET /api/optimization/presets` - Available optimization presets
 
 ## Development Guidelines
 
@@ -475,41 +514,6 @@ When working on tasks or solving problems, if you discover important information
 
 This ensures that future Claude Code instances always have the most accurate and up-to-date information about the project.
 
-## ML Detection Without Models
-
-When ML models are not available, the system uses heuristic fallbacks:
-- **Face Detection**: YCrCb color space + symmetry analysis + multi-scale sliding windows
-- **Text Detection**: Otsu thresholding + morphological operations + connected components
-- **Performance**: Keep image processing under 1200px for real-time performance
-- **Limitations**: Heuristics detect 1-2 faces max, group detection requires actual ML models
-
-## Critical Numpy Shape Patterns
-
-When working with image windows/kernels:
-- ALWAYS check shape compatibility before operations
-- Use padding for kernel operations to avoid boundary issues
-- For symmetry checks: ensure both halves have same dimensions
-- Example pattern:
-  ```python
-  # Ensure same shape before operations
-  min_width = min(left_half.shape[1], right_half.shape[1])
-  left_half = left_half[:, :min_width]
-  right_half = right_half[:, :min_width]
-  ```
-
-## Performance Constraints
-
-- Text detection on images >5MP should be skipped or downsampled
-- Face detection should process at max 1000px dimension
-- Morphological operations are O(n²) - use vectorized ops when possible
-- Multi-scale processing: use single scale for images >1000px
-
-## Testing with Real Images
-
-- Synthetic test images often fail to represent real-world scenarios
-- Group face detection requires actual ML models (heuristics detect 1-2 faces max)
-- Document text detection needs adaptive thresholding for varying lighting
-- Test expectations should allow ranges (e.g., 1-2 faces) not exact counts
 
 ## Critical Intelligence Engine Security Requirements
 
@@ -564,6 +568,27 @@ All image processing MUST meet:
 - Support 10+ concurrent requests
 - Graceful degradation under load
 
+### ContentClassification Model Attributes
+**CRITICAL**: The ContentClassification model uses plural attribute names:
+
+```python
+# CORRECT: Use plural attributes (Story 3.5 update)
+classification.face_regions  # List[BoundingBox] - face detection results
+classification.text_regions  # List[BoundingBox] - text detection results
+
+# WRONG: Singular names no longer exist
+classification.faces  # AttributeError
+classification.text   # AttributeError
+```
+
+**Integration Example**:
+```python
+# In region optimizer or any detection consumer:
+if classification.face_regions:
+    for face in classification.face_regions:
+        bbox = (face.x, face.y, face.x + face.width, face.y + face.height)
+```
+
 ## Non-Maximum Suppression Pattern
 
 For detection algorithms, use distance-based grouping in addition to IoU:
@@ -573,100 +598,170 @@ if iou > 0.1 or center_dist < max_size * 2.0:
     # Merge detections using weighted average by confidence
 ```
 
-### 10. Advanced Parameter Validation in Sandboxed Conversion
-**CRITICAL**: The sandboxed conversion script MUST validate ALL advanced parameters against a whitelist to prevent parameter injection attacks:
+### 10. Service Return Value Patterns
+**CRITICAL**: The conversion_service.convert() method MUST return a tuple (result, output_data):
 
 ```python
-# CORRECT: Whitelist validation for advanced parameters
-ALLOWED_ADVANCED_PARAMS = {
-    "jpeg": {
-        "progressive": {"type": bool, "default": False},
-        "subsampling": {"type": int, "values": [0, 1, 2], "default": 2},
-        "optimize": {"type": bool, "default": True}
-    },
-    "webp": {
-        "lossless": {"type": bool, "default": False},
-        "method": {"type": int, "min": 0, "max": 6, "default": 4},
-        "alpha_quality": {"type": int, "min": 1, "max": 100, "default": 100}
-    }
-}
+# CORRECT: In conversion_service.py
+async def convert(self, image_data: bytes, request: ConversionRequest, ...):
+    result, output_data = await self.conversion_manager.convert_with_output(...)
+    return result, output_data  # MUST return tuple
 
-# WRONG: Passing unvalidated parameters
-save_kwargs.update(advanced_params)  # SECURITY VULNERABILITY!
+# In API routes:
+result, output_data = await conversion_service.convert(...)  # Expects tuple
+
+# WRONG: Returning only result causes ValueError
+return result  # ValueError: too many values to unpack (expected 2)
 ```
 
-**Why**: Without validation, attackers could inject arbitrary parameters to PIL's save() method, potentially leading to code execution or file access.
+**Why**: The API route expects both the ConversionResult object and the actual image bytes. Missing either causes runtime errors.
 
-### 11. Quality Metrics Without Heavy Dependencies
-**CRITICAL**: The system uses estimated quality metrics instead of scikit-image to reduce container size by 200MB:
-
-```python
-# Quality estimation based on file size reduction:
-if size_reduction < 10:
-    estimated_ssim = 0.98
-    estimated_psnr = 45.0
-elif size_reduction < 30:
-    estimated_ssim = 0.95
-    estimated_psnr = 38.0
-# etc...
-```
-
-**Trade-off**: Estimates are less accurate but sufficient for user feedback. Real quality analysis would require scikit-image (200MB) or similar libraries.
-
-### 12. Service Memory Management Pattern
-**CRITICAL**: Services storing temporary data MUST implement cleanup methods:
-
-```python
-# CORRECT: Clear reference after retrieval
-def get_last_optimized_data(self) -> Optional[bytes]:
-    data = self._last_optimized_data
-    self._last_optimized_data = None  # Clear reference
-    return data
-
-# WRONG: Keeping references causes memory leaks
-def get_last_optimized_data(self) -> Optional[bytes]:
-    return self._last_optimized_data  # Memory leak!
-```
-
-**Why**: Python's garbage collector won't free memory if references are held. Explicit cleanup prevents memory exhaustion in long-running services.
-
-### 13. Global Timeout Pattern for Long Operations
-**CRITICAL**: ALL potentially long-running operations MUST have timeouts at the API level:
-
-```python
-# CORRECT: Global timeout at API endpoint
-OPTIMIZATION_TIMEOUT_SECONDS = 30
-
-try:
-    response = await asyncio.wait_for(
-        optimization_service.optimize_image(...),
-        timeout=OPTIMIZATION_TIMEOUT_SECONDS
-    )
-except asyncio.TimeoutError:
-    raise HTTPException(status_code=504, detail=f"Operation timeout after {OPTIMIZATION_TIMEOUT_SECONDS} seconds")
-
-# WRONG: Only internal timeouts (can be bypassed)
-# Relying only on service-level timeouts is insufficient
-```
-
-**Why**: Prevents DoS attacks where malicious users could hang the server with complex operations. The timeout MUST be enforced at the API boundary.
-
-### 14. Testing with Sample Images
-**CRITICAL**: Real test images are located in specific directories:
+### 11. Server Execution Location
+**CRITICAL**: The uvicorn server MUST be run from the backend/ directory:
 
 ```bash
-# Real sample images for testing:
-backend/images_sample/
-├── jpg/          # JPEG samples (routine.jpg, etc.)
-├── png/          # PNG samples (note: lofi_cat.png is 6.9MB)
-├── webp/         # WebP samples (astronaut-nord.webp, etc.)
-├── heic/         # HEIC samples (often misnamed - verify with format detection)
-└── other formats...
+# CORRECT: Run from backend directory
+cd backend
+uvicorn app.main:app --reload --port 8080
 
-# For optimization testing, use smaller images:
-- jpg/routine.jpg (reasonable size)
-- webp/astronaut-nord.webp (good for testing)
-# Avoid png/lofi_cat.png for quick tests (6.9MB)
+# WRONG: Running from project root
+uvicorn backend.app.main:app  # ModuleNotFoundError: No module named 'app'
 ```
 
-**Important**: Many files have wrong extensions. Always use format detection service to verify actual format before testing.
+**Why**: The Python import paths are relative to the backend/ directory. Running from elsewhere breaks all imports.
+
+### 12. Optimization Module Exports
+**CRITICAL**: The optimization module must export all required classes:
+
+```python
+# In app/core/optimization/__init__.py
+from .optimization_engine import OptimizationEngine, OptimizationMode
+from .lossless_compressor import LosslessCompressor, CompressionLevel
+
+__all__ = [
+    # ... other exports ...
+    "OptimizationMode",  # Required for performance tests
+    "CompressionLevel",  # Required for performance tests
+]
+```
+
+**Why**: Tests and other modules depend on these enums being accessible from the optimization package.
+
+### 13. Realistic Test Mock Patterns
+**CRITICAL**: When testing optimization features, use realistic compression curves:
+
+```python
+# CORRECT: Realistic exponential compression for mock conversion
+async def mock_conversion_func(image_data, output_format, quality=85, **kwargs):
+    base_size = 20000  # Base size for quality 100
+    # Exponential curve - size decreases faster at lower qualities
+    quality_factor = (quality / 100) ** 1.5
+    new_size = int(base_size * quality_factor)
+    new_size = max(new_size, 500)  # Minimum size
+    return b'JPEG' + b'\x00' * (new_size - 4)
+
+# WRONG: Linear reduction doesn't match real compression behavior
+new_size = int(20000 * (quality / 100))  # Too simplistic
+```
+
+**Why**: Real image compression follows exponential curves, not linear. Tests with unrealistic mocks will fail or provide incorrect optimization results.
+
+### 14. Batch Processing Architecture Pattern
+**CRITICAL**: Batch processing follows these patterns:
+
+- **Worker Pool Scaling**: Uses 80% of CPU cores (min 2, max 10 workers)
+- **Queue Management**: asyncio.Queue with per-job semaphore limits
+- **Memory Management**: File data temporarily stored in memory during processing
+- **Progress Updates**: Real-time WebSocket updates via ConnectionManager
+- **Cancellation Support**: Both job-level and item-level cancellation
+- **Resource Cleanup**: Automatic cleanup of completed jobs after processing
+
+```python
+# Worker count calculation pattern
+cpu_count = multiprocessing.cpu_count()
+worker_count = max(2, int(cpu_count * 0.8))
+worker_count = min(worker_count, MAX_BATCH_WORKERS)
+
+# Progress callback pattern for WebSocket updates
+async def progress_callback(progress: BatchProgress):
+    await connection_manager.broadcast_progress(progress)
+```
+
+**Integration with Conversion Service**:
+- BatchManager requires injection of conversion_service
+- Each file processed through existing secure conversion pipeline
+- Maintains all security sandboxing per individual file
+
+**Memory Management Warning**:
+```python
+# CRITICAL: Batch results stored in-memory until cleanup
+# BatchManager._job_results accumulates converted image data
+# Must call cleanup_job_results() after download or timeout
+# Risk example: 100 files × 5MB avg = 500MB per job
+# With 10 concurrent jobs = 5GB RAM usage
+# Mitigation: Automatic cleanup after download
+# TODO: Consider disk storage for production scale
+```
+
+### 15. WebSocket Authentication Pattern for Batch Jobs
+**CRITICAL**: Batch processing implements comprehensive WebSocket security:
+
+```python
+# When batch_websocket_auth_enabled = True (default):
+
+# 1. Token generation on job creation
+response = POST /api/batch
+# Response includes: websocket_url with token parameter
+
+# 2. WebSocket connection with authentication
+ws://host/ws/batch/{job_id}?token={token}
+
+# 3. Token refresh for expired/lost tokens
+POST /api/batch/{job_id}/websocket-token
+# Returns new token valid for 24 hours
+
+# Security features:
+# - SHA-256 token hashing (never store plaintext)
+# - 24-hour expiration with automatic cleanup
+# - Rate limiting: 10 connections/minute/IP
+# - Max 10 concurrent connections per job
+# - Graceful fallback when auth disabled
+```
+
+**SecureConnectionManager Implementation**:
+- Located in `app/api/websockets/secure_progress.py`
+- Manages tokens, rate limits, and connection limits
+- Falls back to regular ConnectionManager when auth disabled
+- Uses WebSocket close codes for different security violations
+
+### 16. Batch Processing Simplified UI Pattern
+**CRITICAL**: Batch processing uses automatic flow without modals:
+
+- **NO BatchSummaryModal**: Removed intentionally for simplicity
+- **Auto-download**: Files download automatically upon completion
+- **Simple messages**: Only success/error messages, no complex popups
+
+```python
+# Frontend: Simplified flow in app.js
+async function autoDownloadBatchResults() {
+    const blob = await downloadBatchResults(currentBatchJobId)
+    // Automatic download without user interaction
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `batch_${currentBatchJobId.substring(0, 8)}_results.zip`
+    a.click()
+}
+
+# Backend: On-demand compilation in batch_service.py
+async def get_download_zip(self, job_id: str):
+    result = self._results_storage.get(job_id)
+    if not result:
+        # Automatically compile if not cached
+        result = await self.get_results(job_id)
+        if not result:
+            return None
+```
+
+**Why**: User requirement: "debe ser simple, le das a convertir y luego se descargan solos" (must be simple, click convert and files download automatically)
+
+**Important**: When modifying batch UI, maintain this simplicity principle - no unnecessary modals or user interactions

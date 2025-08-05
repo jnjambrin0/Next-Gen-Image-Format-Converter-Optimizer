@@ -5,6 +5,7 @@ from .monitoring import router as monitoring_router
 from .security import router as security_router
 from .intelligence import router as intelligence_router
 from .optimization import router as optimization_router
+from .batch import router as batch_router
 
 api_router = APIRouter(prefix="/api")
 
@@ -15,5 +16,6 @@ api_router.include_router(monitoring_router, tags=["monitoring"])
 api_router.include_router(security_router, tags=["security"])
 api_router.include_router(intelligence_router, tags=["intelligence"])
 api_router.include_router(optimization_router, tags=["optimization"])
+api_router.include_router(batch_router, tags=["batch"])
 
 __all__ = ["api_router"]

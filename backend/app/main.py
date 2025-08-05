@@ -53,6 +53,10 @@ async def lifespan(app: FastAPI):
     # Set conversion service
     optimization_service.set_conversion_service(conversion_service)
     
+    # Initialize batch service (Story 4.1)
+    from .services.batch_service import batch_service
+    batch_service.set_conversion_service(conversion_service)
+    
     # Ensure data directory exists for database files
     import os
     os.makedirs("./data", exist_ok=True)
@@ -118,6 +122,21 @@ async def lifespan(app: FastAPI):
         # Start background task
         cleanup_task = asyncio.create_task(periodic_log_cleanup())
     
+    # Schedule periodic batch job cleanup (Story 4.1)
+    async def periodic_batch_cleanup():
+        while True:
+            await asyncio.sleep(86400)  # Run once per day
+            try:
+                from .services.batch_history_service import batch_history_service
+                deleted_count = await batch_history_service.cleanup_old_jobs()
+                if deleted_count > 0:
+                    print(f"Cleaned up {deleted_count} old batch jobs")
+            except Exception as e:
+                print(f"Batch cleanup error: {e}")
+    
+    # Start batch cleanup task
+    batch_cleanup_task = asyncio.create_task(periodic_batch_cleanup())
+    
     yield
     
     # Shutdown
@@ -129,6 +148,10 @@ async def lifespan(app: FastAPI):
     
     if getattr(settings, "logging_enabled", True) and 'cleanup_task' in locals():
         cleanup_task.cancel()
+    
+    # Cancel batch cleanup task
+    if 'batch_cleanup_task' in locals():
+        batch_cleanup_task.cancel()
 
 
 app = FastAPI(
@@ -192,6 +215,15 @@ app.openapi = custom_openapi
 
 # Include API routers
 app.include_router(api_router)
+
+# Include WebSocket routers
+from .api.websockets.progress import router as websocket_router
+app.include_router(websocket_router)
+
+# Include secure WebSocket routes if authentication is enabled
+if settings.batch_websocket_auth_enabled:
+    from .api.websockets.secure_progress import router as secure_websocket_router
+    app.include_router(secure_websocket_router, prefix="/api")
 
 # Static file serving for production
 if settings.env == "production":

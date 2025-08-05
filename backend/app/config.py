@@ -12,7 +12,8 @@ try:
         SANDBOX_OUTPUT_LIMITS,
         ERROR_RETENTION_DAYS,
         DEFAULT_MONITORING_INTERVAL,
-        MONITORING_INTERVAL_SECONDS
+        MONITORING_INTERVAL_SECONDS,
+        MAX_BATCH_SIZE as DEFAULT_MAX_BATCH_SIZE
     )
 except ImportError:
     # Fallback values if constants can't be imported (e.g., during initial setup)
@@ -23,6 +24,7 @@ except ImportError:
     ERROR_RETENTION_DAYS = 30
     DEFAULT_MONITORING_INTERVAL = 5
     MONITORING_INTERVAL_SECONDS = 5.0
+    DEFAULT_MAX_BATCH_SIZE = 100
 
 
 class Settings(BaseSettings):
@@ -151,6 +153,14 @@ class Settings(BaseSettings):
     )
     database_pool_timeout: int = Field(default=30, description="Database pool timeout")
 
+    # Batch Processing
+    MAX_BATCH_SIZE: int = Field(
+        default=DEFAULT_MAX_BATCH_SIZE, description="Maximum files per batch"
+    )
+    batch_websocket_auth_enabled: bool = Field(
+        default=True, description="Enable WebSocket authentication for batch jobs"
+    )
+    
     # Feature Flags
     enable_batch_processing: bool = Field(
         default=True, description="Enable batch processing"

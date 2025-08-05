@@ -5,6 +5,13 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_IMAGE_PIXELS = 178956970  # ~178MP (same as PIL default)
 IMAGE_MAX_PIXELS = MAX_IMAGE_PIXELS  # Alias for compatibility
 
+# Batch Processing Limits
+MAX_BATCH_SIZE = 100  # Maximum files per batch
+MAX_BATCH_WORKERS = 10  # Maximum concurrent workers for batch processing
+BATCH_CHUNK_SIZE = 10  # Process files in chunks for memory efficiency
+BATCH_RESULT_EXPIRY_SECONDS = 3600  # 1 hour to download results
+BATCH_JOB_RETENTION_DAYS = 7  # Days to retain completed batch jobs
+
 # Intelligence Engine Limits
 INTELLIGENCE_MODEL_MAX_SIZE = 50 * 1024 * 1024  # 50MB max model size
 INTELLIGENCE_TIMEOUT_MS = 500  # 500ms timeout for classification

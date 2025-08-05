@@ -7,7 +7,11 @@ export class DropZone {
     this.fileInput = element.querySelector('#fileInput')
     this.isDragging = false
     this.onFileSelectCallback = null
+    this.onMultipleFilesSelectCallback = null
     this.uiStateManager = uiStateManager
+    this.supportedFormats = ['.jpg', '.jpeg', '.png', '.webp', '.heif', '.heic', '.bmp', '.tiff', '.gif', '.avif']
+    this.maxFileSize = 50 * 1024 * 1024 // 50MB
+    this.maxFileCount = 100
 
     // Store bound event handlers for cleanup
     this.boundHandlers = {
@@ -86,8 +90,15 @@ export class DropZone {
       this.uiStateManager.setState('idle')
     }
 
-    const files = e.dataTransfer.files
-    this.processFiles(files)
+    // Handle both files and items (for folder support)
+    const items = e.dataTransfer.items
+    if (items && items.length > 0) {
+      this.processFiles(items)
+    } else {
+      // Fallback to files
+      const files = e.dataTransfer.files
+      this.processFiles(files)
+    }
   }
 
   handleClick(e) {
@@ -111,26 +122,172 @@ export class DropZone {
     this.processFiles(files)
   }
 
-  processFiles(files) {
+  async processFiles(files) {
     if (files.length === 0) {
       return
     }
 
-    // For now, we only handle single file
-    const file = files[0]
-
-    if (this.onFileSelectCallback) {
-      try {
-        this.onFileSelectCallback(file)
-      } catch (error) {
-        console.error('Error processing file:', error)
+    // Extract files from FileList and handle folders
+    const allFiles = await this.extractAllFiles(files)
+    
+    // Filter and validate files
+    const validFiles = this.filterValidImageFiles(allFiles)
+    
+    if (validFiles.length === 0) {
+      if (this.uiStateManager) {
         this.uiStateManager.setState(UIStates.ERROR)
       }
+      this.showError('No valid image files found')
+      return
+    }
+
+    // Check file count limit
+    if (validFiles.length > this.maxFileCount) {
+      if (this.uiStateManager) {
+        this.uiStateManager.setState(UIStates.ERROR)
+      }
+      this.showError(`Maximum ${this.maxFileCount} files allowed. You selected ${validFiles.length} files.`)
+      return
+    }
+
+    // Check if we should handle multiple files or single file
+    if (validFiles.length === 1 && this.onFileSelectCallback) {
+      // Single file - use existing callback for backward compatibility
+      try {
+        this.onFileSelectCallback(validFiles[0])
+      } catch (error) {
+        console.error('Error processing file:', error)
+        if (this.uiStateManager) {
+          this.uiStateManager.setState(UIStates.ERROR)
+        }
+      }
+    } else if (validFiles.length > 1 && this.onMultipleFilesSelectCallback) {
+      // Multiple files - use new callback
+      try {
+        this.onMultipleFilesSelectCallback(validFiles)
+      } catch (error) {
+        console.error('Error processing files:', error)
+        if (this.uiStateManager) {
+          this.uiStateManager.setState(UIStates.ERROR)
+        }
+      }
+    } else if (validFiles.length > 1 && !this.onMultipleFilesSelectCallback) {
+      // Multiple files but no handler - show error
+      this.showError('Multiple file handling not configured')
+    }
+  }
+
+  async extractAllFiles(fileList) {
+    const files = []
+    const items = []
+
+    // Convert FileList to array of items
+    if (fileList instanceof DataTransferItemList) {
+      for (let i = 0; i < fileList.length; i++) {
+        items.push(fileList[i])
+      }
+    } else {
+      // Regular FileList
+      for (let i = 0; i < fileList.length; i++) {
+        files.push(fileList[i])
+      }
+      return files
+    }
+
+    // Process each item (could be file or directory)
+    for (const item of items) {
+      if (item.kind === 'file') {
+        const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : item.getAsEntry?.()
+        if (entry) {
+          const extractedFiles = await this.traverseFileTree(entry)
+          files.push(...extractedFiles)
+        } else {
+          // Fallback to getAsFile
+          const file = item.getAsFile()
+          if (file) {
+            files.push(file)
+          }
+        }
+      }
+    }
+
+    return files
+  }
+
+  async traverseFileTree(entry, path = '') {
+    const files = []
+
+    if (entry.isFile) {
+      // Get file
+      const file = await new Promise((resolve, reject) => {
+        entry.file(resolve, reject)
+      })
+      files.push(file)
+    } else if (entry.isDirectory) {
+      // Read directory
+      const reader = entry.createReader()
+      const entries = await new Promise((resolve, reject) => {
+        const allEntries = []
+        const readEntries = () => {
+          reader.readEntries((entries) => {
+            if (entries.length === 0) {
+              resolve(allEntries)
+            } else {
+              allEntries.push(...entries)
+              readEntries() // Continue reading
+            }
+          }, reject)
+        }
+        readEntries()
+      })
+
+      // Process each entry in directory
+      for (const childEntry of entries) {
+        const childFiles = await this.traverseFileTree(childEntry, path + entry.name + '/')
+        files.push(...childFiles)
+      }
+    }
+
+    return files
+  }
+
+  filterValidImageFiles(files) {
+    return files.filter(file => {
+      // Check file extension
+      const ext = file.name.toLowerCase().match(/\.[^.]+$/)?.[0]
+      if (!ext || !this.supportedFormats.includes(ext)) {
+        console.warn(`Skipping unsupported file type: ${file.name}`)
+        return false
+      }
+
+      // Check file size
+      if (file.size > this.maxFileSize) {
+        console.warn(`Skipping file too large: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
+        return false
+      }
+
+      return true
+    })
+  }
+
+  showError(message) {
+    // Find or create error message element
+    const errorEl = document.getElementById('errorMessage')
+    if (errorEl) {
+      errorEl.textContent = message
+      errorEl.classList.remove('hidden')
+      setTimeout(() => {
+        errorEl.classList.add('hidden')
+      }, 5000)
     }
   }
 
   onFileSelect(callback) {
     this.onFileSelectCallback = callback
+  }
+
+  onMultipleFilesSelect(callback) {
+    this.onMultipleFilesSelectCallback = callback
   }
 
   reset() {

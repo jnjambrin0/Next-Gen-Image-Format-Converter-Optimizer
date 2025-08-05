@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Processing UI Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Batch Processing UI Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Multiple File Selection</h2>
+        <p>This test will simulate selecting multiple files to trigger the batch UI.</p>
+        
+        <button onclick="testMultipleFiles()">Test with 3 Files</button>
+        <button onclick="testMixedFormats()">Test with Mixed Formats</button>
+        <button onclick="testLargeBatch()">Test with 10 Files</button>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Open http://localhost:5173 in another tab</li>
+            <li>Open browser console (F12)</li>
+            <li>Copy and paste the test functions below into the console</li>
+            <li>Click the test buttons above to run tests</li>
+        </ol>
+    </div>
+
+    <script>
+        function log(message, isError = false) {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = isError ? 'error' : '';
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+        }
+
+        function createTestFile(name, type = 'image/png', size = 1024) {
+            const blob = new Blob(['x'.repeat(size)], { type });
+            return new File([blob], name, { type });
+        }
+
+        async function testMultipleFiles() {
+            log('Creating test script for 3 PNG files...');
+            
+            const script = `
+// Test Multiple Files Selection
+(function() {
+    // Create test files
+    const files = [
+        new File([new Blob(['test1'], {type: 'image/png'})], 'test1.png', {type: 'image/png'}),
+        new File([new Blob(['test2'], {type: 'image/png'})], 'test2.png', {type: 'image/png'}),
+        new File([new Blob(['test3'], {type: 'image/png'})], 'test3.png', {type: 'image/png'})
+    ];
+    
+    // Find dropzone
+    const dropzone = document.querySelector('#dropzone');
+    const fileInput = document.querySelector('#fileInput');
+    
+    if (!dropzone || !fileInput) {
+        console.error('Dropzone or file input not found');
+        return;
+    }
+    
+    // Create DataTransfer to simulate file selection
+    const dt = new DataTransfer();
+    files.forEach(file => dt.items.add(file));
+    
+    // Update file input
+    fileInput.files = dt.files;
+    
+    // Trigger change event
+    const event = new Event('change', { bubbles: true });
+    fileInput.dispatchEvent(event);
+    
+    console.log('✅ Triggered selection of 3 files');
+    console.log('Expected: Batch UI should appear with FileListPreview');
+})();
+            `;
+            
+            log('Test script created. Copy and paste into the browser console:');
+            log(script);
+        }
+
+        async function testMixedFormats() {
+            log('Creating test script for mixed format files...');
+            
+            const script = `
+// Test Mixed Format Files
+(function() {
+    // Create files with different formats
+    const files = [
+        new File([new Blob(['png'], {type: 'image/png'})], 'image.png', {type: 'image/png'}),
+        new File([new Blob(['jpg'], {type: 'image/jpeg'})], 'photo.jpg', {type: 'image/jpeg'}),
+        new File([new Blob(['webp'], {type: 'image/webp'})], 'graphic.webp', {type: 'image/webp'}),
+        new File([new Blob(['gif'], {type: 'image/gif'})], 'animation.gif', {type: 'image/gif'}),
+        new File([new Blob(['bmp'], {type: 'image/bmp'})], 'bitmap.bmp', {type: 'image/bmp'})
+    ];
+    
+    // Find dropzone
+    const dropzone = document.querySelector('#dropzone');
+    const fileInput = document.querySelector('#fileInput');
+    
+    if (!dropzone || !fileInput) {
+        console.error('Dropzone or file input not found');
+        return;
+    }
+    
+    // Create DataTransfer
+    const dt = new DataTransfer();
+    files.forEach(file => dt.items.add(file));
+    
+    // Update and trigger
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    console.log('✅ Triggered selection of 5 mixed format files');
+    console.log('Files:', files.map(f => f.name + ' (' + f.type + ')').join(', '));
+})();
+            `;
+            
+            log('Test script created. Copy and paste into the browser console:');
+            log(script);
+        }
+
+        async function testLargeBatch() {
+            log('Creating test script for 10 files...');
+            
+            const script = `
+// Test Large Batch (10 files)
+(function() {
+    // Create 10 test files
+    const files = [];
+    for (let i = 0; i < 10; i++) {
+        const formats = ['png', 'jpeg', 'webp', 'gif'];
+        const format = formats[i % formats.length];
+        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/' + format;
+        const ext = format === 'jpeg' ? 'jpg' : format;
+        
+        files.push(new File(
+            [new Blob(['test' + i], {type: mimeType})], 
+            \`test_\${i}.\${ext}\`, 
+            {type: mimeType}
+        ));
+    }
+    
+    // Find elements
+    const fileInput = document.querySelector('#fileInput');
+    if (!fileInput) {
+        console.error('File input not found');
+        return;
+    }
+    
+    // Simulate selection
+    const dt = new DataTransfer();
+    files.forEach(file => dt.items.add(file));
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    console.log('✅ Triggered selection of 10 files');
+    console.log('Expected behavior:');
+    console.log('1. FileListPreview shows all 10 files');
+    console.log('2. BatchPresetSelector appears');
+    console.log('3. "Start Batch Conversion" button is visible');
+})();
+            `;
+            
+            log('Test script created. Copy and paste into the browser console:');
+            log(script);
+        }
+
+        // Additional helper to verify UI state
+        const verifyScript = `
+// Verify Batch UI State
+(function() {
+    const fileList = document.querySelector('#fileListPreview');
+    const batchQueue = document.querySelector('#batchQueueContainer');
+    const dropzone = document.querySelector('#dropzone');
+    
+    console.log('=== Batch UI State ===');
+    console.log('FileListPreview visible:', fileList && !fileList.classList.contains('hidden'));
+    console.log('BatchQueue visible:', batchQueue && batchQueue.style.display !== 'none');
+    console.log('Dropzone state:', dropzone?.className);
+    
+    // Check for batch components
+    const presetSelector = document.querySelector('.batch-preset-selector');
+    const startButton = document.querySelector('button[onclick*="startBatchConversion"]');
+    
+    console.log('PresetSelector present:', !!presetSelector);
+    console.log('Start button present:', !!startButton);
+    
+    // Check WebSocket connection
+    if (window.websocketService) {
+        console.log('WebSocket service:', window.websocketService);
+    }
+})();
+        `;
+
+        // Auto-show verify script
+        setTimeout(() => {
+            log('\n=== Helper Script to Verify UI State ===');
+            log(verifyScript);
+        }, 1000);
+    </script>
+</body>
+</html>

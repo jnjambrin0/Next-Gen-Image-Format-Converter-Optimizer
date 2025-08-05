@@ -9,7 +9,7 @@ from app.models.conversion import (
     InputFormat,
     OutputFormat,
 )
-from app.models.requests import BatchConversionRequest
+from app.models.requests import BatchConversionRequest, ConversionApiRequest
 from app.models.responses import (
     ConversionApiResponse,
     BatchConversionResponse,
@@ -29,6 +29,7 @@ __all__ = [
     "OutputFormat",
     # Request models
     "BatchConversionRequest",
+    "ConversionApiRequest",
     # Response models
     "ConversionApiResponse",
     "BatchConversionResponse",
