@@ -253,6 +253,7 @@ class ConversionRequest(BaseModel):
     output_format: OutputFormat
     settings: Optional[ConversionSettings] = None
     optimization_settings: Optional[OptimizationSettings] = None
+    preset_id: Optional[str] = Field(None, description="UUID of preset to apply")
 
 
 class ConversionResult(BaseModel):

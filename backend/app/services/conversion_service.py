@@ -32,6 +32,8 @@ class ConversionService:
         self.conversion_manager = ConversionManager()
         # Initialize stats_collector as None - will be set later to avoid circular import
         self.stats_collector = None
+        # Initialize preset_service as None - will be set later to avoid circular import
+        self.preset_service = None
         self._mime_to_format = {
             "image/jpeg": ["jpeg", "jpg"],
             "image/png": ["png"],
@@ -43,6 +45,10 @@ class ConversionService:
             "image/heif": ["heif", "heic"],
             "image/heic": ["heif", "heic"],
         }
+    
+    def set_preset_service(self, preset_service):
+        """Set the preset service instance to avoid circular imports."""
+        self.preset_service = preset_service
 
     async def convert(
         self,
@@ -99,10 +105,72 @@ class ConversionService:
                 # Fall back to claimed format if detection fails
                 actual_input_format = request.input_format
 
+            # Apply preset if specified
+            conversion_settings = request.settings
+            optimization_settings = request.optimization_settings
+            output_format = request.output_format
+            
+            if request.preset_id and self.preset_service:
+                try:
+                    preset = await self.preset_service.get_preset(request.preset_id)
+                    if preset:
+                        # Preset settings override request settings
+                        output_format = preset.settings.output_format
+                        
+                        # Merge settings with preset as base
+                        if conversion_settings:
+                            # Request settings override preset settings
+                            preset_dict = {
+                                "quality": preset.settings.quality,
+                                "optimization_mode": preset.settings.optimization_mode,
+                                "preserve_metadata": preset.settings.preserve_metadata,
+                            }
+                            if preset.settings.resize_options:
+                                preset_dict["resize_options"] = preset.settings.resize_options
+                            if preset.settings.advanced_settings:
+                                preset_dict["advanced_settings"] = preset.settings.advanced_settings
+                            
+                            # Override with request settings
+                            request_dict = conversion_settings.model_dump(exclude_none=True)
+                            preset_dict.update(request_dict)
+                            
+                            from app.models.conversion import ConversionSettings
+                            conversion_settings = ConversionSettings(**preset_dict)
+                        else:
+                            # Use preset settings directly
+                            from app.models.conversion import ConversionSettings
+                            conversion_settings = ConversionSettings(
+                                quality=preset.settings.quality,
+                                optimization_mode=preset.settings.optimization_mode,
+                                preserve_metadata=preset.settings.preserve_metadata,
+                                resize_options=preset.settings.resize_options,
+                                advanced_settings=preset.settings.advanced_settings
+                            )
+                        
+                        logger.info(
+                            "Applied preset",
+                            preset_id=request.preset_id,
+                            preset_name=preset.name,
+                            output_format=output_format
+                        )
+                    else:
+                        logger.warning(
+                            "Preset not found",
+                            preset_id=request.preset_id
+                        )
+                except Exception as e:
+                    logger.error(
+                        "Failed to apply preset",
+                        preset_id=request.preset_id,
+                        error=str(e)
+                    )
+            
             # Create core conversion request
             core_request = CoreConversionRequest(
-                output_format=request.output_format,
-                settings=request.settings,
+                output_format=output_format,
+                settings=conversion_settings,
+                optimization_settings=optimization_settings,
+                preset_id=request.preset_id
             )
             
             # Perform conversion with timeout

@@ -195,6 +195,7 @@ class BatchManager:
                 input_format=input_format,
                 output_format=batch_job.settings["output_format"],
                 settings=conv_settings,
+                preset_id=batch_job.settings.get("preset_id"),
             )
             
             task = BatchWorkerTask(

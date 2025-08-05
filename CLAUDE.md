@@ -124,7 +124,7 @@ pytest backend/tests/security/
 3. **Memory-Only Processing**: No temporary files on disk, all processing in RAM
 4. **Format Support**:
    - Input: JPEG, PNG, WebP, HEIF/HEIC, BMP, TIFF, GIF, AVIF
-   - Output: WebP, AVIF, JPEG XL, HEIF, PNG (optimized), JPEG (optimized), WebP2, JPEG 2000
+   - Output: WebP, AVIF, JPEG XL, HEIF, PNG (optimized), JPEG (optimized), WebP2
 5. **Content Detection**: Local ML model classifies images (photo/illustration/screenshot/document)
 6. **Metadata Handling**: EXIF data removed by default for privacy
 
@@ -445,8 +445,10 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 
 ## API Endpoints
 
-- `POST /api/convert` - Convert single image
-- `POST /api/batch` - Create batch conversion job (up to 100 files)
+**IMPORTANT**: Form endpoints that accept presets still require the base parameters (e.g., `output_format`) even though presets will override them. This is due to FastAPI validation requirements.
+
+- `POST /api/convert` - Convert single image (requires `output_format` even with `preset_id`)
+- `POST /api/batch` - Create batch conversion job (requires `output_format` even with `preset_id`)
 - `GET /api/batch/{job_id}/status` - Get batch job status
 - `DELETE /api/batch/{job_id}` - Cancel entire batch job
 - `DELETE /api/batch/{job_id}/items/{file_index}` - Cancel specific file in batch
@@ -459,6 +461,12 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 - `GET /api/security/status` - Security engine status
 - `GET /api/intelligence/capabilities` - ML detection capabilities
 - `GET /api/optimization/presets` - Available optimization presets
+- `GET /api/presets` - List all presets (built-in and user-created)
+- `POST /api/presets` - Create new user preset
+- `PUT /api/presets/{preset_id}` - Update existing preset
+- `DELETE /api/presets/{preset_id}` - Delete user preset
+- `POST /api/presets/import` - Import presets from JSON
+- `GET /api/presets/{preset_id}/export` - Export preset as JSON
 
 ## Development Guidelines
 
@@ -616,7 +624,21 @@ return result  # ValueError: too many values to unpack (expected 2)
 
 **Why**: The API route expects both the ConversionResult object and the actual image bytes. Missing either causes runtime errors.
 
-### 11. Server Execution Location
+### 11. API Response Content-Type Pattern
+**CRITICAL**: When using presets or any feature that changes output format, the response content-type MUST use the actual output format from the conversion result:
+
+```python
+# CORRECT: Use actual format from conversion result
+actual_output_format = result.output_format.lower()
+content_type = content_type_map.get(actual_output_format, "application/octet-stream")
+
+# WRONG: Using form parameter when preset overrides it
+content_type = content_type_map.get(output_format.lower(), "application/octet-stream")
+```
+
+**Why**: Presets and other features can override the requested output format. The response headers must reflect what was actually converted, not what was requested.
+
+### 12. Server Execution Location
 **CRITICAL**: The uvicorn server MUST be run from the backend/ directory:
 
 ```bash
@@ -630,7 +652,7 @@ uvicorn backend.app.main:app  # ModuleNotFoundError: No module named 'app'
 
 **Why**: The Python import paths are relative to the backend/ directory. Running from elsewhere breaks all imports.
 
-### 12. Optimization Module Exports
+### 13. Optimization Module Exports
 **CRITICAL**: The optimization module must export all required classes:
 
 ```python
@@ -647,7 +669,7 @@ __all__ = [
 
 **Why**: Tests and other modules depend on these enums being accessible from the optimization package.
 
-### 13. Realistic Test Mock Patterns
+### 14. Realistic Test Mock Patterns
 **CRITICAL**: When testing optimization features, use realistic compression curves:
 
 ```python
@@ -666,7 +688,7 @@ new_size = int(20000 * (quality / 100))  # Too simplistic
 
 **Why**: Real image compression follows exponential curves, not linear. Tests with unrealistic mocks will fail or provide incorrect optimization results.
 
-### 14. Batch Processing Architecture Pattern
+### 15. Batch Processing Architecture Pattern
 **CRITICAL**: Batch processing follows these patterns:
 
 - **Worker Pool Scaling**: Uses 80% of CPU cores (min 2, max 10 workers)
@@ -703,7 +725,7 @@ async def progress_callback(progress: BatchProgress):
 # TODO: Consider disk storage for production scale
 ```
 
-### 15. WebSocket Authentication Pattern for Batch Jobs
+### 16. WebSocket Authentication Pattern for Batch Jobs
 **CRITICAL**: Batch processing implements comprehensive WebSocket security:
 
 ```python
@@ -734,7 +756,7 @@ POST /api/batch/{job_id}/websocket-token
 - Falls back to regular ConnectionManager when auth disabled
 - Uses WebSocket close codes for different security violations
 
-### 16. Batch Processing Simplified UI Pattern
+### 17. Batch Processing Simplified UI Pattern
 **CRITICAL**: Batch processing uses automatic flow without modals:
 
 - **NO BatchSummaryModal**: Removed intentionally for simplicity

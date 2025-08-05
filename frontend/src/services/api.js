@@ -5,18 +5,77 @@ import { API_CONFIG } from '../config/constants.js'
  */
 
 /**
+ * Generic API client for making HTTP requests
+ */
+export const apiClient = {
+  async get(endpoint) {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    return response
+  },
+
+  async post(endpoint, data) {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    return response
+  },
+
+  async put(endpoint, data) {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    return response
+  },
+
+  async delete(endpoint) {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    return response
+  }
+}
+
+/**
  * Convert an image file to the specified format
  * @param {File} file - The image file to convert
  * @param {string} outputFormat - Target format (webp, avif, etc.)
  * @param {number} quality - Quality setting (1-100)
+ * @param {boolean} preserveMetadata - Whether to preserve metadata (except GPS)
+ * @param {string|null} presetId - Optional preset ID to apply
  * @returns {Promise<{blob: Blob, filename: string}>} The converted image blob and filename
  * @throws {Error} API errors with specific codes and messages
  */
-export async function convertImage(file, outputFormat, quality = 85) {
+export async function convertImage(file, outputFormat, quality = 85, preserveMetadata = false, presetId = null) {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('output_format', outputFormat)
   formData.append('quality', quality.toString())
+  formData.append('preserve_metadata', preserveMetadata.toString())
+  formData.append('strip_metadata', (!preserveMetadata).toString())
+  
+  if (presetId) {
+    formData.append('preset_id', presetId)
+  }
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT)

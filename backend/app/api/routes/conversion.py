@@ -102,6 +102,7 @@ def sanitize_filename(filename: str) -> str:
     - **strip_metadata**: Remove EXIF and other metadata (default: true)
     - **preserve_metadata**: Preserve non-GPS metadata (overrides strip_metadata, default: false)
     - **preserve_gps**: Preserve GPS location data (only if preserve_metadata is true, default: false)
+    - **preset_id**: Optional UUID of preset to apply (preset settings override individual parameters)
     
     By default, all metadata including GPS data is removed for privacy. 
     To keep metadata but remove GPS, set preserve_metadata=true and preserve_gps=false.
@@ -122,6 +123,9 @@ async def convert_image(
     ),
     preserve_gps: Optional[bool] = Form(
         False, description="Preserve GPS location data (only if preserve_metadata is true)"
+    ),
+    preset_id: Optional[str] = Form(
+        None, description="UUID of preset to apply"
     ),
 ):
     """Convert an image to a different format."""
@@ -239,6 +243,7 @@ async def convert_image(
                     preserve_gps=preserve_gps,
                     optimize=True,
                 ),
+                preset_id=preset_id,
             )
 
         # Perform conversion
@@ -256,7 +261,7 @@ async def convert_image(
                     },
                 )
 
-        # Determine content type
+        # Determine content type - use actual output format from result
         content_type_map = {
                 "webp": "image/webp",
                 "avif": "image/avif",
@@ -269,13 +274,15 @@ async def convert_image(
                 "webp2": "image/webp2",
                 "jp2": "image/jp2",
             }
+        # Use the actual output format from the conversion result
+        actual_output_format = result.output_format.lower() if hasattr(result.output_format, 'lower') else str(result.output_format).lower()
         content_type = content_type_map.get(
-                output_format.lower(), "application/octet-stream"
+                actual_output_format, "application/octet-stream"
             )
 
-        # Generate output filename
+        # Generate output filename with actual format
         base_name = Path(safe_filename).stem
-        output_filename = f"{base_name}.{output_format.lower()}"
+        output_filename = f"{base_name}.{actual_output_format}"
 
         # Log successful conversion
         logger.info(

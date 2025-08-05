@@ -57,6 +57,13 @@ async def lifespan(app: FastAPI):
     from .services.batch_service import batch_service
     batch_service.set_conversion_service(conversion_service)
     
+    # Initialize preset service (Story 4.2)
+    from .services.preset_service import preset_service
+    await preset_service.initialize()
+    
+    # Inject preset service into conversion service
+    conversion_service.set_preset_service(preset_service)
+    
     # Ensure data directory exists for database files
     import os
     os.makedirs("./data", exist_ok=True)

@@ -15,6 +15,9 @@ import { BatchPresetSelector } from './components/batchPresetSelector.js'
 import { WebSocketService } from './services/websocket.js'
 import { createBatchJob, getBatchStatus, downloadBatchResults } from './services/batchApi.js'
 
+// Conversion settings
+import { ConversionSettings } from './components/conversionSettings.js'
+
 export function initializeApp() {
   const app = document.getElementById('app')
 
@@ -24,6 +27,17 @@ export function initializeApp() {
 
   // Initialize UI state manager
   const uiStateManager = new UIStateManager()
+
+  // Initialize conversion settings
+  const conversionSettings = new ConversionSettings()
+  const settingsContainer = document.getElementById('conversionSettings')
+  conversionSettings.init((settings) => {
+    // Update last settings when changed
+    lastOutputFormat = settings.outputFormat
+    lastQuality = settings.quality
+  }).then(settingsElement => {
+    settingsContainer.appendChild(settingsElement)
+  })
 
   // Initialize dropzone
   const dropzoneElement = document.getElementById('dropzone')
@@ -73,17 +87,19 @@ export function initializeApp() {
     conversionStartTime = Date.now()
     uiStateManager.setState(UIStates.UPLOADING)
 
-    // TODO: Add output format selection UI in future story
-    // For now, default to WebP with quality 85
-    const outputFormat = lastOutputFormat
-    const quality = lastQuality
+    // Get current settings from conversion settings component
+    const currentSettings = conversionSettings.getCurrentSettings()
+    const outputFormat = currentSettings.outputFormat
+    const quality = currentSettings.quality
+    const preserveMetadata = currentSettings.preserveMetadata
+    const presetId = currentSettings.presetId
 
     try {
       // Update state to converting
       uiStateManager.setState(UIStates.CONVERTING)
 
-      // Call API to convert image
-      const { blob, filename } = await convertImage(file, outputFormat, quality)
+      // Call API to convert image with all settings
+      const { blob, filename } = await convertImage(file, outputFormat, quality, preserveMetadata, presetId)
 
       // Calculate conversion time
       const conversionTime = ((Date.now() - conversionStartTime) / 1000).toFixed(1)

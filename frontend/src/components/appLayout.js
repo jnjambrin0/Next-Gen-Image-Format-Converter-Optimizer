@@ -81,9 +81,15 @@ function createMainContent() {
   const uploadCard = createUploadCard()
   leftCol.appendChild(uploadCard)
 
-  // Right column - Features
+  // Right column - Settings and Features
   const rightCol = document.createElement('div')
-  rightCol.className = 'lg:col-span-1'
+  rightCol.className = 'lg:col-span-1 space-y-6'
+
+  // Settings card placeholder
+  const settingsCard = document.createElement('div')
+  settingsCard.id = 'conversionSettings'
+  settingsCard.className = 'card'
+  rightCol.appendChild(settingsCard)
 
   const featuresCard = createFeaturesCard()
   rightCol.appendChild(featuresCard)

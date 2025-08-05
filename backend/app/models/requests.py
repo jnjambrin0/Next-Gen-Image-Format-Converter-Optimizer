@@ -18,6 +18,7 @@ class ConversionApiRequest(BaseModel):
     optimization_settings: Optional[OptimizationSettings] = Field(
         None, description="Format-specific optimization settings"
     )
+    preset_id: Optional[str] = Field(None, description="UUID of preset to apply")
 
     @field_validator("input_format")
     @classmethod
@@ -44,6 +45,7 @@ class BatchConversionRequest(BaseModel):
     optimization_settings: Optional[OptimizationSettings] = Field(
         None, description="Format-specific optimization settings"
     )
+    preset_id: Optional[str] = Field(None, description="UUID of preset to apply")
     parallel: bool = Field(True, description="Process images in parallel")
     max_parallel: int = Field(
         5, ge=1, le=10, description="Maximum parallel conversions"
