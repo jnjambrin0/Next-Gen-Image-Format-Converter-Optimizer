@@ -13,12 +13,12 @@ import { APIError } from './api.js'
  */
 export async function createBatchJob(files, settings) {
   const formData = new FormData()
-  
+
   // Add files
-  files.forEach(file => {
+  files.forEach((file) => {
     formData.append('files', file)
   })
-  
+
   // Add settings
   formData.append('output_format', settings.outputFormat)
   if (settings.quality !== undefined) {

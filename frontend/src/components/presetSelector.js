@@ -2,16 +2,16 @@
  * Preset selector component for choosing and managing conversion presets
  */
 
-import { presetApi } from '../services/presetApi.js';
-import { showNotification } from '../utils/notifications.js';
+import { presetApi } from '../services/presetApi.js'
+import { showNotification } from '../utils/notifications.js'
 
 export class PresetSelector {
   constructor() {
-    this.element = null;
-    this.presets = [];
-    this.selectedPreset = null;
-    this.onPresetChange = null;
-    this.onSaveAsPreset = null;
+    this.element = null
+    this.presets = []
+    this.selectedPreset = null
+    this.onPresetChange = null
+    this.onSaveAsPreset = null
   }
 
   /**
@@ -20,20 +20,20 @@ export class PresetSelector {
    * @param {Function} onSaveAsPreset - Callback to get current settings for saving
    */
   async init(onPresetChange, onSaveAsPreset) {
-    this.onPresetChange = onPresetChange;
-    this.onSaveAsPreset = onSaveAsPreset;
-    
-    this.element = this.createElement();
-    await this.loadPresets();
-    return this.element;
+    this.onPresetChange = onPresetChange
+    this.onSaveAsPreset = onSaveAsPreset
+
+    this.element = this.createElement()
+    await this.loadPresets()
+    return this.element
   }
 
   /**
    * Create the preset selector element
    */
   createElement() {
-    const container = document.createElement('div');
-    container.className = 'preset-selector bg-white rounded-lg shadow-sm p-4 mb-4';
+    const container = document.createElement('div')
+    container.className = 'preset-selector bg-white rounded-lg shadow-sm p-4 mb-4'
     container.innerHTML = `
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-lg font-medium text-gray-900">Conversion Presets</h3>
@@ -73,76 +73,76 @@ export class PresetSelector {
       
       <!-- Hidden file input for import -->
       <input type="file" id="import-file-input" accept=".json" class="hidden">
-    `;
+    `
 
-    this.attachEventListeners(container);
-    return container;
+    this.attachEventListeners(container)
+    return container
   }
 
   /**
    * Attach event listeners to the component
    */
   attachEventListeners(container) {
-    const presetSelect = container.querySelector('#preset-select');
-    const saveButton = container.querySelector('#save-preset-btn');
-    const deleteButton = container.querySelector('#delete-preset-btn');
-    const menuButton = container.querySelector('#preset-menu-button');
-    const presetMenu = container.querySelector('#preset-menu');
-    const importButton = container.querySelector('#import-presets-btn');
-    const exportButton = container.querySelector('#export-all-btn');
-    const fileInput = container.querySelector('#import-file-input');
+    const presetSelect = container.querySelector('#preset-select')
+    const saveButton = container.querySelector('#save-preset-btn')
+    const deleteButton = container.querySelector('#delete-preset-btn')
+    const menuButton = container.querySelector('#preset-menu-button')
+    const presetMenu = container.querySelector('#preset-menu')
+    const importButton = container.querySelector('#import-presets-btn')
+    const exportButton = container.querySelector('#export-all-btn')
+    const fileInput = container.querySelector('#import-file-input')
 
     // Preset selection
     presetSelect.addEventListener('change', (e) => {
-      const presetId = e.target.value;
+      const presetId = e.target.value
       if (presetId) {
-        const preset = this.presets.find(p => p.id === presetId);
+        const preset = this.presets.find((p) => p.id === presetId)
         if (preset) {
-          this.selectedPreset = preset;
-          deleteButton.disabled = preset.is_builtin;
+          this.selectedPreset = preset
+          deleteButton.disabled = preset.is_builtin
           if (this.onPresetChange) {
-            this.onPresetChange(preset);
+            this.onPresetChange(preset)
           }
         }
       } else {
-        this.selectedPreset = null;
-        deleteButton.disabled = true;
+        this.selectedPreset = null
+        deleteButton.disabled = true
         if (this.onPresetChange) {
-          this.onPresetChange(null);
+          this.onPresetChange(null)
         }
       }
-    });
+    })
 
     // Save as preset
-    saveButton.addEventListener('click', () => this.handleSaveAsPreset());
+    saveButton.addEventListener('click', () => this.handleSaveAsPreset())
 
     // Delete preset
-    deleteButton.addEventListener('click', () => this.handleDeletePreset());
+    deleteButton.addEventListener('click', () => this.handleDeletePreset())
 
     // Menu toggle
     menuButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      presetMenu.classList.toggle('hidden');
-    });
+      e.stopPropagation()
+      presetMenu.classList.toggle('hidden')
+    })
 
     // Close menu when clicking outside
     document.addEventListener('click', () => {
-      presetMenu.classList.add('hidden');
-    });
+      presetMenu.classList.add('hidden')
+    })
 
     // Import presets
     importButton.addEventListener('click', () => {
-      fileInput.click();
-      presetMenu.classList.add('hidden');
-    });
+      fileInput.click()
+      presetMenu.classList.add('hidden')
+    })
 
-    fileInput.addEventListener('change', (e) => this.handleImport(e));
+    fileInput.addEventListener('change', (e) => this.handleImport(e))
 
     // Export all presets
     exportButton.addEventListener('click', () => {
-      this.handleExportAll();
-      presetMenu.classList.add('hidden');
-    });
+      this.handleExportAll()
+      presetMenu.classList.add('hidden')
+    })
   }
 
   /**
@@ -150,11 +150,11 @@ export class PresetSelector {
    */
   async loadPresets() {
     try {
-      this.presets = await presetApi.getPresets();
-      this.updatePresetList();
+      this.presets = await presetApi.getPresets()
+      this.updatePresetList()
     } catch (error) {
-      showNotification('Failed to load presets', 'error');
-      console.error('Failed to load presets:', error);
+      showNotification('Failed to load presets', 'error')
+      console.error('Failed to load presets:', error)
     }
   }
 
@@ -162,51 +162,51 @@ export class PresetSelector {
    * Update the preset dropdown list
    */
   updatePresetList() {
-    const select = this.element.querySelector('#preset-select');
-    const currentValue = select.value;
-    
+    const select = this.element.querySelector('#preset-select')
+    const currentValue = select.value
+
     // Clear existing options except the first one
-    select.innerHTML = '<option value="">Custom Settings</option>';
-    
+    select.innerHTML = '<option value="">Custom Settings</option>'
+
     // Group presets by built-in vs user-created
-    const builtInPresets = this.presets.filter(p => p.is_builtin);
-    const userPresets = this.presets.filter(p => !p.is_builtin);
-    
+    const builtInPresets = this.presets.filter((p) => p.is_builtin)
+    const userPresets = this.presets.filter((p) => !p.is_builtin)
+
     // Add built-in presets
     if (builtInPresets.length > 0) {
-      const builtInGroup = document.createElement('optgroup');
-      builtInGroup.label = 'Built-in Presets';
-      builtInPresets.forEach(preset => {
-        const option = document.createElement('option');
-        option.value = preset.id;
-        option.textContent = preset.name;
+      const builtInGroup = document.createElement('optgroup')
+      builtInGroup.label = 'Built-in Presets'
+      builtInPresets.forEach((preset) => {
+        const option = document.createElement('option')
+        option.value = preset.id
+        option.textContent = preset.name
         if (preset.description) {
-          option.title = preset.description;
+          option.title = preset.description
         }
-        builtInGroup.appendChild(option);
-      });
-      select.appendChild(builtInGroup);
+        builtInGroup.appendChild(option)
+      })
+      select.appendChild(builtInGroup)
     }
-    
+
     // Add user presets
     if (userPresets.length > 0) {
-      const userGroup = document.createElement('optgroup');
-      userGroup.label = 'My Presets';
-      userPresets.forEach(preset => {
-        const option = document.createElement('option');
-        option.value = preset.id;
-        option.textContent = preset.name;
+      const userGroup = document.createElement('optgroup')
+      userGroup.label = 'My Presets'
+      userPresets.forEach((preset) => {
+        const option = document.createElement('option')
+        option.value = preset.id
+        option.textContent = preset.name
         if (preset.description) {
-          option.title = preset.description;
+          option.title = preset.description
         }
-        userGroup.appendChild(option);
-      });
-      select.appendChild(userGroup);
+        userGroup.appendChild(option)
+      })
+      select.appendChild(userGroup)
     }
-    
+
     // Restore selection if it still exists
-    if (currentValue && this.presets.find(p => p.id === currentValue)) {
-      select.value = currentValue;
+    if (currentValue && this.presets.find((p) => p.id === currentValue)) {
+      select.value = currentValue
     }
   }
 
@@ -214,46 +214,49 @@ export class PresetSelector {
    * Handle save as preset
    */
   async handleSaveAsPreset() {
-    if (!this.onSaveAsPreset) return;
-    
-    const currentSettings = this.onSaveAsPreset();
+    if (!this.onSaveAsPreset) {
+      return
+    }
+
+    const currentSettings = this.onSaveAsPreset()
     if (!currentSettings) {
-      showNotification('No settings to save', 'error');
-      return;
+      showNotification('No settings to save', 'error')
+      return
     }
-    
+
     // Prompt for preset name
-    const name = prompt('Enter a name for this preset:');
-    if (!name || !name.trim()) return;
-    
-    // Check if name is available
-    const isAvailable = await presetApi.isNameAvailable(name.trim());
-    if (!isAvailable) {
-      showNotification('A preset with this name already exists', 'error');
-      return;
+    const name = prompt('Enter a name for this preset:')
+    if (!name || !name.trim()) {
+      return
     }
-    
+
+    // Check if name is available
+    const isAvailable = await presetApi.isNameAvailable(name.trim())
+    if (!isAvailable) {
+      showNotification('A preset with this name already exists', 'error')
+      return
+    }
+
     // Optional description
-    const description = prompt('Enter a description (optional):') || '';
-    
+    const description = prompt('Enter a description (optional):') || ''
+
     try {
       const preset = await presetApi.createFromCurrentSettings(
         name.trim(),
         description.trim(),
         currentSettings
-      );
-      
-      showNotification('Preset saved successfully', 'success');
-      
+      )
+
+      showNotification('Preset saved successfully', 'success')
+
       // Reload presets and select the new one
-      await this.loadPresets();
-      const select = this.element.querySelector('#preset-select');
-      select.value = preset.id;
-      select.dispatchEvent(new Event('change'));
-      
+      await this.loadPresets()
+      const select = this.element.querySelector('#preset-select')
+      select.value = preset.id
+      select.dispatchEvent(new Event('change'))
     } catch (error) {
-      showNotification('Failed to save preset', 'error');
-      console.error('Failed to save preset:', error);
+      showNotification('Failed to save preset', 'error')
+      console.error('Failed to save preset:', error)
     }
   }
 
@@ -261,24 +264,29 @@ export class PresetSelector {
    * Handle delete preset
    */
   async handleDeletePreset() {
-    if (!this.selectedPreset || this.selectedPreset.is_builtin) return;
-    
-    const confirmed = confirm(`Are you sure you want to delete the preset "${this.selectedPreset.name}"?`);
-    if (!confirmed) return;
-    
+    if (!this.selectedPreset || this.selectedPreset.is_builtin) {
+      return
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to delete the preset "${this.selectedPreset.name}"?`
+    )
+    if (!confirmed) {
+      return
+    }
+
     try {
-      await presetApi.deletePreset(this.selectedPreset.id);
-      showNotification('Preset deleted successfully', 'success');
-      
+      await presetApi.deletePreset(this.selectedPreset.id)
+      showNotification('Preset deleted successfully', 'success')
+
       // Reset selection and reload
-      const select = this.element.querySelector('#preset-select');
-      select.value = '';
-      select.dispatchEvent(new Event('change'));
-      await this.loadPresets();
-      
+      const select = this.element.querySelector('#preset-select')
+      select.value = ''
+      select.dispatchEvent(new Event('change'))
+      await this.loadPresets()
     } catch (error) {
-      showNotification('Failed to delete preset', 'error');
-      console.error('Failed to delete preset:', error);
+      showNotification('Failed to delete preset', 'error')
+      console.error('Failed to delete preset:', error)
     }
   }
 
@@ -286,36 +294,37 @@ export class PresetSelector {
    * Handle import presets from file
    */
   async handleImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
+    const file = event.target.files[0]
+    if (!file) {
+      return
+    }
+
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      
+      const text = await file.text()
+      const data = JSON.parse(text)
+
       // Validate the data structure
       if (!Array.isArray(data.presets)) {
-        throw new Error('Invalid preset file format');
+        throw new Error('Invalid preset file format')
       }
-      
-      const result = await presetApi.importPresets(data.presets);
-      
+
+      const result = await presetApi.importPresets(data.presets)
+
       showNotification(
-        `Imported ${result.imported} presets successfully` + 
-        (result.skipped > 0 ? ` (${result.skipped} skipped)` : ''),
+        `Imported ${result.imported} presets successfully` +
+          (result.skipped > 0 ? ` (${result.skipped} skipped)` : ''),
         'success'
-      );
-      
+      )
+
       // Reload presets
-      await this.loadPresets();
-      
+      await this.loadPresets()
     } catch (error) {
-      showNotification('Failed to import presets', 'error');
-      console.error('Failed to import presets:', error);
+      showNotification('Failed to import presets', 'error')
+      console.error('Failed to import presets:', error)
     }
-    
+
     // Reset file input
-    event.target.value = '';
+    event.target.value = ''
   }
 
   /**
@@ -323,23 +332,22 @@ export class PresetSelector {
    */
   async handleExportAll() {
     try {
-      const blob = await presetApi.exportAllPresets();
-      
+      const blob = await presetApi.exportAllPresets()
+
       // Create download link
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `image-converter-presets-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      showNotification('Presets exported successfully', 'success');
-      
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `image-converter-presets-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      showNotification('Presets exported successfully', 'success')
     } catch (error) {
-      showNotification('Failed to export presets', 'error');
-      console.error('Failed to export presets:', error);
+      showNotification('Failed to export presets', 'error')
+      console.error('Failed to export presets:', error)
     }
   }
 
@@ -347,15 +355,15 @@ export class PresetSelector {
    * Get the currently selected preset
    */
   getSelectedPreset() {
-    return this.selectedPreset;
+    return this.selectedPreset
   }
 
   /**
    * Clear the current selection
    */
   clearSelection() {
-    const select = this.element.querySelector('#preset-select');
-    select.value = '';
-    select.dispatchEvent(new Event('change'));
+    const select = this.element.querySelector('#preset-select')
+    select.value = ''
+    select.dispatchEvent(new Event('change'))
   }
 }

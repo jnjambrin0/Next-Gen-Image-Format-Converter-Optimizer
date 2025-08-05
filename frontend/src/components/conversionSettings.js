@@ -2,22 +2,22 @@
  * Conversion settings component including format, quality, and presets
  */
 
-import { PresetSelector } from './presetSelector.js';
-import { presetApi } from '../services/presetApi.js';
-import { showNotification } from '../utils/notifications.js';
+import { PresetSelector } from './presetSelector.js'
+import { presetApi } from '../services/presetApi.js'
+import { showNotification } from '../utils/notifications.js'
 
 export class ConversionSettings {
   constructor() {
-    this.element = null;
-    this.presetSelector = null;
+    this.element = null
+    this.presetSelector = null
     this.settings = {
       outputFormat: 'webp',
       quality: 85,
       preserveMetadata: false,
       presetId: null,
-      presetName: null
-    };
-    this.onChange = null;
+      presetName: null,
+    }
+    this.onChange = null
   }
 
   /**
@@ -25,27 +25,27 @@ export class ConversionSettings {
    * @param {Function} onChange - Callback when settings change
    */
   async init(onChange) {
-    this.onChange = onChange;
-    this.element = this.createElement();
-    
+    this.onChange = onChange
+    this.element = this.createElement()
+
     // Initialize preset selector
-    this.presetSelector = new PresetSelector();
+    this.presetSelector = new PresetSelector()
     const presetElement = await this.presetSelector.init(
       (preset) => this.handlePresetChange(preset),
       () => this.getCurrentSettings()
-    );
-    
+    )
+
     // Insert preset selector at the top
-    this.element.insertBefore(presetElement, this.element.firstChild);
-    
-    return this.element;
+    this.element.insertBefore(presetElement, this.element.firstChild)
+
+    return this.element
   }
 
   /**
    * Create the settings element
    */
   createElement() {
-    const container = document.createElement('div');
+    const container = document.createElement('div')
     container.innerHTML = `
       <!-- Format Selection -->
       <div class="mb-4">
@@ -95,42 +95,42 @@ export class ConversionSettings {
       <div id="conversion-info" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-md hidden">
         <!-- Dynamic content -->
       </div>
-    `;
+    `
 
-    this.attachEventListeners(container);
-    return container;
+    this.attachEventListeners(container)
+    return container
   }
 
   /**
    * Attach event listeners
    */
   attachEventListeners(container) {
-    const formatSelect = container.querySelector('#output-format');
-    const qualitySlider = container.querySelector('#quality-slider');
-    const qualityValue = container.querySelector('#quality-value');
-    const preserveMetadata = container.querySelector('#preserve-metadata');
+    const formatSelect = container.querySelector('#output-format')
+    const qualitySlider = container.querySelector('#quality-slider')
+    const qualityValue = container.querySelector('#quality-value')
+    const preserveMetadata = container.querySelector('#preserve-metadata')
 
     // Format change
     formatSelect.addEventListener('change', (e) => {
-      this.settings.outputFormat = e.target.value;
-      this.updateConversionInfo();
-      this.notifyChange();
-    });
+      this.settings.outputFormat = e.target.value
+      this.updateConversionInfo()
+      this.notifyChange()
+    })
 
     // Quality change
     qualitySlider.addEventListener('input', (e) => {
-      const quality = parseInt(e.target.value);
-      this.settings.quality = quality;
-      qualityValue.textContent = quality;
-      this.updateConversionInfo();
-      this.notifyChange();
-    });
+      const quality = parseInt(e.target.value)
+      this.settings.quality = quality
+      qualityValue.textContent = quality
+      this.updateConversionInfo()
+      this.notifyChange()
+    })
 
     // Metadata toggle
     preserveMetadata.addEventListener('change', (e) => {
-      this.settings.preserveMetadata = e.target.checked;
-      this.notifyChange();
-    });
+      this.settings.preserveMetadata = e.target.checked
+      this.notifyChange()
+    })
   }
 
   /**
@@ -139,34 +139,34 @@ export class ConversionSettings {
   handlePresetChange(preset) {
     if (preset) {
       // Apply preset settings
-      const presetSettings = presetApi.applyPresetToSettings(preset);
-      
+      const presetSettings = presetApi.applyPresetToSettings(preset)
+
       // Update UI
-      const formatSelect = this.element.querySelector('#output-format');
-      const qualitySlider = this.element.querySelector('#quality-slider');
-      const qualityValue = this.element.querySelector('#quality-value');
-      const preserveMetadata = this.element.querySelector('#preserve-metadata');
-      
-      formatSelect.value = presetSettings.outputFormat;
-      qualitySlider.value = presetSettings.quality;
-      qualityValue.textContent = presetSettings.quality;
-      preserveMetadata.checked = presetSettings.preserveMetadata;
-      
+      const formatSelect = this.element.querySelector('#output-format')
+      const qualitySlider = this.element.querySelector('#quality-slider')
+      const qualityValue = this.element.querySelector('#quality-value')
+      const preserveMetadata = this.element.querySelector('#preserve-metadata')
+
+      formatSelect.value = presetSettings.outputFormat
+      qualitySlider.value = presetSettings.quality
+      qualityValue.textContent = presetSettings.quality
+      preserveMetadata.checked = presetSettings.preserveMetadata
+
       // Update internal settings
       this.settings = {
         ...this.settings,
-        ...presetSettings
-      };
-      
-      this.updateConversionInfo();
-      this.notifyChange();
-      
-      showNotification(`Applied preset: ${preset.name}`, 'info');
+        ...presetSettings,
+      }
+
+      this.updateConversionInfo()
+      this.notifyChange()
+
+      showNotification(`Applied preset: ${preset.name}`, 'info')
     } else {
       // Clear preset
-      this.settings.presetId = null;
-      this.settings.presetName = null;
-      this.notifyChange();
+      this.settings.presetId = null
+      this.settings.presetName = null
+      this.notifyChange()
     }
   }
 
@@ -174,40 +174,40 @@ export class ConversionSettings {
    * Update conversion info display
    */
   updateConversionInfo() {
-    const infoElement = this.element.querySelector('#conversion-info');
-    const { outputFormat, quality, presetName } = this.settings;
-    
-    let info = '';
-    
+    const infoElement = this.element.querySelector('#conversion-info')
+    const { outputFormat, quality, presetName } = this.settings
+
+    let info = ''
+
     if (presetName) {
-      info += `<div class="font-medium mb-1">Using preset: ${presetName}</div>`;
+      info += `<div class="font-medium mb-1">Using preset: ${presetName}</div>`
     }
-    
+
     // Format-specific info
     switch (outputFormat) {
       case 'webp':
-        info += `<div>WebP provides excellent compression with ${quality < 95 ? 'lossy' : 'near-lossless'} quality.</div>`;
-        break;
+        info += `<div>WebP provides excellent compression with ${quality < 95 ? 'lossy' : 'near-lossless'} quality.</div>`
+        break
       case 'avif':
-        info += `<div>AVIF offers superior compression but may take longer to process.</div>`;
-        break;
+        info += `<div>AVIF offers superior compression but may take longer to process.</div>`
+        break
       case 'jpeg':
-        info += `<div>JPEG is widely compatible but doesn't support transparency.</div>`;
-        break;
+        info += `<div>JPEG is widely compatible but doesn't support transparency.</div>`
+        break
       case 'png':
-        info += `<div>PNG provides lossless compression${quality < 100 ? ' (quality setting will be ignored)' : ''}.</div>`;
-        break;
+        info += `<div>PNG provides lossless compression${quality < 100 ? ' (quality setting will be ignored)' : ''}.</div>`
+        break
     }
-    
-    infoElement.innerHTML = info;
-    infoElement.classList.toggle('hidden', !info);
+
+    infoElement.innerHTML = info
+    infoElement.classList.toggle('hidden', !info)
   }
 
   /**
    * Get current settings
    */
   getCurrentSettings() {
-    return { ...this.settings };
+    return { ...this.settings }
   }
 
   /**
@@ -215,7 +215,7 @@ export class ConversionSettings {
    */
   notifyChange() {
     if (this.onChange) {
-      this.onChange(this.getCurrentSettings());
+      this.onChange(this.getCurrentSettings())
     }
   }
 
@@ -228,26 +228,26 @@ export class ConversionSettings {
       quality: 85,
       preserveMetadata: false,
       presetId: null,
-      presetName: null
-    };
-    
+      presetName: null,
+    }
+
     // Update UI
-    const formatSelect = this.element.querySelector('#output-format');
-    const qualitySlider = this.element.querySelector('#quality-slider');
-    const qualityValue = this.element.querySelector('#quality-value');
-    const preserveMetadata = this.element.querySelector('#preserve-metadata');
-    
-    formatSelect.value = 'webp';
-    qualitySlider.value = 85;
-    qualityValue.textContent = 85;
-    preserveMetadata.checked = false;
-    
+    const formatSelect = this.element.querySelector('#output-format')
+    const qualitySlider = this.element.querySelector('#quality-slider')
+    const qualityValue = this.element.querySelector('#quality-value')
+    const preserveMetadata = this.element.querySelector('#preserve-metadata')
+
+    formatSelect.value = 'webp'
+    qualitySlider.value = 85
+    qualityValue.textContent = 85
+    preserveMetadata.checked = false
+
     // Clear preset selection
     if (this.presetSelector) {
-      this.presetSelector.clearSelection();
+      this.presetSelector.clearSelection()
     }
-    
-    this.updateConversionInfo();
-    this.notifyChange();
+
+    this.updateConversionInfo()
+    this.notifyChange()
   }
 }

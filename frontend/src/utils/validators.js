@@ -72,3 +72,11 @@ export function isImageFile(file) {
   const validation = validateImageFile(file)
   return validation.valid
 }
+
+export function calculateSizeReduction(originalSize, convertedSize) {
+  if (originalSize === 0) {
+    return 0
+  }
+  const reduction = ((originalSize - convertedSize) / originalSize) * 100
+  return Math.max(0, Math.round(reduction))
+}

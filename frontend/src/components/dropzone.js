@@ -9,7 +9,18 @@ export class DropZone {
     this.onFileSelectCallback = null
     this.onMultipleFilesSelectCallback = null
     this.uiStateManager = uiStateManager
-    this.supportedFormats = ['.jpg', '.jpeg', '.png', '.webp', '.heif', '.heic', '.bmp', '.tiff', '.gif', '.avif']
+    this.supportedFormats = [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.webp',
+      '.heif',
+      '.heic',
+      '.bmp',
+      '.tiff',
+      '.gif',
+      '.avif',
+    ]
     this.maxFileSize = 50 * 1024 * 1024 // 50MB
     this.maxFileCount = 100
 
@@ -129,10 +140,10 @@ export class DropZone {
 
     // Extract files from FileList and handle folders
     const allFiles = await this.extractAllFiles(files)
-    
+
     // Filter and validate files
     const validFiles = this.filterValidImageFiles(allFiles)
-    
+
     if (validFiles.length === 0) {
       if (this.uiStateManager) {
         this.uiStateManager.setState(UIStates.ERROR)
@@ -146,7 +157,9 @@ export class DropZone {
       if (this.uiStateManager) {
         this.uiStateManager.setState(UIStates.ERROR)
       }
-      this.showError(`Maximum ${this.maxFileCount} files allowed. You selected ${validFiles.length} files.`)
+      this.showError(
+        `Maximum ${this.maxFileCount} files allowed. You selected ${validFiles.length} files.`
+      )
       return
     }
 
@@ -252,7 +265,7 @@ export class DropZone {
   }
 
   filterValidImageFiles(files) {
-    return files.filter(file => {
+    return files.filter((file) => {
       // Check file extension
       const ext = file.name.toLowerCase().match(/\.[^.]+$/)?.[0]
       if (!ext || !this.supportedFormats.includes(ext)) {
@@ -262,7 +275,9 @@ export class DropZone {
 
       // Check file size
       if (file.size > this.maxFileSize) {
-        console.warn(`Skipping file too large: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
+        console.warn(
+          `Skipping file too large: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`
+        )
         return false
       }
 

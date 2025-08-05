@@ -2,7 +2,7 @@
  * Preset API service for managing conversion presets
  */
 
-import { apiClient } from './api.js';
+import { apiClient } from './api.js'
 
 class PresetApi {
   /**
@@ -11,12 +11,12 @@ class PresetApi {
    */
   async getPresets() {
     try {
-      const response = await apiClient.get('/presets');
-      const data = await response.json();
-      return data.presets || [];
+      const response = await apiClient.get('/presets')
+      const data = await response.json()
+      return data.presets || []
     } catch (error) {
-      console.error('Failed to fetch presets:', error);
-      throw error;
+      console.error('Failed to fetch presets:', error)
+      throw error
     }
   }
 
@@ -27,11 +27,11 @@ class PresetApi {
    */
   async getPreset(presetId) {
     try {
-      const response = await apiClient.get(`/presets/${presetId}`);
-      return await response.json();
+      const response = await apiClient.get(`/presets/${presetId}`)
+      return await response.json()
     } catch (error) {
-      console.error('Failed to fetch preset:', error);
-      throw error;
+      console.error('Failed to fetch preset:', error)
+      throw error
     }
   }
 
@@ -45,11 +45,11 @@ class PresetApi {
    */
   async createPreset(presetData) {
     try {
-      const response = await apiClient.post('/presets', presetData);
-      return await response.json();
+      const response = await apiClient.post('/presets', presetData)
+      return await response.json()
     } catch (error) {
-      console.error('Failed to create preset:', error);
-      throw error;
+      console.error('Failed to create preset:', error)
+      throw error
     }
   }
 
@@ -61,11 +61,11 @@ class PresetApi {
    */
   async updatePreset(presetId, updateData) {
     try {
-      const response = await apiClient.put(`/presets/${presetId}`, updateData);
-      return await response.json();
+      const response = await apiClient.put(`/presets/${presetId}`, updateData)
+      return await response.json()
     } catch (error) {
-      console.error('Failed to update preset:', error);
-      throw error;
+      console.error('Failed to update preset:', error)
+      throw error
     }
   }
 
@@ -76,10 +76,10 @@ class PresetApi {
    */
   async deletePreset(presetId) {
     try {
-      await apiClient.delete(`/presets/${presetId}`);
+      await apiClient.delete(`/presets/${presetId}`)
     } catch (error) {
-      console.error('Failed to delete preset:', error);
-      throw error;
+      console.error('Failed to delete preset:', error)
+      throw error
     }
   }
 
@@ -90,11 +90,11 @@ class PresetApi {
    */
   async importPresets(presets) {
     try {
-      const response = await apiClient.post('/presets/import', { presets });
-      return await response.json();
+      const response = await apiClient.post('/presets/import', { presets })
+      return await response.json()
     } catch (error) {
-      console.error('Failed to import presets:', error);
-      throw error;
+      console.error('Failed to import presets:', error)
+      throw error
     }
   }
 
@@ -105,11 +105,11 @@ class PresetApi {
    */
   async exportPreset(presetId) {
     try {
-      const response = await apiClient.get(`/presets/${presetId}/export`);
-      return await response.json();
+      const response = await apiClient.get(`/presets/${presetId}/export`)
+      return await response.json()
     } catch (error) {
-      console.error('Failed to export preset:', error);
-      throw error;
+      console.error('Failed to export preset:', error)
+      throw error
     }
   }
 
@@ -119,11 +119,11 @@ class PresetApi {
    */
   async exportAllPresets() {
     try {
-      const response = await apiClient.get('/presets/export/all');
-      return await response.blob();
+      const response = await apiClient.get('/presets/export/all')
+      return await response.blob()
     } catch (error) {
-      console.error('Failed to export all presets:', error);
-      throw error;
+      console.error('Failed to export all presets:', error)
+      throw error
     }
   }
 
@@ -144,11 +144,11 @@ class PresetApi {
         optimization_mode: settings.optimizationMode || 'balanced',
         preserve_metadata: settings.preserveMetadata || false,
         resize_options: settings.resizeOptions || null,
-        advanced_settings: settings.advancedSettings || null
-      }
-    };
+        advanced_settings: settings.advancedSettings || null,
+      },
+    }
 
-    return this.createPreset(presetData);
+    return this.createPreset(presetData)
   }
 
   /**
@@ -158,10 +158,10 @@ class PresetApi {
    */
   applyPresetToSettings(preset) {
     if (!preset || !preset.settings) {
-      throw new Error('Invalid preset data');
+      throw new Error('Invalid preset data')
     }
 
-    const settings = preset.settings;
+    const settings = preset.settings
     return {
       outputFormat: settings.output_format,
       quality: settings.quality,
@@ -170,8 +170,8 @@ class PresetApi {
       resizeOptions: settings.resize_options || null,
       advancedSettings: settings.advanced_settings || null,
       presetId: preset.id,
-      presetName: preset.name
-    };
+      presetName: preset.name,
+    }
   }
 
   /**
@@ -181,14 +181,14 @@ class PresetApi {
    */
   async isNameAvailable(name) {
     try {
-      const presets = await this.getPresets();
-      return !presets.some(p => p.name.toLowerCase() === name.toLowerCase());
+      const presets = await this.getPresets()
+      return !presets.some((p) => p.name.toLowerCase() === name.toLowerCase())
     } catch (error) {
-      console.error('Failed to validate preset name:', error);
-      return false;
+      console.error('Failed to validate preset name:', error)
+      return false
     }
   }
 }
 
 // Export singleton instance
-export const presetApi = new PresetApi();
+export const presetApi = new PresetApi()

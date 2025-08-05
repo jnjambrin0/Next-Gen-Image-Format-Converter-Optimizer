@@ -4,6 +4,7 @@ import {
   formatFileSize,
   getFileExtension,
   isImageFile,
+  calculateSizeReduction,
 } from '../../src/utils/validators.js'
 
 describe('validateImageFile', () => {
@@ -94,5 +95,25 @@ describe('isImageFile', () => {
   it('should return false for invalid files', () => {
     const invalidFile = { name: 'test.pdf', type: 'application/pdf', size: 1024 * 1024 }
     expect(isImageFile(invalidFile)).toBe(false)
+  })
+})
+
+describe('calculateSizeReduction', () => {
+  it('should calculate size reduction correctly', () => {
+    expect(calculateSizeReduction(1000, 500)).toBe(50)
+    expect(calculateSizeReduction(1000, 750)).toBe(25)
+    expect(calculateSizeReduction(1000, 1000)).toBe(0)
+    expect(calculateSizeReduction(1000, 100)).toBe(90)
+  })
+
+  it('should handle edge cases', () => {
+    expect(calculateSizeReduction(0, 100)).toBe(0) // Division by zero
+    expect(calculateSizeReduction(1000, 1100)).toBe(0) // Negative reduction
+    expect(calculateSizeReduction(1000, 0)).toBe(100) // 100% reduction
+  })
+
+  it('should round to nearest integer', () => {
+    expect(calculateSizeReduction(1000, 666)).toBe(33) // 33.4% rounds to 33
+    expect(calculateSizeReduction(1000, 665)).toBe(34) // 33.5% rounds to 34
   })
 })

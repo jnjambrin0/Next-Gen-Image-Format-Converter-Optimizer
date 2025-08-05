@@ -10,45 +10,46 @@
  */
 export function showNotification(message, type = 'info', duration = 3000) {
   // Create notification element
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  
+  const notification = document.createElement('div')
+  notification.className = `notification notification-${type}`
+
   // Set up styling based on type
-  const baseClasses = 'fixed top-4 right-4 px-4 py-3 rounded-md shadow-lg z-50 transition-all duration-300 max-w-sm';
+  const baseClasses =
+    'fixed top-4 right-4 px-4 py-3 rounded-md shadow-lg z-50 transition-all duration-300 max-w-sm'
   const typeClasses = {
     success: 'bg-green-500 text-white',
     error: 'bg-red-500 text-white',
     warning: 'bg-yellow-500 text-black',
-    info: 'bg-blue-500 text-white'
-  };
-  
-  notification.className = `${baseClasses} ${typeClasses[type] || typeClasses.info}`;
-  notification.textContent = message;
-  
+    info: 'bg-blue-500 text-white',
+  }
+
+  notification.className = `${baseClasses} ${typeClasses[type] || typeClasses.info}`
+  notification.textContent = message
+
   // Add close button
-  const closeButton = document.createElement('button');
-  closeButton.innerHTML = '×';
-  closeButton.className = 'ml-3 text-lg font-bold opacity-70 hover:opacity-100';
-  closeButton.onclick = () => removeNotification(notification);
-  notification.appendChild(closeButton);
-  
+  const closeButton = document.createElement('button')
+  closeButton.innerHTML = '×'
+  closeButton.className = 'ml-3 text-lg font-bold opacity-70 hover:opacity-100'
+  closeButton.onclick = () => removeNotification(notification)
+  notification.appendChild(closeButton)
+
   // Add to DOM
-  document.body.appendChild(notification);
-  
+  document.body.appendChild(notification)
+
   // Animate in
   requestAnimationFrame(() => {
-    notification.style.transform = 'translateX(0)';
-    notification.style.opacity = '1';
-  });
-  
+    notification.style.transform = 'translateX(0)'
+    notification.style.opacity = '1'
+  })
+
   // Auto-remove after duration
   if (duration > 0) {
     setTimeout(() => {
-      removeNotification(notification);
-    }, duration);
+      removeNotification(notification)
+    }, duration)
   }
-  
-  return notification;
+
+  return notification
 }
 
 /**
@@ -56,18 +57,20 @@ export function showNotification(message, type = 'info', duration = 3000) {
  * @param {HTMLElement} notification - The notification element to remove
  */
 function removeNotification(notification) {
-  if (!notification || !notification.parentNode) return;
-  
+  if (!notification || !notification.parentNode) {
+    return
+  }
+
   // Animate out
-  notification.style.transform = 'translateX(100%)';
-  notification.style.opacity = '0';
-  
+  notification.style.transform = 'translateX(100%)'
+  notification.style.opacity = '0'
+
   // Remove from DOM after animation
   setTimeout(() => {
     if (notification.parentNode) {
-      notification.parentNode.removeChild(notification);
+      notification.parentNode.removeChild(notification)
     }
-  }, 300);
+  }, 300)
 }
 
 /**
@@ -76,7 +79,7 @@ function removeNotification(notification) {
  * @param {number} duration - Duration in milliseconds
  */
 export function showSuccess(message, duration = 3000) {
-  return showNotification(message, 'success', duration);
+  return showNotification(message, 'success', duration)
 }
 
 /**
@@ -85,7 +88,7 @@ export function showSuccess(message, duration = 3000) {
  * @param {number} duration - Duration in milliseconds (0 = persistent)
  */
 export function showError(message, duration = 5000) {
-  return showNotification(message, 'error', duration);
+  return showNotification(message, 'error', duration)
 }
 
 /**
@@ -94,7 +97,7 @@ export function showError(message, duration = 5000) {
  * @param {number} duration - Duration in milliseconds
  */
 export function showWarning(message, duration = 4000) {
-  return showNotification(message, 'warning', duration);
+  return showNotification(message, 'warning', duration)
 }
 
 /**
@@ -103,5 +106,5 @@ export function showWarning(message, duration = 4000) {
  * @param {number} duration - Duration in milliseconds
  */
 export function showInfo(message, duration = 3000) {
-  return showNotification(message, 'info', duration);
+  return showNotification(message, 'info', duration)
 }

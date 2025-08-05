@@ -1,3 +1,5 @@
+import { formatFileSize, calculateSizeReduction } from '../utils/validators.js'
+
 /**
  * Creates a conversion result component with file details and Convert Another button
  * @param {Object} options - Configuration options
@@ -8,6 +10,7 @@
  * @param {number} options.convertedSize - Converted file size in bytes
  * @param {string} options.conversionTime - Conversion time in seconds
  * @param {Function} options.onConvertAnother - Callback when Convert Another is clicked
+ * @param {Function} options.onCompare - Callback when Compare is clicked
  * @returns {HTMLElement} The conversion result element
  */
 export function createConversionResult(options) {
@@ -19,6 +22,7 @@ export function createConversionResult(options) {
     convertedSize,
     conversionTime,
     onConvertAnother,
+    onCompare,
   } = options
 
   // Main container
@@ -65,10 +69,21 @@ export function createConversionResult(options) {
     detailsGrid.appendChild(reductionBadge)
   }
 
-  // Convert Another button
+  // Buttons container
   const buttonContainer = document.createElement('div')
-  buttonContainer.className = 'flex justify-center'
+  buttonContainer.className = 'flex justify-center gap-3'
 
+  // Compare button
+  if (onCompare) {
+    const compareBtn = document.createElement('button')
+    compareBtn.className =
+      'px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors'
+    compareBtn.textContent = 'Compare Images'
+    compareBtn.onclick = onCompare
+    buttonContainer.appendChild(compareBtn)
+  }
+
+  // Convert Another button
   const convertAnotherBtn = document.createElement('button')
   convertAnotherBtn.className =
     'px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors'
@@ -130,33 +145,3 @@ function createSuccessIcon() {
   return svg
 }
 
-/**
- * Formats file size in human-readable format
- * @param {number} bytes - File size in bytes
- * @returns {string} Formatted file size
- */
-function formatFileSize(bytes) {
-  if (bytes === 0) {
-    return '0 Bytes'
-  }
-
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-/**
- * Calculates size reduction percentage
- * @param {number} originalSize - Original file size
- * @param {number} convertedSize - Converted file size
- * @returns {number} Size reduction percentage
- */
-function calculateSizeReduction(originalSize, convertedSize) {
-  if (originalSize === 0) {
-    return 0
-  }
-  const reduction = ((originalSize - convertedSize) / originalSize) * 100
-  return Math.max(0, Math.round(reduction))
-}

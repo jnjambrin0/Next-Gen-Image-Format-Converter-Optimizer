@@ -7,6 +7,8 @@ import { createAppLayout } from './components/appLayout.js'
 import { UI_TIMING } from './config/constants.js'
 import { convertImage, APIError, mapErrorCodeToMessage } from './services/api.js'
 import { createConversionResult } from './components/conversionResult.js'
+import { createComparisonViewer } from './components/comparisonViewer.js'
+import { BlobUrlManager } from './utils/blobUrlManager.js'
 
 // Batch processing components
 import { FileListPreview } from './components/fileListPreview.js'
@@ -31,13 +33,14 @@ export function initializeApp() {
   // Initialize conversion settings
   const conversionSettings = new ConversionSettings()
   const settingsContainer = document.getElementById('conversionSettings')
-  conversionSettings.init((settings) => {
-    // Update last settings when changed
-    lastOutputFormat = settings.outputFormat
-    lastQuality = settings.quality
-  }).then(settingsElement => {
-    settingsContainer.appendChild(settingsElement)
-  })
+  conversionSettings
+    .init((settings) => {
+      // Settings updated - callback for future use
+      console.log('Settings updated:', settings)
+    })
+    .then((settingsElement) => {
+      settingsContainer.appendChild(settingsElement)
+    })
 
   // Initialize dropzone
   const dropzoneElement = document.getElementById('dropzone')
@@ -46,8 +49,10 @@ export function initializeApp() {
   // Track conversion time and last file for retry
   let conversionStartTime = null
   let lastFileForRetry = null
-  let lastOutputFormat = 'webp'
-  let lastQuality = 85
+
+  // Store for comparison
+  const blobUrlManager = new BlobUrlManager()
+  let lastConversionData = null
 
   // Batch processing components
   let fileListPreview = null
@@ -99,21 +104,39 @@ export function initializeApp() {
       uiStateManager.setState(UIStates.CONVERTING)
 
       // Call API to convert image with all settings
-      const { blob, filename } = await convertImage(file, outputFormat, quality, preserveMetadata, presetId)
+      const { blob, filename } = await convertImage(
+        file,
+        outputFormat,
+        quality,
+        preserveMetadata,
+        presetId
+      )
 
       // Calculate conversion time
       const conversionTime = ((Date.now() - conversionStartTime) / 1000).toFixed(1)
 
+      // Create object URLs for comparison using BlobUrlManager
+      const originalUrl = blobUrlManager.createUrl(file, 'original')
+      const convertedUrl = blobUrlManager.createUrl(blob, 'converted')
+
+      // Store conversion data for comparison
+      lastConversionData = {
+        originalUrl: originalUrl,
+        convertedUrl: convertedUrl,
+        originalSize: file.size,
+        convertedSize: blob.size,
+        originalFilename: file.name,
+        convertedFilename: filename,
+      }
+
       // Trigger download
       uiStateManager.setState(UIStates.DOWNLOADING)
-      const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = convertedUrl
       a.download = filename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
 
       // Show success with conversion result component
       uiStateManager.setState(UIStates.SUCCESS)
@@ -132,8 +155,24 @@ export function initializeApp() {
           fileInfoElement.innerHTML = ''
           fileInfoElement.classList.add('hidden')
           errorElement.classList.add('hidden')
+          // Clean up all blob URLs
+          blobUrlManager.revokeAll()
+          lastConversionData = null
           // Reset dropzone
           dropzone.reset()
+        },
+        onCompare: () => {
+          if (lastConversionData) {
+            // Create and show comparison viewer
+            const comparisonViewer = createComparisonViewer({
+              ...lastConversionData,
+              onClose: () => {
+                // Remove viewer from DOM
+                document.body.removeChild(comparisonViewer)
+              },
+            })
+            document.body.appendChild(comparisonViewer)
+          }
         },
       })
 
@@ -146,8 +185,6 @@ export function initializeApp() {
 
       // Store file for retry
       lastFileForRetry = file
-      lastOutputFormat = outputFormat
-      lastQuality = quality
 
       let errorMessage = 'Failed to convert image. '
       if (error instanceof APIError) {
@@ -191,7 +228,7 @@ export function initializeApp() {
   })
 
   // Handle multiple files selection for batch processing
-  dropzone.onMultipleFilesSelect(async (files) => {
+  dropzone.onMultipleFilesSelect((files) => {
     console.log(`Multiple files selected: ${files.length} files`)
 
     // Clear previous messages
@@ -214,7 +251,7 @@ export function initializeApp() {
     const presetContainer = document.createElement('div')
     presetContainer.className = 'mt-4'
     fileListContainer.parentElement.appendChild(presetContainer)
-    
+
     if (!batchPresetSelector) {
       batchPresetSelector = new BatchPresetSelector(presetContainer)
       batchPresetSelector.onChange((settings) => {
@@ -224,7 +261,8 @@ export function initializeApp() {
 
     // Add start batch button
     const startButton = document.createElement('button')
-    startButton.className = 'mt-4 w-full px-4 py-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+    startButton.className =
+      'mt-4 w-full px-4 py-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
     startButton.textContent = `Start Batch Conversion (${files.length} files)`
     startButton.onclick = async () => {
       await startBatchConversion(files)
@@ -237,49 +275,49 @@ export function initializeApp() {
     try {
       // Get settings from preset selector
       const settings = batchPresetSelector.getSettings()
-      
+
       // Hide file list and preset selector
       const fileListContainer = document.getElementById('fileListPreview')
       fileListContainer.classList.add('hidden')
-      
+
       // Remove preset selector container
       const presetContainer = batchPresetSelector.container.parentElement
       if (presetContainer) {
         presetContainer.remove()
       }
-      
+
       // Initialize batch queue component
       const queueContainer = document.createElement('div')
       queueContainer.id = 'batchQueueContainer'
       queueContainer.className = 'mt-4'
       fileListContainer.parentElement.appendChild(queueContainer)
-      
+
       if (!batchQueue) {
         batchQueue = new BatchQueueComponent(queueContainer)
       }
-      
+
       // Create batch job via API
       const response = await createBatchJob(files, settings)
       currentBatchJobId = response.job_id
-      
+
       // Set up batch queue
       batchQueue.setJobId(currentBatchJobId)
       const queueItems = files.map((file, index) => ({
         index,
         filename: file.name,
         status: 'pending',
-        progress: 0
+        progress: 0,
       }))
       batchQueue.setItems(queueItems)
-      
+
       // Initialize WebSocket connection
       if (!websocketService) {
         websocketService = new WebSocketService()
       }
-      
+
       // Connect to WebSocket for progress updates
       await websocketService.connect(currentBatchJobId, response.websocket_url)
-      
+
       // Handle progress updates
       websocketService.on('progress', (data) => {
         if (data.file_index >= 0) {
@@ -287,7 +325,7 @@ export function initializeApp() {
           batchQueue.updateStatus(data.file_index, data.status, data.message)
         }
       })
-      
+
       // Handle job status updates
       websocketService.on('job_status', async (data) => {
         if (data.status === 'completed') {
@@ -299,7 +337,7 @@ export function initializeApp() {
           showBatchError('Batch processing failed. Some files could not be converted.')
         }
       })
-      
+
       // Poll for status as backup (in case WebSocket messages are missed)
       const statusInterval = setInterval(async () => {
         try {
@@ -315,24 +353,25 @@ export function initializeApp() {
           console.error('Failed to get batch status:', error)
         }
       }, 2000) // Check every 2 seconds
-      
+
       // Handle cancel callbacks
-      batchQueue.onCancelItem(async (index) => {
+      batchQueue.onCancelItem((index) => {
         // TODO: Implement cancel item API call
         console.log('Cancel item:', index)
       })
-      
-      batchQueue.onCancelAll(async () => {
+
+      batchQueue.onCancelAll(() => {
         // TODO: Implement cancel all API call
         console.log('Cancel all')
       })
-      
     } catch (error) {
       console.error('Failed to start batch conversion:', error)
       const errorElement = document.getElementById('errorMessage')
       if (errorElement) {
         errorElement.innerHTML = ''
-        errorElement.appendChild(createErrorMessage(['Failed to start batch conversion. Please try again.']))
+        errorElement.appendChild(
+          createErrorMessage(['Failed to start batch conversion. Please try again.'])
+        )
         errorElement.classList.remove('hidden')
       }
     }
@@ -351,10 +390,10 @@ export function initializeApp() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      
+
       // Show success message
       showBatchSuccess('Batch conversion completed! Your files are downloading.')
-      
+
       // Clean up after a short delay
       setTimeout(() => {
         if (websocketService) {
@@ -362,13 +401,12 @@ export function initializeApp() {
         }
         resetBatchUI()
       }, 3000)
-      
     } catch (error) {
       console.error('Failed to download results:', error)
       showBatchError('Failed to download batch results. Please try again.')
     }
   }
-  
+
   // Function to show batch success message
   function showBatchSuccess(message) {
     const fileInfoElement = document.getElementById('fileInfo')
@@ -378,7 +416,7 @@ export function initializeApp() {
       fileInfoElement.classList.remove('hidden')
     }
   }
-  
+
   // Function to show batch error message
   function showBatchError(message) {
     const errorElement = document.getElementById('errorMessage')
@@ -396,13 +434,13 @@ export function initializeApp() {
     if (queueContainer) {
       queueContainer.remove()
     }
-    
+
     // Reset components
     fileListPreview = null
     batchQueue = null
     batchPresetSelector = null
     currentBatchJobId = null
-    
+
     // Reset dropzone
     dropzone.reset()
     uiStateManager.setState(UIStates.IDLE)

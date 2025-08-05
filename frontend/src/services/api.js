@@ -20,9 +20,9 @@ export const apiClient = {
     const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -34,9 +34,9 @@ export const apiClient = {
     const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -46,13 +46,13 @@ export const apiClient = {
 
   async delete(endpoint) {
     const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
     return response
-  }
+  },
 }
 
 /**
@@ -65,14 +65,20 @@ export const apiClient = {
  * @returns {Promise<{blob: Blob, filename: string}>} The converted image blob and filename
  * @throws {Error} API errors with specific codes and messages
  */
-export async function convertImage(file, outputFormat, quality = 85, preserveMetadata = false, presetId = null) {
+export async function convertImage(
+  file,
+  outputFormat,
+  quality = 85,
+  preserveMetadata = false,
+  presetId = null
+) {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('output_format', outputFormat)
   formData.append('quality', quality.toString())
   formData.append('preserve_metadata', preserveMetadata.toString())
   formData.append('strip_metadata', (!preserveMetadata).toString())
-  
+
   if (presetId) {
     formData.append('preset_id', presetId)
   }
