@@ -23,7 +23,7 @@ export class WebSocketService {
    * @param {string} wsUrl - WebSocket URL (may include auth token)
    * @returns {Promise<void>}
    */
-  async connect(jobId, wsUrl) {
+  connect(jobId, wsUrl) {
     this.jobId = jobId
     this.isIntentionallyClosed = false
 
@@ -41,7 +41,7 @@ export class WebSocketService {
     return this.createConnection()
   }
 
-  async createConnection() {
+  createConnection() {
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url)

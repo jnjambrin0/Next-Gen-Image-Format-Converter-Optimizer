@@ -783,7 +783,51 @@ POST /api/batch/{job_id}/websocket-token
 - Falls back to regular ConnectionManager when auth disabled
 - Uses WebSocket close codes for different security violations
 
-### 17. Batch Processing Simplified UI Pattern
+### 17. Frontend Component Memory Management Pattern
+**CRITICAL**: All frontend components with event listeners MUST implement proper cleanup:
+
+```javascript
+// CORRECT: Store event handlers for cleanup
+class Component {
+  constructor() {
+    this.eventHandlers = new Map()
+  }
+  
+  attachEventListeners() {
+    const handler = () => this.handleClick()
+    element.addEventListener('click', handler)
+    this.eventHandlers.set('element-click', { element, event: 'click', handler })
+  }
+  
+  destroy() {
+    // Clean up all event listeners
+    this.eventHandlers.forEach(({ element, event, handler }) => {
+      element?.removeEventListener(event, handler)
+    })
+    this.eventHandlers.clear()
+  }
+}
+
+// WRONG: Anonymous functions can't be removed
+element.addEventListener('click', () => this.handleClick())  // Memory leak!
+```
+
+**Why**: Event listeners with anonymous functions or direct method references can't be removed, causing memory leaks in single-page applications.
+
+**Component Re-rendering Pattern**:
+```javascript
+// CRITICAL: If component uses render() method that recreates DOM
+// MUST re-render after any setting change to update UI
+updateSetting(key, value) {
+  this.settings[key] = value
+  this.render()  // CRITICAL: Without this, UI won't update!
+  if (this.onChangeCallback) {
+    this.onChangeCallback(this.getSettings())
+  }
+}
+```
+
+### 18. Batch Processing Simplified UI Pattern
 **CRITICAL**: Batch processing uses automatic flow without modals:
 
 - **NO BatchSummaryModal**: Removed intentionally for simplicity

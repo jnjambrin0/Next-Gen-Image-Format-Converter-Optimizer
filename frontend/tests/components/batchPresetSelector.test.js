@@ -213,7 +213,7 @@ describe('BatchPresetSelector', () => {
 
       // Initial check
       let summaryItems = container.querySelectorAll('.bg-gray-50 li')
-      expect(summaryItems[0].textContent).toContain('Format: WebP')
+      expect(summaryItems[0].textContent).toContain('• Format: WebP')
 
       // Change format
       const formatSelect = container.querySelector('#batch-format-select')
@@ -222,7 +222,7 @@ describe('BatchPresetSelector', () => {
 
       // Check after change
       summaryItems = container.querySelectorAll('.bg-gray-50 li')
-      expect(summaryItems[0].textContent).toContain('Format: PNG')
+      expect(summaryItems[0].textContent).toContain('• Format: PNG')
     })
   })
 

@@ -19,7 +19,8 @@ import { WebSocketService } from './services/websocket.js'
 import { createBatchJob, getBatchStatus, downloadBatchResults } from './services/batchApi.js'
 
 // Conversion settings
-import { ConversionSettings } from './components/conversionSettings.js'
+import { ConversionSettingsProgressive } from './components/conversionSettingsProgressive.js'
+import { KeyboardShortcuts } from './components/keyboardShortcuts.js'
 
 export function initializeApp() {
   const app = document.getElementById('app')
@@ -31,9 +32,14 @@ export function initializeApp() {
   // Initialize UI state manager
   const uiStateManager = new UIStateManager()
 
-  // Initialize conversion settings
-  const conversionSettings = new ConversionSettings()
+  // Initialize conversion settings with progressive disclosure
+  const conversionSettings = new ConversionSettingsProgressive()
   const settingsContainer = document.getElementById('conversionSettings')
+
+  // Initialize keyboard shortcuts
+  const keyboardShortcuts = new KeyboardShortcuts()
+  keyboardShortcuts.init()
+  KeyboardShortcuts.registerDefaults(keyboardShortcuts)
 
   // Store current file for test conversions
   let currentFile = null
@@ -677,4 +683,44 @@ export function initializeApp() {
 
   // App initialized successfully
   // console.log('Image Converter app initialized')
+
+  // Setup keyboard shortcut event listeners
+  setupKeyboardShortcutListeners()
+
+  function setupKeyboardShortcutListeners() {
+    // Toggle advanced settings
+    window.addEventListener('shortcut:toggleAdvanced', () => {
+      const toggleBtn = document.querySelector('#advanced-toggle')
+      if (toggleBtn) {
+        toggleBtn.click()
+      }
+    })
+
+    // Start conversion
+    window.addEventListener('shortcut:startConversion', () => {
+      // Trigger file selection if no file selected
+      if (!currentFile) {
+        const fileInput = dropzoneElement.querySelector('input[type="file"]')
+        if (fileInput) {
+          fileInput.click()
+        }
+      }
+    })
+
+    // Format selection
+    window.addEventListener('shortcut:selectFormat', (event) => {
+      const formatSelect = document.querySelector('#output-format')
+      if (formatSelect && event.detail.format) {
+        formatSelect.value = event.detail.format
+        formatSelect.dispatchEvent(new Event('change'))
+      }
+    })
+
+    // Escape key handling
+    window.addEventListener('shortcut:escape', () => {
+      // Close any open modals or dialogs
+      const modals = document.querySelectorAll('.customization-modal')
+      modals.forEach((modal) => modal.remove())
+    })
+  }
 }

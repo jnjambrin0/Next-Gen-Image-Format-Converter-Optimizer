@@ -134,7 +134,7 @@ class PresetApi {
    * @param {Object} settings - Current conversion settings
    * @returns {Promise<Object>} Created preset
    */
-  async createFromCurrentSettings(name, description, settings) {
+  createFromCurrentSettings(name, description, settings) {
     const presetData = {
       name,
       description,

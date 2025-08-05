@@ -60,6 +60,8 @@ export class BatchPresetSelector {
 
   updateSetting(key, value) {
     this.settings[key] = value
+    // Re-render to update the summary
+    this.render()
     if (this.onChangeCallback) {
       this.onChangeCallback(this.getSettings())
     }

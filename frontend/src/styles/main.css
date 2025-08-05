@@ -60,4 +60,76 @@
       opacity: 1;
     }
   }
+
+  /* Progressive disclosure animations */
+  .settings-transition {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .settings-group {
+    @apply border border-gray-200 rounded-lg overflow-hidden;
+  }
+
+  .settings-group-header {
+    @apply w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between text-left;
+  }
+
+  .settings-group-content {
+    @apply px-4 py-3 space-y-3;
+  }
+
+  /* Tooltip styles */
+  .tooltip-arrow {
+    @apply absolute;
+  }
+
+  /* Keyboard shortcut badge */
+  .kbd {
+    @apply inline-flex items-center px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded;
+  }
+
+  /* Help icon */
+  .help-icon {
+    @apply inline-flex items-center ml-1 cursor-help;
+  }
+
+  /* Advanced toggle button */
+  .advanced-toggle {
+    @apply inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors;
+  }
+
+  /* Customization modal */
+  .customization-modal {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .settings-transition {
+      @apply transition-none;
+    }
+
+    .fade-in,
+    .slide-up {
+      animation: none;
+    }
+  }
+
+  /* Compact mode styles */
+  .compact-mode .settings-group-header {
+    @apply py-2;
+  }
+
+  .compact-mode .settings-group-content {
+    @apply py-2;
+  }
+
+  .compact-mode .form-label {
+    @apply text-xs;
+  }
+
+  /* Focus visible for accessibility */
+  .focus-visible:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
 }

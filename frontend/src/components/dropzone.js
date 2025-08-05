@@ -311,19 +311,25 @@ export class DropZone {
   }
 
   destroy() {
-    // Remove all event listeners
-    this.element.removeEventListener('dragenter', this.boundHandlers.dragEnter)
-    this.element.removeEventListener('dragover', this.boundHandlers.dragOver)
-    this.element.removeEventListener('dragleave', this.boundHandlers.dragLeave)
-    this.element.removeEventListener('drop', this.boundHandlers.drop)
-    this.element.removeEventListener('click', this.boundHandlers.click)
-    this.element.removeEventListener('keydown', this.boundHandlers.keyDown)
-    this.fileInput.removeEventListener('change', this.boundHandlers.fileInputChange)
+    // Remove all event listeners if elements exist
+    if (this.element && this.boundHandlers) {
+      this.element.removeEventListener('dragenter', this.boundHandlers.dragEnter)
+      this.element.removeEventListener('dragover', this.boundHandlers.dragOver)
+      this.element.removeEventListener('dragleave', this.boundHandlers.dragLeave)
+      this.element.removeEventListener('drop', this.boundHandlers.drop)
+      this.element.removeEventListener('click', this.boundHandlers.click)
+      this.element.removeEventListener('keydown', this.boundHandlers.keyDown)
+    }
+    
+    if (this.fileInput && this.boundHandlers) {
+      this.fileInput.removeEventListener('change', this.boundHandlers.fileInputChange)
+    }
 
     // Clear references
     this.element = null
     this.fileInput = null
     this.onFileSelectCallback = null
     this.uiStateManager = null
+    this.boundHandlers = null
   }
 }
