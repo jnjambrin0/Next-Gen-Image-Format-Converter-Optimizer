@@ -111,6 +111,11 @@ class PresetExport(BaseModel):
 
 
 class PresetListResponse(BaseModel):
-    """Schema for listing presets."""
+    """Schema for listing presets with pagination and search support."""
     presets: List[PresetResponse] = Field(..., description="List of all presets")
     total: int = Field(..., description="Total number of presets")
+    offset: Optional[int] = Field(None, description="Number of presets skipped")
+    limit: Optional[int] = Field(None, description="Maximum presets returned")
+    has_more: Optional[bool] = Field(None, description="Whether more presets are available")
+    search_query: Optional[str] = Field(None, description="Search query used")
+    search_metadata: Optional[Dict[str, Any]] = Field(None, description="Search execution metadata")

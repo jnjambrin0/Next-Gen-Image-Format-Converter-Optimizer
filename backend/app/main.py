@@ -212,22 +212,79 @@ def custom_openapi() -> Dict[str, Any]:
         "description": """
         Privacy-focused local image conversion service with advanced optimization capabilities.
         
-        ## Features
-        - Local-only processing (no external network requests)
-        - Advanced format support (WebP, AVIF, JPEG XL, HEIF, etc.)
-        - Batch processing with real-time progress updates
-        - Smart content detection and optimization recommendations
-        - Preset management for consistent conversion settings
-        - Comprehensive metadata handling with privacy controls
+        ## 🚀 Features
         
-        ## Security
-        - All processing happens in sandboxed environments
-        - Automatic metadata removal for privacy
-        - No data leaves your machine
+        ### Core Conversion
+        - **Universal Format Support**: JPEG, PNG, WebP, AVIF, HEIF/HEIC, JPEG XL, WebP2, BMP, TIFF, GIF
+        - **Smart Format Detection**: Content-based detection, not relying on file extensions
+        - **Quality Optimization**: Adaptive quality settings based on content analysis
+        - **Metadata Privacy**: Automatic EXIF/GPS removal with granular control
         
-        ## API Versions
-        - v1: Current stable API with full feature support
-        - legacy: Backward compatibility endpoints (deprecated)
+        ### Batch Processing
+        - **Concurrent Processing**: Multi-threaded batch conversion with progress tracking
+        - **Real-time Updates**: WebSocket and Server-Sent Events for live progress
+        - **Flexible Cancellation**: Cancel entire jobs or individual items
+        - **Result Management**: Automatic ZIP packaging and download
+        
+        ### Intelligence Features
+        - **Content Analysis**: AI-powered detection of photos, illustrations, screenshots, documents
+        - **Smart Recommendations**: Format suggestions based on content type and optimization goals
+        - **Quality Metrics**: SSIM/PSNR quality analysis for optimization validation
+        - **Performance Profiling**: Detailed conversion statistics and metrics
+        
+        ### Preset Management
+        - **Version Control**: Full version history with rollback capabilities
+        - **Advanced Search**: Fuzzy matching, filtering, and ranking
+        - **Import/Export**: Portable preset sharing with validation
+        - **Usage Analytics**: Track preset performance and adoption
+        
+        ## 🔒 Security & Privacy
+        
+        ### Local-Only Processing
+        - **Network Isolation**: No external API calls or data transmission
+        - **Sandboxed Execution**: All conversions run in isolated environments
+        - **Memory Security**: Secure memory clearing with overwrite patterns
+        - **Resource Limits**: CPU, memory, and time constraints prevent abuse
+        
+        ### Privacy Controls
+        - **Metadata Removal**: EXIF, GPS, and camera data stripped by default
+        - **Filename Sanitization**: Path traversal and security validation
+        - **Privacy-Aware Logging**: No PII or sensitive data in logs
+        - **Audit Trail**: Security event tracking without data exposure
+        
+        ## 📊 API Versions
+        
+        ### Current API (v1)
+        - **REST Endpoints**: Full CRUD operations with standardized error handling
+        - **Real-time Updates**: WebSocket and SSE support for live progress
+        - **Comprehensive Filtering**: Advanced search, pagination, and sorting
+        - **Version Management**: Preset versioning and rollback capabilities
+        
+        ### Legacy API (deprecated)
+        - **Backward Compatibility**: Maintained for existing integrations
+        - **Migration Path**: Automated migration tools and guides available
+        - **Sunset Timeline**: Legacy endpoints will be removed in v2.0
+        
+        ## 🔧 Development
+        
+        ### Error Handling
+        - **Standardized Errors**: Consistent error codes and correlation IDs
+        - **Detailed Context**: Rich error details for debugging
+        - **Rate Limiting**: Built-in protection against abuse
+        - **Validation**: Comprehensive input validation with helpful messages
+        
+        ### Performance
+        - **Concurrent Limits**: Configurable concurrency for optimal resource usage
+        - **Memory Management**: Automatic cleanup and garbage collection
+        - **Caching**: Intelligent caching for repeated operations
+        - **Monitoring**: Built-in metrics and health checks
+        
+        ## 📚 Documentation
+        
+        - **Interactive API Docs**: This Swagger UI with live testing
+        - **Code Examples**: Complete examples in multiple languages
+        - **Integration Guides**: Step-by-step integration tutorials
+        - **Performance Tips**: Optimization recommendations and best practices
         """,
         "contact": {
             "name": "Image Converter API Support",
@@ -243,15 +300,31 @@ def custom_openapi() -> Dict[str, Any]:
         },
     })
 
-    # Enhanced server configuration
+    # Enhanced server configuration with environment detection
     openapi_schema["servers"] = [
         {
             "url": f"http://localhost:{settings.api_port}/api/v1",
-            "description": "Local development server (v1 API)",
+            "description": "Local development server (v1 API - Current)",
+            "variables": {
+                "port": {
+                    "default": str(settings.api_port),
+                    "description": "API server port"
+                }
+            }
         },
         {
             "url": f"http://localhost:{settings.api_port}/api",
-            "description": "Local development server (legacy endpoints)",
+            "description": "Local development server (Legacy endpoints - Deprecated)",
+            "variables": {
+                "port": {
+                    "default": str(settings.api_port),
+                    "description": "API server port"
+                }
+            }
+        },
+        {
+            "url": "http://127.0.0.1:8080/api/v1",
+            "description": "Alternative localhost (v1 API)"
         }
     ]
 
@@ -274,7 +347,7 @@ def custom_openapi() -> Dict[str, Any]:
         }
     }
     
-    # Add common response schemas
+    # Add comprehensive response schemas and examples
     openapi_schema["components"]["schemas"] = openapi_schema["components"].get("schemas", {})
     openapi_schema["components"]["schemas"].update({
         "ErrorResponse": {
@@ -284,7 +357,13 @@ def custom_openapi() -> Dict[str, Any]:
                 "error_code": {
                     "type": "string",
                     "description": "Unique error code for programmatic handling",
-                    "example": "CONV201"
+                    "example": "CONV201",
+                    "enum": [
+                        "CONV201", "CONV400", "CONV413", "CONV415", "CONV422", "CONV500",
+                        "BAT201", "BAT400", "BAT404", "BAT500",
+                        "DET400", "DET413", "DET503",
+                        "PRE400", "PRE403", "PRE404", "PRE409", "PRE500"
+                    ]
                 },
                 "message": {
                     "type": "string",
@@ -294,18 +373,36 @@ def custom_openapi() -> Dict[str, Any]:
                 "correlation_id": {
                     "type": "string",
                     "description": "Request correlation ID for tracking",
-                    "example": "abc123-def456-ghi789"
+                    "example": "abc123-def456-ghi789",
+                    "pattern": "^[a-f0-9-]+$"
                 },
                 "details": {
                     "type": "object",
                     "description": "Additional error context",
-                    "additionalProperties": True
+                    "additionalProperties": True,
+                    "example": {
+                        "file_size": 52428800,
+                        "max_allowed": 50331648,
+                        "size_mb": 50.0
+                    }
                 },
                 "timestamp": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When the error occurred"
+                    "description": "When the error occurred",
+                    "example": "2024-01-15T10:30:00Z"
                 }
+            },
+            "example": {
+                "error_code": "CONV413",
+                "message": "File size exceeds maximum allowed size",
+                "correlation_id": "abc123-def456-ghi789",
+                "details": {
+                    "file_size": 52428800,
+                    "max_allowed": 50331648,
+                    "size_mb": 50.0
+                },
+                "timestamp": "2024-01-15T10:30:00Z"
             }
         },
         "ValidationError": {
@@ -314,70 +411,536 @@ def custom_openapi() -> Dict[str, Any]:
                 "loc": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Location of the validation error"
+                    "description": "Location of the validation error",
+                    "example": ["body", "quality"]
                 },
                 "msg": {
                     "type": "string",
-                    "description": "Validation error message"
+                    "description": "Validation error message",
+                    "example": "ensure this value is greater than or equal to 1"
                 },
                 "type": {
                     "type": "string",
-                    "description": "Type of validation error"
+                    "description": "Type of validation error",
+                    "example": "value_error.number.not_ge"
+                }
+            },
+            "example": {
+                "loc": ["body", "quality"],
+                "msg": "ensure this value is greater than or equal to 1",
+                "type": "value_error.number.not_ge"
+            }
+        },
+        "SupportedFormat": {
+            "type": "object",
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "description": "Format identifier",
+                    "example": "webp"
+                },
+                "mime_type": {
+                    "type": "string",
+                    "description": "MIME type",
+                    "example": "image/webp"
+                },
+                "extensions": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "File extensions",
+                    "example": [".webp"]
+                },
+                "supports_transparency": {
+                    "type": "boolean",
+                    "description": "Whether format supports transparency",
+                    "example": True
+                },
+                "supports_animation": {
+                    "type": "boolean",
+                    "description": "Whether format supports animation",
+                    "example": True
+                }
+            }
+        },
+        "ConversionResult": {
+            "type": "object",
+            "description": "Conversion result metadata (returned in response headers)",
+            "properties": {
+                "conversion_id": {
+                    "type": "string",
+                    "description": "Unique conversion identifier",
+                    "example": "conv_abc123def456"
+                },
+                "processing_time": {
+                    "type": "number",
+                    "description": "Processing time in seconds",
+                    "example": 0.234
+                },
+                "compression_ratio": {
+                    "type": "number",
+                    "description": "Output/input size ratio",
+                    "example": 0.65
+                },
+                "input_format": {
+                    "type": "string",
+                    "description": "Detected input format",
+                    "example": "jpeg"
+                },
+                "output_format": {
+                    "type": "string",
+                    "description": "Actual output format",
+                    "example": "webp"
+                },
+                "input_size": {
+                    "type": "integer",
+                    "description": "Original file size in bytes",
+                    "example": 1048576
+                },
+                "output_size": {
+                    "type": "integer",
+                    "description": "Converted file size in bytes",
+                    "example": 681574
+                },
+                "quality_used": {
+                    "type": "integer",
+                    "description": "Quality setting applied",
+                    "example": 85
+                },
+                "metadata_removed": {
+                    "type": "boolean",
+                    "description": "Whether metadata was stripped",
+                    "example": True
                 }
             }
         }
     })
 
-    # Add common parameters
+    # Add comprehensive common parameters
     openapi_schema["components"]["parameters"] = {
         "CorrelationId": {
             "name": "X-Correlation-ID",
             "in": "header",
-            "description": "Optional correlation ID for request tracking",
+            "description": "Optional correlation ID for request tracking and debugging",
             "required": False,
-            "schema": {"type": "string"}
+            "schema": {
+                "type": "string",
+                "pattern": "^[a-f0-9-]+$",
+                "example": "abc123-def456-ghi789"
+            }
         },
         "AcceptVersion": {
             "name": "Accept-Version",
             "in": "header",
-            "description": "API version preference",
+            "description": "API version preference for backward compatibility",
             "required": False,
             "schema": {
                 "type": "string",
                 "enum": ["v1"],
                 "default": "v1"
             }
+        },
+        "ContentType": {
+            "name": "Content-Type",
+            "in": "header",
+            "description": "Content type for file uploads",
+            "required": True,
+            "schema": {
+                "type": "string",
+                "enum": ["multipart/form-data"],
+                "example": "multipart/form-data"
+            }
+        },
+        "CacheControl": {
+            "name": "Cache-Control",
+            "in": "header",
+            "description": "Cache control for converted images",
+            "required": False,
+            "schema": {
+                "type": "string",
+                "example": "no-cache, no-store, must-revalidate"
+            }
+        },
+        "PaginationLimit": {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return",
+            "required": False,
+            "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20
+            }
+        },
+        "PaginationOffset": {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of items to skip",
+            "required": False,
+            "schema": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+            }
         }
     }
 
-    # Add tags for better organization
+    # Add comprehensive tags for better organization
     openapi_schema["tags"] = [
         {
             "name": "conversion",
-            "description": "Single image conversion operations"
+            "description": "Single image conversion operations with format detection and optimization",
+            "externalDocs": {
+                "description": "Conversion Guide",
+                "url": "/api/docs/conversion-guide"
+            }
         },
         {
             "name": "batch",
-            "description": "Batch processing operations"
+            "description": "Batch processing operations with real-time progress tracking",
+            "externalDocs": {
+                "description": "Batch Processing Guide",
+                "url": "/api/docs/batch-guide"
+            }
         },
         {
             "name": "detection",
-            "description": "Format detection and analysis"
+            "description": "Format detection, analysis, and intelligent recommendations",
+            "externalDocs": {
+                "description": "Detection API Reference",
+                "url": "/api/docs/detection-guide"
+            }
         },
         {
             "name": "presets",
-            "description": "Preset management"
+            "description": "Preset management with versioning, search, and advanced filtering",
+            "externalDocs": {
+                "description": "Preset Management Guide",
+                "url": "/api/docs/preset-guide"
+            }
         },
         {
             "name": "monitoring",
-            "description": "System monitoring and statistics"
+            "description": "System monitoring, statistics, and performance metrics",
+            "externalDocs": {
+                "description": "Monitoring Guide",
+                "url": "/api/docs/monitoring-guide"
+            }
         },
         {
             "name": "health",
-            "description": "Health check and system status"
+            "description": "Health checks, system status, and network isolation verification",
+            "externalDocs": {
+                "description": "Health Check Guide",
+                "url": "/api/docs/health-guide"
+            }
+        },
+        {
+            "name": "intelligence",
+            "description": "AI-powered content analysis and optimization recommendations",
+            "externalDocs": {
+                "description": "Intelligence Engine Guide",
+                "url": "/api/docs/intelligence-guide"
+            }
+        },
+        {
+            "name": "optimization",
+            "description": "Advanced optimization features and quality analysis",
+            "externalDocs": {
+                "description": "Optimization Guide",
+                "url": "/api/docs/optimization-guide"
+            }
         }
     ]
 
+    # Add comprehensive examples for common operations
+    openapi_schema["components"]["examples"] = {
+        "SimpleConversion": {
+            "summary": "Basic image conversion",
+            "description": "Convert a JPEG image to WebP format with default settings",
+            "value": {
+                "file": "@photo.jpg",
+                "output_format": "webp",
+                "quality": 85
+            }
+        },
+        "HighQualityConversion": {
+            "summary": "High-quality conversion",
+            "description": "Convert with maximum quality and metadata preservation",
+            "value": {
+                "file": "@photo.jpg",
+                "output_format": "avif",
+                "quality": 95,
+                "preserve_metadata": True,
+                "strip_metadata": False
+            }
+        },
+        "BatchConversion": {
+            "summary": "Batch processing",
+            "description": "Convert multiple images with consistent settings",
+            "value": {
+                "files": ["@photo1.jpg", "@photo2.png", "@photo3.heic"],
+                "output_format": "webp",
+                "quality": 80,
+                "optimization_mode": "size"
+            }
+        },
+        "PresetConversion": {
+            "summary": "Using presets",
+            "description": "Convert using a predefined preset configuration",
+            "value": {
+                "file": "@photo.jpg",
+                "output_format": "webp",
+                "preset_id": "550e8400-e29b-41d4-a716-446655440000"
+            }
+        },
+        "ErrorResponse400": {
+            "summary": "Validation error",
+            "description": "Example of a validation error response",
+            "value": {
+                "error_code": "CONV400",
+                "message": "Invalid quality setting",
+                "correlation_id": "abc123-def456-ghi789",
+                "details": {
+                    "provided_quality": 150,
+                    "valid_range": "1-100"
+                },
+                "timestamp": "2024-01-15T10:30:00Z"
+            }
+        },
+        "ErrorResponse413": {
+            "summary": "File too large",
+            "description": "Example of a file size error response",
+            "value": {
+                "error_code": "CONV413",
+                "message": "File size exceeds maximum allowed size",
+                "correlation_id": "def456-ghi789-jkl012",
+                "details": {
+                    "file_size": 52428800,
+                    "max_allowed": 50331648,
+                    "size_mb": 50.0
+                },
+                "timestamp": "2024-01-15T10:31:00Z"
+            }
+        }
+    }
+    
+    # Add comprehensive request/response examples
+    openapi_schema["components"]["requestBodies"] = {
+        "ImageConversion": {
+            "description": "Image file with conversion parameters",
+            "required": True,
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "required": ["file", "output_format"],
+                        "properties": {
+                            "file": {
+                                "type": "string",
+                                "format": "binary",
+                                "description": "Image file to convert"
+                            },
+                            "output_format": {
+                                "type": "string",
+                                "enum": ["webp", "avif", "jpeg", "png", "jxl", "heif", "webp2"],
+                                "description": "Target output format"
+                            },
+                            "quality": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 85,
+                                "description": "Output quality (1-100)"
+                            },
+                            "strip_metadata": {
+                                "type": "boolean",
+                                "default": True,
+                                "description": "Remove EXIF and metadata"
+                            },
+                            "preserve_metadata": {
+                                "type": "boolean",
+                                "default": False,
+                                "description": "Preserve non-GPS metadata"
+                            },
+                            "preserve_gps": {
+                                "type": "boolean",
+                                "default": False,
+                                "description": "Preserve GPS location data"
+                            },
+                            "preset_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "UUID of preset to apply"
+                            }
+                        }
+                    },
+                    "examples": {
+                        "simple": {
+                            "$ref": "#/components/examples/SimpleConversion"
+                        },
+                        "high_quality": {
+                            "$ref": "#/components/examples/HighQualityConversion"
+                        },
+                        "with_preset": {
+                            "$ref": "#/components/examples/PresetConversion"
+                        }
+                    }
+                }
+            }
+        },
+        "BatchConversion": {
+            "description": "Multiple image files with batch conversion settings",
+            "required": True,
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "required": ["files", "output_format"],
+                        "properties": {
+                            "files": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "format": "binary"
+                                },
+                                "minItems": 1,
+                                "maxItems": 100,
+                                "description": "Array of image files to convert"
+                            },
+                            "output_format": {
+                                "type": "string",
+                                "enum": ["webp", "avif", "jpeg", "png", "jxl", "heif", "webp2"],
+                                "description": "Target output format for all files"
+                            },
+                            "quality": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 85
+                            },
+                            "optimization_mode": {
+                                "type": "string",
+                                "enum": ["size", "quality", "balanced", "lossless"],
+                                "default": "balanced"
+                            },
+                            "preserve_metadata": {
+                                "type": "boolean",
+                                "default": False
+                            },
+                            "preset_id": {
+                                "type": "string",
+                                "format": "uuid"
+                            }
+                        }
+                    },
+                    "example": {
+                        "$ref": "#/components/examples/BatchConversion"
+                    }
+                }
+            }
+        }
+    }
+    
+    # Add response headers documentation
+    openapi_schema["components"]["headers"] = {
+        "X-Conversion-Id": {
+            "description": "Unique identifier for the conversion operation",
+            "schema": {
+                "type": "string",
+                "example": "conv_abc123def456"
+            }
+        },
+        "X-Processing-Time": {
+            "description": "Time taken to process the conversion (seconds)",
+            "schema": {
+                "type": "number",
+                "example": 0.234
+            }
+        },
+        "X-Compression-Ratio": {
+            "description": "Ratio of output size to input size",
+            "schema": {
+                "type": "number",
+                "example": 0.65
+            }
+        },
+        "X-Input-Format": {
+            "description": "Detected input image format",
+            "schema": {
+                "type": "string",
+                "example": "jpeg"
+            }
+        },
+        "X-Output-Format": {
+            "description": "Actual output format used",
+            "schema": {
+                "type": "string",
+                "example": "webp"
+            }
+        },
+        "X-Correlation-ID": {
+            "description": "Request correlation ID for tracking",
+            "schema": {
+                "type": "string",
+                "example": "abc123-def456-ghi789"
+            }
+        },
+        "X-API-Version": {
+            "description": "API version used for the request",
+            "schema": {
+                "type": "string",
+                "example": "v1"
+            }
+        },
+        "X-Total-Items": {
+            "description": "Total number of items available (pagination)",
+            "schema": {
+                "type": "integer",
+                "example": 150
+            }
+        },
+        "X-Has-More": {
+            "description": "Whether more items are available (pagination)",
+            "schema": {
+                "type": "boolean",
+                "example": True
+            }
+        }
+    }
+    
+    # Add webhook/callback documentation for future extensibility
+    openapi_schema["components"]["callbacks"] = {
+        "conversionComplete": {
+            "{$request.body#/callback_url}": {
+                "post": {
+                    "summary": "Conversion completion notification",
+                    "description": "Called when a conversion operation completes (future feature)",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "conversion_id": {"type": "string"},
+                                        "status": {"type": "string", "enum": ["completed", "failed"]},
+                                        "result": {"$ref": "#/components/schemas/ConversionResult"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Callback acknowledged"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 

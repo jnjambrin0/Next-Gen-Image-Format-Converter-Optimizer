@@ -27,6 +27,7 @@ from app.api.utils.validation import (
     SemaphoreContextManager,
     validate_content_type,
 )
+from app.api.utils.error_handling import EndpointErrorHandler
 from app.core.constants import FORMAT_TO_MIME_TYPE, SUPPORTED_INPUT_FORMATS, SUPPORTED_OUTPUT_FORMATS
 
 logger = structlog.get_logger()
@@ -35,6 +36,11 @@ router = APIRouter(prefix="/detection", tags=["detection"])
 
 # Semaphore for concurrent request limiting
 detection_semaphore = asyncio.Semaphore(settings.max_concurrent_conversions)
+
+# Error handlers for detection endpoints
+detect_error_handler = EndpointErrorHandler("detection", "detect_format")
+recommend_error_handler = EndpointErrorHandler("recommendation", "recommend_format")
+compatibility_error_handler = EndpointErrorHandler("compatibility", "get_format_compatibility")
 
 
 @router.post(
@@ -76,13 +82,9 @@ async def detect_format(
     """Detect the format of an uploaded image file."""
     # Validate content type
     if not validate_content_type(file):
-        raise HTTPException(
-            status_code=415,
-            detail={
-                "error_code": "DET415",
-                "message": "Unsupported media type. Please upload a valid image file.",
-                "correlation_id": request.state.correlation_id,
-            },
+        raise detect_error_handler.unsupported_media_type_error(
+            "Unsupported media type. Please upload a valid image file.",
+            request
         )
     
     contents = None
@@ -104,13 +106,9 @@ async def detect_format(
             detected_format, confidence = await format_detection_service.detect_format(contents)
 
             if not detected_format:
-                raise HTTPException(
-                    status_code=422,
-                    detail={
-                        "error_code": "DET422",
-                        "message": "Unable to detect image format. The file may be corrupted or in an unsupported format.",
-                        "correlation_id": request.state.correlation_id,
-                    },
+                raise detect_error_handler.unprocessable_entity_error(
+                    "Unable to detect image format. The file may be corrupted or in an unsupported format.",
+                    request
                 )
 
             # Get additional format details
@@ -170,13 +168,9 @@ async def detect_format(
                 error=str(e),
                 correlation_id=request.state.correlation_id,
             )
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "error_code": "DET500",
-                    "message": "An unexpected error occurred during format detection",
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise detect_error_handler.internal_server_error(
+                "An unexpected error occurred during format detection",
+                request
             )
 
         finally:
@@ -221,13 +215,9 @@ async def recommend_format(
     """Get format recommendations based on image content analysis."""
     # Validate content type
     if not validate_content_type(file):
-        raise HTTPException(
-            status_code=415,
-            detail={
-                "error_code": "REC415",
-                "message": "Unsupported media type. Please upload a valid image file.",
-                "correlation_id": request.state.correlation_id,
-            },
+        raise recommend_error_handler.unsupported_media_type_error(
+            "Unsupported media type. Please upload a valid image file.",
+            request
         )
     
     contents = None
@@ -244,13 +234,9 @@ async def recommend_format(
             detected_format, confidence = await format_detection_service.detect_format(contents)
 
             if not detected_format:
-                raise HTTPException(
-                    status_code=422,
-                    detail={
-                        "error_code": "REC422",
-                        "message": "Unable to detect input format for analysis",
-                        "correlation_id": request.state.correlation_id,
-                    },
+                raise recommend_error_handler.unprocessable_entity_error(
+                    "Unable to detect input format for analysis",
+                    request
                 )
 
             # Perform content analysis using intelligence engine
@@ -327,13 +313,9 @@ async def recommend_format(
                 error=str(e),
                 correlation_id=request.state.correlation_id,
             )
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "error_code": "REC500",
-                    "message": "An unexpected error occurred during format recommendation",
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise recommend_error_handler.internal_server_error(
+                "An unexpected error occurred during format recommendation",
+                request
             )
 
         finally:
@@ -418,11 +400,7 @@ async def get_format_compatibility(request: Request):
             error=str(e),
             correlation_id=request.state.correlation_id,
         )
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error_code": "COMP500",
-                "message": "An unexpected error occurred while retrieving compatibility information",
-                "correlation_id": request.state.correlation_id,
-            },
+        raise compatibility_error_handler.internal_server_error(
+            "An unexpected error occurred while retrieving compatibility information",
+            request
         )

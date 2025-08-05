@@ -52,7 +52,7 @@ export class Tooltip {
       mouseleave: () => this.handleMouseLeave(tooltipData),
       focus: () => this.handleFocus(tooltipData),
       blur: () => this.handleBlur(tooltipData),
-      touchstart: (e) => this.handleTouch(e, tooltipData)
+      touchstart: (e) => this.handleTouch(e, tooltipData),
     }
 
     // Mouse events
@@ -366,7 +366,7 @@ export class Tooltip {
     if (tooltipData) {
       // Hide tooltip if visible
       this.hide(tooltipData)
-      
+
       // Clean up event listeners
       if (tooltipData.boundHandlers) {
         element.removeEventListener('mouseenter', tooltipData.boundHandlers.mouseenter)
@@ -375,12 +375,12 @@ export class Tooltip {
         element.removeEventListener('blur', tooltipData.boundHandlers.blur)
         element.removeEventListener('touchstart', tooltipData.boundHandlers.touchstart)
       }
-      
+
       // Clear any pending timeouts
       if (tooltipData.showTimeout) {
         clearTimeout(tooltipData.showTimeout)
       }
-      
+
       this.activeTooltips.delete(element)
     }
   }

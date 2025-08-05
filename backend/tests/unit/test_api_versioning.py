@@ -63,7 +63,7 @@ class TestApiVersioning:
         # Check for legacy server
         legacy_server = next((s for s in servers if s["url"].endswith("/api")), None)
         assert legacy_server is not None
-        assert "legacy" in legacy_server["description"]
+        assert "Legacy" in legacy_server["description"]
     
     def test_accept_version_header_support(self, client):
         """Test that Accept-Version header is properly handled."""

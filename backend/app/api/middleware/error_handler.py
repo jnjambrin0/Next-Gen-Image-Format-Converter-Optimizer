@@ -4,11 +4,14 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import traceback
 import uuid
+import json
 from typing import Dict, Any
+from datetime import datetime
 import structlog
 
 from ...core.exceptions import ImageConverterError
 from ..routes.monitoring import error_reporter
+from ...models.responses import ErrorResponse
 
 logger = structlog.get_logger()
 
@@ -26,15 +29,12 @@ async def error_handler_middleware(request: Request, call_next):
 
 
 async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
-    """Handle exceptions and return formatted error response."""
-    error_response: Dict[str, Any] = {
-        "correlation_id": correlation_id,
-        "error": {
-            "message": "An unexpected error occurred",
-            "code": "CONV999",
-            "type": "InternalServerError",
-        },
-    }
+    """Handle exceptions and return formatted error response using ErrorResponse model."""
+    # Default error response
+    error_code = "SRV500"
+    message = "An unexpected error occurred"
+    details = None
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     
     # Record error for local monitoring (privacy-safe)
     try:
@@ -46,16 +46,11 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
     except Exception as e:
         logger.warning("Failed to record error", error=str(e))
 
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-
     # Handle custom exceptions
     if isinstance(exc, ImageConverterError):
-        error_response["error"] = {
-            "message": exc.message,
-            "code": exc.error_code,
-            "type": exc.__class__.__name__,
-            "details": exc.details,
-        }
+        error_code = exc.error_code
+        message = exc.message
+        details = exc.details
         status_code = exc.status_code
         logger.bind(
             correlation_id=correlation_id,
@@ -65,26 +60,33 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
 
     # Handle FastAPI validation errors
     elif isinstance(exc, RequestValidationError):
-        error_response["error"] = {
-            "message": "Validation error",
-            "code": "CONV002",
-            "type": "ValidationError",
-            "details": {"validation_errors": exc.errors()},
-        }
+        error_code = "VAL422"
+        message = "Request validation failed"
+        details = {"validation_errors": exc.errors()}
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         logger.bind(
             correlation_id=correlation_id,
             validation_errors=exc.errors()
         ).warning("Request validation error")
 
-    # Handle Starlette HTTP exceptions
+    # Handle Starlette HTTP exceptions (including FastAPI HTTPException)
     elif isinstance(exc, StarletteHTTPException):
-        error_response["error"] = {
-            "message": exc.detail,
-            "code": f"HTTP{exc.status_code}",
-            "type": "HTTPException",
-        }
+        error_code = f"HTTP{exc.status_code}"
         status_code = exc.status_code
+        
+        # Check if detail is already in ErrorResponse format (from our APIError)
+        if isinstance(exc.detail, dict) and "error_code" in exc.detail:
+            # Use the standardized error format from APIError/endpoint
+            error_response = ErrorResponse(**exc.detail)
+            return JSONResponse(
+                status_code=status_code,
+                content=json.loads(error_response.json()),
+                headers={"X-Correlation-ID": correlation_id},
+            )
+        else:
+            # Legacy format - convert to standard
+            message = str(exc.detail) if exc.detail else "HTTP error"
+        
         logger.bind(
             correlation_id=correlation_id,
             status_code=exc.status_code
@@ -98,9 +100,18 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
             traceback=traceback.format_exc(),
         ).error("Unexpected error", error=str(exc))
 
+    # Create standardized error response
+    error_response = ErrorResponse(
+        error_code=error_code,
+        message=message,
+        correlation_id=correlation_id,
+        details=details,
+        timestamp=datetime.utcnow()
+    )
+
     return JSONResponse(
         status_code=status_code,
-        content=error_response,
+        content=json.loads(error_response.json()),
         headers={"X-Correlation-ID": correlation_id},
     )
 

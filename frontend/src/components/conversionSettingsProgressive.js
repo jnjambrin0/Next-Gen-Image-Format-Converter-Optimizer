@@ -628,7 +628,7 @@ export class ConversionSettingsProgressive {
         formatDiv.textContent = `PNG provides lossless compression${quality < 100 ? ' (quality setting will be ignored)' : ''}.`
         break
     }
-    
+
     if (formatDiv.textContent) {
       infoElement.appendChild(formatDiv)
       hasInfo = true

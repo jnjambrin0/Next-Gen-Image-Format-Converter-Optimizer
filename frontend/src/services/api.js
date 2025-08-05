@@ -140,7 +140,7 @@ export class APIError extends Error {
 }
 
 /**
- * Extract filename from Content-Disposition header
+ * Extract filename from Content-Disposition header with improved parsing
  * @param {string} contentDisposition - The Content-Disposition header value
  * @returns {string|null} The extracted filename or null
  */
@@ -149,8 +149,30 @@ function extractFilename(contentDisposition) {
     return null
   }
 
-  const filenameMatch = contentDisposition.match(/filename="(.+)"/)
-  return filenameMatch ? filenameMatch[1] : null
+  // Try different filename patterns
+  const patterns = [
+    /filename\*=UTF-8''(.+)/, // RFC 5987 encoded
+    /filename="([^"]+)"/, // Quoted filename
+    /filename=([^;\s]+)/, // Unquoted filename
+  ]
+
+  for (const pattern of patterns) {
+    const match = contentDisposition.match(pattern)
+    if (match) {
+      let filename = match[1]
+      // Decode URI component if it looks encoded
+      try {
+        if (filename.includes('%')) {
+          filename = decodeURIComponent(filename)
+        }
+      } catch (e) {
+        // If decoding fails, use original
+      }
+      return filename
+    }
+  }
+
+  return null
 }
 
 /**
@@ -190,4 +212,245 @@ export function mapErrorCodeToMessage(errorCode) {
   }
 
   return errorCodeMap[errorCode] || 'An error occurred during conversion.'
+}
+
+// =============================================================================
+// ENHANCED V1 API FUNCTIONS
+// =============================================================================
+
+/**
+ * Detect image format from file content (v1 API)
+ * @param {File} file - Image file to analyze
+ * @returns {Promise<Object>} Format detection results
+ */
+export async function detectImageFormat(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.postForm(API_CONFIG.ENDPOINTS.DETECT_FORMAT, formData)
+  return await response.json()
+}
+
+/**
+ * Get format recommendations based on image content (v1 API)
+ * @param {File} file - Image file to analyze
+ * @returns {Promise<Object>} Format recommendations with scores
+ */
+export async function getFormatRecommendations(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.postForm(API_CONFIG.ENDPOINTS.RECOMMEND_FORMAT, formData)
+  return await response.json()
+}
+
+/**
+ * Get format compatibility matrix (v1 API)
+ * @returns {Promise<Object>} Complete format compatibility information
+ */
+export async function getFormatCompatibility() {
+  const response = await apiClient.get(API_CONFIG.ENDPOINTS.FORMAT_COMPATIBILITY)
+  return await response.json()
+}
+
+/**
+ * List presets with advanced filtering and pagination (v1 API)
+ * @param {Object} options - Filtering and pagination options
+ * @returns {Promise<Object>} Paginated preset list with metadata
+ */
+export async function listPresets(options = {}) {
+  const params = new URLSearchParams()
+
+  if (options.search) params.append('search', options.search)
+  if (options.formatFilter) params.append('format_filter', options.formatFilter)
+  if (options.sortBy) params.append('sort_by', options.sortBy)
+  if (options.sortOrder) params.append('sort_order', options.sortOrder)
+  if (options.limit) params.append('limit', options.limit)
+  if (options.offset) params.append('offset', options.offset)
+  if (options.includeBuiltin !== undefined) params.append('include_builtin', options.includeBuiltin)
+
+  const endpoint = params.toString()
+    ? `${API_CONFIG.ENDPOINTS.PRESETS}?${params}`
+    : API_CONFIG.ENDPOINTS.PRESETS
+  const response = await apiClient.get(endpoint)
+  return await response.json()
+}
+
+/**
+ * Advanced preset search with fuzzy matching (v1 API)
+ * @param {string} query - Search query
+ * @param {Object} filters - Advanced search filters
+ * @returns {Promise<Object>} Ranked search results
+ */
+export async function searchPresets(query, filters = {}) {
+  const params = new URLSearchParams()
+  params.append('q', query)
+
+  if (filters.formats) params.append('formats', filters.formats.join(','))
+  if (filters.minQuality) params.append('min_quality', filters.minQuality)
+  if (filters.maxQuality) params.append('max_quality', filters.maxQuality)
+  if (filters.optimizationModes)
+    params.append('optimization_modes', filters.optimizationModes.join(','))
+  if (filters.minUsage) params.append('min_usage', filters.minUsage)
+  if (filters.includeBuiltin !== undefined) params.append('include_builtin', filters.includeBuiltin)
+  if (filters.limit) params.append('limit', filters.limit)
+  if (filters.offset) params.append('offset', filters.offset)
+
+  const response = await apiClient.get(`${API_CONFIG.ENDPOINTS.PRESET_SEARCH}?${params}`)
+  return await response.json()
+}
+
+/**
+ * Get preset by ID with enhanced details (v1 API)
+ * @param {string} presetId - Preset UUID
+ * @param {Object} options - Additional options
+ * @returns {Promise<Object>} Complete preset details
+ */
+export async function getPreset(presetId, options = {}) {
+  const params = new URLSearchParams()
+  if (options.includeUsage) params.append('include_usage', 'true')
+  if (options.version) params.append('version', options.version)
+
+  const endpoint = params.toString()
+    ? `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}?${params}`
+    : `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}`
+  const response = await apiClient.get(endpoint)
+  return await response.json()
+}
+
+/**
+ * Create new preset with validation (v1 API)
+ * @param {Object} presetData - Preset configuration
+ * @returns {Promise<Object>} Created preset with version info
+ */
+export async function createPreset(presetData) {
+  const response = await apiClient.post(API_CONFIG.ENDPOINTS.PRESETS, presetData)
+  return await response.json()
+}
+
+/**
+ * Update existing preset with version tracking (v1 API)
+ * @param {string} presetId - Preset UUID
+ * @param {Object} updateData - Fields to update
+ * @param {string} versionNote - Optional change description
+ * @returns {Promise<Object>} Updated preset with new version
+ */
+export async function updatePreset(presetId, updateData, versionNote = null) {
+  const params = new URLSearchParams()
+  if (versionNote) params.append('version_note', versionNote)
+
+  const endpoint = params.toString()
+    ? `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}?${params}`
+    : `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}`
+  const response = await apiClient.put(endpoint, updateData)
+  return await response.json()
+}
+
+/**
+ * Delete preset with safety checks (v1 API)
+ * @param {string} presetId - Preset UUID
+ * @param {boolean} force - Force deletion (admin only)
+ * @returns {Promise<void>} Deletion confirmation
+ */
+export async function deletePreset(presetId, force = false) {
+  const params = new URLSearchParams()
+  if (force) params.append('force', 'true')
+
+  const endpoint = params.toString()
+    ? `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}?${params}`
+    : `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}`
+  await apiClient.delete(endpoint)
+}
+
+/**
+ * Get preset version history (v1 API)
+ * @param {string} presetId - Preset UUID
+ * @param {Object} options - History options
+ * @returns {Promise<Array>} Version history list
+ */
+export async function getPresetVersions(presetId, options = {}) {
+  const params = new URLSearchParams()
+  if (options.limit) params.append('limit', options.limit)
+  if (options.includeContent) params.append('include_content', 'true')
+
+  const endpoint = API_CONFIG.ENDPOINTS.PRESET_VERSIONS(presetId)
+  const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
+  const response = await apiClient.get(finalEndpoint)
+  return await response.json()
+}
+
+/**
+ * Restore preset to previous version (v1 API)
+ * @param {string} presetId - Preset UUID
+ * @param {string} version - Version to restore to
+ * @param {string} restoreNote - Optional restoration note
+ * @returns {Promise<Object>} Restored preset
+ */
+export async function restorePresetVersion(presetId, version, restoreNote = null) {
+  const params = new URLSearchParams()
+  if (restoreNote) params.append('restore_note', restoreNote)
+
+  const endpoint = API_CONFIG.ENDPOINTS.PRESET_RESTORE(presetId, version)
+  const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
+  const response = await apiClient.post(finalEndpoint)
+  return await response.json()
+}
+
+/**
+ * Export preset with metadata (v1 API)
+ * @param {string} presetId - Preset UUID
+ * @param {Object} options - Export options
+ * @returns {Promise<Object>} Export package
+ */
+export async function exportPreset(presetId, options = {}) {
+  const params = new URLSearchParams()
+  if (options.includeHistory) params.append('include_history', 'true')
+  if (options.includeUsage) params.append('include_usage', 'true')
+  if (options.formatVersion) params.append('format_version', options.formatVersion)
+
+  const endpoint = API_CONFIG.ENDPOINTS.PRESET_EXPORT(presetId)
+  const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
+  const response = await apiClient.get(finalEndpoint)
+  return await response.json()
+}
+
+/**
+ * Import presets with conflict resolution (v1 API)
+ * @param {Object} importData - Presets to import
+ * @param {string} conflictStrategy - How to handle conflicts (skip, overwrite, rename)
+ * @param {boolean} validateSettings - Perform deep validation
+ * @returns {Promise<Array>} Successfully imported presets
+ */
+export async function importPresets(
+  importData,
+  conflictStrategy = 'skip',
+  validateSettings = true
+) {
+  const params = new URLSearchParams()
+  params.append('conflict_strategy', conflictStrategy)
+  params.append('validate_settings', validateSettings)
+
+  const response = await apiClient.post(
+    `${API_CONFIG.ENDPOINTS.PRESET_IMPORT}?${params}`,
+    importData
+  )
+  return await response.json()
+}
+
+/**
+ * Export all user presets (v1 API)
+ * @param {Object} options - Export filtering options
+ * @returns {Promise<Array>} All user presets for export
+ */
+export async function exportAllPresets(options = {}) {
+  const params = new URLSearchParams()
+  if (options.formatFilter) params.append('format_filter', options.formatFilter)
+  if (options.includeUnused !== undefined) params.append('include_unused', options.includeUnused)
+  if (options.exportFormat) params.append('export_format', options.exportFormat)
+
+  const endpoint = params.toString()
+    ? `${API_CONFIG.ENDPOINTS.PRESETS_EXPORT_ALL}?${params}`
+    : API_CONFIG.ENDPOINTS.PRESETS_EXPORT_ALL
+  const response = await apiClient.get(endpoint)
+  return await response.json()
 }

@@ -238,7 +238,7 @@ export class KeyboardShortcuts {
     // Header
     const header = document.createElement('div')
     header.className = 'px-6 py-4 border-b border-gray-200'
-    
+
     // SECURITY FIX: Use DOM manipulation instead of innerHTML
     const title = document.createElement('h2')
     title.className = 'text-xl font-semibold text-gray-900'

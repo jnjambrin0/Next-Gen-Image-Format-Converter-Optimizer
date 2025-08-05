@@ -443,10 +443,67 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 - All processing must work completely offline
 
 
+## API Development Patterns
+
+### API Versioning Strategy
+**CRITICAL**: The API supports dual paths for backward compatibility:
+
+```python
+# Both legacy and versioned endpoints work simultaneously
+# Legacy: /api/health
+# Versioned: /api/v1/health
+# All new endpoints should be added to both routers for compatibility
+```
+
+### Centralized Validation Utilities
+**IMPORTANT**: Use these utilities from `app.api.utils.validation` to avoid code duplication:
+
+```python
+# File validation and reading
+contents, file_size = await validate_uploaded_file(file, request, error_prefix="DET")
+
+# Content type validation for uploads
+if not validate_content_type(file):
+    raise HTTPException(status_code=415, detail="Unsupported media type")
+
+# Concurrency control with proper error handling
+async with SemaphoreContextManager(semaphore, timeout, error_code, service_name, request):
+    # Your code here
+
+# Secure memory clearing (uses 5-pass overwrite)
+secure_memory_clear(sensitive_data)
+```
+
+### Test Expectation Patterns
+**IMPORTANT**: Validation middleware intercepts requests before FastAPI validation:
+
+```python
+# When testing missing file uploads:
+# Expect 415 (Unsupported Media Type) from middleware, NOT 422 from FastAPI
+assert response.status_code == 415  # Middleware catches it first
+
+# When testing oversized files:
+# Expect 413 with error_code "VAL413" from validation middleware
+assert response.status_code == 413
+assert data["error_code"] == "VAL413"
+```
+
+### Error Response Patterns
+All API errors follow consistent structure with proper error codes:
+
+```python
+# Error codes match HTTP status patterns:
+# DET503 - Detection service unavailable (503)
+# REC422 - Recommendation validation error (422)
+# VAL413 - Validation payload too large (413)
+# CONV500 - Conversion internal error (500)
+```
+
 ## API Endpoints
 
 **IMPORTANT**: Form endpoints that accept presets still require the base parameters (e.g., `output_format`) even though presets will override them. This is due to FastAPI validation requirements.
 
+### Core Endpoints (Available in both /api and /api/v1)
 - `POST /api/convert` - Convert single image (requires `output_format` even with `preset_id`)
 - `POST /api/batch` - Create batch conversion job (requires `output_format` even with `preset_id`)
 - `GET /api/batch/{job_id}/status` - Get batch job status
@@ -456,17 +513,26 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 - `WebSocket /ws/batch/{job_id}` - Real-time progress updates for batch job
 - `GET /api/health` - Health check with network isolation status
 - `GET /api/formats` - List supported input/output formats
+
+### Monitoring & Intelligence Endpoints
 - `GET /api/monitoring/stats` - Conversion statistics
 - `GET /api/monitoring/errors` - Recent errors
 - `GET /api/security/status` - Security engine status
 - `GET /api/intelligence/capabilities` - ML detection capabilities
 - `GET /api/optimization/presets` - Available optimization presets
+
+### Preset Management Endpoints
 - `GET /api/presets` - List all presets (built-in and user-created)
 - `POST /api/presets` - Create new user preset
 - `PUT /api/presets/{preset_id}` - Update existing preset
 - `DELETE /api/presets/{preset_id}` - Delete user preset
 - `POST /api/presets/import` - Import presets from JSON
 - `GET /api/presets/{preset_id}/export` - Export preset as JSON
+
+### Detection Endpoints (New in v1)
+- `POST /api/v1/detection/detect-format` - Detect image format from content
+- `POST /api/v1/detection/recommend-format` - Get AI-powered format recommendations
+- `GET /api/v1/detection/formats/compatibility` - Get format compatibility matrix
 
 ## Development Guidelines
 

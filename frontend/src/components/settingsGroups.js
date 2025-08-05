@@ -122,7 +122,11 @@ export class SettingsGroups {
     // Click handler - store reference for cleanup
     const clickHandler = () => this.toggleGroup(groupId)
     header.addEventListener('click', clickHandler)
-    this.eventHandlers.set(`header-${groupId}`, { element: header, event: 'click', handler: clickHandler })
+    this.eventHandlers.set(`header-${groupId}`, {
+      element: header,
+      event: 'click',
+      handler: clickHandler,
+    })
 
     return header
   }

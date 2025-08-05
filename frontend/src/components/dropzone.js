@@ -320,7 +320,7 @@ export class DropZone {
       this.element.removeEventListener('click', this.boundHandlers.click)
       this.element.removeEventListener('keydown', this.boundHandlers.keyDown)
     }
-    
+
     if (this.fileInput && this.boundHandlers) {
       this.fileInput.removeEventListener('change', this.boundHandlers.fileInputChange)
     }

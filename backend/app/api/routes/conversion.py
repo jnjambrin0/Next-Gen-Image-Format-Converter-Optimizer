@@ -21,6 +21,7 @@ from app.models.responses import ConversionApiResponse, ErrorResponse
 from app.services.conversion_service import conversion_service
 from app.config import settings
 from app.api.utils.validation import validate_content_type, secure_memory_clear
+from app.api.utils.error_handling import EndpointErrorHandler
 from app.core.constants import FORMAT_TO_CONTENT_TYPE
 
 logger = structlog.get_logger()
@@ -29,6 +30,9 @@ router = APIRouter()
 
 # Semaphore for concurrent request limiting
 conversion_semaphore = asyncio.Semaphore(settings.max_concurrent_conversions)
+
+# Error handler for this endpoint
+error_handler = EndpointErrorHandler("conversion", "convert_image")
 
 
 def sanitize_filename(filename: str) -> str:
@@ -198,26 +202,18 @@ async def convert_image(
     try:
         await asyncio.wait_for(conversion_semaphore.acquire(), timeout=0.01)
     except asyncio.TimeoutError:
-        logger.warning("Conversion service at capacity")
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error_code": "CONV251",
-                "message": "Service temporarily unavailable due to high load",
-                "correlation_id": request.state.correlation_id,
-            },
+        raise error_handler.service_unavailable_error(
+            "Service temporarily unavailable due to high load",
+            request,
+            retry_after=60
         )
 
     try:
         # Validate content type
         if not validate_content_type(file):
-            raise HTTPException(
-                status_code=415,
-                detail={
-                    "error_code": "CONV415",
-                    "message": "Unsupported file type. Please upload an image file (JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, or AVIF).",
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise error_handler.unsupported_media_type_error(
+                "Unsupported file type. Please upload an image file (JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, or AVIF).",
+                request
             )
         
         # Log conversion request
@@ -236,38 +232,26 @@ async def convert_image(
         file_size = len(contents)
 
         if file_size == 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error_code": "CONV201",
-                        "message": "The uploaded file is empty. Please select a valid image file to convert.",
-                        "correlation_id": request.state.correlation_id,
-                    },
+                raise error_handler.validation_error(
+                    "The uploaded file is empty. Please select a valid image file to convert.",
+                    request
                 )
 
         if file_size > settings.max_file_size:
-                raise HTTPException(
-                    status_code=413,
-                    detail={
-                        "error_code": "CONV202",
-                        "message": f"File size exceeds maximum allowed size of {settings.max_file_size / 1024 / 1024}MB",
-                        "correlation_id": request.state.correlation_id,
-                        "details": {
-                            "file_size": file_size,
-                            "max_size": settings.max_file_size,
-                        },
-                    },
+                raise error_handler.payload_too_large_error(
+                    f"File size exceeds maximum allowed size of {settings.max_file_size / 1024 / 1024}MB",
+                    request,
+                    details={
+                        "file_size": file_size,
+                        "max_size": settings.max_file_size,
+                    }
                 )
 
         # Extract file format from filename
         if not file.filename:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error_code": "CONV203",
-                        "message": "A filename is required. Please ensure your file has a valid name before uploading.",
-                        "correlation_id": request.state.correlation_id,
-                    },
+                raise error_handler.validation_error(
+                    "A filename is required. Please ensure your file has a valid name before uploading.",
+                    request
                 )
 
         # Sanitize filename to prevent path traversal
@@ -298,13 +282,9 @@ async def convert_image(
         input_format = detected_format or file_ext
         
         if not input_format:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error_code": "CONV204",
-                        "message": "Unable to determine the image format. The file may be corrupted or in an unsupported format. Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, AVIF.",
-                        "correlation_id": request.state.correlation_id,
-                    },
+                raise error_handler.validation_error(
+                    "Unable to determine the image format. The file may be corrupted or in an unsupported format. Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, AVIF.",
+                    request
                 )
 
         # Create conversion request
@@ -328,13 +308,9 @@ async def convert_image(
             )
 
         if not output_data:
-                raise HTTPException(
-                    status_code=500,
-                    detail={
-                        "error_code": "CONV299",
-                        "message": "The conversion process completed but did not produce any output. This may indicate an issue with the selected output format or image content. Please try a different output format.",
-                        "correlation_id": request.state.correlation_id,
-                    },
+                raise error_handler.internal_server_error(
+                    "The conversion process completed but did not produce any output. This may indicate an issue with the selected output format or image content. Please try a different output format.",
+                    request
                 )
 
         # Determine content type - use actual output format from result
@@ -387,13 +363,9 @@ async def convert_image(
                 filename=file.filename,
                 correlation_id=request.state.correlation_id,
             )
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "error_code": "CONV250",
-                    "message": f"Conversion timed out after {settings.conversion_timeout} seconds",
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise error_handler.internal_server_error(
+                f"Conversion timed out after {settings.conversion_timeout} seconds",
+                request
             )
 
     except InvalidImageError as e:
@@ -402,13 +374,9 @@ async def convert_image(
                 error=str(e),
                 correlation_id=request.state.correlation_id,
             )
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "error_code": "CONV210",
-                    "message": str(e),
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise error_handler.unprocessable_entity_error(
+                str(e),
+                request
             )
 
     except UnsupportedFormatError as e:
@@ -417,13 +385,9 @@ async def convert_image(
                 error=str(e),
                 correlation_id=request.state.correlation_id,
             )
-            raise HTTPException(
-                status_code=415,
-                detail={
-                    "error_code": "CONV211",
-                    "message": str(e),
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise error_handler.unsupported_media_type_error(
+                str(e),
+                request
             )
 
     except ConversionFailedError as e:
@@ -432,13 +396,9 @@ async def convert_image(
                 error=str(e),
                 correlation_id=request.state.correlation_id,
             )
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "error_code": "CONV299",
-                    "message": str(e),
-                    "correlation_id": request.state.correlation_id,
-                },
+            raise error_handler.internal_server_error(
+                str(e),
+                request
             )
 
     except HTTPException:
@@ -451,13 +411,9 @@ async def convert_image(
             error=str(e),
             correlation_id=request.state.correlation_id,
         )
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error_code": "CONV299",
-                "message": "An unexpected error occurred during image conversion. Please verify your image file is valid and try again. If the problem persists, try converting to a different format.",
-                "correlation_id": request.state.correlation_id,
-            },
+        raise error_handler.internal_server_error(
+            "An unexpected error occurred during image conversion. Please verify your image file is valid and try again. If the problem persists, try converting to a different format.",
+            request
         )
     finally:
         # Always release the semaphore
