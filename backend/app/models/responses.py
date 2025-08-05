@@ -85,3 +85,77 @@ class HealthResponse(BaseModel):
         default_factory=datetime.utcnow, description="Current timestamp"
     )
 
+
+class FormatDetectionResponse(BaseModel):
+    """Response model for format detection endpoint."""
+
+    detected_format: str = Field(..., description="Detected image format")
+    confidence: float = Field(..., description="Detection confidence (0.0-1.0)")
+    file_extension: Optional[str] = Field(None, description="Original file extension")
+    mime_type: Optional[str] = Field(None, description="Detected MIME type")
+    format_details: Optional[Dict[str, Any]] = Field(
+        None, description="Additional format-specific details"
+    )
+
+
+class FormatRecommendation(BaseModel):
+    """Single format recommendation."""
+
+    format: OutputFormat = Field(..., description="Recommended output format")
+    score: float = Field(..., description="Recommendation score (0.0-1.0)")
+    reasons: List[str] = Field(..., description="Reasons for recommendation")
+    estimated_compression: Optional[float] = Field(
+        None, description="Estimated compression ratio"
+    )
+    quality_impact: str = Field(..., description="Expected quality impact")
+
+
+class FormatRecommendationResponse(BaseModel):
+    """Response model for format recommendation endpoint."""
+
+    input_format: str = Field(..., description="Detected input format")
+    content_type: str = Field(..., description="Detected content type")
+    recommendations: List[FormatRecommendation] = Field(
+        ..., description="List of format recommendations"
+    )
+    analysis_details: Optional[Dict[str, Any]] = Field(
+        None, description="Additional analysis information"
+    )
+
+
+class FormatCompatibilityMatrix(BaseModel):
+    """Format compatibility information."""
+
+    input_format: str = Field(..., description="Input format")
+    output_formats: List[str] = Field(..., description="Compatible output formats")
+    limitations: Optional[List[str]] = Field(
+        None, description="Known limitations or restrictions"
+    )
+
+
+class FormatCompatibilityResponse(BaseModel):
+    """Response model for format compatibility endpoint."""
+
+    compatibility_matrix: List[FormatCompatibilityMatrix] = Field(
+        ..., description="Format compatibility matrix"
+    )
+    supported_input_formats: List[str] = Field(
+        ..., description="All supported input formats"
+    )
+    supported_output_formats: List[str] = Field(
+        ..., description="All supported output formats"
+    )
+
+
+class ApiVersionResponse(BaseModel):
+    """Response model for API version information."""
+
+    current_version: str = Field(..., description="Current API version")
+    supported_versions: List[str] = Field(..., description="All supported versions")
+    deprecated_versions: List[str] = Field(
+        default_factory=list, description="Deprecated API versions"
+    )
+    version_info: Dict[str, Dict[str, Any]] = Field(
+        ..., description="Detailed version information"
+    )
+

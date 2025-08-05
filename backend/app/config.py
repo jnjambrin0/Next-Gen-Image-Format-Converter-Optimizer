@@ -57,6 +57,18 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = Field(
         default=60, description="Rate limit per IP per minute"
     )
+    max_requests_per_minute: int = Field(
+        default=60, description="Maximum requests per minute per IP"
+    )
+    max_requests_per_hour: int = Field(
+        default=1000, description="Maximum requests per hour per IP"
+    )
+    max_request_body_size: int = Field(
+        default=104857600, description="Maximum request body size in bytes (100MB)"
+    )
+    request_timeout: int = Field(
+        default=120, description="Request timeout in seconds"
+    )
 
     # File Processing
     max_upload_size: int = Field(

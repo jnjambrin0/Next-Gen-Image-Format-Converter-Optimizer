@@ -143,6 +143,62 @@ IMAGE_MAGIC_BYTES = {
     b"icns": "ICNS",  # macOS icon
 }
 
+# MIME Type Mappings
+FORMAT_TO_MIME_TYPE = {
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "png": "image/png",
+    "webp": "image/webp",
+    "gif": "image/gif",
+    "bmp": "image/bmp",
+    "tiff": "image/tiff",
+    "tif": "image/tiff",
+    "heif": "image/heif",
+    "heic": "image/heic",
+    "avif": "image/avif",
+    "jxl": "image/jxl",
+    "jpegxl": "image/jxl",
+    "jp2": "image/jp2",
+    "jpeg2000": "image/jp2",
+    "webp2": "image/webp2",
+    "ico": "image/x-icon",
+    "icns": "image/icns",
+}
+
+# Allowed MIME types for upload validation
+ALLOWED_UPLOAD_MIME_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/bmp",
+    "image/tiff",
+    "image/heif",
+    "image/heic",
+    "image/avif",
+    "image/jxl",
+    "image/jp2",
+    "application/octet-stream",  # Allow generic binary for files with unknown MIME
+]
+
+# Content types for API responses
+FORMAT_TO_CONTENT_TYPE = {
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "png": "image/png",
+    "webp": "image/webp",
+    "gif": "image/gif",
+    "bmp": "image/bmp",
+    "tiff": "image/tiff",
+    "heif": "image/heif",
+    "heic": "image/heic",
+    "avif": "image/avif",
+    "jxl": "image/jxl",
+    "jp2": "image/jp2",
+    "webp2": "image/webp2",
+}
+
 # Suspicious patterns for security scanning
 SUSPICIOUS_PATTERNS = [
     # Script injections

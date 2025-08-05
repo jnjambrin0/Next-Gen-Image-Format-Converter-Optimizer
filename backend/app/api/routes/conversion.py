@@ -20,6 +20,8 @@ from app.models.requests import ConversionApiRequest
 from app.models.responses import ConversionApiResponse, ErrorResponse
 from app.services.conversion_service import conversion_service
 from app.config import settings
+from app.api.utils.validation import validate_content_type, secure_memory_clear
+from app.core.constants import FORMAT_TO_CONTENT_TYPE
 
 logger = structlog.get_logger()
 
@@ -94,18 +96,81 @@ def sanitize_filename(filename: str) -> str:
     },
     summary="Convert an image to a different format",
     description="""
-    Convert an uploaded image to a different format with optional quality and metadata settings.
+    Convert an uploaded image to a different format with comprehensive optimization and metadata control.
     
-    - **file**: The image file to convert (multipart/form-data)
-    - **output_format**: Target format (webp, avif, etc.)
-    - **quality**: Optional quality setting (1-100, default: 85)
+    ## Request Parameters
+    
+    ### Required
+    - **file**: Image file to convert (multipart/form-data)
+      - Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, AVIF
+      - Max size: 100MB per file
+      - Content-based format detection (ignores file extension)
+    - **output_format**: Target format (webp, avif, jpeg, png, heif, jxl, webp2)
+    
+    ### Optional Settings
+    - **quality**: Quality setting (1-100, default: 85)
+      - Higher values = better quality, larger file size
+      - Ignored for lossless formats (PNG)
     - **strip_metadata**: Remove EXIF and other metadata (default: true)
-    - **preserve_metadata**: Preserve non-GPS metadata (overrides strip_metadata, default: false)
-    - **preserve_gps**: Preserve GPS location data (only if preserve_metadata is true, default: false)
-    - **preset_id**: Optional UUID of preset to apply (preset settings override individual parameters)
+      - Recommended for privacy and smaller file sizes
+    - **preserve_metadata**: Keep non-GPS metadata (overrides strip_metadata, default: false)
+      - Preserves camera settings, creation date, etc.
+    - **preserve_gps**: Keep GPS location data (requires preserve_metadata=true, default: false)
+      - ⚠️ GPS data can reveal location information
+    - **preset_id**: UUID of conversion preset to apply
+      - Preset settings override individual parameters
+      - Use `/api/v1/presets` to list available presets
     
-    By default, all metadata including GPS data is removed for privacy. 
-    To keep metadata but remove GPS, set preserve_metadata=true and preserve_gps=false.
+    ## Response
+    
+    ### Success (200)
+    - Binary image data in requested format
+    - Enhanced response headers with conversion metadata:
+      - `X-Conversion-Id`: Unique conversion identifier
+      - `X-Processing-Time`: Time taken in seconds
+      - `X-Compression-Ratio`: Output/input size ratio
+      - `X-Input-Format`: Detected input format
+      - `X-Output-Format`: Actual output format used
+      - `X-Input-Size`: Original file size in bytes
+      - `X-Output-Size`: Converted file size in bytes
+      - `X-Quality-Used`: Quality setting applied
+      - `X-Metadata-Removed`: Whether metadata was stripped
+    
+    ### Error Responses
+    - **400**: Invalid request (empty file, missing filename, unknown format)
+    - **413**: File too large (exceeds size limits)
+    - **415**: Unsupported file format
+    - **422**: Invalid image data or corrupted file
+    - **503**: Service temporarily unavailable (too many concurrent requests)
+    
+    ## Privacy & Security
+    - All processing happens locally (no data sent to external services)
+    - Metadata (including GPS) removed by default
+    - Files processed in sandboxed environment
+    - Memory securely cleared after conversion
+    
+    ## Performance
+    - Concurrent request limiting prevents overload
+    - Automatic format detection more reliable than file extensions
+    - Optimized for files up to 50MB (larger files may be slower)
+    
+    ## Examples
+    
+    ### Basic Conversion
+    ```bash
+    curl -X POST "/api/v1/convert" \\
+         -F "file=@photo.jpg" \\
+         -F "output_format=webp" \\
+         -F "quality=90"
+    ```
+    
+    ### Using Presets
+    ```bash
+    curl -X POST "/api/v1/convert" \\
+         -F "file=@photo.jpg" \\
+         -F "output_format=webp" \\
+         -F "preset_id=550e8400-e29b-41d4-a716-446655440000"
+    ```
     """,
 )
 async def convert_image(
@@ -144,6 +209,17 @@ async def convert_image(
         )
 
     try:
+        # Validate content type
+        if not validate_content_type(file):
+            raise HTTPException(
+                status_code=415,
+                detail={
+                    "error_code": "CONV415",
+                    "message": "Unsupported file type. Please upload an image file (JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, or AVIF).",
+                    "correlation_id": request.state.correlation_id,
+                },
+            )
+        
         # Log conversion request
         logger.info(
             "Conversion request received",
@@ -262,21 +338,9 @@ async def convert_image(
                 )
 
         # Determine content type - use actual output format from result
-        content_type_map = {
-                "webp": "image/webp",
-                "avif": "image/avif",
-                "jpeg": "image/jpeg",
-                "jpg": "image/jpeg",
-                "png": "image/png",
-                "heif": "image/heif",
-                "jpegxl": "image/jxl",
-                "jxl": "image/jxl",
-                "webp2": "image/webp2",
-                "jp2": "image/jp2",
-            }
         # Use the actual output format from the conversion result
         actual_output_format = result.output_format.lower() if hasattr(result.output_format, 'lower') else str(result.output_format).lower()
-        content_type = content_type_map.get(
+        content_type = FORMAT_TO_CONTENT_TYPE.get(
                 actual_output_format, "application/octet-stream"
             )
 
@@ -295,7 +359,7 @@ async def convert_image(
                 correlation_id=request.state.correlation_id,
             )
 
-        # Return binary response
+        # Return binary response with enhanced headers
         return Response(
                 content=output_data,
                 media_type=content_type,
@@ -305,6 +369,15 @@ async def convert_image(
                     "X-Processing-Time": str(result.processing_time),
                     "X-Compression-Ratio": str(result.compression_ratio),
                     "X-Metadata-Removed": str(result.metadata_removed),
+                    "X-Input-Format": input_format,
+                    "X-Output-Format": actual_output_format,
+                    "X-Input-Size": str(file_size),
+                    "X-Output-Size": str(len(output_data)),
+                    "X-Quality-Used": str(quality),
+                    "X-API-Version": "v1",
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
                 },
             )
 
@@ -391,13 +464,6 @@ async def convert_image(
         conversion_semaphore.release()
         
         # Clear sensitive data from memory
-        try:
-            # Clear file contents from memory
-            if 'contents' in locals():
-                del contents
-            # Clear output data from memory
-            if 'output_data' in locals():
-                del output_data
-        except Exception as e:
-            logger.warning("Failed to clear memory", error=str(e))
+        secure_memory_clear(contents if 'contents' in locals() else None)
+        secure_memory_clear(output_data if 'output_data' in locals() else None)
 

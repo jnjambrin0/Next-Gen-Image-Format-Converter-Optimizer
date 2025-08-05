@@ -8,12 +8,13 @@ from pathlib import Path
 from typing import Dict, Any
 
 from .config import settings
-from .api.routes import api_router
+from .api.routes import api_router, api_v1_router
 from .api.middleware import (
     error_handler_middleware,
     setup_exception_handlers,
     logging_middleware,
 )
+from .api.middleware.validation import validation_middleware
 from .utils.logging import setup_logging
 
 
@@ -180,6 +181,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add validation middleware (first - should run before others)
+app.middleware("http")(validation_middleware)
+
 # Add logging middleware
 app.middleware("http")(logging_middleware)
 
@@ -201,16 +205,176 @@ def custom_openapi() -> Dict[str, Any]:
         routes=app.routes,
     )
 
-    # Add custom schema modifications
-    openapi_schema["info"]["x-logo"] = {
-        "url": "/api/logo.png",
-        "altText": "Image Converter Logo",
-    }
+    # Enhanced metadata for better API documentation
+    openapi_schema["info"].update({
+        "version": "1.0.0",
+        "title": "Image Converter API",
+        "description": """
+        Privacy-focused local image conversion service with advanced optimization capabilities.
+        
+        ## Features
+        - Local-only processing (no external network requests)
+        - Advanced format support (WebP, AVIF, JPEG XL, HEIF, etc.)
+        - Batch processing with real-time progress updates
+        - Smart content detection and optimization recommendations
+        - Preset management for consistent conversion settings
+        - Comprehensive metadata handling with privacy controls
+        
+        ## Security
+        - All processing happens in sandboxed environments
+        - Automatic metadata removal for privacy
+        - No data leaves your machine
+        
+        ## API Versions
+        - v1: Current stable API with full feature support
+        - legacy: Backward compatibility endpoints (deprecated)
+        """,
+        "contact": {
+            "name": "Image Converter API Support",
+            "url": "https://github.com/your-repo/image-converter",
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT",
+        },
+        "x-logo": {
+            "url": "/api/logo.png",
+            "altText": "Image Converter Logo",
+        },
+    })
 
+    # Enhanced server configuration
     openapi_schema["servers"] = [
         {
+            "url": f"http://localhost:{settings.api_port}/api/v1",
+            "description": "Local development server (v1 API)",
+        },
+        {
             "url": f"http://localhost:{settings.api_port}/api",
-            "description": "Local development server",
+            "description": "Local development server (legacy endpoints)",
+        }
+    ]
+
+    # Add reusable components
+    openapi_schema["components"] = openapi_schema.get("components", {})
+    
+    # Enhanced security schemes for future authentication
+    openapi_schema["components"]["securitySchemes"] = {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key for authenticated access (future feature)"
+        },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT token authentication (future feature)"
+        }
+    }
+    
+    # Add common response schemas
+    openapi_schema["components"]["schemas"] = openapi_schema["components"].get("schemas", {})
+    openapi_schema["components"]["schemas"].update({
+        "ErrorResponse": {
+            "type": "object",
+            "required": ["error_code", "message", "correlation_id"],
+            "properties": {
+                "error_code": {
+                    "type": "string",
+                    "description": "Unique error code for programmatic handling",
+                    "example": "CONV201"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Human-readable error message",
+                    "example": "File size exceeds maximum allowed size"
+                },
+                "correlation_id": {
+                    "type": "string",
+                    "description": "Request correlation ID for tracking",
+                    "example": "abc123-def456-ghi789"
+                },
+                "details": {
+                    "type": "object",
+                    "description": "Additional error context",
+                    "additionalProperties": True
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the error occurred"
+                }
+            }
+        },
+        "ValidationError": {
+            "type": "object",
+            "properties": {
+                "loc": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Location of the validation error"
+                },
+                "msg": {
+                    "type": "string",
+                    "description": "Validation error message"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Type of validation error"
+                }
+            }
+        }
+    })
+
+    # Add common parameters
+    openapi_schema["components"]["parameters"] = {
+        "CorrelationId": {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "description": "Optional correlation ID for request tracking",
+            "required": False,
+            "schema": {"type": "string"}
+        },
+        "AcceptVersion": {
+            "name": "Accept-Version",
+            "in": "header",
+            "description": "API version preference",
+            "required": False,
+            "schema": {
+                "type": "string",
+                "enum": ["v1"],
+                "default": "v1"
+            }
+        }
+    }
+
+    # Add tags for better organization
+    openapi_schema["tags"] = [
+        {
+            "name": "conversion",
+            "description": "Single image conversion operations"
+        },
+        {
+            "name": "batch",
+            "description": "Batch processing operations"
+        },
+        {
+            "name": "detection",
+            "description": "Format detection and analysis"
+        },
+        {
+            "name": "presets",
+            "description": "Preset management"
+        },
+        {
+            "name": "monitoring",
+            "description": "System monitoring and statistics"
+        },
+        {
+            "name": "health",
+            "description": "Health check and system status"
         }
     ]
 
@@ -221,7 +385,8 @@ def custom_openapi() -> Dict[str, Any]:
 app.openapi = custom_openapi
 
 # Include API routers
-app.include_router(api_router)
+app.include_router(api_router)  # Legacy endpoints for backward compatibility
+app.include_router(api_v1_router)  # Current v1 API endpoints
 
 # Include WebSocket routers
 from .api.websockets.progress import router as websocket_router
