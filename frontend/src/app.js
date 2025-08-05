@@ -8,6 +8,7 @@ import { UI_TIMING } from './config/constants.js'
 import { convertImage, APIError, mapErrorCodeToMessage } from './services/api.js'
 import { createConversionResult } from './components/conversionResult.js'
 import { createComparisonViewer } from './components/comparisonViewer.js'
+import { createPreview } from './components/preview.js'
 import { BlobUrlManager } from './utils/blobUrlManager.js'
 
 // Batch processing components
@@ -33,11 +34,135 @@ export function initializeApp() {
   // Initialize conversion settings
   const conversionSettings = new ConversionSettings()
   const settingsContainer = document.getElementById('conversionSettings')
+
+  // Store current file for test conversions
+  let currentFile = null
+  let testPreviewElement = null
+  const testBlobUrls = { original: null, converted: null }
+
   conversionSettings
-    .init((settings) => {
-      // Settings updated - callback for future use
-      console.log('Settings updated:', settings)
-    })
+    .init(
+      (settings) => {
+        // Settings updated - callback for future use
+        console.log('Settings updated:', settings)
+      },
+      async () => {
+        // Handle test conversion
+        if (!currentFile) {
+          return
+        }
+
+        try {
+          conversionSettings.showTestLoading()
+
+          const currentSettings = conversionSettings.getCurrentSettings()
+          const testBlob = await convertImage(
+            currentFile,
+            currentSettings.outputFormat,
+            currentSettings.quality,
+            currentSettings.preserveMetadata,
+            currentSettings.presetId
+          )
+
+          // Show test results in quality slider
+          conversionSettings.showTestResults(testBlob.blob.size)
+
+          // Clean up previous blob URLs
+          if (testBlobUrls.original) {
+            blobUrlManager.revokeUrl(testBlobUrls.original)
+            testBlobUrls.original = null
+          }
+          if (testBlobUrls.converted) {
+            blobUrlManager.revokeUrl(testBlobUrls.converted)
+            testBlobUrls.converted = null
+          }
+
+          // Create preview
+          const originalUrl = blobUrlManager.createUrl(currentFile)
+          const convertedUrl = blobUrlManager.createUrl(testBlob.blob)
+
+          // Store URLs for cleanup
+          testBlobUrls.original = originalUrl
+          testBlobUrls.converted = convertedUrl
+
+          // Remove existing preview if any
+          if (testPreviewElement) {
+            testPreviewElement.remove()
+            testPreviewElement = null
+          }
+
+          // Create new preview
+          testPreviewElement = createPreview({
+            originalUrl,
+            convertedUrl,
+            originalSize: currentFile.size,
+            convertedSize: testBlob.blob.size,
+            originalFilename: currentFile.name,
+            onClose: () => {
+              if (testPreviewElement) {
+                testPreviewElement.remove()
+                testPreviewElement = null
+              }
+              // Clean up blob URLs on close
+              if (testBlobUrls.original) {
+                blobUrlManager.revokeUrl(testBlobUrls.original)
+                testBlobUrls.original = null
+              }
+              if (testBlobUrls.converted) {
+                blobUrlManager.revokeUrl(testBlobUrls.converted)
+                testBlobUrls.converted = null
+              }
+            },
+          })
+
+          // Insert preview after settings
+          const resultsContainer = document.getElementById('conversionResults')
+          resultsContainer.parentNode.insertBefore(testPreviewElement, resultsContainer)
+        } catch (error) {
+          console.error('Test conversion failed:', error)
+
+          // Hide loading state
+          conversionSettings.showTestResults(null)
+
+          let errorMessage = 'Test conversion failed'
+
+          if (error instanceof APIError) {
+            // Map specific error codes to user-friendly messages
+            switch (error.code) {
+              case 'TIMEOUT':
+                errorMessage =
+                  'Test conversion timed out. Please try again with a smaller image or lower quality.'
+                break
+              case 'FILE_TOO_LARGE':
+                errorMessage =
+                  'The file is too large for test conversion. Please try a smaller file.'
+                break
+              case 'INVALID_FORMAT':
+                errorMessage = 'The selected output format is not supported for this image.'
+                break
+              case 'CONVERSION_FAILED':
+                errorMessage =
+                  'Unable to convert the image. Please try a different format or quality setting.'
+                break
+              default:
+                errorMessage = mapErrorCodeToMessage(error.code)
+            }
+          } else if (error.name === 'AbortError') {
+            errorMessage = 'Test conversion was cancelled or timed out. Please try again.'
+          }
+
+          const errorElement = document.getElementById('errorMessage')
+          errorElement.innerHTML = ''
+          errorElement.appendChild(createErrorMessage(errorMessage))
+          errorElement.classList.remove('hidden')
+
+          // Also show error in quality slider
+          if (conversionSettings.showTestError) {
+            conversionSettings.showTestError(errorMessage)
+          }
+        }
+      }
+    )
     .then((settingsElement) => {
       settingsContainer.appendChild(settingsElement)
     })
@@ -72,6 +197,20 @@ export function initializeApp() {
     errorElement.classList.add('hidden')
     fileInfoElement.classList.add('hidden')
 
+    // Clear previous test preview and blob URLs
+    if (testPreviewElement) {
+      testPreviewElement.remove()
+      testPreviewElement = null
+    }
+    if (testBlobUrls.original) {
+      blobUrlManager.revokeUrl(testBlobUrls.original)
+      testBlobUrls.original = null
+    }
+    if (testBlobUrls.converted) {
+      blobUrlManager.revokeUrl(testBlobUrls.converted)
+      testBlobUrls.converted = null
+    }
+
     // Validate file
     const validation = validateImageFile(file)
 
@@ -82,6 +221,12 @@ export function initializeApp() {
       errorElement.classList.remove('hidden')
       return
     }
+
+    // Store current file
+    currentFile = file
+
+    // Update quality slider with file info
+    conversionSettings.setFileInfo(file)
 
     // Show file info
     fileInfoElement.innerHTML = ''

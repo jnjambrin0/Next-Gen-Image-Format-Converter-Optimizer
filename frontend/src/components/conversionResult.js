@@ -144,4 +144,3 @@ function createSuccessIcon() {
   svg.appendChild(path)
   return svg
 }
-

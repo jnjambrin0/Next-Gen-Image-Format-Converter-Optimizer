@@ -1,6 +1,6 @@
 /**
  * BlobUrlManager - Manages blob URLs lifecycle to prevent memory leaks
- * 
+ *
  * This class ensures that all created blob URLs are properly cleaned up
  * when no longer needed, preventing memory leaks in long-running applications.
  */
@@ -18,7 +18,7 @@ export class BlobUrlManager {
   createUrl(blob, key) {
     // Clean up existing URL for this key if any
     this.revokeUrl(key)
-    
+
     const url = URL.createObjectURL(blob)
     this.urls.set(key, url)
     return url

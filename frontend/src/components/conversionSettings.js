@@ -3,6 +3,7 @@
  */
 
 import { PresetSelector } from './presetSelector.js'
+import { QualitySlider } from './qualitySlider.js'
 import { presetApi } from '../services/presetApi.js'
 import { showNotification } from '../utils/notifications.js'
 
@@ -10,6 +11,7 @@ export class ConversionSettings {
   constructor() {
     this.element = null
     this.presetSelector = null
+    this.qualitySlider = null
     this.settings = {
       outputFormat: 'webp',
       quality: 85,
@@ -18,14 +20,17 @@ export class ConversionSettings {
       presetName: null,
     }
     this.onChange = null
+    this.onTestConvert = null
   }
 
   /**
    * Initialize the conversion settings
    * @param {Function} onChange - Callback when settings change
+   * @param {Function} onTestConvert - Callback for test conversion
    */
-  async init(onChange) {
+  async init(onChange, onTestConvert) {
     this.onChange = onChange
+    this.onTestConvert = onTestConvert
     this.element = this.createElement()
 
     // Initialize preset selector
@@ -35,8 +40,21 @@ export class ConversionSettings {
       () => this.getCurrentSettings()
     )
 
+    // Initialize quality slider
+    this.qualitySlider = new QualitySlider()
+    const qualityElement = this.qualitySlider.init(
+      (event) => this.handleQualityChange(event),
+      this.settings.quality
+    )
+
     // Insert preset selector at the top
     this.element.insertBefore(presetElement, this.element.firstChild)
+
+    // Replace the old quality slider with the new component
+    const oldQualitySection = this.element.querySelector('#quality-section')
+    if (oldQualitySection) {
+      oldQualitySection.replaceWith(qualityElement)
+    }
 
     return this.element
   }
@@ -60,23 +78,9 @@ export class ConversionSettings {
         </select>
       </div>
 
-      <!-- Quality Slider -->
-      <div class="mb-4">
-        <label for="quality-slider" class="block text-sm font-medium text-gray-700 mb-2">
-          Quality: <span id="quality-value" class="text-blue-600 font-semibold">85</span>
-        </label>
-        <input 
-          type="range" 
-          id="quality-slider" 
-          min="1" 
-          max="100" 
-          value="85" 
-          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-        >
-        <div class="flex justify-between text-xs text-gray-500 mt-1">
-          <span>Small file</span>
-          <span>High quality</span>
-        </div>
+      <!-- Quality Slider Placeholder -->
+      <div id="quality-section" class="mb-4">
+        <!-- Will be replaced by QualitySlider component -->
       </div>
 
       <!-- Metadata Options -->
@@ -106,23 +110,18 @@ export class ConversionSettings {
    */
   attachEventListeners(container) {
     const formatSelect = container.querySelector('#output-format')
-    const qualitySlider = container.querySelector('#quality-slider')
-    const qualityValue = container.querySelector('#quality-value')
     const preserveMetadata = container.querySelector('#preserve-metadata')
 
     // Format change
     formatSelect.addEventListener('change', (e) => {
       this.settings.outputFormat = e.target.value
       this.updateConversionInfo()
-      this.notifyChange()
-    })
 
-    // Quality change
-    qualitySlider.addEventListener('input', (e) => {
-      const quality = parseInt(e.target.value)
-      this.settings.quality = quality
-      qualityValue.textContent = quality
-      this.updateConversionInfo()
+      // Update quality slider format
+      if (this.qualitySlider) {
+        this.qualitySlider.setOutputFormat(e.target.value)
+      }
+
       this.notifyChange()
     })
 
@@ -131,6 +130,21 @@ export class ConversionSettings {
       this.settings.preserveMetadata = e.target.checked
       this.notifyChange()
     })
+  }
+
+  /**
+   * Handle quality slider changes
+   */
+  handleQualityChange(event) {
+    if (event.quality !== undefined) {
+      this.settings.quality = event.quality
+      this.updateConversionInfo()
+      this.notifyChange()
+    } else if (event.action === 'test-convert') {
+      if (this.onTestConvert) {
+        this.onTestConvert()
+      }
+    }
   }
 
   /**
@@ -143,14 +157,24 @@ export class ConversionSettings {
 
       // Update UI
       const formatSelect = this.element.querySelector('#output-format')
-      const qualitySlider = this.element.querySelector('#quality-slider')
-      const qualityValue = this.element.querySelector('#quality-value')
       const preserveMetadata = this.element.querySelector('#preserve-metadata')
 
       formatSelect.value = presetSettings.outputFormat
-      qualitySlider.value = presetSettings.quality
-      qualityValue.textContent = presetSettings.quality
       preserveMetadata.checked = presetSettings.preserveMetadata
+
+      // Update quality slider
+      if (this.qualitySlider) {
+        const slider = this.qualitySlider.element.querySelector('#quality-slider')
+        const valueDisplay = this.qualitySlider.element.querySelector('#quality-value')
+        if (slider) {
+          slider.value = presetSettings.quality
+        }
+        if (valueDisplay) {
+          valueDisplay.textContent = presetSettings.quality
+        }
+        this.qualitySlider.quality = presetSettings.quality
+        this.qualitySlider.setOutputFormat(presetSettings.outputFormat)
+      }
 
       // Update internal settings
       this.settings = {
@@ -233,14 +257,15 @@ export class ConversionSettings {
 
     // Update UI
     const formatSelect = this.element.querySelector('#output-format')
-    const qualitySlider = this.element.querySelector('#quality-slider')
-    const qualityValue = this.element.querySelector('#quality-value')
     const preserveMetadata = this.element.querySelector('#preserve-metadata')
 
     formatSelect.value = 'webp'
-    qualitySlider.value = 85
-    qualityValue.textContent = 85
     preserveMetadata.checked = false
+
+    // Reset quality slider
+    if (this.qualitySlider) {
+      this.qualitySlider.reset()
+    }
 
     // Clear preset selection
     if (this.presetSelector) {
@@ -249,5 +274,45 @@ export class ConversionSettings {
 
     this.updateConversionInfo()
     this.notifyChange()
+  }
+
+  /**
+   * Set file info for the quality slider
+   * @param {File} file - The selected file
+   */
+  setFileInfo(file) {
+    if (this.qualitySlider && file) {
+      this.qualitySlider.setOriginalFileSize(file.size)
+      this.qualitySlider.setOutputFormat(this.settings.outputFormat)
+    }
+  }
+
+  /**
+   * Show test conversion loading state
+   */
+  showTestLoading() {
+    if (this.qualitySlider) {
+      this.qualitySlider.showTestLoading()
+    }
+  }
+
+  /**
+   * Show test conversion results
+   * @param {number} actualSize - Actual converted file size
+   */
+  showTestResults(actualSize) {
+    if (this.qualitySlider) {
+      this.qualitySlider.showTestResults(actualSize)
+    }
+  }
+
+  /**
+   * Show test conversion error
+   * @param {string} errorMessage - Error message to display
+   */
+  showTestError(errorMessage) {
+    if (this.qualitySlider) {
+      this.qualitySlider.showTestError(errorMessage)
+    }
   }
 }

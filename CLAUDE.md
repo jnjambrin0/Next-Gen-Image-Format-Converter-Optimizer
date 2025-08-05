@@ -506,6 +506,33 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
    - Add test globals in ESLint overrides for test files
    - Vitest provides `describe`, `it`, `expect`, `beforeEach`, `afterEach`, `vi` globals
 
+5. **Frontend Memory Management Pattern**:
+   **CRITICAL**: Always track and clean up blob URLs to prevent memory leaks:
+
+   ```javascript
+   // Track blob URLs in components that create them
+   const testBlobUrls = { original: null, converted: null }
+
+   // Clean up previous URLs before creating new ones
+   if (testBlobUrls.original) {
+       blobUrlManager.revokeUrl(testBlobUrls.original)
+       testBlobUrls.original = null
+   }
+
+   // Store new URLs for cleanup
+   testBlobUrls.original = blobUrlManager.createUrl(file)
+
+   // Clean up on component removal, file selection, or reset
+   // This prevents memory leaks in long-running sessions
+   ```
+
+   **Key Principles**:
+   - Use `BlobUrlManager` for centralized URL lifecycle management
+   - Track all created blob URLs in component state
+   - Clean up before creating new URLs (prevents accumulation)
+   - Clean up when components unmount or reset
+   - Essential for features with preview/test functionality
+
 ### Backend (Python)
 
 1. **Black Formatter**: Use `black .` for consistent Python formatting
