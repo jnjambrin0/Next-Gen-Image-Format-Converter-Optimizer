@@ -113,6 +113,7 @@ go test ./...
 - [OpenAPI Specification](../openapi.json)
 - [Security Guide](./SECURITY.md)
 - [Migration Guide](./MIGRATION.md)
+- [Distribution Guide](./DISTRIBUTION.md)
 
 ## 🤝 Contributing
 
