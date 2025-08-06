@@ -142,6 +142,17 @@ go test ./...     # Run all tests
 go build ./...    # Build SDK
 ```
 
+### CLI Usage (Story 6.1)
+
+**CRITICAL**: The CLI exists at `backend/img.py` and uses the Python SDK. SDK import path is hardcoded:
+
+```python
+# CLI commands import SDK with hardcoded path - DO NOT CHANGE
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python"))
+```
+
+This fragile path is intentional to avoid circular dependencies. Any changes to directory structure will break CLI.
+
 ## Key Architecture Decisions
 
 1. **Local-Only Processing**: No network requests, all ML models and processing happen locally
