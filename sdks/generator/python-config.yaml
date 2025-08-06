@@ -1,0 +1,36 @@
+# OpenAPI Generator configuration for Python SDK
+packageName: image_converter_sdk
+projectName: image-converter-sdk
+packageVersion: 1.0.0
+packageUrl: https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer
+pythonAttrNoneIfUnset: true
+library: asyncio
+generateSourceCodeOnly: false
+
+# Security: Enforce localhost-only
+serverVariables:
+  host: localhost
+  port: "8080"
+  
+# Additional properties
+additionalProperties:
+  authorName: Image Converter Team
+  authorEmail: support@imageconverter.local
+  licenseInfo: MIT
+  hideGenerationTimestamp: true
+  
+# Import mappings for custom types
+typeMappings:
+  File: BinaryIO
+  
+# Model generation
+generateModels: true
+generateApis: true
+
+# Disable external network features
+supportingFiles:
+  - .gitignore
+  - setup.py
+  - requirements.txt
+  - README.md
+  - test-requirements.txt

@@ -1,0 +1,33 @@
+# OpenAPI Generator configuration for Go SDK
+packageName: imageconverter
+packageVersion: 1.0.0
+gitUserId: image-converter
+gitRepoId: image-converter-sdk-go
+goModule: github.com/image-converter/image-converter-sdk-go
+
+# Security: Enforce localhost-only
+serverVariables:
+  host: localhost
+  port: "8080"
+
+# Additional properties
+additionalProperties:
+  authorName: Image Converter Team
+  authorEmail: support@imageconverter.local
+  licenseInfo: MIT
+  hideGenerationTimestamp: true
+  isGoSubmodule: false
+  
+# Code generation options
+generateInterfaces: true
+structPrefix: true
+enumClassPrefix: true
+
+# Supporting files
+generateSourceCodeOnly: false
+supportingFiles:
+  - .gitignore
+  - go.mod
+  - go.sum
+  - README.md
+  - .travis.yml

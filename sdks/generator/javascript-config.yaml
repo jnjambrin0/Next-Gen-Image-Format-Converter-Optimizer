@@ -1,0 +1,33 @@
+# OpenAPI Generator configuration for JavaScript/TypeScript SDK
+npmName: "@image-converter/sdk"
+npmVersion: 1.0.0
+npmRepository: https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer
+supportsES6: true
+withInterfaces: true
+typescriptThreePlus: true
+modelPropertyNaming: camelCase
+enumPropertyNaming: UPPERCASE
+
+# Security: Enforce localhost-only
+serverVariables:
+  host: localhost
+  port: "8080"
+
+# Additional properties
+additionalProperties:
+  authorName: Image Converter Team
+  authorEmail: support@imageconverter.local
+  licenseInfo: MIT
+  hideGenerationTimestamp: true
+  
+# Platform support
+platform: both # browser and node
+
+# Generate supporting files
+generateSourceCodeOnly: false
+supportingFiles:
+  - .gitignore
+  - package.json
+  - tsconfig.json
+  - README.md
+  - .npmignore

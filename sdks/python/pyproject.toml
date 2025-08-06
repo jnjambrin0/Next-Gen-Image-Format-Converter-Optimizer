@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image-converter-sdk"
+version = "1.0.0"
+authors = [
+    {name = "Image Converter Team", email = "support@imageconverter.local"}
+]
+description = "Python SDK for local Image Converter API - privacy-focused image conversion"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["image", "conversion", "privacy", "local", "sdk"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "keyring>=24.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-httpx>=0.21.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+image-converter = "image_converter.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer"
+Documentation = "https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/blob/main/README.md"
+Repository = "https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer"
+Issues = "https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "examples*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

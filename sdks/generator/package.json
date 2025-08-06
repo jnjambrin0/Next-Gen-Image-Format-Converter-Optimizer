@@ -1,0 +1,16 @@
+{
+  "name": "image-converter-sdk-generator",
+  "version": "1.0.0",
+  "description": "OpenAPI Generator configuration for Image Converter SDKs",
+  "private": true,
+  "scripts": {
+    "install-generator": "npm install @openapitools/openapi-generator-cli",
+    "generate:python": "openapi-generator-cli generate -i ../../openapi.json -g python -o ../python --config python-config.yaml",
+    "generate:javascript": "openapi-generator-cli generate -i ../../openapi.json -g typescript-fetch -o ../javascript --config javascript-config.yaml",
+    "generate:go": "openapi-generator-cli generate -i ../../openapi.json -g go -o ../go --config go-config.yaml",
+    "generate:all": "npm run generate:python && npm run generate:javascript && npm run generate:go"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.21.4"
+  }
+}

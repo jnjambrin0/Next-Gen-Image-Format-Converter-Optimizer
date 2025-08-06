@@ -23,146 +23,165 @@ from .utils.logging import setup_logging
 async def lifespan(app: FastAPI):
     # Startup
     setup_logging(
-        log_level=settings.log_level, 
+        log_level=settings.log_level,
         json_logs=settings.env == "production",
         enable_file_logging=getattr(settings, "logging_enabled", True),
         log_dir=getattr(settings, "log_dir", "./logs"),
         max_log_size_mb=getattr(settings, "max_log_size_mb", 10),
         backup_count=getattr(settings, "log_backup_count", 3),
-        retention_hours=getattr(settings, "log_retention_hours", 24)
+        retention_hours=getattr(settings, "log_retention_hours", 24),
     )
     print(f"Starting {settings.app_name} API on port {settings.api_port}")
-    
+
     # Initialize stats collector and inject into conversion service
     from .core.monitoring.stats import stats_collector
     from .services.conversion_service import conversion_service
+
     conversion_service.stats_collector = stats_collector
-    
+
     # Initialize intelligence service
     from .services.intelligence_service import intelligence_service
+
     intelligence_service.stats_collector = stats_collector
     await intelligence_service.initialize()
-    
+
     # Initialize recommendation service (CRITICAL: Must be initialized for Story 3.4)
-    from .services.recommendation_service import recommendation_service as rec_service_import, RecommendationService
+    from .services.recommendation_service import (
+        recommendation_service as rec_service_import,
+        RecommendationService,
+    )
     import app.services.recommendation_service as rec_module
+
     rec_module.recommendation_service = RecommendationService()
-    
+
     # Initialize optimization service (Story 3.5)
     from .services.optimization_service import optimization_service
+
     optimization_service.stats_collector = stats_collector
     optimization_service.set_intelligence_engine(intelligence_service.engine)
     # Set conversion service
     optimization_service.set_conversion_service(conversion_service)
-    
+
     # Initialize batch service (Story 4.1)
     from .services.batch_service import batch_service
+
     batch_service.set_conversion_service(conversion_service)
-    
+
     # Initialize preset service (Story 4.2)
     from .services.preset_service import preset_service
+
     await preset_service.initialize()
-    
+
     # Inject preset service into conversion service
     conversion_service.set_preset_service(preset_service)
-    
+
     # Initialize API key service (Story 5.2)
     from .services.api_key_service import api_key_service
-    
+
     # Ensure data directory exists for database files
     import os
+
     os.makedirs("./data", exist_ok=True)
-    
+
     # Run enhanced network isolation verification
     if settings.network_verification_enabled:
-        from .core.security.network_verifier import NetworkStrictness, verify_network_at_startup
+        from .core.security.network_verifier import (
+            NetworkStrictness,
+            verify_network_at_startup,
+        )
         from .core.monitoring.security_events import SecurityEventTracker
-        
+
         # Map string to enum
         strictness_map = {
             "standard": NetworkStrictness.STANDARD,
             "strict": NetworkStrictness.STRICT,
-            "paranoid": NetworkStrictness.PARANOID
+            "paranoid": NetworkStrictness.PARANOID,
         }
         strictness = strictness_map.get(
-            settings.network_verification_strictness, 
-            NetworkStrictness.STANDARD
+            settings.network_verification_strictness, NetworkStrictness.STANDARD
         )
-        
+
         # Initialize security tracker if needed
         security_tracker = None
         if strictness != NetworkStrictness.STANDARD:
             security_tracker = SecurityEventTracker(
-                db_path=settings.database_url.replace("sqlite:///", "")
-                if settings.database_url.startswith("sqlite:///")
-                else None
+                db_path=(
+                    settings.database_url.replace("sqlite:///", "")
+                    if settings.database_url.startswith("sqlite:///")
+                    else None
+                )
             )
-        
+
         # Perform network verification
         network_status = await verify_network_at_startup(strictness, security_tracker)
-        
+
         # Store status for later access
         app.state.network_status = network_status
-        
+
         # Log results
         if not network_status["isolated"]:
-            print(f"WARNING: Network isolation issues detected: {network_status['warnings']}")
+            print(
+                f"WARNING: Network isolation issues detected: {network_status['warnings']}"
+            )
         else:
             print(f"Network isolation verified ({strictness.value} mode)")
     else:
         # Basic check from original implementation
         from .core.monitoring.network_check import startup_network_check
+
         startup_network_check()
         app.state.network_status = {"isolated": True, "verified": False}
-    
+
     # Schedule periodic log cleanup
     if getattr(settings, "logging_enabled", True):
         import asyncio
         from .utils.logging import cleanup_old_logs
-        
+
         async def periodic_log_cleanup():
             while True:
                 await asyncio.sleep(3600)  # Run every hour
                 try:
                     cleanup_old_logs(
                         log_dir=getattr(settings, "log_dir", "./logs"),
-                        retention_hours=getattr(settings, "log_retention_hours", 24)
+                        retention_hours=getattr(settings, "log_retention_hours", 24),
                     )
                 except Exception as e:
                     print(f"Log cleanup error: {e}")
-        
+
         # Start background task
         cleanup_task = asyncio.create_task(periodic_log_cleanup())
-    
+
     # Schedule periodic batch job cleanup (Story 4.1)
     async def periodic_batch_cleanup():
         while True:
             await asyncio.sleep(86400)  # Run once per day
             try:
                 from .services.batch_history_service import batch_history_service
+
                 deleted_count = await batch_history_service.cleanup_old_jobs()
                 if deleted_count > 0:
                     print(f"Cleaned up {deleted_count} old batch jobs")
             except Exception as e:
                 print(f"Batch cleanup error: {e}")
-    
+
     # Start batch cleanup task
     batch_cleanup_task = asyncio.create_task(periodic_batch_cleanup())
-    
+
     yield
-    
+
     # Shutdown
     print(f"Shutting down {settings.app_name} API")
-    
+
     # Shutdown intelligence service
     from .services.intelligence_service import intelligence_service
+
     await intelligence_service.shutdown()
-    
-    if getattr(settings, "logging_enabled", True) and 'cleanup_task' in locals():
+
+    if getattr(settings, "logging_enabled", True) and "cleanup_task" in locals():
         cleanup_task.cancel()
-    
+
     # Cancel batch cleanup task
-    if 'batch_cleanup_task' in locals():
+    if "batch_cleanup_task" in locals():
         batch_cleanup_task.cancel()
 
 
@@ -213,10 +232,11 @@ def custom_openapi() -> Dict[str, Any]:
     )
 
     # Enhanced metadata for better API documentation
-    openapi_schema["info"].update({
-        "version": "1.0.0",
-        "title": "Image Converter API",
-        "description": """
+    openapi_schema["info"].update(
+        {
+            "version": "1.0.0",
+            "title": "Image Converter API",
+            "description": """
         Privacy-focused local image conversion service with advanced optimization capabilities.
         
         ## 🚀 Features
@@ -293,19 +313,20 @@ def custom_openapi() -> Dict[str, Any]:
         - **Integration Guides**: Step-by-step integration tutorials
         - **Performance Tips**: Optimization recommendations and best practices
         """,
-        "contact": {
-            "name": "Image Converter API Support",
-            "url": "https://github.com/your-repo/image-converter",
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT",
-        },
-        "x-logo": {
-            "url": "/api/logo.png",
-            "altText": "Image Converter Logo",
-        },
-    })
+            "contact": {
+                "name": "Image Converter API Support",
+                "url": "https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer",
+            },
+            "license": {
+                "name": "MIT",
+                "url": "https://opensource.org/licenses/MIT",
+            },
+            "x-logo": {
+                "url": "/api/logo.png",
+                "altText": "Image Converter Logo",
+            },
+        }
+    )
 
     # Enhanced server configuration with environment detection
     openapi_schema["servers"] = [
@@ -315,9 +336,9 @@ def custom_openapi() -> Dict[str, Any]:
             "variables": {
                 "port": {
                     "default": str(settings.api_port),
-                    "description": "API server port"
+                    "description": "API server port",
                 }
-            }
+            },
         },
         {
             "url": f"http://localhost:{settings.api_port}/api",
@@ -325,202 +346,220 @@ def custom_openapi() -> Dict[str, Any]:
             "variables": {
                 "port": {
                     "default": str(settings.api_port),
-                    "description": "API server port"
+                    "description": "API server port",
                 }
-            }
+            },
         },
         {
             "url": "http://127.0.0.1:8080/api/v1",
-            "description": "Alternative localhost (v1 API)"
-        }
+            "description": "Alternative localhost (v1 API)",
+        },
     ]
 
     # Add reusable components
     openapi_schema["components"] = openapi_schema.get("components", {})
-    
+
     # Enhanced security schemes for future authentication
     openapi_schema["components"]["securitySchemes"] = {
         "ApiKeyAuth": {
             "type": "apiKey",
             "in": "header",
             "name": "X-API-Key",
-            "description": "API key for authenticated access (future feature)"
+            "description": "API key for authenticated access (future feature)",
         },
         "BearerAuth": {
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",
-            "description": "JWT token authentication (future feature)"
-        }
+            "description": "JWT token authentication (future feature)",
+        },
     }
-    
+
     # Add comprehensive response schemas and examples
-    openapi_schema["components"]["schemas"] = openapi_schema["components"].get("schemas", {})
-    openapi_schema["components"]["schemas"].update({
-        "ErrorResponse": {
-            "type": "object",
-            "required": ["error_code", "message", "correlation_id"],
-            "properties": {
-                "error_code": {
-                    "type": "string",
-                    "description": "Unique error code for programmatic handling",
-                    "example": "CONV201",
-                    "enum": [
-                        "CONV201", "CONV400", "CONV413", "CONV415", "CONV422", "CONV500",
-                        "BAT201", "BAT400", "BAT404", "BAT500",
-                        "DET400", "DET413", "DET503",
-                        "PRE400", "PRE403", "PRE404", "PRE409", "PRE500"
-                    ]
+    openapi_schema["components"]["schemas"] = openapi_schema["components"].get(
+        "schemas", {}
+    )
+    openapi_schema["components"]["schemas"].update(
+        {
+            "ErrorResponse": {
+                "type": "object",
+                "required": ["error_code", "message", "correlation_id"],
+                "properties": {
+                    "error_code": {
+                        "type": "string",
+                        "description": "Unique error code for programmatic handling",
+                        "example": "CONV201",
+                        "enum": [
+                            "CONV201",
+                            "CONV400",
+                            "CONV413",
+                            "CONV415",
+                            "CONV422",
+                            "CONV500",
+                            "BAT201",
+                            "BAT400",
+                            "BAT404",
+                            "BAT500",
+                            "DET400",
+                            "DET413",
+                            "DET503",
+                            "PRE400",
+                            "PRE403",
+                            "PRE404",
+                            "PRE409",
+                            "PRE500",
+                        ],
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Human-readable error message",
+                        "example": "File size exceeds maximum allowed size",
+                    },
+                    "correlation_id": {
+                        "type": "string",
+                        "description": "Request correlation ID for tracking",
+                        "example": "abc123-def456-ghi789",
+                        "pattern": "^[a-f0-9-]+$",
+                    },
+                    "details": {
+                        "type": "object",
+                        "description": "Additional error context",
+                        "additionalProperties": True,
+                        "example": {
+                            "file_size": 52428800,
+                            "max_allowed": 50331648,
+                            "size_mb": 50.0,
+                        },
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the error occurred",
+                        "example": "2024-01-15T10:30:00Z",
+                    },
                 },
-                "message": {
-                    "type": "string",
-                    "description": "Human-readable error message",
-                    "example": "File size exceeds maximum allowed size"
-                },
-                "correlation_id": {
-                    "type": "string",
-                    "description": "Request correlation ID for tracking",
-                    "example": "abc123-def456-ghi789",
-                    "pattern": "^[a-f0-9-]+$"
-                },
-                "details": {
-                    "type": "object",
-                    "description": "Additional error context",
-                    "additionalProperties": True,
-                    "example": {
+                "example": {
+                    "error_code": "CONV413",
+                    "message": "File size exceeds maximum allowed size",
+                    "correlation_id": "abc123-def456-ghi789",
+                    "details": {
                         "file_size": 52428800,
                         "max_allowed": 50331648,
-                        "size_mb": 50.0
-                    }
+                        "size_mb": 50.0,
+                    },
+                    "timestamp": "2024-01-15T10:30:00Z",
                 },
-                "timestamp": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the error occurred",
-                    "example": "2024-01-15T10:30:00Z"
-                }
             },
-            "example": {
-                "error_code": "CONV413",
-                "message": "File size exceeds maximum allowed size",
-                "correlation_id": "abc123-def456-ghi789",
-                "details": {
-                    "file_size": 52428800,
-                    "max_allowed": 50331648,
-                    "size_mb": 50.0
+            "ValidationError": {
+                "type": "object",
+                "properties": {
+                    "loc": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Location of the validation error",
+                        "example": ["body", "quality"],
+                    },
+                    "msg": {
+                        "type": "string",
+                        "description": "Validation error message",
+                        "example": "ensure this value is greater than or equal to 1",
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Type of validation error",
+                        "example": "value_error.number.not_ge",
+                    },
                 },
-                "timestamp": "2024-01-15T10:30:00Z"
-            }
-        },
-        "ValidationError": {
-            "type": "object",
-            "properties": {
-                "loc": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Location of the validation error",
-                    "example": ["body", "quality"]
+                "example": {
+                    "loc": ["body", "quality"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge",
                 },
-                "msg": {
-                    "type": "string",
-                    "description": "Validation error message",
-                    "example": "ensure this value is greater than or equal to 1"
-                },
-                "type": {
-                    "type": "string",
-                    "description": "Type of validation error",
-                    "example": "value_error.number.not_ge"
-                }
             },
-            "example": {
-                "loc": ["body", "quality"],
-                "msg": "ensure this value is greater than or equal to 1",
-                "type": "value_error.number.not_ge"
-            }
-        },
-        "SupportedFormat": {
-            "type": "object",
-            "properties": {
-                "format": {
-                    "type": "string",
-                    "description": "Format identifier",
-                    "example": "webp"
+            "SupportedFormat": {
+                "type": "object",
+                "properties": {
+                    "format": {
+                        "type": "string",
+                        "description": "Format identifier",
+                        "example": "webp",
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "description": "MIME type",
+                        "example": "image/webp",
+                    },
+                    "extensions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "File extensions",
+                        "example": [".webp"],
+                    },
+                    "supports_transparency": {
+                        "type": "boolean",
+                        "description": "Whether format supports transparency",
+                        "example": True,
+                    },
+                    "supports_animation": {
+                        "type": "boolean",
+                        "description": "Whether format supports animation",
+                        "example": True,
+                    },
                 },
-                "mime_type": {
-                    "type": "string",
-                    "description": "MIME type",
-                    "example": "image/webp"
+            },
+            "ConversionResult": {
+                "type": "object",
+                "description": "Conversion result metadata (returned in response headers)",
+                "properties": {
+                    "conversion_id": {
+                        "type": "string",
+                        "description": "Unique conversion identifier",
+                        "example": "conv_abc123def456",
+                    },
+                    "processing_time": {
+                        "type": "number",
+                        "description": "Processing time in seconds",
+                        "example": 0.234,
+                    },
+                    "compression_ratio": {
+                        "type": "number",
+                        "description": "Output/input size ratio",
+                        "example": 0.65,
+                    },
+                    "input_format": {
+                        "type": "string",
+                        "description": "Detected input format",
+                        "example": "jpeg",
+                    },
+                    "output_format": {
+                        "type": "string",
+                        "description": "Actual output format",
+                        "example": "webp",
+                    },
+                    "input_size": {
+                        "type": "integer",
+                        "description": "Original file size in bytes",
+                        "example": 1048576,
+                    },
+                    "output_size": {
+                        "type": "integer",
+                        "description": "Converted file size in bytes",
+                        "example": 681574,
+                    },
+                    "quality_used": {
+                        "type": "integer",
+                        "description": "Quality setting applied",
+                        "example": 85,
+                    },
+                    "metadata_removed": {
+                        "type": "boolean",
+                        "description": "Whether metadata was stripped",
+                        "example": True,
+                    },
                 },
-                "extensions": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "File extensions",
-                    "example": [".webp"]
-                },
-                "supports_transparency": {
-                    "type": "boolean",
-                    "description": "Whether format supports transparency",
-                    "example": True
-                },
-                "supports_animation": {
-                    "type": "boolean",
-                    "description": "Whether format supports animation",
-                    "example": True
-                }
-            }
-        },
-        "ConversionResult": {
-            "type": "object",
-            "description": "Conversion result metadata (returned in response headers)",
-            "properties": {
-                "conversion_id": {
-                    "type": "string",
-                    "description": "Unique conversion identifier",
-                    "example": "conv_abc123def456"
-                },
-                "processing_time": {
-                    "type": "number",
-                    "description": "Processing time in seconds",
-                    "example": 0.234
-                },
-                "compression_ratio": {
-                    "type": "number",
-                    "description": "Output/input size ratio",
-                    "example": 0.65
-                },
-                "input_format": {
-                    "type": "string",
-                    "description": "Detected input format",
-                    "example": "jpeg"
-                },
-                "output_format": {
-                    "type": "string",
-                    "description": "Actual output format",
-                    "example": "webp"
-                },
-                "input_size": {
-                    "type": "integer",
-                    "description": "Original file size in bytes",
-                    "example": 1048576
-                },
-                "output_size": {
-                    "type": "integer",
-                    "description": "Converted file size in bytes",
-                    "example": 681574
-                },
-                "quality_used": {
-                    "type": "integer",
-                    "description": "Quality setting applied",
-                    "example": 85
-                },
-                "metadata_removed": {
-                    "type": "boolean",
-                    "description": "Whether metadata was stripped",
-                    "example": True
-                }
-            }
+            },
         }
-    })
+    )
 
     # Add comprehensive common parameters
     openapi_schema["components"]["parameters"] = {
@@ -532,19 +571,15 @@ def custom_openapi() -> Dict[str, Any]:
             "schema": {
                 "type": "string",
                 "pattern": "^[a-f0-9-]+$",
-                "example": "abc123-def456-ghi789"
-            }
+                "example": "abc123-def456-ghi789",
+            },
         },
         "AcceptVersion": {
             "name": "Accept-Version",
             "in": "header",
             "description": "API version preference for backward compatibility",
             "required": False,
-            "schema": {
-                "type": "string",
-                "enum": ["v1"],
-                "default": "v1"
-            }
+            "schema": {"type": "string", "enum": ["v1"], "default": "v1"},
         },
         "ContentType": {
             "name": "Content-Type",
@@ -554,8 +589,8 @@ def custom_openapi() -> Dict[str, Any]:
             "schema": {
                 "type": "string",
                 "enum": ["multipart/form-data"],
-                "example": "multipart/form-data"
-            }
+                "example": "multipart/form-data",
+            },
         },
         "CacheControl": {
             "name": "Cache-Control",
@@ -564,32 +599,23 @@ def custom_openapi() -> Dict[str, Any]:
             "required": False,
             "schema": {
                 "type": "string",
-                "example": "no-cache, no-store, must-revalidate"
-            }
+                "example": "no-cache, no-store, must-revalidate",
+            },
         },
         "PaginationLimit": {
             "name": "limit",
             "in": "query",
             "description": "Maximum number of items to return",
             "required": False,
-            "schema": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 100,
-                "default": 20
-            }
+            "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
         },
         "PaginationOffset": {
             "name": "offset",
             "in": "query",
             "description": "Number of items to skip",
             "required": False,
-            "schema": {
-                "type": "integer",
-                "minimum": 0,
-                "default": 0
-            }
-        }
+            "schema": {"type": "integer", "minimum": 0, "default": 0},
+        },
     }
 
     # Add comprehensive tags for better organization
@@ -599,65 +625,65 @@ def custom_openapi() -> Dict[str, Any]:
             "description": "Single image conversion operations with format detection and optimization",
             "externalDocs": {
                 "description": "Conversion Guide",
-                "url": "/api/docs/conversion-guide"
-            }
+                "url": "/api/docs/conversion-guide",
+            },
         },
         {
             "name": "batch",
             "description": "Batch processing operations with real-time progress tracking",
             "externalDocs": {
                 "description": "Batch Processing Guide",
-                "url": "/api/docs/batch-guide"
-            }
+                "url": "/api/docs/batch-guide",
+            },
         },
         {
             "name": "detection",
             "description": "Format detection, analysis, and intelligent recommendations",
             "externalDocs": {
                 "description": "Detection API Reference",
-                "url": "/api/docs/detection-guide"
-            }
+                "url": "/api/docs/detection-guide",
+            },
         },
         {
             "name": "presets",
             "description": "Preset management with versioning, search, and advanced filtering",
             "externalDocs": {
                 "description": "Preset Management Guide",
-                "url": "/api/docs/preset-guide"
-            }
+                "url": "/api/docs/preset-guide",
+            },
         },
         {
             "name": "monitoring",
             "description": "System monitoring, statistics, and performance metrics",
             "externalDocs": {
                 "description": "Monitoring Guide",
-                "url": "/api/docs/monitoring-guide"
-            }
+                "url": "/api/docs/monitoring-guide",
+            },
         },
         {
             "name": "health",
             "description": "Health checks, system status, and network isolation verification",
             "externalDocs": {
                 "description": "Health Check Guide",
-                "url": "/api/docs/health-guide"
-            }
+                "url": "/api/docs/health-guide",
+            },
         },
         {
             "name": "intelligence",
             "description": "AI-powered content analysis and optimization recommendations",
             "externalDocs": {
                 "description": "Intelligence Engine Guide",
-                "url": "/api/docs/intelligence-guide"
-            }
+                "url": "/api/docs/intelligence-guide",
+            },
         },
         {
             "name": "optimization",
             "description": "Advanced optimization features and quality analysis",
             "externalDocs": {
                 "description": "Optimization Guide",
-                "url": "/api/docs/optimization-guide"
-            }
-        }
+                "url": "/api/docs/optimization-guide",
+            },
+        },
     ]
 
     # Add comprehensive examples for common operations
@@ -665,11 +691,7 @@ def custom_openapi() -> Dict[str, Any]:
         "SimpleConversion": {
             "summary": "Basic image conversion",
             "description": "Convert a JPEG image to WebP format with default settings",
-            "value": {
-                "file": "@photo.jpg",
-                "output_format": "webp",
-                "quality": 85
-            }
+            "value": {"file": "@photo.jpg", "output_format": "webp", "quality": 85},
         },
         "HighQualityConversion": {
             "summary": "High-quality conversion",
@@ -679,8 +701,8 @@ def custom_openapi() -> Dict[str, Any]:
                 "output_format": "avif",
                 "quality": 95,
                 "preserve_metadata": True,
-                "strip_metadata": False
-            }
+                "strip_metadata": False,
+            },
         },
         "BatchConversion": {
             "summary": "Batch processing",
@@ -689,8 +711,8 @@ def custom_openapi() -> Dict[str, Any]:
                 "files": ["@photo1.jpg", "@photo2.png", "@photo3.heic"],
                 "output_format": "webp",
                 "quality": 80,
-                "optimization_mode": "size"
-            }
+                "optimization_mode": "size",
+            },
         },
         "PresetConversion": {
             "summary": "Using presets",
@@ -698,8 +720,8 @@ def custom_openapi() -> Dict[str, Any]:
             "value": {
                 "file": "@photo.jpg",
                 "output_format": "webp",
-                "preset_id": "550e8400-e29b-41d4-a716-446655440000"
-            }
+                "preset_id": "550e8400-e29b-41d4-a716-446655440000",
+            },
         },
         "ErrorResponse400": {
             "summary": "Validation error",
@@ -708,12 +730,9 @@ def custom_openapi() -> Dict[str, Any]:
                 "error_code": "CONV400",
                 "message": "Invalid quality setting",
                 "correlation_id": "abc123-def456-ghi789",
-                "details": {
-                    "provided_quality": 150,
-                    "valid_range": "1-100"
-                },
-                "timestamp": "2024-01-15T10:30:00Z"
-            }
+                "details": {"provided_quality": 150, "valid_range": "1-100"},
+                "timestamp": "2024-01-15T10:30:00Z",
+            },
         },
         "ErrorResponse413": {
             "summary": "File too large",
@@ -725,13 +744,13 @@ def custom_openapi() -> Dict[str, Any]:
                 "details": {
                     "file_size": 52428800,
                     "max_allowed": 50331648,
-                    "size_mb": 50.0
+                    "size_mb": 50.0,
                 },
-                "timestamp": "2024-01-15T10:31:00Z"
-            }
-        }
+                "timestamp": "2024-01-15T10:31:00Z",
+            },
+        },
     }
-    
+
     # Add comprehensive request/response examples
     openapi_schema["components"]["requestBodies"] = {
         "ImageConversion": {
@@ -746,55 +765,61 @@ def custom_openapi() -> Dict[str, Any]:
                             "file": {
                                 "type": "string",
                                 "format": "binary",
-                                "description": "Image file to convert"
+                                "description": "Image file to convert",
                             },
                             "output_format": {
                                 "type": "string",
-                                "enum": ["webp", "avif", "jpeg", "png", "jxl", "heif", "webp2"],
-                                "description": "Target output format"
+                                "enum": [
+                                    "webp",
+                                    "avif",
+                                    "jpeg",
+                                    "png",
+                                    "jxl",
+                                    "heif",
+                                    "webp2",
+                                ],
+                                "description": "Target output format",
                             },
                             "quality": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 100,
                                 "default": 85,
-                                "description": "Output quality (1-100)"
+                                "description": "Output quality (1-100)",
                             },
                             "strip_metadata": {
                                 "type": "boolean",
                                 "default": True,
-                                "description": "Remove EXIF and metadata"
+                                "description": "Remove EXIF and metadata",
                             },
                             "preserve_metadata": {
                                 "type": "boolean",
                                 "default": False,
-                                "description": "Preserve non-GPS metadata"
+                                "description": "Preserve non-GPS metadata",
                             },
                             "preserve_gps": {
                                 "type": "boolean",
                                 "default": False,
-                                "description": "Preserve GPS location data"
+                                "description": "Preserve GPS location data",
                             },
                             "preset_id": {
                                 "type": "string",
                                 "format": "uuid",
-                                "description": "UUID of preset to apply"
-                            }
-                        }
+                                "description": "UUID of preset to apply",
+                            },
+                        },
                     },
                     "examples": {
-                        "simple": {
-                            "$ref": "#/components/examples/SimpleConversion"
-                        },
+                        "simple": {"$ref": "#/components/examples/SimpleConversion"},
                         "high_quality": {
                             "$ref": "#/components/examples/HighQualityConversion"
                         },
                         "with_preset": {
                             "$ref": "#/components/examples/PresetConversion"
-                        }
-                    }
+                        },
+                    },
                 }
-            }
+            },
         },
         "BatchConversion": {
             "description": "Multiple image files with batch conversion settings",
@@ -807,115 +832,85 @@ def custom_openapi() -> Dict[str, Any]:
                         "properties": {
                             "files": {
                                 "type": "array",
-                                "items": {
-                                    "type": "string",
-                                    "format": "binary"
-                                },
+                                "items": {"type": "string", "format": "binary"},
                                 "minItems": 1,
                                 "maxItems": 100,
-                                "description": "Array of image files to convert"
+                                "description": "Array of image files to convert",
                             },
                             "output_format": {
                                 "type": "string",
-                                "enum": ["webp", "avif", "jpeg", "png", "jxl", "heif", "webp2"],
-                                "description": "Target output format for all files"
+                                "enum": [
+                                    "webp",
+                                    "avif",
+                                    "jpeg",
+                                    "png",
+                                    "jxl",
+                                    "heif",
+                                    "webp2",
+                                ],
+                                "description": "Target output format for all files",
                             },
                             "quality": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 100,
-                                "default": 85
+                                "default": 85,
                             },
                             "optimization_mode": {
                                 "type": "string",
                                 "enum": ["size", "quality", "balanced", "lossless"],
-                                "default": "balanced"
+                                "default": "balanced",
                             },
-                            "preserve_metadata": {
-                                "type": "boolean",
-                                "default": False
-                            },
-                            "preset_id": {
-                                "type": "string",
-                                "format": "uuid"
-                            }
-                        }
+                            "preserve_metadata": {"type": "boolean", "default": False},
+                            "preset_id": {"type": "string", "format": "uuid"},
+                        },
                     },
-                    "example": {
-                        "$ref": "#/components/examples/BatchConversion"
-                    }
+                    "example": {"$ref": "#/components/examples/BatchConversion"},
                 }
-            }
-        }
+            },
+        },
     }
-    
+
     # Add response headers documentation
     openapi_schema["components"]["headers"] = {
         "X-Conversion-Id": {
             "description": "Unique identifier for the conversion operation",
-            "schema": {
-                "type": "string",
-                "example": "conv_abc123def456"
-            }
+            "schema": {"type": "string", "example": "conv_abc123def456"},
         },
         "X-Processing-Time": {
             "description": "Time taken to process the conversion (seconds)",
-            "schema": {
-                "type": "number",
-                "example": 0.234
-            }
+            "schema": {"type": "number", "example": 0.234},
         },
         "X-Compression-Ratio": {
             "description": "Ratio of output size to input size",
-            "schema": {
-                "type": "number",
-                "example": 0.65
-            }
+            "schema": {"type": "number", "example": 0.65},
         },
         "X-Input-Format": {
             "description": "Detected input image format",
-            "schema": {
-                "type": "string",
-                "example": "jpeg"
-            }
+            "schema": {"type": "string", "example": "jpeg"},
         },
         "X-Output-Format": {
             "description": "Actual output format used",
-            "schema": {
-                "type": "string",
-                "example": "webp"
-            }
+            "schema": {"type": "string", "example": "webp"},
         },
         "X-Correlation-ID": {
             "description": "Request correlation ID for tracking",
-            "schema": {
-                "type": "string",
-                "example": "abc123-def456-ghi789"
-            }
+            "schema": {"type": "string", "example": "abc123-def456-ghi789"},
         },
         "X-API-Version": {
             "description": "API version used for the request",
-            "schema": {
-                "type": "string",
-                "example": "v1"
-            }
+            "schema": {"type": "string", "example": "v1"},
         },
         "X-Total-Items": {
             "description": "Total number of items available (pagination)",
-            "schema": {
-                "type": "integer",
-                "example": 150
-            }
+            "schema": {"type": "integer", "example": 150},
         },
         "X-Has-More": {
             "description": "Whether more items are available (pagination)",
-            "schema": {
-                "type": "boolean",
-                "example": True
-            }
-        }
+            "schema": {"type": "boolean", "example": True},
+        },
     }
-    
+
     # Add webhook/callback documentation for future extensibility
     openapi_schema["components"]["callbacks"] = {
         "conversionComplete": {
@@ -931,23 +926,24 @@ def custom_openapi() -> Dict[str, Any]:
                                     "type": "object",
                                     "properties": {
                                         "conversion_id": {"type": "string"},
-                                        "status": {"type": "string", "enum": ["completed", "failed"]},
-                                        "result": {"$ref": "#/components/schemas/ConversionResult"}
-                                    }
+                                        "status": {
+                                            "type": "string",
+                                            "enum": ["completed", "failed"],
+                                        },
+                                        "result": {
+                                            "$ref": "#/components/schemas/ConversionResult"
+                                        },
+                                    },
                                 }
                             }
-                        }
+                        },
                     },
-                    "responses": {
-                        "200": {
-                            "description": "Callback acknowledged"
-                        }
-                    }
+                    "responses": {"200": {"description": "Callback acknowledged"}},
                 }
             }
         }
     }
-    
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
@@ -960,11 +956,13 @@ app.include_router(api_v1_router)  # Current v1 API endpoints
 
 # Include WebSocket routers
 from .api.websockets.progress import router as websocket_router
+
 app.include_router(websocket_router)
 
 # Include secure WebSocket routes if authentication is enabled
 if settings.batch_websocket_auth_enabled:
     from .api.websockets.secure_progress import router as secure_websocket_router
+
     app.include_router(secure_websocket_router, prefix="/api")
 
 # Static file serving for production
