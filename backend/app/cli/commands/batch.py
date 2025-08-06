@@ -3,7 +3,6 @@ Batch Command
 Batch image conversion with parallel processing
 """
 
-import sys
 import asyncio
 from pathlib import Path
 from typing import List, Optional, Annotated
@@ -18,14 +17,24 @@ from app.cli.config import get_config
 from app.cli.utils.validation import validate_input_file
 from app.cli.utils.errors import handle_api_error
 from app.cli.utils.history import record_command
+from app.cli.ui.themes import get_theme_manager
+from app.cli.ui.tables import SmartTable, ColumnType, create_batch_summary_table
+from app.cli.utils.emoji import get_emoji, get_format_emoji, format_with_emoji
+from app.cli.utils.terminal import should_use_emoji
+from app.cli.utils.progress import InterruptableProgress, create_multi_progress
 
 # Import SDK client
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python"))
+from app.cli.utils import setup_sdk_path
+setup_sdk_path()
 from image_converter.async_client import AsyncImageConverterClient
 from image_converter.models import BatchRequest, OutputFormat as SDKOutputFormat
 
 app = typer.Typer(no_args_is_help=True)
-console = Console()
+
+# Initialize themed console
+theme_manager = get_theme_manager()
+config = get_config()
+console = theme_manager.create_console(config.theme)
 
 
 @app.command(name="convert")
@@ -83,10 +92,12 @@ def batch_convert(
     valid_files = [Path(f) for f in files if validate_input_file(Path(f))]
     
     if not valid_files:
-        console.print(f"[red]No valid image files found matching: {pattern}[/red]")
+        error_msg = format_with_emoji("No valid image files found matching: " + pattern, "error")
+        console.print(f"[error]{error_msg}[/error]")
         raise typer.Exit(1)
     
-    console.print(f"[cyan]Found {len(valid_files)} images to convert[/cyan]")
+    found_msg = format_with_emoji(f"Found {len(valid_files)} images to convert", "info")
+    console.print(f"[info]{found_msg}[/info]")
     
     # Create output directory if specified
     if output_dir:
@@ -139,7 +150,8 @@ async def _run_batch_conversion(
     
     # Initialize async client
     async with AsyncImageConverterClient(
-        base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
         api_key=config.api_key,
         timeout=config.api_timeout
     ) as client:
@@ -222,12 +234,27 @@ async def _run_batch_conversion(
                                 f.write(result['data'])
                             success_count += 1
                 
-                # Show summary
-                console.print(f"\n[green]✓[/green] Batch conversion complete!")
-                console.print(f"  Processed: {len(files)} files")
-                console.print(f"  Succeeded: [green]{completed}[/green]")
+                # Show summary with SmartTable
+                summary_table = SmartTable(
+                    title="Batch Conversion Summary",
+                    console=console,
+                    show_statistics=True
+                )
+                summary_table.add_column("Metric", ColumnType.TEXT, width=20)
+                summary_table.add_column("Value", ColumnType.TEXT, width=15)
+                summary_table.add_column("Status", ColumnType.STATUS, width=10)
+                
+                summary_table.add_row("Total Files", str(len(files)), "info")
+                summary_table.add_row("Succeeded", str(completed), "success" if completed > 0 else "warning")
                 if failed > 0:
-                    console.print(f"  Failed: [red]{failed}[/red]")
+                    summary_table.add_row("Failed", str(failed), "error")
+                summary_table.add_row("Output Format", format.upper(), "info")
+                
+                console.print()
+                console.print(summary_table.render())
+                
+                complete_msg = format_with_emoji("Batch conversion complete!", "success")
+                console.print(f"\n[success]{complete_msg}[/success]")
                 
                 # Record in history
                 record_command(f"batch convert {pattern} -f {format}", success=True)
@@ -260,7 +287,8 @@ def batch_status(
     
     async def check_status():
         async with AsyncImageConverterClient(
-            base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
             api_key=config.api_key
         ) as client:
             
@@ -317,7 +345,8 @@ def batch_cancel(
     
     async def cancel_job():
         async with AsyncImageConverterClient(
-            base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
             api_key=config.api_key
         ) as client:
             try:

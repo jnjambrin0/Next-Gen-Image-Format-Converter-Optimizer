@@ -37,3 +37,5 @@ numpy==2.3.2
 typer[all]==0.15.1
 rich==13.9.4
 click==8.1.8
+textual==1.0.1
+wcwidth==0.2.13

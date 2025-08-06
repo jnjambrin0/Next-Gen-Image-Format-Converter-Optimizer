@@ -18,9 +18,12 @@ from app.cli.commands import convert, batch, optimize, analyze, formats, presets
 from app.cli.plugins import loader as plugin_loader
 from app.cli.utils import aliases, errors, i18n
 from app.cli.config import CLIConfig, get_config, update_config
+from app.cli.ui.themes import get_theme_manager
+from app.cli.utils.terminal import get_terminal_detector
 
-# Initialize console for rich output
-console = Console()
+# Initialize theme manager and console
+theme_manager = get_theme_manager()
+console = None  # Will be initialized with theme
 
 # Create main Typer app with custom help
 app = typer.Typer(
@@ -46,8 +49,9 @@ class OutputFormat(str, Enum):
     rich = "rich"
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     version: Annotated[
         Optional[bool],
         typer.Option("--version", "-v", help="Show CLI version")
@@ -90,6 +94,16 @@ def main(
       • img b → img batch
       • img o → img optimize
     """
+    global console  # Declare global at the beginning
+    
+    # Load user configuration first
+    config = get_config()
+    
+    # Initialize console with theme if not already initialized
+    if not console:
+        theme_manager.set_current_theme(config.theme)
+        console = theme_manager.create_console()
+    
     if version:
         version_table = Table(show_header=False, box=None)
         version_table.add_column("Component", style="cyan")
@@ -111,16 +125,26 @@ def main(
         state["language"] = language
         i18n.set_language(language)
     
-    # Load user configuration
-    config = get_config()
-    
     # Load plugins
     if config.plugins_enabled:
-        plugin_loader.load_plugins(app)
+        try:
+            plugin_loader.load_plugins(app)
+        except Exception as e:
+            if state["debug"]:
+                console.print(f"[yellow]Warning: Failed to load plugins: {e}[/yellow]")
     
     # Apply aliases
     if config.aliases_enabled:
-        aliases.apply_aliases(app)
+        try:
+            aliases.apply_aliases(app)
+        except Exception as e:
+            if state["debug"]:
+                console.print(f"[yellow]Warning: Failed to apply aliases: {e}[/yellow]")
+    
+    # If no command was invoked and no version flag, show help
+    if ctx.invoked_subcommand is None and not version:
+        console.print(ctx.get_help())
+        raise typer.Exit()
 
 
 # Add command groups
@@ -166,11 +190,11 @@ def optimize_shortcut(
 def config(
     action: Annotated[
         str,
-        typer.Argument(help="Action: show, set, get, reset")
+        typer.Argument(help="Action: show, set, get, reset, theme")
     ],
     key: Annotated[
         Optional[str],
-        typer.Argument(help="Configuration key")
+        typer.Argument(help="Configuration key or theme name")
     ] = None,
     value: Annotated[
         Optional[str],
@@ -185,7 +209,17 @@ def config(
       img config get api_url       # Get specific value
       img config set api_url http://localhost:8080
       img config reset             # Reset to defaults
+      img config theme             # List available themes
+      img config theme dark        # Set theme to dark
     """
+    global console
+    
+    # Ensure console is initialized
+    if not console:
+        config_obj = get_config()
+        theme_manager.set_current_theme(config_obj.theme)
+        console = theme_manager.create_console()
+    
     config_obj = get_config()
     
     if action == "show":
@@ -225,9 +259,45 @@ def config(
         update_config(default_config)
         console.print("[green]✓[/green] Configuration reset to defaults")
     
+    elif action == "theme":
+        if key:
+            # Set theme
+            if theme_manager.set_current_theme(key):
+                config_obj.theme = key
+                update_config(config_obj)
+                # Reinitialize console with new theme
+                new_console = theme_manager.create_console()
+                new_console.print(f"[green]✓[/green] Theme set to [cyan]{key}[/cyan]")
+                # Update global console
+                console = new_console
+            else:
+                console.print(f"[red]Unknown theme: {key}[/red]")
+                console.print("Available themes: dark, light, high_contrast, colorblind_safe, minimal")
+                raise typer.Exit(1)
+        else:
+            # List themes
+            themes = theme_manager.list_themes()
+            table = Table(title="Available Themes", show_header=True)
+            table.add_column("Name", style="cyan")
+            table.add_column("Type", style="green")
+            table.add_column("Description", style="dim")
+            table.add_column("Current", style="yellow")
+            
+            current_theme = config_obj.theme
+            for theme_name, theme in themes.items():
+                is_current = "✓" if theme_name == current_theme else ""
+                table.add_row(
+                    theme.name,
+                    theme.type.value,
+                    theme.description,
+                    is_current
+                )
+            
+            console.print(table)
+    
     else:
         console.print("[red]Invalid action or missing arguments[/red]")
-        console.print("Use: img config show|get|set|reset")
+        console.print("Use: img config show|get|set|reset|theme")
         raise typer.Exit(1)
 
 
@@ -359,6 +429,31 @@ def plugins(
 
 
 @app.command()
+def tui():
+    """
+    Launch interactive Terminal UI mode
+    
+    Provides a full-featured terminal interface with:
+    • File browser for image selection
+    • Visual conversion settings
+    • Real-time progress tracking
+    • Results table with statistics
+    """
+    from app.cli.ui.tui import launch_tui
+    
+    try:
+        console.print("[cyan]Launching Interactive Mode...[/cyan]")
+        launch_tui()
+    except ImportError:
+        console.print("[red]Error: Textual library not installed[/red]")
+        console.print("Install with: pip install textual")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Error launching TUI: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
 def history(
     action: Annotated[
         Optional[str],
@@ -429,7 +524,8 @@ def history(
 
 
 # Error handling
-@app.exception_handler(Exception)
+# Note: Typer doesn't have exception_handler attribute
+# This would need to be implemented differently
 def handle_exceptions(e: Exception):
     """Global exception handler with helpful suggestions"""
     if state.get("debug"):

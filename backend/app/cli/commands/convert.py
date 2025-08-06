@@ -15,9 +15,12 @@ from rich.table import Table
 
 from app.cli.config import get_config
 from app.cli.utils.validation import validate_input_file, validate_output_path
-from app.cli.utils.progress import create_progress_bar
+from app.cli.utils.progress import create_progress_bar, InterruptableProgress, progress_context
 from app.cli.utils.errors import handle_api_error
 from app.cli.utils.history import record_command
+from app.cli.ui.themes import get_theme_manager
+from app.cli.utils.emoji import get_emoji, get_format_emoji
+from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
 
 # Import SDK client
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python"))
@@ -25,7 +28,11 @@ from image_converter.client import ImageConverterClient
 from image_converter.models import ConversionRequest, OutputFormat as SDKOutputFormat
 
 app = typer.Typer(no_args_is_help=True)
-console = Console()
+
+# Initialize themed console
+theme_manager = get_theme_manager()
+config = get_config()
+console = theme_manager.create_console(config.theme)
 
 
 @app.command(name="file")
@@ -100,19 +107,23 @@ def convert_file(
             console.print("[yellow]Conversion cancelled[/yellow]")
             raise typer.Exit(0)
     
-    # Show operation preview
-    console.print(f"\n[bold cyan]Converting:[/bold cyan] {input_path.name}")
-    console.print(f"[bold green]To:[/bold green] {output_path.name} ({format.upper()})")
+    # Show operation preview with emoji if supported
+    if should_use_emoji():
+        console.print(f"\n[bold cyan]{get_emoji('convert')} Converting:[/bold cyan] {input_path.name}")
+        console.print(f"[bold green]{get_emoji('success')} To:[/bold green] {output_path.name} ({get_format_emoji(format)} {format.upper()})")
+    else:
+        console.print(f"\n[bold cyan]Converting:[/bold cyan] {input_path.name}")
+        console.print(f"[bold green]To:[/bold green] {output_path.name} ({format.upper()})")
     
     if dry_run:
-        # Show what would be done
-        table = Table(title="Conversion Preview", show_header=False)
-        table.add_column("Setting", style="cyan")
-        table.add_column("Value", style="green")
+        # Show what would be done with themed table
+        table = Table(title="Conversion Preview", show_header=False, style="primary")
+        table.add_column("Setting", style="secondary")
+        table.add_column("Value", style="info")
         
         table.add_row("Input", str(input_path))
         table.add_row("Output", str(output_path))
-        table.add_row("Format", format.upper())
+        table.add_row("Format", f"{get_format_emoji(format) if should_use_emoji() else ''} {format.upper()}")
         if quality:
             table.add_row("Quality", str(quality))
         if preset:
@@ -123,14 +134,15 @@ def convert_file(
         table.add_row("Optimize", "Yes" if optimize else "No")
         
         console.print(table)
-        console.print("\n[yellow]Dry run complete. No files were modified.[/yellow]")
+        console.print(f"\n[warning]{get_emoji('warning') if should_use_emoji() else ''} Dry run complete. No files were modified.[/warning]")
         raise typer.Exit(0)
     
     # Perform conversion
     try:
         # Initialize client
         client = ImageConverterClient(
-            base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
             api_key=config.api_key,
             timeout=config.api_timeout
         )
@@ -150,40 +162,74 @@ def convert_file(
             optimize_level=2 if optimize else None
         )
         
-        # Show progress
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            console=console
+        # Show enhanced progress with interruption support
+        import tempfile
+        import os
+        
+        with InterruptableProgress(
+            description="Converting image",
+            total=100,
+            show_emoji=should_use_emoji(),
+            console=console,
+            show_speed=True
         ) as progress:
             task = progress.add_task("Converting...", total=100)
             
-            # Perform conversion
-            result = client.convert(
-                image_data=image_data,
-                request=request,
-                input_filename=input_path.name
-            )
+            # Create temp file for SDK (it expects file path)
+            with tempfile.NamedTemporaryFile(suffix=input_path.suffix, delete=False) as tmp_input:
+                tmp_input.write(image_data)
+                tmp_input_path = tmp_input.name
             
-            progress.update(task, advance=50)
+            try:
+                # Perform conversion (SDK expects file path)
+                output_data, result = client.convert_image(
+                    image_path=tmp_input_path,
+                    output_format=format.lower(),
+                    quality=quality,
+                    strip_metadata=not keep_metadata,
+                    preset_id=preset
+                )
+                
+                progress.update(task, advance=50, description="Processing...")
+                
+                # Write output file
+                with open(output_path, 'wb') as f:
+                    f.write(output_data)
+                
+                progress.update(task, advance=50, description="Saving...")
+            finally:
+                # Clean up temp file
+                if os.path.exists(tmp_input_path):
+                    os.unlink(tmp_input_path)
             
-            # Write output file
-            with open(output_path, 'wb') as f:
-                f.write(result.output_data)
-            
-            progress.update(task, advance=50)
+            if progress.interrupted:
+                console.print(f"\n[error]{get_emoji('error') if should_use_emoji() else ''} Conversion interrupted by user[/error]")
+                raise typer.Exit(1)
         
-        # Show results
+        # Show results with emojis and theming
         input_size = len(image_data) / 1024
-        output_size = len(result.output_data) / 1024
+        output_size = len(output_data) / 1024
         reduction = ((input_size - output_size) / input_size) * 100 if input_size > 0 else 0
         
-        console.print(f"\n[green]✓[/green] Conversion complete!")
-        console.print(f"  Input:  {input_size:.1f} KB")
-        console.print(f"  Output: {output_size:.1f} KB ([{'green' if reduction > 0 else 'yellow'}]{reduction:+.1f}%[/{'green' if reduction > 0 else 'yellow'}])")
-        console.print(f"  Saved to: [cyan]{output_path}[/cyan]")
+        if should_use_emoji():
+            console.print(f"\n[success]{get_emoji('success')} Conversion complete![/success]")
+        else:
+            console.print(f"\n[success]Conversion complete![/success]")
+            
+        # Create results table
+        results_table = Table(show_header=False, box=None)
+        results_table.add_column("Metric", style="dim")
+        results_table.add_column("Value", style="info")
+        
+        results_table.add_row("Input Size", f"{input_size:.1f} KB")
+        results_table.add_row("Output Size", f"{output_size:.1f} KB")
+        results_table.add_row(
+            "Size Reduction", 
+            f"[{'success' if reduction > 0 else 'warning'}]{reduction:+.1f}%[/{'success' if reduction > 0 else 'warning'}]"
+        )
+        results_table.add_row("Saved to", f"[primary]{output_path}[/primary]")
+        
+        console.print(results_table)
         
         # Record in history
         record_command(f"convert {input_path} -f {format} -o {output_path}", success=True)
@@ -227,7 +273,8 @@ def convert_stdin(
         # Initialize client
         config = get_config()
         client = ImageConverterClient(
-            base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
             api_key=config.api_key,
             timeout=config.api_timeout
         )
@@ -238,20 +285,35 @@ def convert_stdin(
             quality=quality or config.default_quality
         )
         
-        # Perform conversion
-        result = client.convert(
-            image_data=image_data,
-            request=request
-        )
+        # Create temp file for SDK
+        import tempfile
+        import os
+        
+        with tempfile.NamedTemporaryFile(suffix='.tmp', delete=False) as tmp_input:
+            tmp_input.write(image_data)
+            tmp_input_path = tmp_input.name
+        
+        try:
+            # Perform conversion (SDK expects file path)
+            output_data, result = client.convert_image(
+                image_path=tmp_input_path,
+                output_format=format.lower(),
+                quality=quality,
+                strip_metadata=True
+            )
+        finally:
+            # Clean up temp file
+            if os.path.exists(tmp_input_path):
+                os.unlink(tmp_input_path)
         
         # Output result
         if output:
             with open(output, 'wb') as f:
-                f.write(result.output_data)
+                f.write(output_data)
             console.print(f"[green]✓[/green] Saved to: [cyan]{output}[/cyan]", file=sys.stderr)
         else:
             # Write to stdout
-            sys.stdout.buffer.write(result.output_data)
+            sys.stdout.buffer.write(output_data)
         
     except Exception as e:
         handle_api_error(e, console)

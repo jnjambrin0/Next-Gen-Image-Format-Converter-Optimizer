@@ -42,10 +42,10 @@ python test_format_detection.py
 python -m venv .venv
 source .venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies (when available)
+# Install dependencies
 pip install -r requirements.txt
 
-# Run development server (MUST be from backend/ directory)
+# CRITICAL: Run development server from backend/ directory
 cd backend
 uvicorn app.main:app --reload --port 8080
 
@@ -69,7 +69,7 @@ cd frontend
 cp .env.example .env
 # Edit .env to set backend port if different from 8080
 
-# Install dependencies (when available)
+# Install dependencies
 npm install
 
 # Run development server
@@ -142,16 +142,50 @@ go test ./...     # Run all tests
 go build ./...    # Build SDK
 ```
 
-### CLI Usage (Story 6.1)
+### CLI Usage (Story 6.1 & 6.2)
 
-**CRITICAL**: The CLI exists at `backend/img.py` and uses the Python SDK. SDK import path is hardcoded:
+**CRITICAL**: The CLI exists at `backend/img.py` and uses the Python SDK with specific requirements:
 
+1. **SDK Client Initialization**: Uses `host` and `port`, NOT `base_url`:
 ```python
-# CLI commands import SDK with hardcoded path - DO NOT CHANGE
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python"))
+# CORRECT - SDK expects separate host/port
+client = ImageConverterClient(
+    host=config.api_host,  # "localhost"
+    port=config.api_port,  # 8080
+    api_key=config.api_key
+)
+
+# WRONG - This will fail
+client = ImageConverterClient(base_url="http://localhost:8080")
 ```
 
-This fragile path is intentional to avoid circular dependencies. Any changes to directory structure will break CLI.
+2. **SDK Methods Expect File Paths**: The SDK's `convert_image` expects file paths, not bytes:
+```python
+# CLI must use temp files for SDK
+with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+    tmp.write(image_bytes)
+    tmp_path = tmp.name
+
+output_data, result = client.convert_image(
+    image_path=tmp_path,  # File path, not bytes!
+    output_format="webp"
+)
+```
+
+3. **TUI Uses RichLog**: Textual's `TextLog` was removed, use `RichLog`:
+```python
+from textual.widgets import RichLog  # NOT TextLog
+```
+
+4. **CLI Command Structure**: Commands use subcommands pattern:
+```bash
+# CORRECT - Note the subcommand structure
+img convert file input.jpg -f webp     # NOT: img convert input.jpg
+img batch convert "*.png" -f avif      # NOT: img batch create
+img optimize auto photo.jpg --preset web
+
+# The pattern is: img <command> <subcommand> <args>
+```
 
 ## Key Architecture Decisions
 
@@ -399,8 +433,6 @@ optimization_service.set_intelligence_engine(intelligence_service.engine)
 optimization_service.set_conversion_service(conversion_service)
 ```
 
-### 7. Format Support Decisions
-**CRITICAL**: JPEG 2000 (JP2) is intentionally disabled despite implementation existing. Disabled due to <1% real-world usage and complexity overhead. This is intentional - don't "fix" this.
 
 ### 8. Format Detection Architecture
 **CRITICAL**: The system uses content-based format detection, NOT extension-based:

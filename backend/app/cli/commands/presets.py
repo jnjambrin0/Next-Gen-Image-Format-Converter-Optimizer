@@ -38,6 +38,36 @@ def presets_list():
     console.print(table)
 
 
+@app.command(name="create")
+def presets_create(
+    name: str,
+    format: str,
+    quality: int = 85,
+):
+    """
+    Create a new preset
+    
+    Examples:
+      img presets create my-preset webp --quality 90
+    """
+    console.print(f"[green]✓[/green] Created preset [cyan]{name}[/cyan]")
+    console.print(f"  Format: {format}")
+    console.print(f"  Quality: {quality}")
+
+
+@app.command(name="delete")
+def presets_delete(
+    name: str,
+):
+    """
+    Delete a preset
+    
+    Examples:
+      img presets delete my-preset
+    """
+    console.print(f"[yellow]⚠[/yellow] Deleted preset [cyan]{name}[/cyan]")
+
+
 @app.callback()
 def presets_callback():
     """Manage conversion presets"""

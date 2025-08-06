@@ -17,6 +17,14 @@ class CLIConfig(BaseModel):
         default="http://localhost:8080",
         description="API server URL"
     )
+    api_host: str = Field(
+        default="localhost",
+        description="API server host"
+    )
+    api_port: int = Field(
+        default=8080,
+        description="API server port"
+    )
     api_key: Optional[str] = Field(
         default=None,
         description="API key for authentication"
@@ -64,6 +72,20 @@ class CLIConfig(BaseModel):
         description="Interface language (en, es, fr, de, zh, ja)"
     )
     
+    # UI/Theme Settings
+    theme: str = Field(
+        default="dark",
+        description="Terminal theme (dark, light, high_contrast, colorblind_safe, minimal)"
+    )
+    emoji_enabled: bool = Field(
+        default=True,
+        description="Enable emoji in output"
+    )
+    syntax_highlighting: bool = Field(
+        default=True,
+        description="Enable syntax highlighting for code/JSON output"
+    )
+    
     # Defaults for conversion
     default_quality: int = Field(
         default=85,
@@ -101,6 +123,7 @@ class ConfigManager:
         (self.config_dir / "history").mkdir(exist_ok=True)
         (self.config_dir / "plugins").mkdir(exist_ok=True)
         (self.config_dir / "cache").mkdir(exist_ok=True)
+        (self.config_dir / "themes").mkdir(exist_ok=True)
     
     def load_config(self) -> CLIConfig:
         """Load configuration from disk"""
@@ -182,3 +205,8 @@ def get_history_dir() -> Path:
 def get_aliases_file() -> Path:
     """Get aliases file path"""
     return _config_manager.config_dir / "aliases" / "aliases.json"
+
+
+def get_themes_dir() -> Path:
+    """Get themes directory path"""
+    return _config_manager.config_dir / "themes"

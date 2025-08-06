@@ -16,7 +16,8 @@ from app.cli.config import get_config
 from app.cli.utils.errors import handle_api_error
 
 # Import SDK client
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python"))
+from app.cli.utils import setup_sdk_path
+setup_sdk_path()
 from image_converter.client import ImageConverterClient
 from image_converter.models import ConversionRequest, OutputFormat as SDKOutputFormat
 
@@ -61,7 +62,8 @@ def chain(
     # Process operations
     config = get_config()
     client = ImageConverterClient(
-        base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
         api_key=config.api_key,
         timeout=config.api_timeout
     )
@@ -103,7 +105,7 @@ def chain(
             optimize_level=optimize_level
         )
         
-        result = client.convert(
+        result = client.convert_image(
             image_data=image_data,
             request=request
         )
@@ -150,7 +152,8 @@ def pipe(
     # Process
     config = get_config()
     client = ImageConverterClient(
-        base_url=config.api_url,
+            host=config.api_host,
+            port=config.api_port,
         api_key=config.api_key,
         timeout=config.api_timeout
     )
@@ -160,7 +163,7 @@ def pipe(
         quality=quality or config.default_quality
     )
     
-    result = client.convert(
+    result = client.convert_image(
         image_data=image_data,
         request=request
     )

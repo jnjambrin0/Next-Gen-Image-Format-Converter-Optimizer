@@ -25,6 +25,30 @@ def analyze_info(
     # Implementation will use the analyze API endpoint
 
 
+@app.command(name="preview")
+def analyze_preview(
+    input_path: str,
+    mode: str = "ansi",
+):
+    """
+    Preview image in terminal
+    
+    Examples:
+      img analyze preview photo.jpg
+      img analyze preview photo.jpg --mode ascii
+    """
+    console.print(f"[cyan]Generating preview for {input_path}...[/cyan]")
+    # Implementation will use the preview module
+    from app.cli.ui.preview import create_ascii_preview
+    from pathlib import Path
+    
+    try:
+        preview = create_ascii_preview(Path(input_path), mode=mode)
+        console.print(preview)
+    except Exception as e:
+        console.print(f"[red]Error generating preview: {e}[/red]")
+
+
 @app.callback()
 def analyze_callback():
     """Analyze image properties"""

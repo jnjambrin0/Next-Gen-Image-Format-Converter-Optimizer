@@ -166,6 +166,33 @@ class FormatRecommendation(BaseModel):
     quality_predictions: Dict[str, float]
     
     
+class OptimizationRequest(BaseModel):
+    """Request model for image optimization."""
+    
+    preset: Optional[str] = Field(default="balanced", description="Optimization preset")
+    target_quality: Optional[int] = Field(default=None, ge=1, le=100, description="Target quality")
+    max_file_size: Optional[int] = Field(default=None, description="Maximum file size in bytes")
+    auto_optimize: bool = Field(default=True, description="Enable automatic optimization")
+    optimize_level: Optional[int] = Field(default=2, ge=1, le=3, description="Optimization level (1-3)")
+    progressive: bool = Field(default=False, description="Enable progressive encoding")
+    lossless: bool = Field(default=False, description="Enable lossless compression")
+    preserve_metadata: bool = Field(default=False, description="Preserve image metadata")
+    
+    @validator("target_quality")
+    def validate_quality(cls, v: Optional[int]) -> Optional[int]:
+        """Ensure quality is within valid range."""
+        if v is not None and (v < 1 or v > 100):
+            raise ValueError("Target quality must be between 1 and 100")
+        return v
+    
+    @validator("optimize_level")
+    def validate_optimize_level(cls, v: Optional[int]) -> Optional[int]:
+        """Ensure optimization level is valid."""
+        if v is not None and (v < 1 or v > 3):
+            raise ValueError("Optimization level must be between 1 and 3")
+        return v
+
+
 class APIKeyInfo(BaseModel):
     """API key information (sanitized)."""
     
