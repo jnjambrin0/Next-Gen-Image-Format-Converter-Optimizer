@@ -101,6 +101,9 @@ See `frontend/ENV_CONFIG.md` for detailed configuration instructions.
 ### Testing
 
 ```bash
+# IMPORTANT: Run pytest from backend/ directory, not project root
+cd backend
+
 # Run all tests
 pytest
 
@@ -108,13 +111,35 @@ pytest
 pytest --cov=. --cov-report=html
 
 # Run specific test file
-pytest backend/tests/unit/test_conversion.py
+pytest tests/unit/test_conversion.py
 
 # Run integration tests only
-pytest backend/tests/integration/
+pytest tests/integration/
 
 # Run security tests (requires Docker)
-pytest backend/tests/security/
+pytest tests/security/
+```
+
+### SDK Development
+
+```bash
+# Python SDK
+cd sdks/python
+pip install -e .  # Install in development mode
+pip install keyring httpx pydantic  # Install dependencies
+pytest tests/     # Run SDK tests
+
+# JavaScript SDK
+cd sdks/javascript
+npm install       # Install dependencies
+npm run build     # Build TypeScript
+npm test          # Run tests (requires jest)
+
+# Go SDK
+cd sdks/go
+go mod download   # Download dependencies
+go test ./...     # Run all tests
+go build ./...    # Build SDK
 ```
 
 ## Key Architecture Decisions
@@ -143,6 +168,10 @@ pytest backend/tests/security/
 │   ├── integration/   # Integration tests
 │   ├── security/      # Security tests
 │   └── fixtures/      # Test images and data
+├── sdks/               # Language SDKs (Story 5.3)
+│   ├── python/        # Python SDK with async/sync support
+│   ├── javascript/    # JavaScript/TypeScript SDK
+│   └── go/           # Go SDK with idiomatic patterns
 ├── ml_models/         # Local ML models
 └── scripts/           # Utility scripts
 ```
@@ -360,7 +389,7 @@ optimization_service.set_conversion_service(conversion_service)
 ```
 
 ### 7. Format Support Decisions
-**CRITICAL**: JPEG 2000 (JP2) is intentionally disabled. Code exists but not registered due to <1% usage and complexity. Don't "fix" this.
+**CRITICAL**: JPEG 2000 (JP2) is intentionally disabled despite implementation existing. Disabled due to <1% real-world usage and complexity overhead. This is intentional - don't "fix" this.
 
 ### 8. Format Detection Architecture
 **CRITICAL**: The system uses content-based format detection, NOT extension-based:
@@ -441,6 +470,21 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 - **NEVER** add network functionality beyond localhost API
 - **NEVER** add telemetry or external service calls
 - All processing must work completely offline
+
+#### SDK Localhost Enforcement Pattern (Story 5.3)
+**CRITICAL**: All language SDKs enforce localhost-only connections:
+
+```python
+# Hardcoded in all SDKs (Python/JavaScript/Go):
+allowed_hosts = ['localhost', '127.0.0.1', '::1', '[::1]']
+
+# Connection attempts to external hosts are blocked:
+if host not in allowed_hosts:
+    raise NetworkSecurityError('Connection to non-localhost blocked')
+
+# This can be disabled (NOT recommended) with:
+verify_localhost=False  # Security risk!
+```
 
 
 ## API Development Patterns
@@ -533,6 +577,12 @@ All API errors follow consistent structure with proper error codes:
 - `POST /api/v1/detection/detect-format` - Detect image format from content
 - `POST /api/v1/detection/recommend-format` - Get AI-powered format recommendations
 - `GET /api/v1/detection/formats/compatibility` - Get format compatibility matrix
+
+### Authentication Endpoints (Story 5.2)
+- `POST /api/v1/auth/keys` - Create new API key (requires admin permissions)
+- `GET /api/v1/auth/keys` - List all API keys
+- `DELETE /api/v1/auth/keys/{key_id}` - Revoke specific API key
+- `GET /api/v1/auth/verify` - Verify current API key validity
 
 ## Development Guidelines
 
