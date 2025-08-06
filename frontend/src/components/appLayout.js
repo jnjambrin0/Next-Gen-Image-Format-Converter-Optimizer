@@ -42,9 +42,22 @@ function createHeader() {
   titleContainer.appendChild(h1)
   titleContainer.appendChild(subtitle)
 
-  // Right side - Status badge
+  // Right side - Status badge and API management
   const badgeContainer = document.createElement('div')
-  badgeContainer.className = 'flex items-center space-x-2'
+  badgeContainer.className = 'flex items-center space-x-3'
+
+  // API management button
+  const apiButton = document.createElement('button')
+  apiButton.id = 'apiManagementBtn'
+  apiButton.className = 'inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+  apiButton.innerHTML = `
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+    </svg>
+    API Keys
+  `
+  apiButton.title = 'Manage API Keys'
+  badgeContainer.appendChild(apiButton)
 
   const badge = document.createElement('span')
   badge.className =

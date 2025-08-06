@@ -8,6 +8,7 @@ from .optimization import router as optimization_router
 from .batch import router as batch_router
 from .presets import router as presets_router
 from .detection import router as detection_router
+from .auth import router as auth_router
 
 # Legacy API router (backward compatibility)
 api_router = APIRouter(prefix="/api")
@@ -22,6 +23,7 @@ api_router.include_router(optimization_router, tags=["optimization"])
 api_router.include_router(batch_router, tags=["batch"])
 api_router.include_router(presets_router, tags=["presets"])
 api_router.include_router(detection_router, tags=["detection"])
+api_router.include_router(auth_router, tags=["auth"])
 
 # V1 API router (current stable version)
 api_v1_router = APIRouter(prefix="/api/v1")
@@ -36,5 +38,6 @@ api_v1_router.include_router(optimization_router, tags=["v1-optimization"])
 api_v1_router.include_router(batch_router, tags=["v1-batch"])
 api_v1_router.include_router(presets_router, tags=["v1-presets"])
 api_v1_router.include_router(detection_router, tags=["v1-detection"])
+api_v1_router.include_router(auth_router, tags=["v1-auth"])
 
 __all__ = ["api_router", "api_v1_router"]

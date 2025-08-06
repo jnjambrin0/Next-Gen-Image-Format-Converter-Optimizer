@@ -13,6 +13,7 @@ from .api.middleware import (
     error_handler_middleware,
     setup_exception_handlers,
     logging_middleware,
+    auth_middleware,
 )
 from .api.middleware.validation import validation_middleware
 from .utils.logging import setup_logging
@@ -64,6 +65,9 @@ async def lifespan(app: FastAPI):
     
     # Inject preset service into conversion service
     conversion_service.set_preset_service(preset_service)
+    
+    # Initialize API key service (Story 5.2)
+    from .services.api_key_service import api_key_service
     
     # Ensure data directory exists for database files
     import os
@@ -183,6 +187,9 @@ app.add_middleware(
 
 # Add validation middleware (first - should run before others)
 app.middleware("http")(validation_middleware)
+
+# Add authentication middleware (runs after validation)
+app.middleware("http")(auth_middleware)
 
 # Add logging middleware
 app.middleware("http")(logging_middleware)

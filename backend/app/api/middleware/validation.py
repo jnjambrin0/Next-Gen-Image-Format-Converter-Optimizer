@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse
 import structlog
 
 from app.config import settings
+from app.core.security.rate_limiter import api_rate_limiter
+from app.services.api_key_service import api_key_service
 
 logger = structlog.get_logger()
 
@@ -78,40 +80,37 @@ class RequestValidator:
         # Fallback to direct client IP
         return request.client.host if request.client else "unknown"
     
-    def _is_rate_limited(self, client_ip: str) -> tuple[bool, str]:
-        """Check if client IP is rate limited."""
-        current_time = time.time()
+    def _is_rate_limited(self, client_ip: str, request: Request) -> tuple[bool, str, dict]:
+        """Check if client IP is rate limited using enhanced API rate limiter.
         
-        # Check if IP is blocked
-        if client_ip in self.blocked_ips:
-            if self.blocked_ips[client_ip] > current_time:
-                remaining_time = int(self.blocked_ips[client_ip] - current_time)
-                return True, f"IP temporarily blocked due to excessive requests. Try again in {remaining_time} seconds"
+        Args:
+            client_ip: Client IP address
+            request: FastAPI request object
+            
+        Returns:
+            Tuple of (is_limited, message, headers)
+        """
+        # Get API key info from request state (set by auth middleware)
+        api_key_record = getattr(request.state, 'api_key', None)
+        api_key_id = api_key_record.id if api_key_record else None
+        custom_limit = api_key_record.rate_limit_override if api_key_record else None
+        
+        # Use enhanced API rate limiter
+        allowed, headers = api_rate_limiter.check_rate_limit(api_key_id, custom_limit)
+        
+        if not allowed:
+            # Determine which limit was hit based on headers
+            remaining = int(headers.get("X-RateLimit-Remaining", "0"))
+            limit = int(headers.get("X-RateLimit-Limit", "60"))
+            
+            if api_key_record:
+                message = f"API key rate limit exceeded: {limit - remaining}/{limit} requests per minute"
             else:
-                # Block has expired, remove it
-                del self.blocked_ips[client_ip]
+                message = f"Rate limit exceeded: {limit - remaining}/{limit} requests per minute"
+            
+            return True, message, headers
         
-        requests = self.request_counts[client_ip]
-        
-        # Count requests in last minute
-        minute_ago = current_time - 60
-        minute_requests = sum(1 for req_time in requests if req_time > minute_ago)
-        
-        if minute_requests >= self.max_requests_per_minute:
-            # Block IP for 5 minutes
-            self.blocked_ips[client_ip] = current_time + 300
-            return True, f"Rate limit exceeded: {minute_requests} requests per minute (max: {self.max_requests_per_minute})"
-        
-        # Count requests in last hour
-        hour_ago = current_time - 3600
-        hour_requests = sum(1 for req_time in requests if req_time > hour_ago)
-        
-        if hour_requests >= self.max_requests_per_hour:
-            # Block IP for 1 hour
-            self.blocked_ips[client_ip] = current_time + 3600
-            return True, f"Hourly rate limit exceeded: {hour_requests} requests per hour (max: {self.max_requests_per_hour})"
-        
-        return False, ""
+        return False, "", headers
     
     # Remove _unblock_ip_later method - no longer needed with timestamp-based blocking
     
@@ -179,16 +178,19 @@ class RequestValidator:
             # Get client IP
             client_ip = self._get_client_ip(request)
             
-            # Check rate limiting
-            is_limited, limit_message = self._is_rate_limited(client_ip)
+            # Check rate limiting with enhanced API rate limiter
+            is_limited, limit_message, rate_limit_headers = self._is_rate_limited(client_ip, request)
             if is_limited:
                 logger.warning(
                     "Request rate limited",
                     client_ip=client_ip,
                     path=request.url.path,
-                    message=limit_message
+                    message=limit_message,
+                    api_key_authenticated=hasattr(request.state, 'authenticated') and request.state.authenticated
                 )
-                return JSONResponse(
+                
+                # Create response with rate limit headers
+                response = JSONResponse(
                     status_code=429,
                     content={
                         "error_code": "VAL429",
@@ -197,6 +199,12 @@ class RequestValidator:
                         "retry_after": 60,  # seconds
                     }
                 )
+                
+                # Add rate limit headers
+                for header, value in rate_limit_headers.items():
+                    response.headers[header] = value
+                
+                return response
             
             # Record this request
             current_time = time.time()
@@ -306,16 +314,17 @@ async def validation_middleware(request: Request, call_next):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
-        # Add rate limiting headers
-        client_ip = request_validator._get_client_ip(request)
-        current_time = time.time()
-        minute_ago = current_time - 60
-        requests = request_validator.request_counts[client_ip]
-        minute_requests = sum(1 for req_time in requests if req_time > minute_ago)
+        # Add rate limiting headers using enhanced API rate limiter
+        api_key_record = getattr(request.state, 'api_key', None)
+        api_key_id = api_key_record.id if api_key_record else None
+        custom_limit = api_key_record.rate_limit_override if api_key_record else None
         
-        response.headers["X-RateLimit-Limit"] = str(request_validator.max_requests_per_minute)
-        response.headers["X-RateLimit-Remaining"] = str(max(0, request_validator.max_requests_per_minute - minute_requests))
-        response.headers["X-RateLimit-Reset"] = str(int(current_time + 60))
+        # Get current rate limit headers
+        _, rate_limit_headers = api_rate_limiter.check_rate_limit(api_key_id, custom_limit)
+        
+        # Add rate limit headers to response
+        for header, value in rate_limit_headers.items():
+            response.headers[header] = value
         
         return response
         

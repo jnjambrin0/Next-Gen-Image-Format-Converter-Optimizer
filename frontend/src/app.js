@@ -22,6 +22,9 @@ import { createBatchJob, getBatchStatus, downloadBatchResults } from './services
 import { ConversionSettingsProgressive } from './components/conversionSettingsProgressive.js'
 import { KeyboardShortcuts } from './components/keyboardShortcuts.js'
 
+// API key management
+import { apiKeyManager } from './components/apiKeyManager.js'
+
 export function initializeApp() {
   const app = document.getElementById('app')
 
@@ -686,6 +689,29 @@ export function initializeApp() {
 
   // Setup keyboard shortcut event listeners
   setupKeyboardShortcutListeners()
+
+  // Setup API key manager
+  setupApiKeyManager()
+
+  function setupApiKeyManager() {
+    // Initialize the API key manager UI
+    apiKeyManager.render()
+    
+    // Add event listener to the API management button
+    const apiButton = document.getElementById('apiManagementBtn')
+    if (apiButton) {
+      apiButton.addEventListener('click', () => {
+        apiKeyManager.show()
+      })
+    }
+    
+    // Handle escape key to close API key manager
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && apiKeyManager.isVisible) {
+        apiKeyManager.hide()
+      }
+    })
+  }
 
   function setupKeyboardShortcutListeners() {
     // Toggle advanced settings
