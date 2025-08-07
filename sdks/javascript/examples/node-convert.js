@@ -22,7 +22,7 @@ program
   .option('-q, --quality <number>', 'Quality (1-100)', '85')
   .option('-s, --strip-metadata', 'Remove metadata', true)
   .option('-k, --api-key <key>', 'API key')
-  .option('-p, --port <number>', 'API server port', '8080')
+  .option('-p, --port <number>', 'API server port', '8000')
   .action(async (input, outputFormat, options) => {
     await convertSingle(input, outputFormat, options);
   });
@@ -34,7 +34,7 @@ program
   .option('-s, --strip-metadata', 'Remove metadata', true)
   .option('-c, --concurrent <number>', 'Max concurrent conversions', '5')
   .option('-k, --api-key <key>', 'API key')
-  .option('-p, --port <number>', 'API server port', '8080')
+  .option('-p, --port <number>', 'API server port', '8000')
   .action(async (directory, outputFormat, options) => {
     await convertBatch(directory, outputFormat, options);
   });
@@ -43,7 +43,7 @@ program
   .command('analyze <input>')
   .description('Analyze image content using ML')
   .option('-d, --debug', 'Include debug information')
-  .option('-p, --port <number>', 'API server port', '8080')
+  .option('-p, --port <number>', 'API server port', '8000')
   .action(async (input, options) => {
     await analyzeImage(input, options);
   });

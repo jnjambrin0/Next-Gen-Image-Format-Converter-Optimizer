@@ -17,6 +17,7 @@ from rich.style import Style
 
 class ThemeType(str, Enum):
     """Built-in theme types"""
+
     DARK = "dark"
     LIGHT = "light"
     HIGH_CONTRAST = "high_contrast"
@@ -31,6 +32,7 @@ class ThemeType(str, Enum):
 @dataclass
 class Theme:
     """Theme configuration"""
+
     name: str
     type: ThemeType
     colors: Dict[str, str]
@@ -38,7 +40,7 @@ class Theme:
     description: str = ""
     author: str = ""
     version: str = "1.0.0"
-    
+
     def to_rich_theme(self) -> RichTheme:
         """Convert to Rich Theme object"""
         style_dict = {}
@@ -56,15 +58,15 @@ class Theme:
                 style_kwargs["underline"] = style_def["underline"]
             if "dim" in style_def:
                 style_kwargs["dim"] = style_def["dim"]
-            
+
             style_dict[name] = Style(**style_kwargs)
-        
+
         return RichTheme(style_dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Theme":
         """Create from dictionary"""
@@ -74,7 +76,7 @@ class Theme:
 
 class ThemeManager:
     """Manages CLI themes"""
-    
+
     # Built-in themes
     THEMES = {
         ThemeType.DARK: Theme(
@@ -114,7 +116,6 @@ class ThemeManager:
             description="Default dark theme with vibrant colors",
             author="Image Converter CLI",
         ),
-        
         ThemeType.LIGHT: Theme(
             name="Light",
             type=ThemeType.LIGHT,
@@ -152,7 +153,6 @@ class ThemeManager:
             description="Light theme for bright terminals",
             author="Image Converter CLI",
         ),
-        
         ThemeType.HIGH_CONTRAST: Theme(
             name="High Contrast",
             type=ThemeType.HIGH_CONTRAST,
@@ -174,11 +174,19 @@ class ThemeManager:
                 "primary": {"color": "bright_white", "bold": True},
                 "secondary": {"color": "bright_yellow", "bold": True},
                 "dim": {"color": "white"},
-                "highlight": {"color": "bright_yellow", "bold": True, "underline": True},
+                "highlight": {
+                    "color": "bright_yellow",
+                    "bold": True,
+                    "underline": True,
+                },
                 "progress.description": {"color": "bright_white", "bold": True},
                 "progress.percentage": {"color": "bright_cyan", "bold": True},
                 "progress.bar": {"color": "bright_green"},
-                "table.header": {"color": "bright_white", "bold": True, "underline": True},
+                "table.header": {
+                    "color": "bright_white",
+                    "bold": True,
+                    "underline": True,
+                },
                 "table.row": {"color": "bright_white"},
                 "table.footer": {"color": "white", "italic": True},
                 "json.key": {"color": "bright_cyan", "bold": True},
@@ -190,7 +198,6 @@ class ThemeManager:
             description="Maximum contrast for accessibility",
             author="Image Converter CLI",
         ),
-        
         ThemeType.COLORBLIND_SAFE: Theme(
             name="Colorblind Safe",
             type=ThemeType.COLORBLIND_SAFE,
@@ -211,14 +218,14 @@ class ThemeManager:
                 "success": {"color": "#029E73"},
                 "primary": {"color": "#0173B2"},
                 "secondary": {"color": "#DE8F05"},
-                "dim": {"color": "#808080"},
+                "dim": {"color": "#800080"},
                 "highlight": {"color": "#DE8F05", "bold": True},
                 "progress.description": {"color": "#56B4E9"},
                 "progress.percentage": {"color": "#0173B2"},
                 "progress.bar": {"color": "#029E73"},
                 "table.header": {"color": "#0173B2", "bold": True},
                 "table.row": {"color": "#D4D4D4"},
-                "table.footer": {"color": "#808080", "italic": True},
+                "table.footer": {"color": "#800080", "italic": True},
                 "json.key": {"color": "#0173B2"},
                 "json.string": {"color": "#029E73"},
                 "json.number": {"color": "#DE8F05"},
@@ -228,7 +235,6 @@ class ThemeManager:
             description="Optimized for colorblind users",
             author="Image Converter CLI",
         ),
-        
         ThemeType.MINIMAL: Theme(
             name="Minimal",
             type=ThemeType.MINIMAL,
@@ -267,19 +273,19 @@ class ThemeManager:
             author="Image Converter CLI",
         ),
     }
-    
+
     def __init__(self, config_dir: Optional[Path] = None):
         """Initialize theme manager"""
         self.config_dir = config_dir or Path.home() / ".image-converter"
         self.themes_dir = self.config_dir / "themes"
         self.themes_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._current_theme: Optional[Theme] = None
         self._custom_themes: Dict[str, Theme] = {}
-        
+
         # Load custom themes
         self._load_custom_themes()
-    
+
     def _load_custom_themes(self):
         """Load custom themes from configuration directory"""
         for theme_file in self.themes_dir.glob("*.json"):
@@ -291,30 +297,30 @@ class ThemeManager:
             except Exception:
                 # Ignore invalid theme files
                 pass
-    
+
     def get_theme(self, name: str) -> Optional[Theme]:
         """Get theme by name"""
         # Check built-in themes
         for theme_type in ThemeType:
             if theme_type.value == name.lower():
                 return self.THEMES[theme_type]
-        
+
         # Check custom themes
         return self._custom_themes.get(name.lower())
-    
+
     def list_themes(self) -> Dict[str, Theme]:
         """List all available themes"""
         themes = {}
-        
+
         # Add built-in themes
         for theme_type, theme in self.THEMES.items():
             themes[theme_type.value] = theme
-        
+
         # Add custom themes
         themes.update(self._custom_themes)
-        
+
         return themes
-    
+
     def set_current_theme(self, name: str) -> bool:
         """Set the current theme"""
         theme = self.get_theme(name)
@@ -322,13 +328,13 @@ class ThemeManager:
             self._current_theme = theme
             return True
         return False
-    
+
     def get_current_theme(self) -> Theme:
         """Get current theme (default to dark if not set)"""
         if not self._current_theme:
             self._current_theme = self.THEMES[ThemeType.DARK]
         return self._current_theme
-    
+
     def save_custom_theme(self, theme: Theme) -> bool:
         """Save a custom theme"""
         try:
@@ -339,7 +345,7 @@ class ThemeManager:
             return True
         except Exception:
             return False
-    
+
     def delete_custom_theme(self, name: str) -> bool:
         """Delete a custom theme"""
         if name.lower() in self._custom_themes:
@@ -349,15 +355,15 @@ class ThemeManager:
             del self._custom_themes[name.lower()]
             return True
         return False
-    
+
     def create_console(self, theme_name: Optional[str] = None) -> Console:
         """Create a Rich console with the specified theme"""
         if theme_name:
             self.set_current_theme(theme_name)
-        
+
         theme = self.get_current_theme()
         return Console(theme=theme.to_rich_theme())
-    
+
     def detect_terminal_theme(self) -> ThemeType:
         """Attempt to detect terminal background and suggest theme"""
         # This is a placeholder - actual detection would require terminal queries
@@ -370,11 +376,11 @@ class ThemeManager:
                 # Common light background colors are 7 (white) or 15 (bright white)
                 if bg in [7, 15]:
                     return ThemeType.LIGHT
-        
+
         # Check for common terminal theme indicators
         if os.environ.get("TERMINAL_THEME") == "light":
             return ThemeType.LIGHT
-        
+
         # Default to dark theme
         return ThemeType.DARK
 

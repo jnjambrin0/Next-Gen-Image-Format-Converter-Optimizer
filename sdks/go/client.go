@@ -21,7 +21,7 @@ import (
 const (
 	defaultTimeout = 30 * time.Second
 	defaultHost    = "localhost"
-	defaultPort    = 8080
+	defaultPort    = 8000
 	defaultVersion = "v1"
 )
 

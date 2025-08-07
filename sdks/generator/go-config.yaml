@@ -8,7 +8,7 @@ goModule: github.com/image-converter/image-converter-sdk-go
 # Security: Enforce localhost-only
 serverVariables:
   host: localhost
-  port: "8080"
+  port: "8000"
 
 # Additional properties
 additionalProperties:

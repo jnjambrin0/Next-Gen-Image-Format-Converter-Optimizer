@@ -10,7 +10,7 @@ echo "                 CLI VISUAL FEATURES MANUAL TEST"
 echo "======================================================================"
 echo ""
 echo "This script will run various CLI commands to demonstrate visual features."
-echo "Please ensure the backend is running on localhost:8080"
+echo "Please ensure the backend is running on localhost:8000"
 echo ""
 echo "Press Enter to continue or Ctrl+C to exit..."
 read

@@ -5,11 +5,11 @@ This guide helps you migrate between different versions of the Image Converter S
 ## Version Compatibility Matrix
 
 | SDK Version | API Version | Breaking Changes | Migration Required |
-|-------------|-------------|------------------|-------------------|
-| 1.0.x       | v1          | -                | No                |
-| 1.1.x       | v1          | No               | No                |
-| 1.2.x       | v1          | No               | No                |
-| 2.0.x       | v2          | Yes              | Yes               |
+| ----------- | ----------- | ---------------- | ------------------ |
+| 1.0.x       | v1          | -                | No                 |
+| 1.1.x       | v1          | No               | No                 |
+| 1.2.x       | v1          | No               | No                 |
+| 2.0.x       | v2          | Yes              | Yes                |
 
 ## Migrating from 1.x to 2.x (Future)
 
@@ -18,11 +18,13 @@ This guide helps you migrate between different versions of the Image Converter S
 ### Breaking Changes
 
 #### All SDKs
+
 - Minimum API version requirement: v2
 - New error code system
 - WebSocket connection changes
 
 #### Python SDK
+
 ```python
 # v1.x (Old)
 from image_converter import ImageConverterClient
@@ -34,6 +36,7 @@ client = Client()
 ```
 
 #### JavaScript SDK
+
 ```javascript
 // v1.x (Old)
 const client = new ImageConverterClient();
@@ -43,6 +46,7 @@ const client = await ImageConverterClient.create(); // Async initialization
 ```
 
 #### Go SDK
+
 ```go
 // v1.x (Old)
 client, err := ic.NewClient(nil)
@@ -56,6 +60,7 @@ client, err := ic.NewClient(context.Background(), nil) // Context required
 ### Installation Changes
 
 #### Python
+
 ```bash
 # Old
 pip install image-converter-beta
@@ -65,6 +70,7 @@ pip install image-converter-sdk
 ```
 
 #### JavaScript
+
 ```bash
 # Old
 npm install image-converter-client
@@ -74,6 +80,7 @@ npm install @image-converter/sdk
 ```
 
 #### Go
+
 ```bash
 # Old
 go get github.com/image-converter/client-go
@@ -87,6 +94,7 @@ go get github.com/image-converter/image-converter-sdk-go
 #### Error Handling
 
 **Python - Old (0.x)**
+
 ```python
 try:
     result = client.convert(image_path, "webp")
@@ -95,6 +103,7 @@ except Exception as e:
 ```
 
 **Python - New (1.0)**
+
 ```python
 from image_converter.exceptions import (
     NetworkSecurityError,
@@ -115,25 +124,28 @@ except ValidationError as e:
 #### Batch Processing
 
 **JavaScript - Old (0.x)**
+
 ```javascript
 // Synchronous batch processing
-const results = client.batchConvert(images, 'webp');
+const results = client.batchConvert(images, "webp");
 ```
 
 **JavaScript - New (1.0)**
+
 ```javascript
 // Asynchronous with progress tracking
-const batch = await client.createBatch(images, 'webp');
-while (batch.status !== 'completed') {
-    await sleep(2000);
-    batch = await client.getBatchStatus(batch.jobId);
-    console.log(`Progress: ${batch.progressPercentage}%`);
+const batch = await client.createBatch(images, "webp");
+while (batch.status !== "completed") {
+  await sleep(2000);
+  batch = await client.getBatchStatus(batch.jobId);
+  console.log(`Progress: ${batch.progressPercentage}%`);
 }
 ```
 
 #### Security Enhancements
 
 **Go - Old (0.x)**
+
 ```go
 // No localhost enforcement
 client := &Client{
@@ -142,6 +154,7 @@ client := &Client{
 ```
 
 **Go - New (1.0)**
+
 ```go
 // Localhost enforced by default
 client, err := NewClient(&ClientOptions{
@@ -160,17 +173,21 @@ client, err := NewClient(&ClientOptions{
 ### Deprecated in 1.0
 
 #### Python SDK
+
 - `client.set_api_key()` → Use `client.store_api_key()`
 - `client.get_formats()` → Use `client.get_supported_formats()`
 
 #### JavaScript SDK
+
 - `client.formats` property → Use `client.getSupportedFormats()`
 - Callback-based API → Use Promise/async-await
 
 #### Go SDK
+
 - `client.SetKey()` → Use `client.StoreAPIKey()`
 
 ### Removal Timeline
+
 - Deprecated in: 1.0.0
 - Warnings added: 1.1.0
 - Removed in: 2.0.0
@@ -180,6 +197,7 @@ client, err := NewClient(&ClientOptions{
 ### API Key Storage
 
 **Old Method (0.x)**
+
 ```python
 # Stored in plaintext config file
 config = {
@@ -188,6 +206,7 @@ config = {
 ```
 
 **New Method (1.0+)**
+
 ```python
 # Secure OS keychain storage
 from image_converter.auth import SecureAPIKeyManager
@@ -199,13 +218,15 @@ manager.store_api_key("production", "ic_live_abc123...")
 ### Environment Variables
 
 **Old (0.x)**
+
 ```bash
 export IC_API_KEY="abc123"
 export IC_API_HOST="localhost"
-export IC_API_PORT="8080"
+export IC_API_PORT="8000"
 ```
 
 **New (1.0+)**
+
 ```bash
 export IMAGE_CONVERTER_API_KEY="ic_live_abc123..."
 # Host and port now in client initialization
@@ -216,6 +237,7 @@ export IMAGE_CONVERTER_API_KEY="ic_live_abc123..."
 ### Automated Migration Testing
 
 **Python**
+
 ```python
 # test_migration.py
 import pytest
@@ -232,25 +254,27 @@ def test_security_enforcement():
 ```
 
 **JavaScript**
+
 ```javascript
 // test-migration.js
-const { ImageConverterClient } = require('@image-converter/sdk');
+const { ImageConverterClient } = require("@image-converter/sdk");
 
-describe('Migration Tests', () => {
-    test('v1 API compatibility', () => {
-        const client = new ImageConverterClient();
-        expect(client.verifyLocalhost).toBe(true);
-    });
-    
-    test('Security enforcement', () => {
-        expect(() => {
-            new ImageConverterClient({ host: 'external.com' });
-        }).toThrow('Network access blocked');
-    });
+describe("Migration Tests", () => {
+  test("v1 API compatibility", () => {
+    const client = new ImageConverterClient();
+    expect(client.verifyLocalhost).toBe(true);
+  });
+
+  test("Security enforcement", () => {
+    expect(() => {
+      new ImageConverterClient({ host: "external.com" });
+    }).toThrow("Network access blocked");
+  });
 });
 ```
 
 **Go**
+
 ```go
 // migration_test.go
 func TestV1Compatibility(t *testing.T) {
@@ -288,16 +312,19 @@ Before upgrading:
 If you need to rollback:
 
 ### Python
+
 ```bash
 pip install image-converter-sdk==1.0.0  # Specific version
 ```
 
 ### JavaScript
+
 ```bash
 npm install @image-converter/sdk@1.0.0
 ```
 
 ### Go
+
 ```bash
 go get github.com/image-converter/image-converter-sdk-go@v1.0.0
 ```
@@ -314,10 +341,13 @@ go get github.com/image-converter/image-converter-sdk-go@v1.0.0
 ### Common Migration Issues
 
 #### Issue: "NetworkSecurityError: Connection blocked"
+
 **Solution**: Ensure you're connecting to localhost only, or explicitly disable verification (not recommended).
 
 #### Issue: "Module not found" after upgrade
+
 **Solution**: Clear package cache and reinstall:
+
 ```bash
 # Python
 pip cache purge && pip install --upgrade image-converter-sdk
@@ -330,19 +360,21 @@ go clean -cache && go get -u github.com/image-converter/image-converter-sdk-go
 ```
 
 #### Issue: "API version mismatch"
+
 **Solution**: Ensure your API server is running the compatible version. Check with:
+
 ```bash
-curl http://localhost:8080/api/health
+curl http://localhost:8000/api/health
 ```
 
 ## Version Support Policy
 
-| Version | Status        | Support Until | Security Updates |
-|---------|--------------|---------------|------------------|
-| 1.2.x   | Current      | -             | Yes              |
-| 1.1.x   | Maintenance  | 2025-06-01    | Yes              |
-| 1.0.x   | Maintenance  | 2025-03-01    | Critical only    |
-| 0.x     | End of Life  | 2024-12-31    | No               |
+| Version | Status      | Support Until | Security Updates |
+| ------- | ----------- | ------------- | ---------------- |
+| 1.2.x   | Current     | -             | Yes              |
+| 1.1.x   | Maintenance | 2025-06-01    | Yes              |
+| 1.0.x   | Maintenance | 2025-03-01    | Critical only    |
+| 0.x     | End of Life | 2024-12-31    | No               |
 
 ## Changelog
 

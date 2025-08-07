@@ -42,7 +42,7 @@ export class ImageConverterClient {
   constructor(options: ClientOptions = {}) {
     const {
       host = 'localhost',
-      port = 8080,
+      port = 8000,
       apiKey,
       apiVersion = 'v1',
       timeout = 30000,

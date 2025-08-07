@@ -11,7 +11,7 @@ describe('ImageConverterClient', () => {
 
   beforeEach(() => {
     client = new ImageConverterClient({
-      port: 8080,
+      port: 8000,
       timeout: 5000,
     });
   });

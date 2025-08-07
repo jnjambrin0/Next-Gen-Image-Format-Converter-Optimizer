@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only image conversion tool with advanced optimization capabilities. All processing happens on the user's machine with no external network requests.
 
 ### Supported Formats
+
 - **Input**: JPEG, PNG, WebP, HEIF/HEIC, BMP, TIFF, GIF, AVIF
 - **Output**: WebP, AVIF, JPEG XL, HEIF, PNG (optimized), JPEG (optimized), WebP2
 - **Content Detection**: Local ML model classifies images (photo/illustration/screenshot/document)
@@ -16,7 +17,7 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
 ## Architecture Summary
 
 - **Architecture Pattern**: Monolithic with modular internals
-- **Backend**: FastAPI (Python 3.11+) running on port 8080
+- **Backend**: FastAPI (Python 3.11+) running on port 8000
 - **Frontend**: Vanilla JS with Vite build system
 - **Core Modules**:
   - Conversion Manager: Orchestrates image processing
@@ -42,7 +43,7 @@ pip install -r requirements.txt
 
 # CRITICAL: Run development server from backend/ directory
 cd backend
-uvicorn app.main:app --reload --port 8080
+uvicorn app.main:app --reload --port 8000
 
 # Run tests (MUST be from backend/ directory)
 cd backend
@@ -63,7 +64,7 @@ cd frontend
 
 # Setup environment variables
 cp .env.example .env
-# Edit .env to set backend port if different from 8080
+# Edit .env to set backend port if different from 8000
 
 # Install dependencies
 npm install
@@ -89,7 +90,7 @@ npm run test:coverage
 
 The frontend uses environment variables for backend configuration:
 
-- `VITE_API_PORT`: Backend API port (default: 8080)
+- `VITE_API_PORT`: Backend API port (default: 8000)
 - `VITE_API_HOST`: Backend API host (default: localhost)
 
 See `frontend/ENV_CONFIG.md` for detailed configuration instructions.
@@ -121,19 +122,21 @@ go build ./...    # Build SDK
 **CRITICAL**: The CLI exists at `backend/img.py` and uses the Python SDK with specific requirements:
 
 1. **SDK Client Initialization**: Uses `host` and `port`, NOT `base_url`:
+
 ```python
 # CORRECT - SDK expects separate host/port
 client = ImageConverterClient(
     host=config.api_host,  # "localhost"
-    port=config.api_port,  # 8080
+    port=config.api_port,  # 8000
     api_key=config.api_key
 )
 
 # WRONG - This will fail
-client = ImageConverterClient(base_url="http://localhost:8080")
+client = ImageConverterClient(base_url="http://localhost:8000")
 ```
 
 2. **SDK Methods Expect File Paths**: The SDK's `convert_image` expects file paths, not bytes:
+
 ```python
 # CLI must use temp files for SDK
 with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
@@ -147,11 +150,13 @@ output_data, result = client.convert_image(
 ```
 
 3. **TUI Uses RichLog**: Textual's `TextLog` was removed, use `RichLog`:
+
 ```python
 from textual.widgets import RichLog  # NOT TextLog
 ```
 
 4. **CLI Command Structure**: Commands use subcommands pattern:
+
 ```bash
 # CORRECT - Note the subcommand structure
 img convert file input.jpg -f webp     # NOT: img convert input.jpg
@@ -187,18 +192,22 @@ img optimize auto photo.jpg --preset web
 ## Security Architecture
 
 ### Core Security Principles
+
 - **Local-Only Processing**: No network requests, all ML models and processing happen locally
 - **Process Sandboxing**: Each conversion runs in isolated subprocess with restricted permissions
 - **Memory-Only Processing**: No temporary files on disk, all processing in RAM
 - **Privacy-First**: EXIF/metadata removed by default, no PII in logs
 
 ### Sandbox Implementation
+
 - **Three-Layer Architecture**:
+
   - `SecurityEngine` - Orchestrates security operations, creates sandboxes, manages metadata
-  - `SecuritySandbox` - Manages resource limits, memory tracking, process isolation  
+  - `SecuritySandbox` - Manages resource limits, memory tracking, process isolation
   - `sandboxed_convert.py` - Isolated subprocess for actual image conversion
 
 - **Strictness Levels** via `IMAGE_CONVERTER_SANDBOX_STRICTNESS`:
+
   - `standard`: 512MB RAM, 80% CPU, 30s timeout
   - `strict`: 256MB RAM, 60% CPU, 20s timeout, memory locking enabled
   - `paranoid`: 128MB RAM, 40% CPU, 10s timeout, memory locking enabled
@@ -210,7 +219,9 @@ img optimize auto photo.jpg --preset web
   - Enable/disable via `IMAGE_CONVERTER_ENABLE_SANDBOXING`
 
 ### Privacy-Aware Logging
+
 **CRITICAL**: NEVER include PII in logs:
+
 ```python
 # CORRECT: Generic messages
 logger.error("Invalid filename format")
@@ -222,20 +233,27 @@ logger.error(f"Invalid file: {filename}")  # Contains PII!
 ## Critical Implementation Details
 
 ### Image Conversion Architecture
+
 - **NO ImageMagick Required**: The sandboxed conversion uses Python subprocess with PIL/Pillow
 - **Sandboxed Script**: `app/core/conversion/sandboxed_convert.py` - standalone conversion script
 - **Execution Method**: Must run with `python script.py` directly, NOT as module (`-m`) to avoid logging initialization
 - **Error Format**: Sandboxed errors are returned as JSON on stderr:
   ```json
-  {"error_code": "CODE", "message": "description", "type": "sandboxed_conversion_error"}
+  {
+    "error_code": "CODE",
+    "message": "description",
+    "type": "sandboxed_conversion_error"
+  }
   ```
 
 ### Logging Configuration
+
 - **CRITICAL**: Logging MUST use stderr, not stdout (`app/utils/logging.py:72`)
 - Logging to stdout will contaminate subprocess output and break conversions
 - Format: `stream=sys.stderr  # NOT sys.stdout`
 
 ### Key Configuration Files
+
 - `app/core/constants.py` - All system constants (limits, formats, security patterns)
   - `MAX_BATCH_SIZE = 100` - Maximum files per batch
   - `MAX_BATCH_WORKERS = 10` - Maximum concurrent workers
@@ -246,12 +264,13 @@ logger.error(f"Invalid file: {filename}")  # Contains PII!
 ## Critical Architectural Patterns
 
 ### 1. Metadata Processing MUST Happen Before Conversion
+
 **CRITICAL**: Always process metadata (EXIF, GPS, etc.) on the INPUT image before format conversion, never on the output.
 
 ```python
 # CORRECT: Process metadata before conversion
 processed_input, metadata_summary = await security_engine.analyze_and_process_metadata(
-    input_data, 
+    input_data,
     input_format,  # Use INPUT format, not output
     ...
 )
@@ -265,6 +284,7 @@ output_data = await convert_image(input_data, ...)
 **Why**: Many format conversions (e.g., JPEG→WebP) automatically lose metadata during conversion. Processing after conversion gives incorrect results about what metadata existed in the original image.
 
 ### 2. Sandboxed Script Execution Pattern
+
 **CRITICAL**: The sandboxed conversion script MUST be executed directly, NOT as a module:
 
 ```python
@@ -293,12 +313,15 @@ socket.socket = lambda *args: raise OSError("Network disabled")
 **Why**: Many Python modules (like SSL) expect `socket.socket` to be a class they can inherit from. Replacing it with a function causes `TypeError: function() argument 'code' must be code, not str`.
 
 ### 3. Privacy-Aware Logging Pattern
+
 **CRITICAL**: See Security Architecture section for privacy-aware logging requirements.
+
 - Never include filenames, paths, or user content in logs
 - Use generic error messages
 - This prevents PII exposure in logs
 
 ### 4. Secure Memory Management Pattern
+
 **CRITICAL**: Memory allocated for image processing must be explicitly cleared with overwrite patterns:
 
 ```python
@@ -318,6 +341,7 @@ buffer = None
 **Why**: Image data may contain sensitive information. Secure clearing prevents memory-based data recovery attacks.
 
 ### 5. Database Initialization Pattern
+
 **CRITICAL**: Database directories must exist before initializing trackers:
 
 ```python
@@ -335,6 +359,7 @@ security_tracker = SecurityEventTracker(db_path="./data/security.db")
 **Why**: SQLite cannot create database files in non-existent directories. The trackers will fail silently and report "no such table" errors during operations.
 
 ### 6. Singleton Service Pattern
+
 **CRITICAL**: To avoid circular imports, services must follow this pattern:
 
 ```python
@@ -342,7 +367,7 @@ security_tracker = SecurityEventTracker(db_path="./data/security.db")
 class ConversionService:
     def __init__(self):
         self.stats_collector = None  # Will be injected
-        
+
 # Create singleton at module level
 conversion_service = ConversionService()
 
@@ -361,6 +386,7 @@ class ConversionService:
 **Why**: Direct imports in `__init__` can create circular dependencies. Use dependency injection pattern instead.
 
 **IMPORTANT**: All new services with singleton pattern MUST be initialized in main.py during the lifespan startup. Example:
+
 ```python
 # In main.py lifespan function:
 from .services.new_service import new_service as svc_import, NewService
@@ -369,14 +395,16 @@ svc_module.new_service = NewService()
 ```
 
 **Common Services Requiring Initialization**:
+
 - `conversion_service` - Already initialized
-- `intelligence_service` - Already initialized  
+- `intelligence_service` - Already initialized
 - `recommendation_service`
 - `optimization_service` - Requires intelligence_engine and conversion_service
 - `batch_service` - Requires conversion_service (also injects to internal BatchManager)
 - Any future singleton services following this pattern
 
 **Batch Service Special Initialization**:
+
 ```python
 # CRITICAL: BatchService requires double injection
 # In main.py lifespan function:
@@ -386,6 +414,7 @@ batch_service.set_conversion_service(conversion_service)
 ```
 
 **Optimization Service Special Initialization**:
+
 ```python
 # In main.py lifespan function (AFTER other services):
 from app.services.optimization_service import optimization_service
@@ -394,6 +423,7 @@ optimization_service.set_conversion_service(conversion_service)
 ```
 
 ### 7. Format Detection Architecture
+
 **CRITICAL**: The system uses content-based format detection, NOT extension-based:
 
 ```python
@@ -408,6 +438,7 @@ if filename.endswith('.jpg'):
 ```
 
 **Why**: Real-world files often have wrong extensions. The system detects formats using:
+
 1. Magic bytes (most reliable)
 2. PIL detection (fallback)
 3. Extended structure analysis
@@ -415,6 +446,7 @@ if filename.endswith('.jpg'):
 **Key Service**: `app/services/format_detection_service.py` - Single source of truth for format detection.
 
 ### 8. Quality Analyzer Implementation Pattern
+
 **CRITICAL**: The project uses a custom SSIM/PSNR implementation to avoid heavy dependencies:
 
 ```python
@@ -425,6 +457,7 @@ if filename.endswith('.jpg'):
 ```
 
 **Key Features**:
+
 - Real perceptual quality metrics (not estimates)
 - Pure Python/numpy implementation
 - LRU cache for repeated calculations
@@ -433,6 +466,7 @@ if filename.endswith('.jpg'):
 ### 9. Critical Security Patterns (MUST KNOW)
 
 #### Sandbox Path Validation
+
 **CRITICAL**: The sandbox blocks ALL absolute paths for security:
 
 ```python
@@ -446,13 +480,16 @@ sandbox.validate_path("output/file.jpg")  # OK
 **Why**: Absolute paths could allow access to system files. The sandbox enforces relative paths only.
 
 #### Blocked Commands in Sandbox
+
 **CRITICAL**: The following commands are blocked in `SecuritySandbox.blocked_commands`:
+
 - Programming languages: `python`, `perl`, `ruby`, `php`, `node`
 - Shells: `bash`, `sh`, `zsh`, `fish`, `cmd`, `powershell`
 - Network tools: `curl`, `wget`, `nc`, `netcat`, `telnet`, `ssh`, `ftp`
 - Dangerous commands: `rm`, `dd`, `format`, `fdisk`, `mkfs`
 
 #### Simplified Error System
+
 **CRITICAL**: Use only 5 error categories, never expose PII:
 
 ```python
@@ -467,13 +504,16 @@ raise SecurityError(f"Cannot access {filename}")  # Exposes PII!
 Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 
 #### Architecture Constraint
+
 **CRITICAL**: This is a **LOCAL-ONLY** application:
+
 - **NEVER** add distributed features (Redis, distributed locks, etc.)
 - **NEVER** add network functionality beyond localhost API
 - **NEVER** add telemetry or external service calls
 - All processing must work completely offline
 
 #### SDK Localhost Enforcement Pattern
+
 **CRITICAL**: All language SDKs enforce localhost-only connections:
 
 ```python
@@ -488,10 +528,10 @@ if host not in allowed_hosts:
 verify_localhost=False  # Security risk!
 ```
 
-
 ## API Development Patterns
 
 ### API Versioning Strategy
+
 **CRITICAL**: The API supports dual paths for backward compatibility:
 
 ```python
@@ -502,6 +542,7 @@ verify_localhost=False  # Security risk!
 ```
 
 ### Centralized Validation Utilities
+
 **IMPORTANT**: Use these utilities from `app.api.utils.validation` to avoid code duplication:
 
 ```python
@@ -521,6 +562,7 @@ secure_memory_clear(sensitive_data)
 ```
 
 ### Test Expectation Patterns
+
 **IMPORTANT**: Validation middleware intercepts requests before FastAPI validation:
 
 ```python
@@ -535,6 +577,7 @@ assert data["error_code"] == "VAL413"
 ```
 
 ### Error Response Patterns
+
 All API errors follow consistent structure with proper error codes:
 
 ```python
@@ -550,6 +593,7 @@ All API errors follow consistent structure with proper error codes:
 **IMPORTANT**: Form endpoints that accept presets still require the base parameters (e.g., `output_format`) even though presets will override them. This is due to FastAPI validation requirements.
 
 ### Core Endpoints (Available in both /api and /api/v1)
+
 - `POST /api/convert` - Convert single image (requires `output_format` even with `preset_id`)
 - `POST /api/batch` - Create batch conversion job (requires `output_format` even with `preset_id`)
 - `GET /api/batch/{job_id}/status` - Get batch job status
@@ -561,6 +605,7 @@ All API errors follow consistent structure with proper error codes:
 - `GET /api/formats` - List supported input/output formats
 
 ### Monitoring & Intelligence Endpoints
+
 - `GET /api/monitoring/stats` - Conversion statistics
 - `GET /api/monitoring/errors` - Recent errors
 - `GET /api/security/status` - Security engine status
@@ -568,6 +613,7 @@ All API errors follow consistent structure with proper error codes:
 - `GET /api/optimization/presets` - Available optimization presets
 
 ### Preset Management Endpoints
+
 - `GET /api/presets` - List all presets (built-in and user-created)
 - `POST /api/presets` - Create new user preset
 - `PUT /api/presets/{preset_id}` - Update existing preset
@@ -576,11 +622,13 @@ All API errors follow consistent structure with proper error codes:
 - `GET /api/presets/{preset_id}/export` - Export preset as JSON
 
 ### Detection Endpoints (New in v1)
+
 - `POST /api/v1/detection/detect-format` - Detect image format from content
 - `POST /api/v1/detection/recommend-format` - Get AI-powered format recommendations
 - `GET /api/v1/detection/formats/compatibility` - Get format compatibility matrix
 
 ### Authentication Endpoints
+
 - `POST /api/v1/auth/keys` - Create new API key (requires admin permissions)
 - `GET /api/v1/auth/keys` - List all API keys
 - `DELETE /api/v1/auth/keys/{key_id}` - Revoke specific API key
@@ -620,6 +668,7 @@ All API errors follow consistent structure with proper error codes:
    - Use `import.meta.url` instead of `__dirname` in ES modules
 
 4. **Test Environment Setup**:
+
    - Use `.eslintrc.cjs` (CommonJS format) for ESLint config
    - Add test globals in ESLint overrides for test files
    - Vitest provides `describe`, `it`, `expect`, `beforeEach`, `afterEach`, `vi` globals
@@ -629,22 +678,23 @@ All API errors follow consistent structure with proper error codes:
 
    ```javascript
    // Track blob URLs in components that create them
-   const testBlobUrls = { original: null, converted: null }
+   const testBlobUrls = { original: null, converted: null };
 
    // Clean up previous URLs before creating new ones
    if (testBlobUrls.original) {
-       blobUrlManager.revokeUrl(testBlobUrls.original)
-       testBlobUrls.original = null
+     blobUrlManager.revokeUrl(testBlobUrls.original);
+     testBlobUrls.original = null;
    }
 
    // Store new URLs for cleanup
-   testBlobUrls.original = blobUrlManager.createUrl(file)
+   testBlobUrls.original = blobUrlManager.createUrl(file);
 
    // Clean up on component removal, file selection, or reset
    // This prevents memory leaks in long-running sessions
    ```
 
    **Key Principles**:
+
    - Use `BlobUrlManager` for centralized URL lifecycle management
    - Track all created blob URLs in component state
    - Clean up before creating new URLs (prevents accumulation)
@@ -667,10 +717,10 @@ When working on tasks or solving problems, if you discover important information
 
 This ensures that future Claude Code instances always have the most accurate and up-to-date information about the project.
 
-
 ## Critical Intelligence Engine Security Requirements
 
 ### Input Validation (MANDATORY)
+
 **CRITICAL**: ALL image processing MUST validate inputs to prevent DoS:
 
 ```python
@@ -690,6 +740,7 @@ if image.width > 50000 or image.height > 50000:
 ```
 
 ### Concurrency Protection (MANDATORY)
+
 **CRITICAL**: Prevent resource exhaustion with semaphores:
 
 ```python
@@ -702,6 +753,7 @@ async with _semaphore:
 ```
 
 ### Cache Security Pattern
+
 **CRITICAL**: NEVER return direct cache references:
 
 ```python
@@ -715,13 +767,16 @@ return cached_result  # SECURITY VULNERABILITY!
 ```
 
 ### Performance Requirements
+
 All image processing MUST meet:
+
 - P99 latency < 500ms
 - Memory stable (< 50MB growth per 1000 ops)
 - Support 10+ concurrent requests
 - Graceful degradation under load
 
 ### ContentClassification Model Attributes
+
 **CRITICAL**: The ContentClassification model uses plural attribute names:
 
 ```python
@@ -735,6 +790,7 @@ classification.text   # AttributeError
 ```
 
 **Integration Example**:
+
 ```python
 # In region optimizer or any detection consumer:
 if classification.face_regions:
@@ -745,6 +801,7 @@ if classification.face_regions:
 ## Non-Maximum Suppression Pattern
 
 For detection algorithms, use distance-based grouping in addition to IoU:
+
 ```python
 # Group if overlapping OR centers are close
 if iou > 0.1 or center_dist < max_size * 2.0:
@@ -752,6 +809,7 @@ if iou > 0.1 or center_dist < max_size * 2.0:
 ```
 
 ### 10. Service Return Value Patterns
+
 **CRITICAL**: The conversion_service.convert() method MUST return a tuple (result, output_data):
 
 ```python
@@ -770,6 +828,7 @@ return result  # ValueError: too many values to unpack (expected 2)
 **Why**: The API route expects both the ConversionResult object and the actual image bytes. Missing either causes runtime errors.
 
 ### 11. API Response Content-Type Pattern
+
 **CRITICAL**: When using presets or any feature that changes output format, the response content-type MUST use the actual output format from the conversion result:
 
 ```python
@@ -784,12 +843,13 @@ content_type = content_type_map.get(output_format.lower(), "application/octet-st
 **Why**: Presets and other features can override the requested output format. The response headers must reflect what was actually converted, not what was requested.
 
 ### 12. Server Execution Location
+
 **CRITICAL**: The uvicorn server MUST be run from the backend/ directory:
 
 ```bash
 # CORRECT: Run from backend directory
 cd backend
-uvicorn app.main:app --reload --port 8080
+uvicorn app.main:app --reload --port 8000
 
 # WRONG: Running from project root
 uvicorn backend.app.main:app  # ModuleNotFoundError: No module named 'app'
@@ -798,6 +858,7 @@ uvicorn backend.app.main:app  # ModuleNotFoundError: No module named 'app'
 **Why**: The Python import paths are relative to the backend/ directory. Running from elsewhere breaks all imports.
 
 ### 13. Optimization Module Exports
+
 **CRITICAL**: The optimization module must export all required classes:
 
 ```python
@@ -815,6 +876,7 @@ __all__ = [
 **Why**: Tests and other modules depend on these enums being accessible from the optimization package.
 
 ### 14. Realistic Test Mock Patterns
+
 **CRITICAL**: When testing optimization features, use realistic compression curves:
 
 ```python
@@ -834,6 +896,7 @@ new_size = int(20000 * (quality / 100))  # Too simplistic
 **Why**: Real image compression follows exponential curves, not linear. Tests with unrealistic mocks will fail or provide incorrect optimization results.
 
 ### 15. Batch Processing Architecture Pattern
+
 **CRITICAL**: Batch processing follows these patterns:
 
 - **Worker Pool Scaling**: Uses 80% of CPU cores (min 2, max 10 workers)
@@ -855,11 +918,13 @@ async def progress_callback(progress: BatchProgress):
 ```
 
 **Integration with Conversion Service**:
+
 - BatchManager requires injection of conversion_service
 - Each file processed through existing secure conversion pipeline
 - Maintains all security sandboxing per individual file
 
 **Memory Management Warning**:
+
 ```python
 # CRITICAL: Batch results stored in-memory until cleanup
 # BatchManager._job_results accumulates converted image data
@@ -871,6 +936,7 @@ async def progress_callback(progress: BatchProgress):
 ```
 
 ### 16. WebSocket Authentication Pattern for Batch Jobs
+
 **CRITICAL**: Batch processing implements comprehensive WebSocket security:
 
 ```python
@@ -896,43 +962,50 @@ POST /api/batch/{job_id}/websocket-token
 ```
 
 **SecureConnectionManager Implementation**:
+
 - Located in `app/api/websockets/secure_progress.py`
 - Manages tokens, rate limits, and connection limits
 - Falls back to regular ConnectionManager when auth disabled
 - Uses WebSocket close codes for different security violations
 
 ### 17. Frontend Component Memory Management Pattern
+
 **CRITICAL**: All frontend components with event listeners MUST implement proper cleanup:
 
 ```javascript
 // CORRECT: Store event handlers for cleanup
 class Component {
   constructor() {
-    this.eventHandlers = new Map()
+    this.eventHandlers = new Map();
   }
-  
+
   attachEventListeners() {
-    const handler = () => this.handleClick()
-    element.addEventListener('click', handler)
-    this.eventHandlers.set('element-click', { element, event: 'click', handler })
+    const handler = () => this.handleClick();
+    element.addEventListener("click", handler);
+    this.eventHandlers.set("element-click", {
+      element,
+      event: "click",
+      handler,
+    });
   }
-  
+
   destroy() {
     // Clean up all event listeners
     this.eventHandlers.forEach(({ element, event, handler }) => {
-      element?.removeEventListener(event, handler)
-    })
-    this.eventHandlers.clear()
+      element?.removeEventListener(event, handler);
+    });
+    this.eventHandlers.clear();
   }
 }
 
 // WRONG: Anonymous functions can't be removed
-element.addEventListener('click', () => this.handleClick())  // Memory leak!
+element.addEventListener("click", () => this.handleClick()); // Memory leak!
 ```
 
 **Why**: Event listeners with anonymous functions or direct method references can't be removed, causing memory leaks in single-page applications.
 
 **Component Re-rendering Pattern**:
+
 ```javascript
 // CRITICAL: If component uses render() method that recreates DOM
 // MUST re-render after any setting change to update UI
@@ -946,6 +1019,7 @@ updateSetting(key, value) {
 ```
 
 ### 18. Batch Processing Simplified UI Pattern
+
 **CRITICAL**: Batch processing uses automatic flow without modals:
 
 - **NO BatchSummaryModal**: Removed intentionally for simplicity
@@ -978,9 +1052,11 @@ async def get_download_zip(self, job_id: str):
 **Important**: When modifying batch UI, maintain this simplicity principle - no unnecessary modals or user interactions
 
 ### 19. CLI Productivity Module Security Patterns
+
 **CRITICAL**: When implementing CLI productivity features, these security patterns are MANDATORY:
 
 #### Privacy-First Data Storage
+
 ```python
 # NEVER store filenames, paths, or PII in autocomplete/history
 class PrivacySanitizer:
@@ -989,7 +1065,7 @@ class PrivacySanitizer:
         r'[\w\.\-]+@[\w\.\-]+',  # Email addresses
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP addresses
     ]
-    
+
     def sanitize(self, text: str) -> str:
         for pattern in self.PATH_PATTERNS:
             text = re.sub(pattern, '<REDACTED>', text)
@@ -997,6 +1073,7 @@ class PrivacySanitizer:
 ```
 
 #### Resource Limits for Watch Mode
+
 - **Max Files**: 100 files per watch session
 - **Concurrency**: Max 5 concurrent conversions
 - **Memory**: 512MB RAM limit enforced
@@ -1004,6 +1081,7 @@ class PrivacySanitizer:
 - **Auto-shutdown**: On 3 consecutive resource violations
 
 #### Macro Security Requirements
+
 1. **Command Validation**: Block dangerous commands (rm, format, curl, etc.)
 2. **Signature Verification**: HMAC-SHA256 for integrity
 3. **Approval System**: User must approve before first execution
@@ -1011,6 +1089,7 @@ class PrivacySanitizer:
 5. **File Permissions**: Store with 0o600 (user read/write only)
 
 ### 20. Test Execution Critical Pattern
+
 **CRITICAL**: Tests MUST be run from backend/ directory for imports to work:
 
 ```bash
@@ -1030,9 +1109,11 @@ class PrivacySanitizer:
 **Why**: All test imports use `from app.` which requires backend/ as working directory. Running from project root will cause ModuleNotFoundError.
 
 ### 21. Performance Monitoring Implementation Details
+
 **CRITICAL**: When implementing performance monitoring features:
 
 #### PerformanceMonitor Peak Memory Pattern
+
 The PerformanceMonitor must update peak memory in the `stop()` method to capture final state:
 
 ```python
@@ -1047,6 +1128,7 @@ if current_memory > self._peak_memory:
 **Why**: Memory may spike between the last sample and stop() call. Without this, peak memory tracking is incomplete.
 
 #### VipsOperations Required Methods
+
 VipsOperations class must implement these auxiliary methods for full functionality:
 
 ```python
@@ -1062,7 +1144,7 @@ def monitor_memory(self, operation_name: str) -> Dict[str, Any]:
     current_memory = self._get_memory_usage()
     delta = current_memory - self._initial_memory
     usage_percent = (delta / MAX_MEMORY_MB) * 100 if MAX_MEMORY_MB > 0 else 0
-    
+
     return {
         "operation": operation_name,
         "current_mb": round(current_memory, 2),
@@ -1079,6 +1161,7 @@ def should_use_streaming(self, file_path: str = None, file_size: int = None) -> 
 ```
 
 #### Test Mocking for Large Files
+
 When testing large file operations without actual large files:
 
 ```python
@@ -1086,13 +1169,13 @@ When testing large file operations without actual large files:
 with patch('app.core.processing.vips_ops.Image') as mock_image:
     mock_img = MagicMock()
     mock_image.open.return_value = mock_img
-    
+
     # Mock BytesIO for buffer operations
     with patch('app.core.processing.vips_ops.io.BytesIO') as mock_io:
         mock_buffer = MagicMock()
         mock_io.return_value = mock_buffer
         mock_buffer.getvalue.return_value = b'processed_data'
-        
+
         # Now safe to process fake data
         result = vips_ops.process_in_chunks(fake_data, 'webp', 85)
 ```
@@ -1100,19 +1183,21 @@ with patch('app.core.processing.vips_ops.Image') as mock_image:
 **Why**: Testing with fake image data requires proper mocking to avoid PIL errors with invalid image formats.
 
 ### 22. CLI Documentation Sandbox Security Pattern
+
 **CRITICAL**: When implementing CLI tutorials, examples, or any interactive command execution, these security measures are MANDATORY:
 
 #### Command Validation
+
 ```python
 # Validate img subcommand structure, not just prefix
 valid_subcommands = [
-    'convert', 'batch', 'optimize', 'analyze', 'formats', 
+    'convert', 'batch', 'optimize', 'analyze', 'formats',
     'presets', 'watch', 'chain', 'docs', 'tutorial', 'help',
     'config', 'version', '--help', '-h'
 ]
 if not command.startswith('img '):
     raise ValueError("Only img commands allowed")
-    
+
 # Validate subcommand structure
 img_parts = command[4:].strip().split()
 if not img_parts:
@@ -1123,6 +1208,7 @@ if subcommand not in valid_subcommands:
 ```
 
 #### Environment Isolation
+
 ```python
 # MANDATORY environment for CLI sandbox execution
 safe_env = {
@@ -1149,7 +1235,9 @@ result = subprocess.run(
 ```
 
 #### Blocked Commands List (70+)
+
 The sandbox MUST block these command categories:
+
 - **Shells**: bash, sh, zsh, fish, ksh, csh, tcsh, powershell, cmd
 - **Languages**: python, python3, perl, ruby, php, node, nodejs
 - **Network**: curl, wget, nc, netcat, telnet, ssh, ftp, sftp, scp, rsync

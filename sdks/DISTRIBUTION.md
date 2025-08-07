@@ -7,6 +7,7 @@ This guide covers how to install, distribute, and manage the Image Converter SDK
 ### Online Installation (Standard)
 
 #### Python SDK
+
 ```bash
 # From PyPI
 pip install image-converter-sdk
@@ -19,6 +20,7 @@ pip install image-converter-sdk==1.2.0
 ```
 
 #### JavaScript SDK
+
 ```bash
 # From npm
 npm install @image-converter/sdk
@@ -31,6 +33,7 @@ yarn add @image-converter/sdk
 ```
 
 #### Go SDK
+
 ```bash
 # Latest version
 go get github.com/image-converter/image-converter-sdk-go
@@ -44,18 +47,21 @@ go get github.com/image-converter/image-converter-sdk-go@v1.2.0
 #### Python SDK - Offline
 
 1. **Download wheel file**:
+
 ```bash
 # On internet-connected machine
 pip download image-converter-sdk --dest ./offline-packages
 ```
 
 2. **Transfer and install**:
+
 ```bash
 # On offline machine
 pip install --no-index --find-links ./offline-packages image-converter-sdk
 ```
 
 3. **Using setup script**:
+
 ```bash
 # Download offline bundle
 curl -O https://github.com/image-converter/releases/download/v1.2.0/python-sdk-offline.tar.gz
@@ -67,6 +73,7 @@ cd python-sdk-offline
 #### JavaScript SDK - Offline
 
 1. **Create offline bundle**:
+
 ```bash
 # On internet-connected machine
 mkdir offline-npm
@@ -78,12 +85,14 @@ npm pack node-fetch
 ```
 
 2. **Install from bundle**:
+
 ```bash
 # On offline machine
 npm install ./offline-npm/image-converter-sdk-1.2.0.tgz
 ```
 
 3. **Using offline script**:
+
 ```bash
 # Download offline bundle
 curl -O https://github.com/image-converter/releases/download/v1.2.0/js-sdk-offline.tar.gz
@@ -95,6 +104,7 @@ cd js-sdk-offline
 #### Go SDK - Offline
 
 1. **Vendor dependencies**:
+
 ```bash
 # On internet-connected machine
 git clone https://github.com/image-converter/image-converter-sdk-go
@@ -104,6 +114,7 @@ tar -czf go-sdk-vendor.tar.gz .
 ```
 
 2. **Use vendored version**:
+
 ```bash
 # On offline machine
 tar -xzf go-sdk-vendor.tar.gz
@@ -115,29 +126,31 @@ go build -mod=vendor
 
 ### Official Channels
 
-| Channel | Python | JavaScript | Go | Notes |
-|---------|---------|------------|-----|-------|
-| Package Registry | PyPI | npm | pkg.go.dev | Primary distribution |
-| GitHub Releases | ✓ | ✓ | ✓ | Tagged releases with binaries |
-| Direct Download | ✓ | ✓ | ✓ | From project website |
-| Docker Images | ✓ | ✓ | ✓ | Pre-configured containers |
+| Channel          | Python | JavaScript | Go         | Notes                         |
+| ---------------- | ------ | ---------- | ---------- | ----------------------------- |
+| Package Registry | PyPI   | npm        | pkg.go.dev | Primary distribution          |
+| GitHub Releases  | ✓      | ✓          | ✓          | Tagged releases with binaries |
+| Direct Download  | ✓      | ✓          | ✓          | From project website          |
+| Docker Images    | ✓      | ✓          | ✓          | Pre-configured containers     |
 
 ### Self-Hosted Options
 
 #### Private PyPI Server
+
 ```bash
 # Using pypiserver
 pip install pypiserver
-pypi-server -p 8080 ./packages
+pypi-server -p 8000 ./packages
 
 # Upload SDK
-twine upload --repository-url http://localhost:8080 dist/*
+twine upload --repository-url http://localhost:8000 dist/*
 
 # Install from private server
-pip install --index-url http://localhost:8080 image-converter-sdk
+pip install --index-url http://localhost:8000 image-converter-sdk
 ```
 
 #### Private npm Registry
+
 ```bash
 # Using Verdaccio
 npm install -g verdaccio
@@ -151,6 +164,7 @@ npm install @image-converter/sdk --registry http://localhost:4873
 ```
 
 #### Private Go Proxy
+
 ```bash
 # Using Athens
 docker run -p 3000:3000 gomods/athens
@@ -214,16 +228,17 @@ gpg --verify "python-sdk-${SDK_VERSION}.tar.gz.sig" "python-sdk-${SDK_VERSION}.t
 
 ### Version Alignment
 
-| API Version | SDK Version | Compatibility |
-|-------------|-------------|---------------|
-| v1.0        | 1.0.x       | Full          |
-| v1.1        | 1.1.x       | Full          |
-| v1.2        | 1.2.x       | Full          |
+| API Version | SDK Version | Compatibility    |
+| ----------- | ----------- | ---------------- |
+| v1.0        | 1.0.x       | Full             |
+| v1.1        | 1.1.x       | Full             |
+| v1.2        | 1.2.x       | Full             |
 | v2.0        | 2.0.x       | Breaking changes |
 
 ### Version Pinning
 
 #### Python
+
 ```python
 # requirements.txt
 image-converter-sdk>=1.2.0,<2.0.0
@@ -234,6 +249,7 @@ image-converter-sdk = "^1.2.0"
 ```
 
 #### JavaScript
+
 ```json
 // package.json
 {
@@ -244,6 +260,7 @@ image-converter-sdk = "^1.2.0"
 ```
 
 #### Go
+
 ```go
 // go.mod
 require (
@@ -254,6 +271,7 @@ require (
 ## Building from Source
 
 ### Python SDK
+
 ```bash
 git clone https://github.com/image-converter/sdk-python
 cd sdk-python
@@ -264,6 +282,7 @@ python setup.py bdist_wheel
 ```
 
 ### JavaScript SDK
+
 ```bash
 git clone https://github.com/image-converter/sdk-javascript
 cd sdk-javascript
@@ -273,6 +292,7 @@ npm pack
 ```
 
 ### Go SDK
+
 ```bash
 git clone https://github.com/image-converter/image-converter-sdk-go
 cd image-converter-sdk-go
@@ -334,7 +354,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - run: pip install image-converter-sdk
       - run: python -m pytest
 
@@ -344,7 +364,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm install @image-converter/sdk
       - run: npm test
 
@@ -354,7 +374,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: "1.21"
       - run: go get github.com/image-converter/image-converter-sdk-go
       - run: go test ./...
 ```
@@ -488,7 +508,7 @@ echo "Created: js-sdk-offline-${VERSION}.tar.gz"
 # Python mirror
 mkdir -p mirrors/pypi
 pip download image-converter-sdk --dest mirrors/pypi
-pypi-server -p 8080 mirrors/pypi &
+pypi-server -p 8000 mirrors/pypi &
 
 # JavaScript mirror
 mkdir -p mirrors/npm
@@ -501,7 +521,7 @@ export GOPATH=$HOME/mirrors/go
 go get -d github.com/image-converter/image-converter-sdk-go
 
 echo "Mirrors available at:"
-echo "  Python: http://localhost:8080"
+echo "  Python: http://localhost:8000"
 echo "  JavaScript: http://localhost:4873"
 echo "  Go: file://$GOPATH"
 ```
@@ -511,21 +531,27 @@ echo "  Go: file://$GOPATH"
 ### Common Issues
 
 #### Issue: "Package not found" in offline mode
+
 **Solution**: Ensure all dependencies are included in offline bundle:
+
 ```bash
 pip download --dest ./offline image-converter-sdk --no-deps
 pip download --dest ./offline keyring httpx pydantic  # Add dependencies
 ```
 
 #### Issue: "Checksum mismatch" error
+
 **Solution**: Re-download with verification:
+
 ```bash
 curl -O https://github.com/.../checksums.txt
 sha256sum -c checksums.txt || echo "Checksum failed - redownload"
 ```
 
 #### Issue: "Network error" in air-gapped environment
+
 **Solution**: Ensure localhost is properly configured:
+
 ```bash
 echo "127.0.0.1 localhost" >> /etc/hosts
 ```

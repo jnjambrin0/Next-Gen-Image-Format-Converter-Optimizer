@@ -62,7 +62,7 @@ func main() {
 	// Initialize Image Converter client
 	client, err := ic.NewClient(&ic.ClientOptions{
 		Host:    "localhost",
-		Port:    8080,
+		Port:    8000,
 		Timeout: 30 * time.Second,
 	})
 	if err != nil {
@@ -103,7 +103,7 @@ func main() {
 	}
 
 	log.Printf("🚀 Microservice starting on port %s", port)
-	log.Printf("🔒 Connected to Image Converter API on localhost:8080")
+	log.Printf("🔒 Connected to Image Converter API on localhost:8000")
 	log.Printf("📊 Endpoints available:")
 	log.Printf("   GET  /health  - Health check")
 	log.Printf("   POST /convert - Convert single image")

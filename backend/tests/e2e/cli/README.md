@@ -5,12 +5,14 @@ Este directorio contiene tests end-to-end ultra realistas para probar todas las 
 ## 📋 Requisitos Previos
 
 1. **Backend corriendo**:
+
    ```bash
    cd backend
-   uvicorn app.main:app --reload --port 8080
+   uvicorn app.main:app --reload --port 8000
    ```
 
 2. **CLI instalado**:
+
    ```bash
    cd backend
    pip install -e .
@@ -24,7 +26,9 @@ Este directorio contiene tests end-to-end ultra realistas para probar todas las 
 ## 🧪 Tests Disponibles
 
 ### 1. **Test E2E Principal** (`test_cli_visual_e2e.py`)
+
 Prueba todas las funcionalidades visuales:
+
 - ✅ Salida con temas y colores
 - ✅ Soporte de emojis con fallback
 - ✅ Barras de progreso animadas
@@ -35,6 +39,7 @@ Prueba todas las funcionalidades visuales:
 - ✅ Manejo de errores con estilo
 
 **Ejecución**:
+
 ```bash
 # Con salida visible (recomendado para ver los colores)
 pytest test_cli_visual_e2e.py -v --capture=no
@@ -44,7 +49,9 @@ pytest test_cli_visual_e2e.py::TestCLIVisualFeatures::test_convert_with_themed_o
 ```
 
 ### 2. **Test de Seguridad** (`test_cli_security.py`)
+
 Prueba las nuevas características de seguridad:
+
 - 🛡️ PathSanitizer - Prevención de path traversal
 - 🛡️ RateLimiter - Control de tasa de actualizaciones
 - 🛡️ Límites de tamaño de archivo
@@ -52,6 +59,7 @@ Prueba las nuevas características de seguridad:
 - 🛡️ Chequeos de permisos
 
 **Ejecución**:
+
 ```bash
 pytest test_cli_security.py -v
 
@@ -60,14 +68,17 @@ pytest test_cli_security.py::TestPathSanitizer -v
 ```
 
 ### 3. **Test Manual Visual** (`manual_test_visual_features.sh`)
+
 Script interactivo para verificación visual manual:
 
 **Ejecución**:
+
 ```bash
 ./manual_test_visual_features.sh
 ```
 
 Este script:
+
 - Crea imágenes de prueba automáticamente
 - Ejecuta todos los comandos con diferentes configuraciones
 - Muestra la salida con colores y formato
@@ -77,6 +88,7 @@ Este script:
 ## 🎯 Casos de Prueba Cubiertos
 
 ### Funcionalidades Visuales
+
 - **Temas**: Dark, Light, High Contrast, Colorblind Safe, Minimal
 - **Emojis**: ✅ ❌ ⚠️ 📷 🖼️ con fallback automático
 - **Progreso**: Barras, spinners, porcentajes, ETA
@@ -85,12 +97,14 @@ Este script:
 - **TUI**: Interfaz interactiva con Textual
 
 ### Adaptación de Terminal
+
 - **Full Featured**: iTerm2, Terminal.app con TrueColor
 - **Basic**: xterm sin colores avanzados
 - **No Color**: Terminales sin soporte de color
 - **CI Environment**: GitHub Actions, Jenkins, etc.
 
 ### Seguridad
+
 - **Path Traversal**: ../../../etc/passwd bloqueado
 - **Command Injection**: `; rm -rf /` sanitizado
 - **Rate Limiting**: 10 updates/seg máximo
@@ -126,11 +140,13 @@ Los tests validan automáticamente:
 Si un test falla:
 
 1. **Verificar backend**:
+
    ```bash
-   curl http://localhost:8080/api/health
+   curl http://localhost:8000/api/health
    ```
 
 2. **Ejecutar test individual con output**:
+
    ```bash
    pytest test_cli_visual_e2e.py::test_name -vvs --capture=no
    ```

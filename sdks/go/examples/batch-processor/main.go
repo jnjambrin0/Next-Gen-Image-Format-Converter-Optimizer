@@ -25,7 +25,7 @@ var (
 	quality      = flag.Int("quality", 85, "Quality (1-100)")
 	workers      = flag.Int("workers", 4, "Number of concurrent workers")
 	stripMeta    = flag.Bool("strip-metadata", true, "Remove metadata from images")
-	port         = flag.Int("port", 8080, "API server port")
+	port         = flag.Int("port", 8000, "API server port")
 	apiKey       = flag.String("api-key", "", "API key (optional)")
 	showProgress = flag.Bool("progress", true, "Show progress bar")
 )

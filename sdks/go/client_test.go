@@ -22,7 +22,7 @@ func TestClientCreation(t *testing.T) {
 			name: "explicit localhost",
 			opts: &ClientOptions{
 				Host: "localhost",
-				Port: 8080,
+				Port: 8000,
 			},
 			shouldError: false,
 		},
@@ -126,7 +126,7 @@ func TestClientConfiguration(t *testing.T) {
 			t.Fatalf("Failed to create client: %v", err)
 		}
 
-		expectedURL := "http://localhost:8080/api/v1"
+		expectedURL := "http://localhost:8000/api/v1"
 		if client.baseURL != expectedURL {
 			t.Errorf("Expected baseURL %q, got %q", expectedURL, client.baseURL)
 		}

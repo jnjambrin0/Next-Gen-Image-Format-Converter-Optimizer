@@ -42,7 +42,7 @@ const { ImageConverterClient } = require('@image-converter/sdk');
 
 const client = new ImageConverterClient({
   host: 'localhost',  // Only localhost allowed
-  port: 8080,
+  port: 8000,
   apiKey: null,  // Optional, will try env or secure storage
 });
 
@@ -74,7 +74,7 @@ import { ImageConverterClient, OutputFormat } from '@image-converter/sdk';
 
 const client = new ImageConverterClient({
   host: 'localhost',
-  port: 8080,
+  port: 8000,
 });
 
 async function convert(): Promise<void> {
@@ -227,7 +227,7 @@ try {
 ```typescript
 const client = new ImageConverterClient({
   host: 'localhost',        // Must be localhost
-  port: 8080,              // API port
+  port: 8000,              // API port
   apiKey: 'ic_live_...',   // Optional API key
   apiVersion: 'v1',        // API version
   timeout: 30000,          // Request timeout (ms)
@@ -255,7 +255,7 @@ import { ImageConverterClient } from '@image-converter/sdk';
 
 const client = new ImageConverterClient({
   host: 'localhost',
-  port: 8080,
+  port: 8000,
 });
 
 // Note: File reading is different in browser
@@ -266,7 +266,7 @@ async function convertFromBlob(blob) {
   formData.append('file', blob);
   formData.append('output_format', 'webp');
   
-  const response = await fetch('http://localhost:8080/api/v1/convert', {
+  const response = await fetch('http://localhost:8000/api/v1/convert', {
     method: 'POST',
     body: formData,
   });

@@ -351,7 +351,7 @@ def custom_openapi() -> Dict[str, Any]:
             },
         },
         {
-            "url": "http://127.0.0.1:8080/api/v1",
+            "url": "http://127.0.0.1:8000/api/v1",
             "description": "Alternative localhost (v1 API)",
         },
     ]

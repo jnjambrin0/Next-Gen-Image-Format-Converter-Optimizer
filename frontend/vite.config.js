@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
 
   // Get backend configuration from environment variables
   const backendHost = env.VITE_API_HOST || 'localhost'
-  const backendPort = env.VITE_API_PORT || '8080'
+  const backendPort = env.VITE_API_PORT || '8000'
   const backendUrl = `http://${backendHost}:${backendPort}`
   const backendWsUrl = `ws://${backendHost}:${backendPort}`
 

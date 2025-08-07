@@ -19,6 +19,7 @@ pip install image-converter-sdk
 ```
 
 For development:
+
 ```bash
 pip install image-converter-sdk[dev]
 ```
@@ -26,12 +27,15 @@ pip install image-converter-sdk[dev]
 ## 🔒 Security Features
 
 ### Localhost-Only Enforcement
+
 The SDK **only** connects to localhost addresses (127.0.0.1, localhost, ::1). Attempts to connect to external hosts will raise a `NetworkSecurityError`.
 
 ### Secure API Key Storage
+
 API keys are stored securely using your OS keychain (macOS Keychain, Windows Credential Locker, Linux Secret Service). Fallback to encrypted local storage if keychain is unavailable.
 
 ### Privacy-Aware Error Handling
+
 No filenames, paths, or user data in error messages. All errors use generic, privacy-safe messages.
 
 ## 🚦 Quick Start
@@ -44,7 +48,7 @@ from image_converter import ImageConverterClient
 # Initialize client (localhost only)
 client = ImageConverterClient(
     host="localhost",  # Only localhost allowed
-    port=8080,
+    port=8000,
     api_key=None,  # Optional, will try env or secure storage
 )
 
@@ -77,7 +81,7 @@ async def main():
             for i in range(5)
         ]
         results = await asyncio.gather(*tasks)
-        
+
         for i, (data, metadata) in enumerate(results):
             with open(f"photo{i}.webp", "wb") as f:
                 f.write(data)
@@ -201,7 +205,7 @@ except ServiceUnavailableError:
 ```python
 client = ImageConverterClient(
     host="localhost",        # Must be localhost
-    port=8080,              # API port
+    port=8000,              # API port
     api_key="ic_live_...",  # Optional API key
     api_version="v1",       # API version
     timeout=30.0,           # Request timeout (seconds)
@@ -267,6 +271,7 @@ MIT License - see LICENSE file for details.
 ## ⚠️ Security Notice
 
 This SDK is designed for **local-only** operation. It will:
+
 - ✅ Only connect to localhost/127.0.0.1
 - ✅ Store API keys securely in OS keychain
 - ✅ Remove metadata from images by default
