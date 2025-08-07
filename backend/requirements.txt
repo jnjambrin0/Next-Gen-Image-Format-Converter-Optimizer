@@ -34,15 +34,20 @@ onnxruntime==1.22.1
 numpy==2.3.2
 
 # CLI Framework
-typer[all]==0.15.1
-rich==13.9.4
-click==8.1.8
-textual==1.0.1
+typer[all]==0.16.0
+rich==14.1.0
+click==8.2.1
+textual==5.2.0
 wcwidth==0.2.13
 
 # CLI Productivity Features
-watchdog>=3.0.0      # File system monitoring for watch mode
-rapidfuzz>=3.0.0     # Fuzzy string matching for history search
+watchdog>=6.0.0      # File system monitoring for watch mode
+rapidfuzz>=3.13.0     # Fuzzy string matching for history search
 pyyaml>=6.0          # YAML output format support
-cryptography>=41.0.0 # For autocomplete data encryption
-psutil>=5.9.0        # System resource monitoring for watch mode
+cryptography>=45.0.6 # For autocomplete data encryption
+psutil>=7.0.0        # System resource monitoring for watch mode
+
+# Documentation Features (Story 6.4)
+reportlab>=4.0.0     # PDF generation for reference cards
+whoosh>=2.7.0        # Full-text search for documentation
+pyperclip>=1.8.0     # Clipboard support for examples (optional)
