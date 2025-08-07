@@ -1,0 +1,195 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    image: image-converter-backend:latest
+    container_name: image_converter_backend_prod
+    ports:
+      - "8000:8000"
+    volumes:
+      # ML models as read-only
+      - ./ml_models:/app/ml_models:ro
+      # Data persistence
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+    environment:
+      - IMAGE_CONVERTER_ENV=production
+      - IMAGE_CONVERTER_DEBUG=false
+      - IMAGE_CONVERTER_LOG_LEVEL=INFO
+      - IMAGE_CONVERTER_API_HOST=0.0.0.0
+      - IMAGE_CONVERTER_API_PORT=8000
+      - IMAGE_CONVERTER_API_WORKERS=4
+      - IMAGE_CONVERTER_CORS_ORIGINS=http://localhost,https://yourdomain.com
+      - IMAGE_CONVERTER_DATABASE_URL=sqlite:///./data/app.db
+      - IMAGE_CONVERTER_ML_MODELS_PATH=/app/ml_models
+      - IMAGE_CONVERTER_ENABLE_SANDBOXING=true
+      - IMAGE_CONVERTER_SANDBOX_STRICTNESS=strict
+      - IMAGE_CONVERTER_MAX_CONCURRENT_CONVERSIONS=10
+      - IMAGE_CONVERTER_MEMORY_LIMIT_MB=512
+      - IMAGE_CONVERTER_CPU_LIMIT_PERCENT=80
+      - IMAGE_CONVERTER_STRIP_METADATA_DEFAULT=true
+      - IMAGE_CONVERTER_ANONYMIZE_LOGS=true
+      - IMAGE_CONVERTER_NETWORK_VERIFICATION_ENABLED=true
+      - IMAGE_CONVERTER_NETWORK_VERIFICATION_STRICTNESS=strict
+    env_file:
+      - .env.production
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 2
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 30s
+        max_failure_ratio: 0.3
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - VITE_API_HOST=backend
+        - VITE_API_PORT=8000
+    image: image-converter-frontend:latest
+    container_name: image_converter_frontend_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # SSL certificates (if using HTTPS)
+      - ./ssl:/etc/nginx/ssl:ro
+      # Custom nginx config if needed
+      - ./nginx-prod.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - NODE_ENV=production
+      - VITE_API_HOST=backend
+      - VITE_API_PORT=8000
+    networks:
+      - app_network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+
+  # Optional: Redis for caching (if needed in future)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: image_converter_redis
+  #   command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - app_network
+  #   restart: always
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: 256M
+
+  # Optional: Monitoring with Prometheus
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: image_converter_prometheus
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - app_network
+  #   restart: always
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+
+volumes:
+  backend_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/backend
+  backend_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs/backend
+  # redis_data:
+  #   driver: local
+  # prometheus_data:
+  #   driver: local

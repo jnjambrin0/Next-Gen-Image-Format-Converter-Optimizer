@@ -1,38 +1,96 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
+    container_name: image_converter_backend
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/app:/app/app
+      # Mount source code for hot-reload
+      - ./backend/app:/app/app:ro
+      - ./backend/tests:/app/tests:ro
+      # ML models as read-only
       - ./ml_models:/app/ml_models:ro
+      # Data persistence
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+      # Temp directory for conversions
+      - backend_tmp:/tmp/image-converter
     environment:
+      - IMAGE_CONVERTER_ENV=development
+      - IMAGE_CONVERTER_DEBUG=true
+      - IMAGE_CONVERTER_LOG_LEVEL=DEBUG
+      - IMAGE_CONVERTER_API_HOST=0.0.0.0
+      - IMAGE_CONVERTER_API_PORT=8000
+      - IMAGE_CONVERTER_CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost
+      - IMAGE_CONVERTER_DATABASE_URL=sqlite:///./data/app.db
+      - IMAGE_CONVERTER_ML_MODELS_PATH=/app/ml_models
+      - IMAGE_CONVERTER_ENABLE_SANDBOXING=true
+      - IMAGE_CONVERTER_SANDBOX_STRICTNESS=standard
       - PYTHONUNBUFFERED=1
-      - ENV=development
     env_file:
       - .env
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - app_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   frontend:
-    image: node:20-alpine
-    working_dir: /app
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: image_converter_frontend
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
+      # Mount source code for hot-reload
+      - ./frontend:/app:ro
       - /app/node_modules
-    command: sh -c "npm install && npm run dev -- --host"
     environment:
       - NODE_ENV=development
+      - VITE_API_HOST=localhost
+      - VITE_API_PORT=8000
+    networks:
+      - app_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
 
 volumes:
-  node_modules:
+  backend_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_tmp:
+    driver: local

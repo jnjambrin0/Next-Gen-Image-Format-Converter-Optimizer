@@ -1,6 +1,8 @@
 .bmad-core
 .claude
 
+docs/
+
 backend/data/
 
 # ML Models - exclude actual model files but keep metadata
@@ -109,3 +111,53 @@ logs/
 # OS
 Thumbs.db
 .DS_Store
+
+# ============================================
+# OPEN SOURCE CLEANUP - Added after repository cleanup
+# ============================================
+
+# Local databases (auto-generated)
+data/*.db
+backend/data/*.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Test files in root directory
+/test_*.py
+/test_*.js
+/test_*.html
+/verify_*.md
+/*_SUMMARY.md
+/*_FIX_*.md
+/*_REVIEW_*.md
+
+# Temporary test scripts in backend
+backend/test_*.py
+backend/check_*.sh
+backend/verify_*.sh
+backend/fix_*.py
+backend/analyze_*.py
+backend/debug_*.py
+backend/validate_*.py
+backend/quick_*.py
+backend/run_*.py
+backend/comprehensive_*.py
+backend/*_verification.py
+backend/*_SUMMARY.md
+backend/test.txt
+
+# Test HTML files
+frontend/test_*.html
+
+# Debug and test outputs
+debug_output/
+test_results/
+*_debug.*
+*_test_output/
+
+# Temporary analysis files
+FILE_CLEAN.md
+FILES_TO_REMOVE.md
+list_all_files.py
+cleanup_repo.sh
