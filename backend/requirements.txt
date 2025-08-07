@@ -48,6 +48,6 @@ cryptography>=45.0.6 # For autocomplete data encryption
 psutil>=7.0.0        # System resource monitoring for watch mode
 
 # Documentation Features (Story 6.4)
-reportlab>=4.0.0     # PDF generation for reference cards
+reportlab>=4.4.0    # PDF generation for reference cards
 whoosh>=2.7.0        # Full-text search for documentation
-pyperclip>=1.8.0     # Clipboard support for examples (optional)
+pyperclip>=1.9.0     # Clipboard support for examples (optional)

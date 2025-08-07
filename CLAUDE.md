@@ -1070,3 +1070,63 @@ class PrivacySanitizer:
 ```
 
 **Why**: All test imports use `from app.` which requires backend/ as working directory. Running from project root will cause ModuleNotFoundError.
+
+### 21. CLI Documentation Sandbox Security Pattern
+**CRITICAL**: When implementing CLI tutorials, examples, or any interactive command execution, these security measures are MANDATORY:
+
+#### Command Validation
+```python
+# Validate img subcommand structure, not just prefix
+valid_subcommands = [
+    'convert', 'batch', 'optimize', 'analyze', 'formats', 
+    'presets', 'watch', 'chain', 'docs', 'tutorial', 'help',
+    'config', 'version', '--help', '-h'
+]
+if not command.startswith('img '):
+    raise ValueError("Only img commands allowed")
+    
+# Validate subcommand structure
+img_parts = command[4:].strip().split()
+if not img_parts:
+    raise ValueError("Missing subcommand")
+subcommand = img_parts[0].lower()
+if subcommand not in valid_subcommands:
+    raise ValueError(f"Invalid subcommand: {subcommand}")
+```
+
+#### Environment Isolation
+```python
+# MANDATORY environment for CLI sandbox execution
+safe_env = {
+    'PATH': '/usr/local/bin:/usr/bin:/bin',
+    'HOME': str(sandbox_dir),
+    'TMPDIR': str(sandbox_dir / 'tmp'),
+    'IMAGE_CONVERTER_ENABLE_SANDBOXING': 'true',
+    'IMAGE_CONVERTER_SANDBOX_STRICTNESS': 'paranoid',
+    # Block all network access
+    'http_proxy': 'http://127.0.0.1:1',
+    'https_proxy': 'http://127.0.0.1:1',
+    'no_proxy': '*',
+}
+
+# Execute with resource limits
+result = subprocess.run(
+    command,
+    shell=True,
+    cwd=sandbox_dir,
+    env=safe_env,  # Use restricted environment
+    timeout=10,    # 10 second timeout
+    capture_output=True
+)
+```
+
+#### Blocked Commands List (70+)
+The sandbox MUST block these command categories:
+- **Shells**: bash, sh, zsh, fish, ksh, csh, tcsh, powershell, cmd
+- **Languages**: python, python3, perl, ruby, php, node, nodejs
+- **Network**: curl, wget, nc, netcat, telnet, ssh, ftp, sftp, scp, rsync
+- **System**: sudo, su, chmod, chown, kill, pkill, systemctl, mount
+- **Dangerous**: rm, dd, format, fdisk, mkfs, shred, wipe
+- **Editors**: vi, vim, nano, emacs (can escape sandbox)
+
+**Why**: CLI documentation features that execute commands pose significant security risks. These patterns ensure complete isolation and prevent command injection, network access, and system manipulation.
