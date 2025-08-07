@@ -24,19 +24,9 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
   - Intelligence Engine: ML-based content detection (ONNX Runtime)
   - Processing Engine: Image manipulation (Pillow/libvips)
 
-## Critical Testing Pattern
+## Testing Guidelines
 
-**CRITICAL**: When testing with sample images, ALWAYS check actual format first:
-
-```bash
-# Many sample files have wrong extensions!
-# Example: images_sample/heic/lofi_cat.heic is actually a PNG file
-
-# Test with format detection to verify actual formats:
-python test_format_detection.py
-```
-
-**Why**: The test images in `images_sample/` include intentionally misnamed files to test robustness. Never assume the extension matches the content.
+**IMPORTANT**: The test images in `images_sample/` may have incorrect extensions to test format detection robustness. Always verify actual format through content detection, not file extension.
 
 ## Development Commands
 
@@ -126,7 +116,7 @@ go test ./...     # Run all tests
 go build ./...    # Build SDK
 ```
 
-### CLI Usage (Story 6.1 & 6.2)
+### CLI Usage
 
 **CRITICAL**: The CLI exists at `backend/img.py` and uses the Python SDK with specific requirements:
 
@@ -186,7 +176,7 @@ img optimize auto photo.jpg --preset web
 │   ├── integration/   # Integration tests
 │   ├── security/      # Security tests
 │   └── fixtures/      # Test images and data
-├── sdks/               # Language SDKs (Story 5.3)
+├── sdks/               # Language SDKs
 │   ├── python/        # Python SDK with async/sync support
 │   ├── javascript/    # JavaScript/TypeScript SDK
 │   └── go/           # Go SDK with idiomatic patterns
@@ -381,9 +371,9 @@ svc_module.new_service = NewService()
 **Common Services Requiring Initialization**:
 - `conversion_service` - Already initialized
 - `intelligence_service` - Already initialized  
-- `recommendation_service` - Story 3.4
-- `optimization_service` - Story 3.5 (requires intelligence_engine and conversion_service)
-- `batch_service` - Story 4.1 (requires conversion_service which also injects to internal BatchManager)
+- `recommendation_service`
+- `optimization_service` - Requires intelligence_engine and conversion_service
+- `batch_service` - Requires conversion_service (also injects to internal BatchManager)
 - Any future singleton services following this pattern
 
 **Batch Service Special Initialization**:
@@ -483,7 +473,7 @@ Categories: `network`, `sandbox`, `rate_limit`, `verification`, `file`
 - **NEVER** add telemetry or external service calls
 - All processing must work completely offline
 
-#### SDK Localhost Enforcement Pattern (Story 5.3)
+#### SDK Localhost Enforcement Pattern
 **CRITICAL**: All language SDKs enforce localhost-only connections:
 
 ```python
@@ -590,7 +580,7 @@ All API errors follow consistent structure with proper error codes:
 - `POST /api/v1/detection/recommend-format` - Get AI-powered format recommendations
 - `GET /api/v1/detection/formats/compatibility` - Get format compatibility matrix
 
-### Authentication Endpoints (Story 5.2)
+### Authentication Endpoints
 - `POST /api/v1/auth/keys` - Create new API key (requires admin permissions)
 - `GET /api/v1/auth/keys` - List all API keys
 - `DELETE /api/v1/auth/keys/{key_id}` - Revoke specific API key
@@ -735,7 +725,7 @@ All image processing MUST meet:
 **CRITICAL**: The ContentClassification model uses plural attribute names:
 
 ```python
-# CORRECT: Use plural attributes (Story 3.5 update)
+# CORRECT: Use plural attributes
 classification.face_regions  # List[BoundingBox] - face detection results
 classification.text_regions  # List[BoundingBox] - text detection results
 
@@ -877,7 +867,7 @@ async def progress_callback(progress: BatchProgress):
 # Risk example: 100 files × 5MB avg = 500MB per job
 # With 10 concurrent jobs = 5GB RAM usage
 # Mitigation: Automatic cleanup after download
-# TODO: Consider disk storage for production scale
+# Note: Consider disk storage for production scale
 ```
 
 ### 16. WebSocket Authentication Pattern for Batch Jobs
@@ -987,7 +977,7 @@ async def get_download_zip(self, job_id: str):
 
 **Important**: When modifying batch UI, maintain this simplicity principle - no unnecessary modals or user interactions
 
-### 19. CLI Productivity Module Security Patterns (Story 6.3)
+### 19. CLI Productivity Module Security Patterns
 **CRITICAL**: When implementing CLI productivity features, these security patterns are MANDATORY:
 
 #### Privacy-First Data Storage
