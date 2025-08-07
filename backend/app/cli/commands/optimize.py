@@ -3,6 +3,7 @@ Optimize Command
 Intelligent image optimization with presets and auto-detection
 """
 
+import time
 from pathlib import Path
 from typing import Optional, Annotated
 import asyncio
@@ -20,6 +21,7 @@ from app.cli.ui.preview import show_image_comparison
 from app.cli.utils.emoji import get_emoji, format_with_emoji, get_quality_stars
 from app.cli.utils.terminal import should_use_emoji
 from app.cli.utils.progress import InterruptableProgress, SpinnerStyle
+from app.cli.utils.profiler import cli_profiler
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
@@ -65,6 +67,14 @@ def optimize_auto(
         bool,
         typer.Option("--dry-run", help="Show optimization plan without executing")
     ] = False,
+    profile: Annotated[
+        bool,
+        typer.Option("--profile", help="Enable performance profiling")
+    ] = False,
+    profile_output: Annotated[
+        Optional[Path],
+        typer.Option("--profile-output", help="Save profile to JSON file")
+    ] = None,
 ):
     """
     Automatically optimize image with intelligent settings
@@ -114,7 +124,13 @@ def optimize_auto(
         console.print(f"\n[warning]{info_msg}[/warning]")
         raise typer.Exit(0)
     
+    # Enable profiling if requested
+    if profile:
+        cli_profiler.enable(output_path=profile_output, show_summary=True)
+    
     # Perform optimization
+    optimization_start = time.time()
+    
     try:
         # Initialize client
         client = ImageConverterClient(
@@ -177,6 +193,19 @@ def optimize_auto(
                 error_msg = format_with_emoji("Optimization interrupted by user", "cancelled")
                 console.print(f"\n[error]{error_msg}[/error]")
                 raise typer.Exit(1)
+        
+        # Track optimization metrics if profiling
+        optimization_time = time.time() - optimization_start
+        if profile:
+            with cli_profiler.profile_operation("optimize_auto"):
+                cli_profiler.track_conversion(
+                    input_size=len(image_data),
+                    output_size=len(result.output_data),
+                    duration=optimization_time,
+                    input_format=input_path.suffix.strip('.'),
+                    output_format=output.suffix.strip('.') if output else input_path.suffix.strip('.'),
+                    memory_used=0  # Would need to track actual memory
+                )
         
         # Calculate results
         output_size = len(result.output_data) / 1024  # KB

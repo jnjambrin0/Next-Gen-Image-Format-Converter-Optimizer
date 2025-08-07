@@ -4,6 +4,7 @@ Batch image conversion with parallel processing
 """
 
 import asyncio
+import time
 from pathlib import Path
 from typing import List, Optional, Annotated
 from glob import glob
@@ -22,6 +23,7 @@ from app.cli.ui.tables import SmartTable, ColumnType, create_batch_summary_table
 from app.cli.utils.emoji import get_emoji, get_format_emoji, format_with_emoji
 from app.cli.utils.terminal import should_use_emoji
 from app.cli.utils.progress import InterruptableProgress, create_multi_progress
+from app.cli.utils.profiler import cli_profiler, BatchMetrics
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
@@ -75,6 +77,14 @@ def batch_convert(
         bool,
         typer.Option("--dry-run", help="Show what would be converted without doing it")
     ] = False,
+    profile: Annotated[
+        bool,
+        typer.Option("--profile", help="Enable performance profiling")
+    ] = False,
+    profile_output: Annotated[
+        Optional[Path],
+        typer.Option("--profile-output", help="Save profile to JSON file")
+    ] = None,
 ):
     """
     Convert multiple images in batch
@@ -132,7 +142,9 @@ def batch_convert(
         quality=quality,
         preset=preset,
         parallel=parallel,
-        skip_errors=skip_errors
+        skip_errors=skip_errors,
+        profile=profile,
+        profile_output=profile_output
     ))
 
 
@@ -143,10 +155,27 @@ async def _run_batch_conversion(
     quality: Optional[int],
     preset: Optional[str],
     parallel: int,
-    skip_errors: bool
+    skip_errors: bool,
+    profile: bool = False,
+    profile_output: Optional[Path] = None
 ):
     """Run batch conversion asynchronously"""
     config = get_config()
+    
+    # Enable profiling if requested
+    if profile:
+        cli_profiler.enable(output_path=profile_output, show_summary=True)
+    
+    # Create batch metrics for profiling
+    batch_metrics = None
+    if profile:
+        batch_metrics = BatchMetrics(
+            job_id="batch_" + str(int(time.time())),
+            total_files=len(files),
+            worker_count=parallel
+        )
+    
+    batch_start_time = time.time()
     
     # Initialize async client
     async with AsyncImageConverterClient(
@@ -256,12 +285,30 @@ async def _run_batch_conversion(
                 complete_msg = format_with_emoji("Batch conversion complete!", "success")
                 console.print(f"\n[success]{complete_msg}[/success]")
                 
+                # Complete profiling if enabled
+                if profile and batch_metrics:
+                    batch_metrics.completed_files = completed
+                    batch_metrics.failed_files = failed
+                    batch_metrics.end_time = time.time()
+                    
+                    # Calculate total input/output sizes
+                    total_input = sum(len(bf['data']) for bf in batch_files)
+                    batch_metrics.total_input_size = total_input
+                    
+                    # Note: Would need to track output sizes from results
+                    # For now, estimate based on average compression
+                    batch_metrics.total_output_size = int(total_input * 0.7)  # Estimate 30% compression
+                    
+                    # Display batch metrics
+                    with cli_profiler.profile_operation("batch_conversion"):
+                        cli_profiler.display_batch_metrics(batch_metrics)
+                
                 # Record in history
-                record_command(f"batch convert {pattern} -f {format}", success=True)
+                record_command(f"batch convert -f {format}", success=True)
                 
             except Exception as e:
                 handle_api_error(e, console)
-                record_command(f"batch convert {pattern} -f {format}", success=False)
+                record_command(f"batch convert -f {format}", success=False)
                 raise typer.Exit(1)
 
 

@@ -120,6 +120,14 @@ class BatchManager:
         metrics = self._job_metrics[job_id]
         metrics["peak_memory_mb"] = max(metrics["peak_memory_mb"], current_memory)
         metrics["memory_samples"].append((time.time(), current_memory))
+        
+        # Track worker efficiency
+        worker_id = id(asyncio.current_task())
+        if "worker_activity" not in metrics:
+            metrics["worker_activity"] = {}
+        if worker_id not in metrics["worker_activity"]:
+            metrics["worker_activity"][worker_id] = {"files_processed": 0, "total_time": 0}
+        metrics["worker_activity"][worker_id]["files_processed"] += 1
     
     async def create_job(
         self,
@@ -322,10 +330,15 @@ class BatchManager:
                 "processing_time": item.processing_time
             }
             
-            # Track file processing time
+            # Track file processing time and worker efficiency
             file_processing_time = time.time() - file_start_time
             if task.job_id in self._job_metrics:
                 self._job_metrics[task.job_id]["file_times"].append(file_processing_time)
+                
+                # Update worker activity
+                worker_id = id(asyncio.current_task())
+                if worker_id in self._job_metrics[task.job_id]["worker_activity"]:
+                    self._job_metrics[task.job_id]["worker_activity"][worker_id]["total_time"] += file_processing_time
             
             self.logger.debug(
                 f"Completed file {task.file_index} in job {task.job_id} "
@@ -346,6 +359,11 @@ class BatchManager:
             file_processing_time = time.time() - file_start_time
             if task.job_id in self._job_metrics:
                 self._job_metrics[task.job_id]["file_times"].append(file_processing_time)
+                
+                # Update worker activity even for failures
+                worker_id = id(asyncio.current_task())
+                if worker_id in self._job_metrics[task.job_id]["worker_activity"]:
+                    self._job_metrics[task.job_id]["worker_activity"][worker_id]["total_time"] += file_processing_time
             
             self.logger.error(
                 f"Failed to process file {task.file_index} in job {task.job_id}: {e}"
@@ -738,6 +756,19 @@ class BatchManager:
         completed_files = job.completed_files + job.failed_files if job else 0
         throughput = completed_files / elapsed_time if elapsed_time > 0 else 0
         
+        # Calculate worker efficiency
+        worker_stats = []
+        for worker_id, activity in metrics["worker_activity"].items():
+            if activity["files_processed"] > 0:
+                avg_time = activity["total_time"] / activity["files_processed"]
+                worker_stats.append({
+                    "worker_id": str(worker_id),
+                    "files_processed": activity["files_processed"],
+                    "total_time": activity["total_time"],
+                    "average_time": avg_time,
+                    "efficiency": (avg_time_per_file / avg_time * 100) if avg_time > 0 and avg_time_per_file > 0 else 0
+                })
+        
         return {
             "job_id": job_id,
             "elapsed_time_seconds": elapsed_time,
@@ -758,6 +789,7 @@ class BatchManager:
                 "files_per_second": throughput,
                 "estimated_completion_seconds": (job.total_files / throughput - elapsed_time) if throughput > 0 and job else 0
             },
+            "worker_efficiency": worker_stats,
             "memory_samples": len(metrics["memory_samples"])
         }
     

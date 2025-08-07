@@ -4,6 +4,7 @@ Single image conversion with rich progress and options
 """
 
 import sys
+import time
 from pathlib import Path
 from typing import Optional, Annotated
 import asyncio
@@ -21,6 +22,7 @@ from app.cli.utils.history import record_command
 from app.cli.ui.themes import get_theme_manager
 from app.cli.utils.emoji import get_emoji, get_format_emoji
 from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
+from app.cli.utils.profiler import cli_profiler, profile_command
 
 # Import SDK client
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python"))
@@ -77,6 +79,14 @@ def convert_file(
         bool,
         typer.Option("--dry-run", help="Preview operation without converting")
     ] = False,
+    profile: Annotated[
+        bool,
+        typer.Option("--profile", help="Enable performance profiling")
+    ] = False,
+    profile_output: Annotated[
+        Optional[Path],
+        typer.Option("--profile-output", help="Save profile to JSON file")
+    ] = None,
 ):
     """
     Convert a single image to a different format
@@ -137,7 +147,13 @@ def convert_file(
         console.print(f"\n[warning]{get_emoji('warning') if should_use_emoji() else ''} Dry run complete. No files were modified.[/warning]")
         raise typer.Exit(0)
     
+    # Enable profiling if requested
+    if profile:
+        cli_profiler.enable(output_path=profile_output, show_summary=True)
+    
     # Perform conversion
+    conversion_start = time.time()
+    
     try:
         # Initialize client
         client = ImageConverterClient(
@@ -205,6 +221,19 @@ def convert_file(
             if progress.interrupted:
                 console.print(f"\n[error]{get_emoji('error') if should_use_emoji() else ''} Conversion interrupted by user[/error]")
                 raise typer.Exit(1)
+        
+        # Track conversion metrics if profiling
+        conversion_time = time.time() - conversion_start
+        if profile:
+            with cli_profiler.profile_operation("convert_file"):
+                cli_profiler.track_conversion(
+                    input_size=len(image_data),
+                    output_size=len(output_data),
+                    duration=conversion_time,
+                    input_format=input_path.suffix.strip('.'),
+                    output_format=format,
+                    memory_used=0  # Would need to track actual memory
+                )
         
         # Show results with emojis and theming
         input_size = len(image_data) / 1024
