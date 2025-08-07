@@ -31,16 +31,14 @@ FROM python:3.11-slim AS production
 
 # Install runtime dependencies for image processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libvips42 \
-    libheif1 \
-    libde265-0 \
-    libjpeg62-turbo \
-    libpng16-16 \
-    libwebp7 \
-    libwebpmux3 \
-    libwebpdemux2 \
-    libtiff5 \
-    libexif12 \
+    libvips \
+    libheif-dev \
+    libde265-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libtiff-dev \
+    libexif-dev \
     libglib2.0-0 \
     libexpat1 \
     libgomp1 \
@@ -67,12 +65,11 @@ WORKDIR /app
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/
-COPY --chown=appuser:appuser ml_models/ ./ml_models/
 
-# Create empty data directory structure
-RUN mkdir -p data && \
-    touch data/.gitkeep && \
-    chown -R appuser:appuser data
+# Create necessary directories
+RUN mkdir -p data ml_models && \
+    touch data/.gitkeep ml_models/.gitkeep && \
+    chown -R appuser:appuser data ml_models
 
 # Switch to non-root user
 USER appuser
@@ -135,10 +132,9 @@ CMD ["uvicorn", "app.main:app", \
 # ============================================
 FROM production AS testing
 
-# Copy test files
-COPY --chown=appuser:appuser tests/ ./tests/
-COPY --chown=appuser:appuser pytest.ini ./
-COPY --chown=appuser:appuser .coveragerc ./
+# Copy test files (if they exist)
+COPY --chown=appuser:appuser tests/ ./tests/ 
+COPY --chown=appuser:appuser pytest.ini* ./
 
 # Install test dependencies
 ENV PATH="/opt/venv/bin:$PATH"
