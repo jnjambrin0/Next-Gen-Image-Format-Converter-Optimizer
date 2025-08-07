@@ -49,7 +49,8 @@ pip install -r requirements.txt
 cd backend
 uvicorn app.main:app --reload --port 8080
 
-# Run tests
+# Run tests (MUST be from backend/ directory)
+cd backend
 pytest
 
 # Format code
@@ -1017,3 +1018,55 @@ async def get_download_zip(self, job_id: str):
 **Why**: User requirement: "debe ser simple, le das a convertir y luego se descargan solos" (must be simple, click convert and files download automatically)
 
 **Important**: When modifying batch UI, maintain this simplicity principle - no unnecessary modals or user interactions
+
+### 19. CLI Productivity Module Security Patterns (Story 6.3)
+**CRITICAL**: When implementing CLI productivity features, these security patterns are MANDATORY:
+
+#### Privacy-First Data Storage
+```python
+# NEVER store filenames, paths, or PII in autocomplete/history
+class PrivacySanitizer:
+    PATH_PATTERNS = [
+        r'[/\\][\w\-\.]+(?:[/\\][\w\-\.]+)*',  # File paths
+        r'[\w\.\-]+@[\w\.\-]+',  # Email addresses
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP addresses
+    ]
+    
+    def sanitize(self, text: str) -> str:
+        for pattern in self.PATH_PATTERNS:
+            text = re.sub(pattern, '<REDACTED>', text)
+        return text
+```
+
+#### Resource Limits for Watch Mode
+- **Max Files**: 100 files per watch session
+- **Concurrency**: Max 5 concurrent conversions
+- **Memory**: 512MB RAM limit enforced
+- **Rate Limiting**: 10 events/second with 500ms debouncing
+- **Auto-shutdown**: On 3 consecutive resource violations
+
+#### Macro Security Requirements
+1. **Command Validation**: Block dangerous commands (rm, format, curl, etc.)
+2. **Signature Verification**: HMAC-SHA256 for integrity
+3. **Approval System**: User must approve before first execution
+4. **Sandboxing**: Execute in restricted environment
+5. **File Permissions**: Store with 0o600 (user read/write only)
+
+### 20. Test Execution Critical Pattern
+**CRITICAL**: Tests MUST be run from backend/ directory for imports to work:
+
+```bash
+# WRONG: Will cause import errors
+/image_converter$ pytest backend/tests/
+
+# CORRECT: Run from backend directory
+/image_converter$ cd backend
+/image_converter/backend$ pytest
+
+# Run specific test categories
+/image_converter/backend$ pytest tests/unit/
+/image_converter/backend$ pytest tests/integration/
+/image_converter/backend$ pytest tests/security/
+```
+
+**Why**: All test imports use `from app.` which requires backend/ as working directory. Running from project root will cause ModuleNotFoundError.
