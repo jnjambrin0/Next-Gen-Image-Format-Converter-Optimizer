@@ -8,6 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only image conversion tool with advanced optimization capabilities. All processing happens on the user's machine with no external network requests.
 
+### Supported Formats
+- **Input**: JPEG, PNG, WebP, HEIF/HEIC, BMP, TIFF, GIF, AVIF
+- **Output**: WebP, AVIF, JPEG XL, HEIF, PNG (optimized), JPEG (optimized), WebP2
+- **Content Detection**: Local ML model classifies images (photo/illustration/screenshot/document)
+
 ## Architecture Summary
 
 - **Architecture Pattern**: Monolithic with modular internals
@@ -99,28 +104,6 @@ The frontend uses environment variables for backend configuration:
 
 See `frontend/ENV_CONFIG.md` for detailed configuration instructions.
 
-### Testing
-
-```bash
-# IMPORTANT: Run pytest from backend/ directory, not project root
-cd backend
-
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=. --cov-report=html
-
-# Run specific test file
-pytest tests/unit/test_conversion.py
-
-# Run integration tests only
-pytest tests/integration/
-
-# Run security tests (requires Docker)
-pytest tests/security/
-```
-
 ### SDK Development
 
 ```bash
@@ -188,17 +171,6 @@ img optimize auto photo.jpg --preset web
 # The pattern is: img <command> <subcommand> <args>
 ```
 
-## Key Architecture Decisions
-
-1. **Local-Only Processing**: No network requests, all ML models and processing happen locally
-2. **Process Sandboxing**: Each conversion runs in isolated subprocess with restricted permissions
-3. **Memory-Only Processing**: No temporary files on disk, all processing in RAM
-4. **Format Support**:
-   - Input: JPEG, PNG, WebP, HEIF/HEIC, BMP, TIFF, GIF, AVIF
-   - Output: WebP, AVIF, JPEG XL, HEIF, PNG (optimized), JPEG (optimized), WebP2
-5. **Content Detection**: Local ML model classifies images (photo/illustration/screenshot/document)
-6. **Metadata Handling**: EXIF data removed by default for privacy
-
 ## Project Structure
 
 ```
@@ -222,34 +194,40 @@ img optimize auto photo.jpg --preset web
 └── scripts/           # Utility scripts
 ```
 
-## Security Considerations
+## Security Architecture
 
-- All image processing happens in sandboxed subprocesses
-- No network access from sandboxed processes
-- Limited filesystem access (read input, write output only)
-- Resource limits enforced (CPU, memory, time)
-- Automatic EXIF/metadata removal by default
-- Memory explicitly cleared after processing
-- **Privacy-Aware Logging Rules**:
-  - NEVER include filenames, file paths, or user-provided names in log messages or errors
-  - Use generic messages like "Invalid filename" instead of including the actual filename
-  - This applies to ALL error messages, debug logs, and system outputs
+### Core Security Principles
+- **Local-Only Processing**: No network requests, all ML models and processing happen locally
+- **Process Sandboxing**: Each conversion runs in isolated subprocess with restricted permissions
+- **Memory-Only Processing**: No temporary files on disk, all processing in RAM
+- **Privacy-First**: EXIF/metadata removed by default, no PII in logs
 
-## Security Implementation Details
-
-- **Sandbox Architecture**: Three-layer system with distinct responsibilities:
+### Sandbox Implementation
+- **Three-Layer Architecture**:
   - `SecurityEngine` - Orchestrates security operations, creates sandboxes, manages metadata
   - `SecuritySandbox` - Manages resource limits, memory tracking, process isolation  
   - `sandboxed_convert.py` - Isolated subprocess for actual image conversion
-- **Strictness Levels**: Configurable via `IMAGE_CONVERTER_SANDBOX_STRICTNESS` (standard/strict/paranoid)
-  - standard: 512MB RAM, 80% CPU, 30s timeout, 3 memory violations allowed, no memory locking
-  - strict: 256MB RAM, 60% CPU, 20s timeout, 2 memory violations allowed, memory locking enabled
-  - paranoid: 128MB RAM, 40% CPU, 10s timeout, 1 memory violation allowed, memory locking enabled
-- **Privacy-Aware Logging**: Security audit logs contain no PII (filenames, paths, or content)
-- **Resource Tracking**: Actual CPU/memory usage tracked per conversion with violation detection
-- **Secure Memory Management**: 5-pass overwrite patterns (0x00, 0xFF, 0xAA, 0x55, 0x00) for clearing sensitive data
-- **Memory Page Locking**: Cross-platform mlock() implementation with graceful fallbacks
-- **Sandbox Control**: Enable/disable via `IMAGE_CONVERTER_ENABLE_SANDBOXING` env var
+
+- **Strictness Levels** via `IMAGE_CONVERTER_SANDBOX_STRICTNESS`:
+  - `standard`: 512MB RAM, 80% CPU, 30s timeout
+  - `strict`: 256MB RAM, 60% CPU, 20s timeout, memory locking enabled
+  - `paranoid`: 128MB RAM, 40% CPU, 10s timeout, memory locking enabled
+
+- **Security Features**:
+  - 5-pass memory overwrite (0x00, 0xFF, 0xAA, 0x55, 0x00)
+  - Cross-platform mlock() for sensitive data
+  - Resource tracking with violation detection
+  - Enable/disable via `IMAGE_CONVERTER_ENABLE_SANDBOXING`
+
+### Privacy-Aware Logging
+**CRITICAL**: NEVER include PII in logs:
+```python
+# CORRECT: Generic messages
+logger.error("Invalid filename format")
+
+# WRONG: Exposing user data
+logger.error(f"Invalid file: {filename}")  # Contains PII!
+```
 
 ## Critical Implementation Details
 
@@ -325,19 +303,10 @@ socket.socket = lambda *args: raise OSError("Network disabled")
 **Why**: Many Python modules (like SSL) expect `socket.socket` to be a class they can inherit from. Replacing it with a function causes `TypeError: function() argument 'code' must be code, not str`.
 
 ### 3. Privacy-Aware Logging Pattern
-**CRITICAL**: Security and error messages MUST NEVER include filenames, paths, or user content:
-
-```python
-# CORRECT: Generic error messages without PII
-raise SecurityError("Filename contains dangerous patterns")
-logger.warning("Memory limit violation detected", current_mb=150, limit_mb=100)
-
-# WRONG: Including filenames or paths (contains PII)
-raise SecurityError(f"Invalid filename: {filename}")
-logger.error(f"Failed to process file: {file_path}")
-```
-
-**Why**: Filenames and paths may contain Personally Identifiable Information (PII). All logging must be privacy-aware.
+**CRITICAL**: See Security Architecture section for privacy-aware logging requirements.
+- Never include filenames, paths, or user content in logs
+- Use generic error messages
+- This prevents PII exposure in logs
 
 ### 4. Secure Memory Management Pattern
 **CRITICAL**: Memory allocated for image processing must be explicitly cleared with overwrite patterns:
@@ -434,8 +403,7 @@ optimization_service.set_intelligence_engine(intelligence_service.engine)
 optimization_service.set_conversion_service(conversion_service)
 ```
 
-
-### 8. Format Detection Architecture
+### 7. Format Detection Architecture
 **CRITICAL**: The system uses content-based format detection, NOT extension-based:
 
 ```python
@@ -456,7 +424,7 @@ if filename.endswith('.jpg'):
 
 **Key Service**: `app/services/format_detection_service.py` - Single source of truth for format detection.
 
-### 9. Quality Analyzer Implementation Pattern
+### 8. Quality Analyzer Implementation Pattern
 **CRITICAL**: The project uses a custom SSIM/PSNR implementation to avoid heavy dependencies:
 
 ```python
@@ -472,7 +440,7 @@ if filename.endswith('.jpg'):
 - LRU cache for repeated calculations
 - Automatic downsampling for large images (>2048px)
 
-### 10. Critical Security Patterns (MUST KNOW)
+### 9. Critical Security Patterns (MUST KNOW)
 
 #### Sandbox Path Validation
 **CRITICAL**: The sandbox blocks ALL absolute paths for security:
@@ -1071,7 +1039,77 @@ class PrivacySanitizer:
 
 **Why**: All test imports use `from app.` which requires backend/ as working directory. Running from project root will cause ModuleNotFoundError.
 
-### 21. CLI Documentation Sandbox Security Pattern
+### 21. Performance Monitoring Implementation Details
+**CRITICAL**: When implementing performance monitoring features:
+
+#### PerformanceMonitor Peak Memory Pattern
+The PerformanceMonitor must update peak memory in the `stop()` method to capture final state:
+
+```python
+# In PerformanceMonitor.stop():
+current_memory = self._process.memory_info().rss
+
+# Update peak one last time in case it increased after last sample
+if current_memory > self._peak_memory:
+    self._peak_memory = current_memory
+```
+
+**Why**: Memory may spike between the last sample and stop() call. Without this, peak memory tracking is incomplete.
+
+#### VipsOperations Required Methods
+VipsOperations class must implement these auxiliary methods for full functionality:
+
+```python
+def estimate_memory_usage(self, width: int, height: int, channels: int = 4) -> float:
+    """Estimates memory usage in MB for given image dimensions."""
+    bytes_per_pixel = channels  # 8-bit per channel
+    base_memory = width * height * bytes_per_pixel
+    base_memory_mb = base_memory / (1024 * 1024)
+    return base_memory_mb * 1.2  # Add 20% overhead
+
+def monitor_memory(self, operation_name: str) -> Dict[str, Any]:
+    """Returns current memory statistics for monitoring."""
+    current_memory = self._get_memory_usage()
+    delta = current_memory - self._initial_memory
+    usage_percent = (delta / MAX_MEMORY_MB) * 100 if MAX_MEMORY_MB > 0 else 0
+    
+    return {
+        "operation": operation_name,
+        "current_mb": round(current_memory, 2),
+        "initial_mb": round(self._initial_memory, 2),
+        "delta_mb": round(delta, 2),
+        "limit_mb": MAX_MEMORY_MB,
+        "usage_percent": round(usage_percent, 2)
+    }
+
+def should_use_streaming(self, file_path: str = None, file_size: int = None) -> bool:
+    """Returns True if file size exceeds streaming threshold (100MB)."""
+    # Note: Returns based on size regardless of vips availability
+    # Actual streaming requires vips, but this indicates if it WOULD be appropriate
+```
+
+#### Test Mocking for Large Files
+When testing large file operations without actual large files:
+
+```python
+# Mock PIL Image operations to avoid processing fake data
+with patch('app.core.processing.vips_ops.Image') as mock_image:
+    mock_img = MagicMock()
+    mock_image.open.return_value = mock_img
+    
+    # Mock BytesIO for buffer operations
+    with patch('app.core.processing.vips_ops.io.BytesIO') as mock_io:
+        mock_buffer = MagicMock()
+        mock_io.return_value = mock_buffer
+        mock_buffer.getvalue.return_value = b'processed_data'
+        
+        # Now safe to process fake data
+        result = vips_ops.process_in_chunks(fake_data, 'webp', 85)
+```
+
+**Why**: Testing with fake image data requires proper mocking to avoid PIL errors with invalid image formats.
+
+### 22. CLI Documentation Sandbox Security Pattern
 **CRITICAL**: When implementing CLI tutorials, examples, or any interactive command execution, these security measures are MANDATORY:
 
 #### Command Validation
