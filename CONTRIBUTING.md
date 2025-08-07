@@ -20,6 +20,7 @@ First off, thank you for considering contributing to our project! 🎉 Your help
 ### Our Pledge
 
 We are committed to providing a friendly, safe, and welcoming environment for all contributors, regardless of:
+
 - Experience level
 - Gender identity and expression
 - Sexual orientation
@@ -32,6 +33,7 @@ We are committed to providing a friendly, safe, and welcoming environment for al
 ### Our Standards
 
 **Examples of behavior that contributes to a positive environment:**
+
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints and experiences
 - Gracefully accepting constructive criticism
@@ -39,6 +41,7 @@ We are committed to providing a friendly, safe, and welcoming environment for al
 - Showing empathy towards other community members
 
 **Examples of unacceptable behavior:**
+
 - The use of sexualized language or imagery
 - Trolling, insulting/derogatory comments, and personal attacks
 - Public or private harassment
@@ -69,28 +72,35 @@ Before creating bug reports, please check existing issues to avoid duplicates. W
 5. **Screenshots/Logs**: If applicable, add screenshots or error logs (sanitized of any PII)
 
 **Bug Report Template:**
+
 ```markdown
 ## Bug Description
+
 [Clear description of the bug]
 
 ## Environment
+
 - OS: [e.g., Ubuntu 22.04]
 - Python: [e.g., 3.11.5]
 - Node.js: [e.g., 18.17.0]
 - Browser: [e.g., Chrome 120]
 
 ## Steps to Reproduce
+
 1. [First step]
 2. [Second step]
 3. [...]
 
 ## Expected Behavior
+
 [What should happen]
 
 ## Actual Behavior
+
 [What actually happens]
 
 ## Additional Context
+
 [Any other relevant information, logs, screenshots]
 ```
 
@@ -104,20 +114,26 @@ We love feature suggestions! Please provide:
 4. **Additional Context**: Add mockups, examples, or references
 
 **Feature Request Template:**
+
 ```markdown
 ## Feature Description
+
 [Clear description of the feature]
 
 ## Problem It Solves
+
 [What problem does this feature address?]
 
 ## Proposed Implementation
+
 [How would this feature work?]
 
 ## Alternatives Considered
+
 [Other ways to solve this problem]
 
 ## Additional Context
+
 [Mockups, examples, references]
 ```
 
@@ -126,6 +142,7 @@ We love feature suggestions! Please provide:
 #### First-Time Contributors
 
 Look for issues labeled with:
+
 - `good first issue` - Simple tasks perfect for beginners
 - `help wanted` - Issues where we need community help
 - `documentation` - Documentation improvements
@@ -184,6 +201,7 @@ git commit -m "refactor(core): optimize memory usage"
 ```
 
 **Commit Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -218,7 +236,7 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt  # Development dependencies
 
 # Run the backend
-uvicorn app.main:app --reload --port 8080
+uvicorn app.main:app --reload --port 8000
 ```
 
 ### Frontend Development
@@ -287,12 +305,12 @@ npm run test:ui           # Interactive UI
        quality: int = 85
    ) -> Tuple[bytes, ConversionResult]:
        """Convert image to specified format.
-       
+
        Args:
            input_data: Raw image bytes
            output_format: Target format (webp, avif, etc.)
            quality: Output quality (1-100)
-           
+
        Returns:
            Tuple of converted bytes and result metadata
        """
@@ -306,7 +324,7 @@ npm run test:ui           # Interactive UI
 ### JavaScript (Frontend)
 
 1. **Style Guide**: ESLint with Prettier
-2. **Formatting**: 
+2. **Formatting**:
    ```bash
    npm run format
    ```
@@ -318,7 +336,7 @@ npm run test:ui           # Interactive UI
    ```javascript
    // Use functional components with clear naming
    export function ImageUploader({ onUpload, maxSize }) {
-       // Component logic
+     // Component logic
    }
    ```
 
@@ -333,6 +351,7 @@ npm run test:ui           # Interactive UI
 5. **Path validation**: Prevent directory traversal attacks
 
 Example of secure error handling:
+
 ```python
 # CORRECT: Generic error without PII
 logger.error("File processing failed: invalid format")
@@ -352,6 +371,7 @@ logger.error(f"Failed to process {filename}")  # Never do this!
 ### Writing Tests
 
 #### Python Tests
+
 ```python
 import pytest
 from app.core.conversion import convert_image
@@ -361,14 +381,14 @@ def test_webp_conversion():
     # Arrange
     with open("tests/fixtures/sample.jpg", "rb") as f:
         input_data = f.read()
-    
+
     # Act
     result, output = convert_image(
         input_data,
         output_format="webp",
         quality=85
     )
-    
+
     # Assert
     assert result.success
     assert result.output_format == "webp"
@@ -376,16 +396,17 @@ def test_webp_conversion():
 ```
 
 #### JavaScript Tests
-```javascript
-import { describe, it, expect } from 'vitest';
-import { validateImageSize } from '../utils/validation';
 
-describe('Image Validation', () => {
-    it('should reject oversized images', () => {
-        const result = validateImageSize(100 * 1024 * 1024); // 100MB
-        expect(result.valid).toBe(false);
-        expect(result.error).toContain('size');
-    });
+```javascript
+import { describe, it, expect } from "vitest";
+import { validateImageSize } from "../utils/validation";
+
+describe("Image Validation", () => {
+  it("should reject oversized images", () => {
+    const result = validateImageSize(100 * 1024 * 1024); // 100MB
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("size");
+  });
 });
 ```
 
@@ -403,20 +424,24 @@ describe('Image Validation', () => {
 
 ```markdown
 ## Description
+
 [Describe your changes]
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Manual testing completed
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Self-review completed
 - [ ] Documentation updated
@@ -452,6 +477,7 @@ We will respond within 48 hours and work on a fix immediately.
 ### General Issues
 
 Use GitHub Issues for:
+
 - Bug reports
 - Feature requests
 - Documentation issues
@@ -470,6 +496,7 @@ We're always looking for ideas to improve the project! When suggesting features:
 ## Recognition
 
 Contributors who make significant contributions will be:
+
 - Added to the README contributors section
 - Mentioned in release notes
 - Given credit in relevant documentation
@@ -477,6 +504,7 @@ Contributors who make significant contributions will be:
 ## Questions?
 
 Feel free to:
+
 - Open a discussion on GitHub Discussions
 - Contact the maintainers
 - Join our community chat (coming soon)

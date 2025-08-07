@@ -70,6 +70,7 @@
 <td width="50%">
 
 **Privacy-First Design**
+
 - ✅ No external API calls
 - ✅ No telemetry or tracking
 - ✅ No cloud dependencies
@@ -80,6 +81,7 @@
 <td width="50%">
 
 **Enterprise Security**
+
 - ✅ Process sandboxing
 - ✅ Resource isolation
 - ✅ Memory limits enforcement
@@ -236,7 +238,7 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8080
+uvicorn app.main:app --reload --port 8000
 
 # In another terminal, start the frontend
 cd frontend
@@ -269,7 +271,7 @@ img optimize photo.jpg --preset web
 # Python SDK
 from image_converter import ImageConverterClient
 
-client = ImageConverterClient(host="localhost", port=8080)
+client = ImageConverterClient(host="localhost", port=8000)
 result, output_data = client.convert_image(
     "photo.jpg",
     output_format="webp",
@@ -310,7 +312,7 @@ npm run build
 
 # Run the application
 cd ../backend
-uvicorn app.main:app --host 0.0.0.0 --port 8080
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 </details>
@@ -336,7 +338,7 @@ npm run build
 
 # Run the application
 cd ..\backend
-uvicorn app.main:app --host 0.0.0.0 --port 8080
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 </details>
@@ -350,7 +352,7 @@ docker-compose up -d
 
 # Or build manually
 docker build -t image-converter .
-docker run -p 8080:8080 -p 5173:5173 image-converter
+docker run -p 8000:8000 -p 5173:5173 image-converter
 ```
 
 </details>
@@ -448,7 +450,7 @@ from image_converter import ImageConverterClient
 # Initialize client
 client = ImageConverterClient(
     host="localhost",
-    port=8080,
+    port=8000,
     api_key="your-api-key"  # Optional
 )
 
@@ -489,7 +491,7 @@ from image_converter import AsyncImageConverterClient
 async def convert_images():
     async with AsyncImageConverterClient(
         host="localhost",
-        port=8080
+        port=8000
     ) as client:
         # Parallel conversions
         tasks = [
@@ -497,7 +499,7 @@ async def convert_images():
             for i in range(10)
         ]
         results = await asyncio.gather(*tasks)
-        
+
         # AI-powered optimization
         optimized = await client.optimize_image(
             "photo.jpg",
@@ -513,33 +515,35 @@ asyncio.run(convert_images())
 ### JavaScript/TypeScript SDK
 
 ```javascript
-import { ImageConverterClient } from 'image-converter-sdk';
+import { ImageConverterClient } from "image-converter-sdk";
 
 const client = new ImageConverterClient({
-  host: 'localhost',
-  port: 8080
+  host: "localhost",
+  port: 8000,
 });
 
 // Convert with promise
-client.convertImage('photo.jpg', {
-  outputFormat: 'webp',
-  quality: 85
-}).then(result => {
-  console.log('Conversion complete:', result);
-});
+client
+  .convertImage("photo.jpg", {
+    outputFormat: "webp",
+    quality: 85,
+  })
+  .then((result) => {
+    console.log("Conversion complete:", result);
+  });
 
 // Async/await syntax
 async function batchConvert() {
   const job = await client.createBatchJob({
-    files: ['img1.jpg', 'img2.png'],
-    outputFormat: 'avif'
+    files: ["img1.jpg", "img2.png"],
+    outputFormat: "avif",
   });
-  
+
   // Real-time progress via WebSocket
-  job.on('progress', (data) => {
+  job.on("progress", (data) => {
     console.log(`Progress: ${data.completed}/${data.total}`);
   });
-  
+
   await job.waitForCompletion();
 }
 ```
@@ -551,7 +555,7 @@ async function batchConvert() {
 
 ```bash
 # Convert image via API
-curl -X POST http://localhost:8080/api/v1/convert \
+curl -X POST http://localhost:8000/api/v1/convert \
   -F "file=@photo.jpg" \
   -F "output_format=webp" \
   -F "quality=85" \
@@ -564,14 +568,14 @@ import requests
 
 with open('photo.jpg', 'rb') as f:
     response = requests.post(
-        'http://localhost:8080/api/v1/convert',
+        'http://localhost:8000/api/v1/convert',
         files={'file': f},
         data={
             'output_format': 'webp',
             'quality': 85
         }
     )
-    
+
 with open('output.webp', 'wb') as f:
     f.write(response.content)
 ```
@@ -664,13 +668,13 @@ npm run test:ui               # Interactive UI
 
 ### Test Coverage
 
-| Component | Coverage | Status |
-|-----------|----------|--------|
-| Backend Core | 92% | ✅ Excellent |
-| API Routes | 88% | ✅ Good |
-| Security Module | 95% | ✅ Excellent |
-| Frontend UI | 85% | ✅ Good |
-| CLI | 78% | 🔄 Improving |
+| Component       | Coverage | Status       |
+| --------------- | -------- | ------------ |
+| Backend Core    | 92%      | ✅ Excellent |
+| API Routes      | 88%      | ✅ Good      |
+| Security Module | 95%      | ✅ Excellent |
+| Frontend UI     | 85%      | ✅ Good      |
+| CLI             | 78%      | 🔄 Improving |
 
 ---
 
@@ -718,7 +722,7 @@ npm run test:ui               # Interactive UI
 </tbody>
 </table>
 
-*Tested on: Intel i7-10700K, 16GB RAM, Ubuntu 22.04*
+_Tested on: Intel i7-10700K, 16GB RAM, Ubuntu 22.04_
 
 ---
 
@@ -781,9 +785,10 @@ npm run format        # JS/CSS formatting
 Create `.env` files for configuration:
 
 **Backend (.env)**
+
 ```env
 # API Configuration
-API_PORT=8080
+API_PORT=8000
 API_HOST=0.0.0.0
 ENV=development
 
@@ -803,10 +808,11 @@ LOG_DIR=./logs
 ```
 
 **Frontend (.env)**
+
 ```env
 # API Connection
 VITE_API_HOST=localhost
-VITE_API_PORT=8080
+VITE_API_PORT=8000
 
 # Features
 VITE_ENABLE_BATCH=true
@@ -847,9 +853,9 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 
 ### API Documentation
 
-- **Swagger UI**: http://localhost:8080/api/docs
-- **ReDoc**: http://localhost:8080/api/redoc
-- **OpenAPI Schema**: http://localhost:8080/api/openapi.json
+- **Swagger UI**: http://localhost:8000/api/docs
+- **ReDoc**: http://localhost:8000/api/redoc
+- **OpenAPI Schema**: http://localhost:8000/api/openapi.json
 
 ### Guides & Tutorials
 
@@ -865,6 +871,7 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 ## 🗺️ Roadmap
 
 ### Version 1.0 (Current)
+
 - ✅ Core conversion functionality
 - ✅ Web interface
 - ✅ CLI tool
@@ -874,6 +881,7 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 - ✅ AI content detection
 
 ### Version 1.1 (Q2 2025)
+
 - 🔄 JavaScript/TypeScript SDK
 - 🔄 Go SDK
 - 🔄 WebAssembly support
@@ -881,6 +889,7 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 - 🔄 Advanced presets
 
 ### Version 2.0 (Q3 2025)
+
 - 📋 RAW format support
 - 📋 HDR image handling
 - 📋 Video format conversion
@@ -888,6 +897,7 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 - 📋 Mobile applications
 
 ### Future Considerations
+
 - 🔮 Blockchain verification
 - 🔮 Distributed processing
 - 🔮 AI upscaling

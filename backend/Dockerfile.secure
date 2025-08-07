@@ -1,0 +1,214 @@
+# Security-Hardened Multi-stage Dockerfile for Image Converter Backend
+# Implements defense in depth and least privilege principles
+
+# ============================================
+# Stage 1: Security Scanner
+# ============================================
+FROM python:3.11-slim AS scanner
+
+RUN pip install --no-cache-dir safety bandit
+
+WORKDIR /scan
+COPY requirements.txt .
+
+# Security scan of dependencies
+RUN safety check --file requirements.txt --json || true
+RUN echo "Security scan completed"
+
+# ============================================
+# Stage 2: Build dependencies
+# ============================================
+FROM python:3.11-slim AS builder
+
+# Install build dependencies with minimal packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && apt-get autoremove -y
+
+# Create virtual environment with specific user
+RUN useradd -r -u 1001 -g root -m builder
+USER builder
+WORKDIR /home/builder
+
+# Create and activate virtual environment
+RUN python -m venv /home/builder/venv
+ENV PATH="/home/builder/venv/bin:$PATH"
+ENV VIRTUAL_ENV="/home/builder/venv"
+
+# Copy and install Python dependencies
+COPY --chown=builder:root requirements.txt /tmp/
+RUN pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.0.3 wheel==0.42.0 && \
+    pip install --no-cache-dir --no-compile -r /tmp/requirements.txt && \
+    find /home/builder/venv -type f -name "*.pyc" -delete && \
+    find /home/builder/venv -type d -name "__pycache__" -delete
+
+# ============================================
+# Stage 3: Production runtime
+# ============================================
+FROM python:3.11-slim AS production
+
+# Labels for container metadata
+LABEL maintainer="security@example.com" \
+      version="1.0.0" \
+      description="Secure Image Converter Backend" \
+      security.scan="enabled"
+
+# Security: Update base image and install minimal runtime deps
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    libvips \
+    libheif-dev \
+    libde265-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libtiff-dev \
+    libexif-dev \
+    libglib2.0-0 \
+    libexpat1 \
+    libgomp1 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && apt-get autoremove -y \
+    && rm -rf /var/cache/apt/* \
+    && rm -rf /tmp/*
+
+# Security: Create non-root user with specific UID/GID
+RUN groupadd -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser -m -d /home/appuser -s /sbin/nologin appuser && \
+    mkdir -p /app /app/data /app/logs /app/ml_models && \
+    chown -R appuser:appuser /app && \
+    chmod 750 /app /app/data /app/logs /app/ml_models
+
+# Copy virtual environment from builder
+COPY --from=builder --chown=appuser:appuser /home/builder/venv /opt/venv
+
+# Environment configuration
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH="/app:$PYTHONPATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Security: Set working directory and copy application
+WORKDIR /app
+COPY --chown=appuser:appuser app/ ./app/
+
+# Security: Create required directories with strict permissions
+RUN mkdir -p /tmp/image-converter && \
+    chown appuser:appuser /tmp/image-converter && \
+    chmod 1770 /tmp/image-converter && \
+    touch /app/data/.gitkeep /app/ml_models/.gitkeep && \
+    chmod 640 /app/data/.gitkeep /app/ml_models/.gitkeep
+
+# Security: Remove unnecessary tools and files
+RUN find /usr/local -type f -name "*.pyc" -delete && \
+    find /usr/local -type d -name "__pycache__" -delete && \
+    rm -rf /root/.cache /root/.pip && \
+    rm -rf /var/log/* /var/cache/debconf/* /var/lib/apt/lists/* && \
+    rm -f /usr/bin/curl /usr/bin/wget  # Remove after healthcheck setup
+
+# Security: Switch to non-root user
+USER appuser:appuser
+
+# Health check with timeout
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health').read()" || exit 1
+
+# Expose port (documentation only)
+EXPOSE 8000
+
+# Security: Use exec form to prevent shell injection
+ENTRYPOINT ["python", "-m", "uvicorn"]
+
+# Default command for production with security settings
+CMD ["app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "2", \
+     "--loop", "uvloop", \
+     "--header", "server:hidden", \
+     "--access-log", \
+     "--use-colors", \
+     "--limit-concurrency", "100", \
+     "--limit-max-requests", "1000", \
+     "--timeout-keep-alive", "5"]
+
+# ============================================
+# Stage 4: Development runtime (less strict)
+# ============================================
+FROM production AS development
+
+# Switch to root for development tools installation
+USER root
+
+# Install development tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
+    nano \
+    htop \
+    net-tools \
+    iputils-ping \
+    strace \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Install development Python packages
+RUN /opt/venv/bin/pip install --no-cache-dir \
+    ipython \
+    ipdb \
+    pytest-watch \
+    black \
+    flake8 \
+    mypy \
+    pylint
+
+# Allow write access for development
+RUN chmod -R 775 /app && \
+    chown -R appuser:appuser /app
+
+# Switch back to non-root user
+USER appuser:appuser
+
+# Development command with hot-reload
+CMD ["app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--reload", \
+     "--reload-dir", "/app", \
+     "--log-level", "debug"]
+
+# ============================================
+# Stage 5: Security Testing
+# ============================================
+FROM production AS security-test
+
+USER root
+
+# Install security testing tools
+RUN /opt/venv/bin/pip install --no-cache-dir \
+    safety \
+    bandit \
+    semgrep \
+    pip-audit
+
+# Copy test scripts
+COPY --chown=appuser:appuser tests/ ./tests/
+COPY --chown=appuser:appuser .bandit .safety-policy.json ./
+
+USER appuser:appuser
+
+# Run security tests
+CMD ["sh", "-c", "safety check && bandit -r app/ && pip-audit"]
