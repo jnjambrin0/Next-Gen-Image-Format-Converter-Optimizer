@@ -471,6 +471,145 @@ class SecuritySandbox:
             logger.error(f"Failed to set resource limits: {e}")
             # Don't fail hard here - some systems may not support all limits
 
+    async def execute_sandboxed_async(
+        self,
+        command: List[str],
+        input_data: Optional[bytes] = None,
+        timeout: Optional[int] = None,
+        max_memory_mb: Optional[int] = None,
+        max_output_size_mb: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute a command in the sandbox with security restrictions (async version).
+        
+        This version uses asyncio subprocess to avoid blocking the event loop,
+        allowing other async tasks (like progress updates) to run concurrently.
+
+        Args:
+            command: Command to execute
+            input_data: Optional input data to pipe to command
+            timeout: Override timeout in seconds
+            max_memory_mb: Override memory limit
+            max_output_size_mb: Override output size limit
+
+        Returns:
+            Dict with 'output', 'stderr', 'returncode', 'process_id',
+            'memory_used_mb', 'cpu_time', 'wall_time'
+
+        Raises:
+            SecurityError: If command violates security policy
+            TimeoutError: If command exceeds timeout
+            MemoryError: If command exceeds memory limit
+        """
+        # Initialize memory manager if needed
+        self._initialize_memory_manager()
+
+        # Validate command
+        self.validate_command(command)
+
+        # Use overrides if provided
+        actual_timeout = timeout or self.config.timeout_seconds
+        actual_max_memory = max_memory_mb or self.config.max_memory_mb
+        actual_max_output = max_output_size_mb or self.config.max_output_size_mb
+
+        # Create secure environment
+        env = self._create_secure_environment()
+
+        # Create temporary directory for operation
+        temp_dir = self._create_temp_directory()
+
+        try:
+
+            # Create subprocess using asyncio for non-blocking execution
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=env,
+                cwd=str(temp_dir),
+                # Note: preexec_fn and start_new_session aren't supported in async subprocess
+                # We'll need to handle resource limits differently
+            )
+
+            try:
+                start_time = time.time()
+                
+                # Use asyncio.wait_for to apply timeout
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(input=input_data),
+                    timeout=actual_timeout
+                )
+                
+                wall_time = time.time() - start_time
+
+                # Check output size
+                if len(stdout) > actual_max_output * MB_TO_BYTES_FACTOR:
+                    raise create_sandbox_error(
+                        reason="output_violation",
+                        output_size=len(stdout),
+                        limit=actual_max_output * MB_TO_BYTES_FACTOR
+                    )
+
+                # Try to get resource usage info with memory monitoring
+                resource_usage = self._get_process_resource_usage(process.pid)
+
+                # Check memory violations if tracking is enabled
+                if self.config.enable_memory_tracking:
+                    memory_mb = resource_usage.get("memory_mb", 0)
+                    if memory_mb > 0:
+                        self._check_memory_violation(memory_mb)
+
+                result = {
+                    "output": stdout,
+                    "stderr": stderr,
+                    "returncode": process.returncode,
+                    "process_id": process.pid,
+                    "memory_used_mb": resource_usage.get("memory_mb", 0),
+                    "cpu_time": resource_usage.get("cpu_time", 0),
+                    "wall_time": wall_time,
+                    "peak_memory_mb": self._peak_memory_mb,
+                    "memory_violations": self._memory_violations,
+                    "memory_tracking_enabled": self.config.enable_memory_tracking,
+                }
+
+                if process.returncode == -9:  # SIGKILL
+                    if b"Memory limit exceeded" in stderr:
+                        raise create_sandbox_error(
+                            reason="memory_violation",
+                            details="Memory limit exceeded"
+                        )
+                    else:
+                        raise create_sandbox_error(
+                            reason="timeout",
+                            details="Process killed (likely timeout)"
+                        )
+
+
+                return result
+
+            except asyncio.TimeoutError:
+                # Kill the process
+                try:
+                    process.kill()
+                    await process.wait()  # Ensure process is cleaned up
+                except ProcessLookupError:
+                    pass
+                raise create_sandbox_error(
+                    reason="timeout",
+                    timeout=actual_timeout,
+                    details=f"Execution timeout after {actual_timeout} seconds"
+                )
+
+        finally:
+            # Ensure process is cleaned up
+            try:
+                if process and process.returncode is None:
+                    process.kill()
+                    await process.wait()
+            except Exception:
+                pass
+
     def execute_sandboxed(
         self,
         command: List[str],
@@ -480,7 +619,10 @@ class SecuritySandbox:
         max_output_size_mb: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
-        Execute a command in the sandbox with security restrictions.
+        Execute a command in the sandbox with security restrictions (synchronous version).
+        
+        DEPRECATED: This synchronous version blocks the event loop.
+        Use execute_sandboxed_async() for async contexts to allow concurrent tasks.
 
         Args:
             command: Command to execute

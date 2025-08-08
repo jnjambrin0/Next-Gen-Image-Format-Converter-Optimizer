@@ -170,6 +170,106 @@ class PresetService:
             presets = query.all()
             return [self._preset_to_response(preset) for preset in presets]
     
+    async def list_presets_advanced(
+        self,
+        include_builtin: bool = True,
+        search: Optional[str] = None,
+        format_filter: Optional[str] = None,
+        sort_by: str = "name",
+        sort_order: str = "asc",
+        limit: Optional[int] = None,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """List presets with advanced filtering, search, and pagination.
+        
+        Args:
+            include_builtin: Whether to include built-in presets
+            search: Search term for name/description
+            format_filter: Filter by output format in settings
+            sort_by: Field to sort by (name, created_at, updated_at, usage_count)
+            sort_order: Sort direction (asc, desc)
+            limit: Maximum number of presets to return
+            offset: Number of presets to skip
+            
+        Returns:
+            Dictionary with presets and pagination metadata
+        """
+        with self.SessionLocal() as session:
+            query = session.query(UserPreset)
+            
+            # Filter by built-in status
+            if not include_builtin:
+                query = query.filter_by(is_builtin=False)
+            
+            # Search in name and description
+            if search:
+                search_term = f"%{search}%"
+                from sqlalchemy import or_
+                query = query.filter(
+                    or_(
+                        UserPreset.name.ilike(search_term),
+                        UserPreset.description.ilike(search_term)
+                    )
+                )
+            
+            # Filter by output format in JSON settings
+            if format_filter:
+                # Use JSON extraction for SQLite
+                # SQLite stores JSON as text, so we use LIKE pattern matching
+                format_pattern = f'%"output_format": "{format_filter}"%'
+                query = query.filter(UserPreset.settings.like(format_pattern))
+            
+            # Get total count before pagination
+            total_count = query.count()
+            
+            # Apply sorting
+            if sort_by == "name":
+                if sort_order == "desc":
+                    query = query.order_by(UserPreset.name.desc())
+                else:
+                    query = query.order_by(UserPreset.name)
+            elif sort_by == "created_at":
+                if sort_order == "desc":
+                    query = query.order_by(UserPreset.created_at.desc())
+                else:
+                    query = query.order_by(UserPreset.created_at)
+            elif sort_by == "updated_at":
+                if sort_order == "desc":
+                    query = query.order_by(UserPreset.updated_at.desc())
+                else:
+                    query = query.order_by(UserPreset.updated_at)
+            elif sort_by == "usage_count":
+                # For now, sort by name as usage_count is not tracked
+                # This maintains API compatibility
+                if sort_order == "desc":
+                    query = query.order_by(UserPreset.name.desc())
+                else:
+                    query = query.order_by(UserPreset.name)
+            
+            # Apply pagination
+            if limit:
+                query = query.limit(limit)
+            query = query.offset(offset)
+            
+            # Execute query
+            presets = query.all()
+            preset_responses = [self._preset_to_response(preset) for preset in presets]
+            
+            # Calculate pagination metadata
+            page_size = limit if limit else total_count
+            current_page = (offset // page_size) + 1 if page_size > 0 else 1
+            total_pages = (total_count + page_size - 1) // page_size if page_size > 0 else 1
+            
+            return {
+                "presets": preset_responses,
+                "total": total_count,
+                "page": current_page,
+                "page_size": page_size,
+                "total_pages": total_pages,
+                "has_next": (offset + page_size) < total_count if limit else False,
+                "has_previous": offset > 0
+            }
+    
     async def update_preset(self, preset_id: str, update_data: PresetUpdate) -> Optional[PresetResponse]:
         """Update an existing preset.
         

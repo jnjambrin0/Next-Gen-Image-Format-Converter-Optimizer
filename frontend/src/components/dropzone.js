@@ -195,12 +195,13 @@ export class DropZone {
     const items = []
 
     // Convert FileList to array of items
-    if (fileList instanceof DataTransferItemList) {
+    // Check if DataTransferItemList exists (not available in all environments like jsdom)
+    if (typeof DataTransferItemList !== 'undefined' && fileList instanceof DataTransferItemList) {
       for (let i = 0; i < fileList.length; i++) {
         items.push(fileList[i])
       }
     } else {
-      // Regular FileList
+      // Regular FileList or fallback
       for (let i = 0; i < fileList.length; i++) {
         files.push(fileList[i])
       }

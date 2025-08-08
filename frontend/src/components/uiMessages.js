@@ -82,3 +82,37 @@ export function createSuccessMessage(fileName, fileSize) {
 
   return container
 }
+
+/**
+ * Creates a batch success message element
+ * @param {string} message - Success message to display
+ * @returns {HTMLElement} The message element
+ */
+export function createBatchSuccessMessage(message) {
+  const container = document.createElement('div')
+  container.className =
+    'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start'
+
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  icon.setAttribute('class', 'w-5 h-5 text-green-400 mr-3 flex-shrink-0 mt-0.5')
+  icon.setAttribute('fill', 'currentColor')
+  icon.setAttribute('viewBox', '0 0 20 20')
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  path.setAttribute('fill-rule', 'evenodd')
+  path.setAttribute(
+    'd',
+    'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+  )
+  path.setAttribute('clip-rule', 'evenodd')
+  icon.appendChild(path)
+
+  const content = document.createElement('div')
+  content.className = 'font-medium'
+  content.textContent = sanitizeText(message)
+
+  container.appendChild(icon)
+  container.appendChild(content)
+
+  return container
+}

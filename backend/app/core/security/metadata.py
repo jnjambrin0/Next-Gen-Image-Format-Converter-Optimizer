@@ -1,6 +1,8 @@
 """Metadata stripping module for privacy protection."""
 
+import asyncio
 import io
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional, Set, Tuple
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
@@ -8,6 +10,9 @@ import structlog
 import piexif
 
 logger = structlog.get_logger()
+
+# Thread pool for blocking PIL operations to avoid blocking the event loop
+_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="pil_worker")
 
 
 class MetadataStripper:
@@ -22,6 +27,28 @@ class MetadataStripper:
     - Embedded thumbnails removal
     - Format-specific metadata handling
     """
+
+    async def _save_image_async(self, image: Image.Image, format: str, **save_kwargs) -> bytes:
+        """
+        Save image to bytes in thread pool to avoid blocking event loop.
+        
+        Args:
+            image: PIL Image object
+            format: Output format
+            **save_kwargs: Additional arguments for image.save()
+            
+        Returns:
+            Saved image as bytes
+        """
+        loop = asyncio.get_event_loop()
+        
+        def save_sync():
+            output_buffer = io.BytesIO()
+            image.save(output_buffer, format=format, **save_kwargs)
+            output_buffer.seek(0)
+            return output_buffer.read()
+        
+        return await loop.run_in_executor(_executor, save_sync)
 
     # GPS tags that should always be removed unless explicitly preserved
     GPS_TAGS = {
@@ -140,8 +167,12 @@ class MetadataStripper:
         }
 
         try:
-            # Load image
-            image = Image.open(io.BytesIO(image_data))
+            # Load image in thread pool to avoid blocking event loop
+            loop = asyncio.get_event_loop()
+            image = await loop.run_in_executor(
+                _executor,
+                lambda: Image.open(io.BytesIO(image_data))
+            )
 
             # Check what metadata exists
             metadata_summary.update(self._analyze_metadata(image))
@@ -293,10 +324,8 @@ class MetadataStripper:
                 if self._analyze_metadata(image)["had_gps"]:
                     summary["gps_removed"] = True
 
-            # Save image with modified metadata
-            output_buffer = io.BytesIO()
+            # Prepare save kwargs
             save_kwargs = {
-                "format": format,
                 "optimize": True,
                 "progressive": format == "JPEG",
             }
@@ -314,10 +343,9 @@ class MetadataStripper:
             if "iptc" in image.info and not preserve_metadata:
                 summary["metadata_removed"].append("IPTC")
 
-            image.save(output_buffer, **save_kwargs)
-
-            output_buffer.seek(0)
-            return output_buffer.read(), summary
+            # Use async save to avoid blocking event loop
+            saved_data = await self._save_image_async(image, format, **save_kwargs)
+            return saved_data, summary
 
         except Exception as e:
             logger.error(f"Error stripping JPEG/TIFF metadata: {e}")
@@ -343,8 +371,7 @@ class MetadataStripper:
                 if key not in summary["metadata_removed"]:
                     summary["metadata_removed"].append(f"text:{key}")
 
-        output_buffer = io.BytesIO()
-        save_kwargs = {"format": "PNG", "optimize": True}
+        save_kwargs = {"optimize": True}
 
         if preserve_metadata:
             # Keep some metadata
@@ -368,10 +395,9 @@ class MetadataStripper:
                 if key in image.info and key not in summary["metadata_removed"]:
                     summary["metadata_removed"].append(key)
 
-        image.save(output_buffer, **save_kwargs)
-
-        output_buffer.seek(0)
-        return output_buffer.read(), summary
+        # Use async save to avoid blocking event loop
+        saved_data = await self._save_image_async(image, "PNG", **save_kwargs)
+        return saved_data, summary
 
     async def _strip_webp_metadata(
         self, image: Image.Image, preserve_metadata: bool
@@ -383,8 +409,7 @@ class MetadataStripper:
         has_exif = "exif" in image.info
         has_xmp = "xmp" in image.info
         
-        output_buffer = io.BytesIO()
-        save_kwargs = {"format": "WEBP", "optimize": True}
+        save_kwargs = {"optimize": True}
 
         # WebP can have EXIF and XMP
         if preserve_metadata:
@@ -403,10 +428,9 @@ class MetadataStripper:
                 summary["metadata_removed"].append("xmp")
             # Don't pass any metadata to save_kwargs
 
-        image.save(output_buffer, **save_kwargs)
-
-        output_buffer.seek(0)
-        return output_buffer.read(), summary
+        # Use async save to avoid blocking event loop
+        saved_data = await self._save_image_async(image, "WEBP", **save_kwargs)
+        return saved_data, summary
 
     async def _strip_heif_avif_metadata(
         self, image: Image.Image, format: str, preserve_metadata: bool
@@ -427,9 +451,7 @@ class MetadataStripper:
             )
             image = rgb_image
 
-        output_buffer = io.BytesIO()
         save_kwargs = {
-            "format": format if format != "JPG" else "JPEG",
             "optimize": True,
         }
 
@@ -438,10 +460,9 @@ class MetadataStripper:
             save_kwargs["quality"] = 85
             save_kwargs["progressive"] = True
 
-        image.save(output_buffer, **save_kwargs)
-
-        output_buffer.seek(0)
-        return output_buffer.read()
+        # Use async save to avoid blocking event loop
+        format_name = format if format != "JPG" else "JPEG"
+        return await self._save_image_async(image, format_name, **save_kwargs)
 
     def get_metadata_info(self, image_data: bytes, format: str) -> Dict[str, Any]:
         """

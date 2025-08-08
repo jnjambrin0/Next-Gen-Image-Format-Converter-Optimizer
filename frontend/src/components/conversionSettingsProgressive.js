@@ -19,6 +19,7 @@ export class ConversionSettingsProgressive {
     this.qualitySlider = null
     this.progressiveUI = null
     this.settingsGroups = null
+    this.eventHandlers = new Map() // Track event handlers for cleanup
     this.settings = {
       outputFormat: 'webp',
       quality: 85,
@@ -321,8 +322,14 @@ export class ConversionSettingsProgressive {
    */
   setupCustomization() {
     const customizeBtn = this.element.querySelector('#customize-ui')
-    customizeBtn.addEventListener('click', () => {
+    const customizeHandler = () => {
       this.showCustomizationModal()
+    }
+    customizeBtn.addEventListener('click', customizeHandler)
+    this.eventHandlers.set('customize-click', {
+      element: customizeBtn,
+      event: 'click',
+      handler: customizeHandler,
     })
   }
 
@@ -460,7 +467,7 @@ export class ConversionSettingsProgressive {
   attachBasicEventListeners(container) {
     const formatSelect = container.querySelector('#output-format')
 
-    formatSelect.addEventListener('change', (e) => {
+    const formatHandler = (e) => {
       this.settings.outputFormat = e.target.value
       this.updateConversionInfo()
 
@@ -470,6 +477,13 @@ export class ConversionSettingsProgressive {
 
       this.notifyChange()
       this.saveLastUsedSettings()
+    }
+
+    formatSelect.addEventListener('change', formatHandler)
+    this.eventHandlers.set('format-change', {
+      element: formatSelect,
+      event: 'change',
+      handler: formatHandler,
     })
   }
 
@@ -482,19 +496,31 @@ export class ConversionSettingsProgressive {
     const preserveMetaCheckbox = elements.preserveMeta.querySelector('#preserve-metadata')
     const removeAllMetaCheckbox = elements.removeAllMeta.querySelector('#remove-all-metadata')
 
-    losslessCheckbox.addEventListener('change', (e) => {
+    const losslessHandler = (e) => {
       this.settings.losslessCompression = e.target.checked
       this.notifyChange()
       this.saveLastUsedSettings()
+    }
+    losslessCheckbox.addEventListener('change', losslessHandler)
+    this.eventHandlers.set('lossless-change', {
+      element: losslessCheckbox,
+      event: 'change',
+      handler: losslessHandler,
     })
 
-    regionOptCheckbox.addEventListener('change', (e) => {
+    const regionOptHandler = (e) => {
       this.settings.enableRegionOptimization = e.target.checked
       this.notifyChange()
       this.saveLastUsedSettings()
+    }
+    regionOptCheckbox.addEventListener('change', regionOptHandler)
+    this.eventHandlers.set('region-opt-change', {
+      element: regionOptCheckbox,
+      event: 'change',
+      handler: regionOptHandler,
     })
 
-    preserveMetaCheckbox.addEventListener('change', (e) => {
+    const preserveMetaHandler = (e) => {
       this.settings.preserveMetadata = e.target.checked
       if (e.target.checked) {
         removeAllMetaCheckbox.checked = false
@@ -502,9 +528,15 @@ export class ConversionSettingsProgressive {
       }
       this.notifyChange()
       this.saveLastUsedSettings()
+    }
+    preserveMetaCheckbox.addEventListener('change', preserveMetaHandler)
+    this.eventHandlers.set('preserve-meta-change', {
+      element: preserveMetaCheckbox,
+      event: 'change',
+      handler: preserveMetaHandler,
     })
 
-    removeAllMetaCheckbox.addEventListener('change', (e) => {
+    const removeAllMetaHandler = (e) => {
       this.settings.removeAllMetadata = e.target.checked
       if (e.target.checked) {
         preserveMetaCheckbox.checked = false
@@ -512,6 +544,12 @@ export class ConversionSettingsProgressive {
       }
       this.notifyChange()
       this.saveLastUsedSettings()
+    }
+    removeAllMetaCheckbox.addEventListener('change', removeAllMetaHandler)
+    this.eventHandlers.set('remove-all-meta-change', {
+      element: removeAllMetaCheckbox,
+      event: 'change',
+      handler: removeAllMetaHandler,
     })
   }
 
@@ -724,5 +762,36 @@ export class ConversionSettingsProgressive {
 
     this.updateConversionInfo()
     this.notifyChange()
+  }
+
+  /**
+   * Clean up event listeners and components
+   */
+  destroy() {
+    // Remove all event listeners
+    this.eventHandlers.forEach(({ element, event, handler }) => {
+      element?.removeEventListener(event, handler)
+    })
+    this.eventHandlers.clear()
+
+    // Destroy child components
+    if (this.presetSelector?.destroy) {
+      this.presetSelector.destroy()
+    }
+    if (this.qualitySlider?.destroy) {
+      this.qualitySlider.destroy()
+    }
+    if (this.settingsGroups?.destroy) {
+      this.settingsGroups.destroy()
+    }
+
+    // Clear references
+    this.element = null
+    this.presetSelector = null
+    this.qualitySlider = null
+    this.progressiveUI = null
+    this.settingsGroups = null
+    this.onChange = null
+    this.onTestConvert = null
   }
 }

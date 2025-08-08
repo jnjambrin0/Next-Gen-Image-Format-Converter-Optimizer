@@ -318,15 +318,46 @@ export class BatchQueueComponent {
   }
 
   createProgressBar(progress) {
+    const wrapper = document.createElement('div')
+    wrapper.className = 'mt-2'
+    
+    // Progress text
+    const progressText = document.createElement('div')
+    progressText.className = 'text-xs text-gray-600 mb-1'
+    progressText.textContent = `${Math.round(progress)}%`
+    
+    // Progress bar container
     const progressContainer = document.createElement('div')
-    progressContainer.className = 'w-full bg-gray-200 rounded-full h-2 mt-2'
+    progressContainer.className = 'w-full bg-gray-200 rounded-full h-2 relative overflow-hidden'
 
+    // Progress bar fill
     const progressBar = document.createElement('div')
-    progressBar.className = 'bg-blue-600 h-2 rounded-full transition-all duration-300'
+    progressBar.className = 'bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out'
     progressBar.style.width = `${progress}%`
+    
+    // Add pulsing animation if processing (between 0 and 100)
+    if (progress > 0 && progress < 100) {
+      progressBar.style.animation = 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+    }
 
     progressContainer.appendChild(progressBar)
-    return progressContainer
+    wrapper.appendChild(progressText)
+    wrapper.appendChild(progressContainer)
+    
+    // Add CSS animation if not already present
+    if (!document.querySelector('#batch-progress-animations')) {
+      const style = document.createElement('style')
+      style.id = 'batch-progress-animations'
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+      `
+      document.head.appendChild(style)
+    }
+    
+    return wrapper
   }
 
   createCancelIcon() {

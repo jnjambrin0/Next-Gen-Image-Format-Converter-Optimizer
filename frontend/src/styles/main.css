@@ -98,6 +98,93 @@
     @apply inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors;
   }
 
+  /* Unified Layout Styles */
+  .unified-layout-container {
+    @apply max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8;
+  }
+
+  .unified-layout-wrapper {
+    @apply flex gap-8;
+    min-height: calc(100vh - 120px);
+  }
+
+  .unified-content-area {
+    @apply flex-1;
+    max-width: calc(100% - 352px); /* Account for sidebar width + gap */
+  }
+
+  .unified-settings-sidebar {
+    @apply bg-white rounded-lg shadow-md;
+    width: 320px;
+    position: sticky;
+    top: 1rem;
+    height: fit-content;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  /* Unified Settings Panel Styles */
+  .unified-settings-panel {
+    @apply p-6 space-y-4;
+  }
+
+  .unified-settings-panel[data-mode='batch'] .settings-header {
+    @apply border-l-4 border-blue-500 pl-4;
+  }
+
+  .settings-header {
+    @apply mb-4;
+  }
+
+  .settings-section {
+    @apply space-y-3;
+  }
+
+  .setting-group {
+    @apply space-y-2;
+  }
+
+  .setting-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  .setting-control {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  .setting-checkbox {
+    @apply flex items-center;
+  }
+
+  .setting-description {
+    @apply text-xs text-gray-500 mt-1;
+  }
+
+  .settings-summary {
+    @apply bg-gray-50 rounded-lg p-3 mt-4;
+  }
+
+  .toggle-icon {
+    @apply transition-transform duration-200;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .unified-layout-wrapper {
+      @apply flex-col;
+    }
+
+    .unified-content-area {
+      max-width: 100%;
+    }
+
+    .unified-settings-sidebar {
+      width: 100%;
+      position: static;
+      margin-top: 1rem;
+    }
+  }
+
   /* Customization modal */
   .customization-modal {
     @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50;

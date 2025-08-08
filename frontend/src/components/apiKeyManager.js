@@ -1,21 +1,21 @@
-import { authApi } from '../services/authApi.js';
+import { authApi } from '../services/authApi.js'
 
 export class ApiKeyManager {
-    constructor() {
-        this.apiKeys = [];
-        this.isVisible = false;
-        this.eventHandlers = new Map();
-        this.container = null;
+  constructor() {
+    this.apiKeys = []
+    this.isVisible = false
+    this.eventHandlers = new Map()
+    this.container = null
+  }
+
+  render() {
+    if (this.container) {
+      this.container.remove()
     }
 
-    render() {
-        if (this.container) {
-            this.container.remove();
-        }
-
-        this.container = document.createElement('div');
-        this.container.className = 'api-key-manager';
-        this.container.innerHTML = `
+    this.container = document.createElement('div')
+    this.container.className = 'api-key-manager'
+    this.container.innerHTML = `
             <div class="modal-overlay" style="display: ${this.isVisible ? 'flex' : 'none'}">
                 <div class="modal-content api-key-modal">
                     <div class="modal-header">
@@ -88,26 +88,26 @@ export class ApiKeyManager {
                     </div>
                 </div>
             </div>
-        `;
+        `
 
-        // Add styles
-        this.addStyles();
+    // Add styles
+    this.addStyles()
 
-        // Attach event handlers
-        this.attachEventHandlers();
+    // Attach event handlers
+    this.attachEventHandlers()
 
-        document.body.appendChild(this.container);
-        return this.container;
+    document.body.appendChild(this.container)
+    return this.container
+  }
+
+  addStyles() {
+    if (document.getElementById('api-key-manager-styles')) {
+      return
     }
 
-    addStyles() {
-        if (document.getElementById('api-key-manager-styles')) {
-            return;
-        }
-
-        const styles = document.createElement('style');
-        styles.id = 'api-key-manager-styles';
-        styles.textContent = `
+    const styles = document.createElement('style')
+    styles.id = 'api-key-manager-styles'
+    styles.textContent = `
             .api-key-manager .modal-overlay {
                 position: fixed;
                 top: 0;
@@ -385,92 +385,106 @@ export class ApiKeyManager {
                 opacity: 0.6;
                 pointer-events: none;
             }
-        `;
+        `
 
-        document.head.appendChild(styles);
+    document.head.appendChild(styles)
+  }
+
+  attachEventHandlers() {
+    // Store handlers for cleanup
+    const handlers = new Map()
+
+    // Close modal handlers
+    const closeHandler = () => this.hide()
+    const closeButtons = this.container.querySelectorAll('.btn-close, .close-modal')
+    closeButtons.forEach((btn) => {
+      btn.addEventListener('click', closeHandler)
+      handlers.set(`close-${btn.className}`, {
+        element: btn,
+        event: 'click',
+        handler: closeHandler,
+      })
+    })
+
+    // Create API key form
+    const createForm = this.container.querySelector('.create-key-form')
+    const createFormHandler = (e) => this.handleCreateKey(e)
+    createForm.addEventListener('submit', createFormHandler)
+    handlers.set('create-form', {
+      element: createForm,
+      event: 'submit',
+      handler: createFormHandler,
+    })
+
+    // Usage stats button
+    const statsBtn = this.container.querySelector('.show-usage-stats')
+    const statsHandler = () => this.showUsageStats()
+    statsBtn.addEventListener('click', statsHandler)
+    handlers.set('stats-btn', { element: statsBtn, event: 'click', handler: statsHandler })
+
+    // New key modal handlers
+    const newKeyCloseButtons = this.container.querySelectorAll('.close-new-key')
+    const newKeyCloseHandler = () => this.hideNewKeyModal()
+    newKeyCloseButtons.forEach((btn) => {
+      btn.addEventListener('click', newKeyCloseHandler)
+      handlers.set(`new-key-close-${btn.className}`, {
+        element: btn,
+        event: 'click',
+        handler: newKeyCloseHandler,
+      })
+    })
+
+    // Copy button handler
+    const copyBtn = this.container.querySelector('.btn-copy')
+    const copyHandler = () => this.copyApiKey()
+    copyBtn.addEventListener('click', copyHandler)
+    handlers.set('copy-btn', { element: copyBtn, event: 'click', handler: copyHandler })
+
+    // Store all handlers for cleanup
+    this.eventHandlers = handlers
+  }
+
+  show() {
+    this.isVisible = true
+    if (!this.container) {
+      this.render()
+    } else {
+      this.container.querySelector('.modal-overlay').style.display = 'flex'
+    }
+    this.loadApiKeys()
+  }
+
+  hide() {
+    this.isVisible = false
+    if (this.container) {
+      this.container.querySelector('.modal-overlay').style.display = 'none'
+    }
+  }
+
+  async loadApiKeys() {
+    try {
+      const keysList = this.container.querySelector('.keys-list')
+      keysList.innerHTML = '<div class="loading">Loading API keys...</div>'
+
+      this.apiKeys = await authApi.listApiKeys()
+      this.renderApiKeysList()
+    } catch (error) {
+      console.error('Failed to load API keys:', error)
+      this.showError('Failed to load API keys. Please try again.')
+    }
+  }
+
+  renderApiKeysList() {
+    const keysList = this.container.querySelector('.keys-list')
+
+    if (this.apiKeys.length === 0) {
+      keysList.innerHTML = '<p>No API keys found. Create your first API key above.</p>'
+      return
     }
 
-    attachEventHandlers() {
-        // Store handlers for cleanup
-        const handlers = new Map();
-
-        // Close modal handlers
-        const closeHandler = () => this.hide();
-        const closeButtons = this.container.querySelectorAll('.btn-close, .close-modal');
-        closeButtons.forEach(btn => {
-            btn.addEventListener('click', closeHandler);
-            handlers.set(`close-${btn.className}`, { element: btn, event: 'click', handler: closeHandler });
-        });
-
-        // Create API key form
-        const createForm = this.container.querySelector('.create-key-form');
-        const createFormHandler = (e) => this.handleCreateKey(e);
-        createForm.addEventListener('submit', createFormHandler);
-        handlers.set('create-form', { element: createForm, event: 'submit', handler: createFormHandler });
-
-        // Usage stats button
-        const statsBtn = this.container.querySelector('.show-usage-stats');
-        const statsHandler = () => this.showUsageStats();
-        statsBtn.addEventListener('click', statsHandler);
-        handlers.set('stats-btn', { element: statsBtn, event: 'click', handler: statsHandler });
-
-        // New key modal handlers
-        const newKeyCloseButtons = this.container.querySelectorAll('.close-new-key');
-        const newKeyCloseHandler = () => this.hideNewKeyModal();
-        newKeyCloseButtons.forEach(btn => {
-            btn.addEventListener('click', newKeyCloseHandler);
-            handlers.set(`new-key-close-${btn.className}`, { element: btn, event: 'click', handler: newKeyCloseHandler });
-        });
-
-        // Copy button handler
-        const copyBtn = this.container.querySelector('.btn-copy');
-        const copyHandler = () => this.copyApiKey();
-        copyBtn.addEventListener('click', copyHandler);
-        handlers.set('copy-btn', { element: copyBtn, event: 'click', handler: copyHandler });
-
-        // Store all handlers for cleanup
-        this.eventHandlers = handlers;
-    }
-
-    show() {
-        this.isVisible = true;
-        if (!this.container) {
-            this.render();
-        } else {
-            this.container.querySelector('.modal-overlay').style.display = 'flex';
-        }
-        this.loadApiKeys();
-    }
-
-    hide() {
-        this.isVisible = false;
-        if (this.container) {
-            this.container.querySelector('.modal-overlay').style.display = 'none';
-        }
-    }
-
-    async loadApiKeys() {
-        try {
-            const keysList = this.container.querySelector('.keys-list');
-            keysList.innerHTML = '<div class="loading">Loading API keys...</div>';
-
-            this.apiKeys = await authApi.listApiKeys();
-            this.renderApiKeysList();
-        } catch (error) {
-            console.error('Failed to load API keys:', error);
-            this.showError('Failed to load API keys. Please try again.');
-        }
-    }
-
-    renderApiKeysList() {
-        const keysList = this.container.querySelector('.keys-list');
-        
-        if (this.apiKeys.length === 0) {
-            keysList.innerHTML = '<p>No API keys found. Create your first API key above.</p>';
-            return;
-        }
-
-        keysList.innerHTML = this.apiKeys.map(key => `
+    keysList.innerHTML = this.apiKeys
+      .map(
+        (key) => `
             <div class="api-key-item">
                 <div class="key-header">
                     <span class="key-name">${key.name || `Key ${key.id.substring(0, 8)}`}</span>
@@ -490,116 +504,117 @@ export class ApiKeyManager {
                     ${key.is_active ? `<button class="btn btn-danger" onclick="apiKeyManager.revokeKey('${key.id}')">Revoke</button>` : ''}
                 </div>
             </div>
-        `).join('');
-    }
+        `
+      )
+      .join('')
+  }
 
-    async handleCreateKey(event) {
-        event.preventDefault();
-        
-        try {
-            const form = event.target;
-            const formData = new FormData(form);
-            
-            const keyData = {
-                name: this.container.querySelector('#keyName').value.trim() || null,
-                rate_limit_override: parseInt(this.container.querySelector('#rateLimitOverride').value) || null,
-                expires_days: parseInt(this.container.querySelector('#expiresDays').value) || null
-            };
+  async handleCreateKey(event) {
+    event.preventDefault()
 
-            // Remove null values
-            Object.keys(keyData).forEach(key => {
-                if (keyData[key] === null || keyData[key] === '') {
-                    delete keyData[key];
-                }
-            });
+    try {
+      const form = event.target
 
-            form.classList.add('loading');
-            
-            const result = await authApi.createApiKey(keyData);
-            
-            // Show the new API key
-            this.showNewApiKey(result.api_key);
-            
-            // Clear form and reload keys list
-            form.reset();
-            this.loadApiKeys();
-            
-        } catch (error) {
-            console.error('Failed to create API key:', error);
-            this.showError('Failed to create API key. Please check your input and try again.');
-        } finally {
-            event.target.classList.remove('loading');
+      const keyData = {
+        name: this.container.querySelector('#keyName').value.trim() || null,
+        rate_limit_override:
+          parseInt(this.container.querySelector('#rateLimitOverride').value) || null,
+        expires_days: parseInt(this.container.querySelector('#expiresDays').value) || null,
+      }
+
+      // Remove null values
+      Object.keys(keyData).forEach((key) => {
+        if (keyData[key] === null || keyData[key] === '') {
+          delete keyData[key]
         }
+      })
+
+      form.classList.add('loading')
+
+      const result = await authApi.createApiKey(keyData)
+
+      // Show the new API key
+      this.showNewApiKey(result.api_key)
+
+      // Clear form and reload keys list
+      form.reset()
+      this.loadApiKeys()
+    } catch (error) {
+      console.error('Failed to create API key:', error)
+      this.showError('Failed to create API key. Please check your input and try again.')
+    } finally {
+      event.target.classList.remove('loading')
+    }
+  }
+
+  showNewApiKey(apiKey) {
+    const modal = this.container.querySelector('.new-key-modal')
+    const input = modal.querySelector('.api-key-value')
+    input.value = apiKey
+    modal.style.display = 'flex'
+  }
+
+  hideNewKeyModal() {
+    const modal = this.container.querySelector('.new-key-modal')
+    modal.style.display = 'none'
+    // Clear the key value for security
+    const input = modal.querySelector('.api-key-value')
+    input.value = ''
+  }
+
+  copyApiKey() {
+    const input = this.container.querySelector('.api-key-value')
+    input.select()
+    document.execCommand('copy')
+
+    const btn = this.container.querySelector('.btn-copy')
+    const originalText = btn.textContent
+    btn.textContent = 'Copied!'
+    setTimeout(() => {
+      btn.textContent = originalText
+    }, 2000)
+  }
+
+  async revokeKey(keyId) {
+    if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+      return
     }
 
-    showNewApiKey(apiKey) {
-        const modal = this.container.querySelector('.new-key-modal');
-        const input = modal.querySelector('.api-key-value');
-        input.value = apiKey;
-        modal.style.display = 'flex';
+    try {
+      await authApi.revokeApiKey(keyId)
+      this.showSuccess('API key revoked successfully.')
+      this.loadApiKeys()
+    } catch (error) {
+      console.error('Failed to revoke API key:', error)
+      this.showError('Failed to revoke API key. Please try again.')
     }
+  }
 
-    hideNewKeyModal() {
-        const modal = this.container.querySelector('.new-key-modal');
-        modal.style.display = 'none';
-        // Clear the key value for security
-        const input = modal.querySelector('.api-key-value');
-        input.value = '';
+  async showKeyUsage(keyId) {
+    try {
+      const usage = await authApi.getApiKeyUsage(keyId)
+      this.displayUsageStats(usage, `API Key ${keyId.substring(0, 8)} Usage`)
+    } catch (error) {
+      console.error('Failed to load usage stats:', error)
+      this.showError('Failed to load usage statistics. Please try again.')
     }
+  }
 
-    copyApiKey() {
-        const input = this.container.querySelector('.api-key-value');
-        input.select();
-        document.execCommand('copy');
-        
-        const btn = this.container.querySelector('.btn-copy');
-        const originalText = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => {
-            btn.textContent = originalText;
-        }, 2000);
+  async showUsageStats() {
+    try {
+      const usage = await authApi.getOverallUsage()
+      this.displayUsageStats(usage, 'Overall API Usage Statistics')
+    } catch (error) {
+      console.error('Failed to load usage stats:', error)
+      this.showError('Failed to load usage statistics. Please try again.')
     }
+  }
 
-    async revokeKey(keyId) {
-        if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
-            return;
-        }
+  displayUsageStats(usage, title) {
+    const section = this.container.querySelector('.usage-stats-section')
+    const content = section.querySelector('.usage-stats-content')
 
-        try {
-            await authApi.revokeApiKey(keyId);
-            this.showSuccess('API key revoked successfully.');
-            this.loadApiKeys();
-        } catch (error) {
-            console.error('Failed to revoke API key:', error);
-            this.showError('Failed to revoke API key. Please try again.');
-        }
-    }
-
-    async showKeyUsage(keyId) {
-        try {
-            const usage = await authApi.getApiKeyUsage(keyId);
-            this.displayUsageStats(usage, `API Key ${keyId.substring(0, 8)} Usage`);
-        } catch (error) {
-            console.error('Failed to load usage stats:', error);
-            this.showError('Failed to load usage statistics. Please try again.');
-        }
-    }
-
-    async showUsageStats() {
-        try {
-            const usage = await authApi.getOverallUsage();
-            this.displayUsageStats(usage, 'Overall API Usage Statistics');
-        } catch (error) {
-            console.error('Failed to load usage stats:', error);
-            this.showError('Failed to load usage statistics. Please try again.');
-        }
-    }
-
-    displayUsageStats(usage, title) {
-        const section = this.container.querySelector('.usage-stats-section');
-        const content = section.querySelector('.usage-stats-content');
-        
-        content.innerHTML = `
+    content.innerHTML = `
             <h4>${title} (Last ${usage.period_days} days)</h4>
             <div class="stats-summary">
                 <p><strong>Total Requests:</strong> ${usage.total_requests}</p>
@@ -613,9 +628,9 @@ export class ApiKeyManager {
                     <tr><th>Status Code</th><th>Count</th></tr>
                 </thead>
                 <tbody>
-                    ${Object.entries(usage.status_codes).map(([code, count]) => 
-                        `<tr><td>${code}</td><td>${count}</td></tr>`
-                    ).join('')}
+                    ${Object.entries(usage.status_codes)
+                      .map(([code, count]) => `<tr><td>${code}</td><td>${count}</td></tr>`)
+                      .join('')}
                 </tbody>
             </table>
             
@@ -626,58 +641,57 @@ export class ApiKeyManager {
                 </thead>
                 <tbody>
                     ${Object.entries(usage.endpoints)
-                        .sort(([,a], [,b]) => b - a)
-                        .slice(0, 10)
-                        .map(([endpoint, count]) => 
-                            `<tr><td>${endpoint}</td><td>${count}</td></tr>`
-                        ).join('')}
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 10)
+                      .map(([endpoint, count]) => `<tr><td>${endpoint}</td><td>${count}</td></tr>`)
+                      .join('')}
                 </tbody>
             </table>
-        `;
-        
-        section.style.display = 'block';
+        `
+
+    section.style.display = 'block'
+  }
+
+  showError(message) {
+    this.showMessage(message, 'error')
+  }
+
+  showSuccess(message) {
+    this.showMessage(message, 'success')
+  }
+
+  showMessage(message, type) {
+    // Remove existing messages
+    const existing = this.container.querySelectorAll('.error-message, .success-message')
+    existing.forEach((el) => el.remove())
+
+    const messageEl = document.createElement('div')
+    messageEl.className = `${type}-message`
+    messageEl.textContent = message
+
+    const modalBody = this.container.querySelector('.modal-body')
+    modalBody.insertBefore(messageEl, modalBody.firstChild)
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      messageEl.remove()
+    }, 5000)
+  }
+
+  destroy() {
+    // Clean up event listeners
+    this.eventHandlers.forEach(({ element, event, handler }) => {
+      element?.removeEventListener(event, handler)
+    })
+    this.eventHandlers.clear()
+
+    // Remove container
+    if (this.container) {
+      this.container.remove()
+      this.container = null
     }
-
-    showError(message) {
-        this.showMessage(message, 'error');
-    }
-
-    showSuccess(message) {
-        this.showMessage(message, 'success');
-    }
-
-    showMessage(message, type) {
-        // Remove existing messages
-        const existing = this.container.querySelectorAll('.error-message, .success-message');
-        existing.forEach(el => el.remove());
-
-        const messageEl = document.createElement('div');
-        messageEl.className = `${type}-message`;
-        messageEl.textContent = message;
-        
-        const modalBody = this.container.querySelector('.modal-body');
-        modalBody.insertBefore(messageEl, modalBody.firstChild);
-
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            messageEl.remove();
-        }, 5000);
-    }
-
-    destroy() {
-        // Clean up event listeners
-        this.eventHandlers.forEach(({ element, event, handler }) => {
-            element?.removeEventListener(event, handler);
-        });
-        this.eventHandlers.clear();
-
-        // Remove container
-        if (this.container) {
-            this.container.remove();
-            this.container = null;
-        }
-    }
+  }
 }
 
 // Global instance
-export const apiKeyManager = new ApiKeyManager();
+export const apiKeyManager = new ApiKeyManager()

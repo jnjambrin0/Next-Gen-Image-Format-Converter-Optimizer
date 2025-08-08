@@ -2,9 +2,9 @@ import { DropZone } from './components/dropzone.js'
 import { validateImageFile, formatFileSize } from './utils/validators.js'
 import { UIStateManager, UIStates } from './utils/uiState.js'
 import { createLoadingSpinner } from './components/loadingSpinner.js'
-import { createErrorMessage, createSuccessMessage } from './components/uiMessages.js'
+import { createErrorMessage, createSuccessMessage, createBatchSuccessMessage } from './components/uiMessages.js'
 import { createAppLayout } from './components/appLayout.js'
-import { UI_TIMING } from './config/constants.js'
+import { UI_TIMING, FEATURE_FLAGS } from './config/constants.js'
 import { convertImage, APIError, mapErrorCodeToMessage } from './services/api.js'
 import { createConversionResult } from './components/conversionResult.js'
 import { createComparisonViewer } from './components/comparisonViewer.js'
@@ -18,8 +18,11 @@ import { BatchPresetSelector } from './components/batchPresetSelector.js'
 import { WebSocketService } from './services/websocket.js'
 import { createBatchJob, getBatchStatus, downloadBatchResults } from './services/batchApi.js'
 
-// Conversion settings
+// Conversion settings - conditional import based on feature flag
 import { ConversionSettingsProgressive } from './components/conversionSettingsProgressive.js'
+import { UnifiedConversionSettings } from './components/unifiedConversionSettings.js'
+// Import refactored version with dynamic selection
+import { UnifiedConversionSettings as UnifiedConversionSettingsRefactored } from './components/unifiedConversionSettingsRefactored.js'
 import { KeyboardShortcuts } from './components/keyboardShortcuts.js'
 
 // API key management
@@ -35,14 +38,39 @@ export function initializeApp() {
   // Initialize UI state manager
   const uiStateManager = new UIStateManager()
 
-  // Initialize conversion settings with progressive disclosure
-  const conversionSettings = new ConversionSettingsProgressive()
+  // Initialize conversion settings based on feature flags
+  let conversionSettings
+  if (FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')) {
+    // Use the refactored version with smaller sub-components
+    conversionSettings = new UnifiedConversionSettingsRefactored(uiStateManager.getMode())
+  } else if (FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS')) {
+    // Use the original unified settings
+    conversionSettings = new UnifiedConversionSettings(uiStateManager.getMode())
+  } else {
+    // Fall back to progressive settings
+    conversionSettings = new ConversionSettingsProgressive()
+  }
   const settingsContainer = document.getElementById('conversionSettings')
 
   // Initialize keyboard shortcuts
   const keyboardShortcuts = new KeyboardShortcuts()
   keyboardShortcuts.init()
   KeyboardShortcuts.registerDefaults(keyboardShortcuts)
+
+  // Listen for mode changes if using unified settings (original or refactored)
+  if (
+    FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') ||
+    FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')
+  ) {
+    uiStateManager.onModeChange((newMode, _oldMode) => {
+      // UI mode changed - update relevant elements
+      // Update any UI elements that depend on mode
+      const mainContent = document.getElementById('mainContentArea')
+      if (mainContent) {
+        mainContent.setAttribute('data-mode', newMode)
+      }
+    })
+  }
 
   // Store current file for test conversions
   let currentFile = null
@@ -51,9 +79,8 @@ export function initializeApp() {
 
   conversionSettings
     .init(
-      (settings) => {
+      (_settings) => {
         // Settings updated - callback for future use
-        console.log('Settings updated:', settings)
       },
       async () => {
         // Handle test conversion
@@ -76,19 +103,19 @@ export function initializeApp() {
           // Show test results in quality slider
           conversionSettings.showTestResults(testBlob.blob.size)
 
-          // Clean up previous blob URLs
+          // Clean up previous blob URLs using the correct key-based method
           if (testBlobUrls.original) {
-            blobUrlManager.revokeUrl(testBlobUrls.original)
+            blobUrlManager.revokeUrl('test-original')
             testBlobUrls.original = null
           }
           if (testBlobUrls.converted) {
-            blobUrlManager.revokeUrl(testBlobUrls.converted)
+            blobUrlManager.revokeUrl('test-converted')
             testBlobUrls.converted = null
           }
 
-          // Create preview
-          const originalUrl = blobUrlManager.createUrl(currentFile)
-          const convertedUrl = blobUrlManager.createUrl(testBlob.blob)
+          // Create preview with proper key management
+          const originalUrl = blobUrlManager.createUrl(currentFile, 'test-original')
+          const convertedUrl = blobUrlManager.createUrl(testBlob.blob, 'test-converted')
 
           // Store URLs for cleanup
           testBlobUrls.original = originalUrl
@@ -112,13 +139,13 @@ export function initializeApp() {
                 testPreviewElement.remove()
                 testPreviewElement = null
               }
-              // Clean up blob URLs on close
+              // Clean up blob URLs on close using the correct key-based method
               if (testBlobUrls.original) {
-                blobUrlManager.revokeUrl(testBlobUrls.original)
+                blobUrlManager.revokeUrl('test-original')
                 testBlobUrls.original = null
               }
               if (testBlobUrls.converted) {
-                blobUrlManager.revokeUrl(testBlobUrls.converted)
+                blobUrlManager.revokeUrl('test-converted')
                 testBlobUrls.converted = null
               }
             },
@@ -195,30 +222,116 @@ export function initializeApp() {
   let websocketService = null
   let currentBatchJobId = null
 
+  /**
+   * Comprehensive application state reset function
+   * Ensures proper cleanup of all resources and returns UI to initial state
+   */
+  function resetApplicationState() {
+    // 1. Clean up all blob URLs to prevent memory leaks
+    blobUrlManager.revokeAll()
+
+    // 2. Clear test preview elements and URLs
+    if (testPreviewElement) {
+      testPreviewElement.remove()
+      testPreviewElement = null
+    }
+    testBlobUrls.original = null
+    testBlobUrls.converted = null
+
+    // 3. Clear conversion tracking variables
+    currentFile = null
+    lastConversionData = null
+    lastFileForRetry = null
+    conversionStartTime = null
+
+    // 4. Clear UI messages
+    const errorElement = document.getElementById('errorMessage')
+    const fileInfoElement = document.getElementById('fileInfo')
+    if (errorElement) {
+      errorElement.innerHTML = ''
+      errorElement.classList.add('hidden')
+    }
+    if (fileInfoElement) {
+      fileInfoElement.innerHTML = ''
+      fileInfoElement.classList.add('hidden')
+    }
+
+    // 5. Reset dropzone to initial state (don't destroy, it's reused)
+    dropzone.reset()
+
+    // 6. Reset UI state to IDLE
+    uiStateManager.setState(UIStates.IDLE)
+
+    // 7. Clear any batch processing components if present
+    const queueContainer = document.getElementById('batchQueueContainer')
+    if (queueContainer) {
+      queueContainer.remove()
+    }
+
+    // 8. Remove any lingering spinners
+    const existingSpinner =
+      dropzoneElement.querySelector('.animate-spin')?.parentElement?.parentElement
+    if (existingSpinner) {
+      existingSpinner.remove()
+    }
+
+    // 9. Reset dropzone content text
+    const dropzoneContent = dropzoneElement.querySelector('p')
+    if (dropzoneContent) {
+      dropzoneContent.textContent = 'Drag and drop images or folders here, or click to select'
+    }
+    dropzoneElement.classList.remove('opacity-50', 'pointer-events-none')
+
+    // 10. Clear file list preview if visible
+    const fileListContainer = document.getElementById('fileListPreview')
+    if (fileListContainer && !fileListContainer.classList.contains('hidden')) {
+      fileListContainer.classList.add('hidden')
+      fileListContainer.innerHTML = ''
+    }
+
+    // Note: Settings preservation is handled separately by the conversionSettings component
+  }
+
   // Handle file selection
   dropzone.onFileSelect(async (file) => {
     // File selected - log details for debugging
     // console.log('File selected:', file.name, file.type, file.size)
+
+    // Perform partial reset to clean up previous state while preserving settings
+    // Clean up blob URLs and test previews
+    if (testPreviewElement) {
+      testPreviewElement.remove()
+      testPreviewElement = null
+    }
+    if (testBlobUrls.original) {
+      blobUrlManager.revokeUrl('test-original')
+      testBlobUrls.original = null
+    }
+    if (testBlobUrls.converted) {
+      blobUrlManager.revokeUrl('test-converted')
+      testBlobUrls.converted = null
+    }
+    // Clean up conversion URLs if they exist
+    if (lastConversionData) {
+      blobUrlManager.revokeUrl('original')
+      blobUrlManager.revokeUrl('converted')
+      lastConversionData = null
+    }
+
+    // Switch to single mode if using unified settings (original or refactored)
+    if (
+      FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') ||
+      FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')
+    ) {
+      uiStateManager.switchMode('single')
+      conversionSettings.updateMode('single')
+    }
 
     // Clear previous messages
     const errorElement = document.getElementById('errorMessage')
     const fileInfoElement = document.getElementById('fileInfo')
     errorElement.classList.add('hidden')
     fileInfoElement.classList.add('hidden')
-
-    // Clear previous test preview and blob URLs
-    if (testPreviewElement) {
-      testPreviewElement.remove()
-      testPreviewElement = null
-    }
-    if (testBlobUrls.original) {
-      blobUrlManager.revokeUrl(testBlobUrls.original)
-      testBlobUrls.original = null
-    }
-    if (testBlobUrls.converted) {
-      blobUrlManager.revokeUrl(testBlobUrls.converted)
-      testBlobUrls.converted = null
-    }
 
     // Validate file
     const validation = validateImageFile(file)
@@ -304,16 +417,8 @@ export function initializeApp() {
         convertedSize: blob.size,
         conversionTime: conversionTime,
         onConvertAnother: () => {
-          // Reset UI for another conversion
-          uiStateManager.setState(UIStates.IDLE)
-          fileInfoElement.innerHTML = ''
-          fileInfoElement.classList.add('hidden')
-          errorElement.classList.add('hidden')
-          // Clean up all blob URLs
-          blobUrlManager.revokeAll()
-          lastConversionData = null
-          // Reset dropzone
-          dropzone.reset()
+          // Use comprehensive reset function for proper cleanup
+          resetApplicationState()
         },
         onCompare: () => {
           if (lastConversionData) {
@@ -377,19 +482,56 @@ export function initializeApp() {
       // Reset to idle after error
       setTimeout(() => {
         uiStateManager.setState(UIStates.IDLE)
+        // Clean up any blob URLs created during failed conversion
+        if (lastConversionData) {
+          blobUrlManager.revokeUrl('original')
+          blobUrlManager.revokeUrl('converted')
+          lastConversionData = null
+        }
       }, UI_TIMING.ERROR_MESSAGE_DURATION)
     }
   })
 
   // Handle multiple files selection for batch processing
   dropzone.onMultipleFilesSelect((files) => {
-    console.log(`Multiple files selected: ${files.length} files`)
+    // Multiple files selected - switching to batch mode
+
+    // Perform partial reset to clean up single mode state
+    // Clean up blob URLs and test previews
+    if (testPreviewElement) {
+      testPreviewElement.remove()
+      testPreviewElement = null
+    }
+    if (testBlobUrls.original) {
+      blobUrlManager.revokeUrl('test-original')
+      testBlobUrls.original = null
+    }
+    if (testBlobUrls.converted) {
+      blobUrlManager.revokeUrl('test-converted')
+      testBlobUrls.converted = null
+    }
+    // Clean up conversion URLs if they exist
+    if (lastConversionData) {
+      blobUrlManager.revokeUrl('original')
+      blobUrlManager.revokeUrl('converted')
+      lastConversionData = null
+    }
+    currentFile = null
 
     // Clear previous messages
     const errorElement = document.getElementById('errorMessage')
     const fileInfoElement = document.getElementById('fileInfo')
     errorElement.classList.add('hidden')
     fileInfoElement.classList.add('hidden')
+
+    // Switch to batch mode if using unified settings (original or refactored)
+    if (
+      FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') ||
+      FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')
+    ) {
+      uiStateManager.switchMode('batch')
+      conversionSettings.updateMode('batch')
+    }
 
     // Initialize file list preview if not exists
     const fileListContainer = document.getElementById('fileListPreview')
@@ -401,16 +543,22 @@ export function initializeApp() {
     fileListPreview.setFiles(files)
     fileListContainer.classList.remove('hidden')
 
-    // Initialize batch preset selector
-    const presetContainer = document.createElement('div')
-    presetContainer.className = 'mt-4'
-    fileListContainer.parentElement.appendChild(presetContainer)
+    // If not using unified settings (neither original nor refactored), use the old batch preset selector
+    if (
+      !FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') &&
+      !FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')
+    ) {
+      // Initialize batch preset selector
+      const presetContainer = document.createElement('div')
+      presetContainer.className = 'mt-4'
+      fileListContainer.parentElement.appendChild(presetContainer)
 
-    if (!batchPresetSelector) {
-      batchPresetSelector = new BatchPresetSelector(presetContainer)
-      batchPresetSelector.onChange((settings) => {
-        console.log('Batch settings changed:', settings)
-      })
+      if (!batchPresetSelector) {
+        batchPresetSelector = new BatchPresetSelector(presetContainer)
+        batchPresetSelector.onChange((_settings) => {
+          // Batch settings changed
+        })
+      }
     }
 
     // Add start batch button
@@ -421,23 +569,51 @@ export function initializeApp() {
     startButton.onclick = async () => {
       await startBatchConversion(files)
     }
-    presetContainer.appendChild(startButton)
+
+    // Append button to appropriate container based on feature flags
+    if (
+      FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') ||
+      FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')
+    ) {
+      // Append to file list container for unified settings
+      fileListContainer.appendChild(startButton)
+    } else {
+      // Append to preset container for old implementation
+      const presetContainer = batchPresetSelector?.container?.parentElement
+      if (presetContainer) {
+        presetContainer.appendChild(startButton)
+      }
+    }
   })
 
   // Function to start batch conversion
   async function startBatchConversion(files) {
     try {
-      // Get settings from preset selector
-      const settings = batchPresetSelector.getSettings()
+      // Get settings from unified settings (original or refactored) or batch preset selector
+      let settings
+      if (
+        FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') ||
+        FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS')
+      ) {
+        settings = conversionSettings.getCurrentSettings()
+      } else {
+        settings = batchPresetSelector.getSettings()
+      }
 
       // Hide file list and preset selector
       const fileListContainer = document.getElementById('fileListPreview')
       fileListContainer.classList.add('hidden')
 
-      // Remove preset selector container
-      const presetContainer = batchPresetSelector.container.parentElement
-      if (presetContainer) {
-        presetContainer.remove()
+      // Remove preset selector container (only for old implementation)
+      if (
+        !FEATURE_FLAGS.isEnabled('UNIFIED_SETTINGS') &&
+        !FEATURE_FLAGS.isEnabled('REFACTORED_SETTINGS') &&
+        batchPresetSelector
+      ) {
+        const presetContainer = batchPresetSelector.container?.parentElement
+        if (presetContainer) {
+          presetContainer.remove()
+        }
       }
 
       // Initialize batch queue component
@@ -472,51 +648,98 @@ export function initializeApp() {
       // Connect to WebSocket for progress updates
       await websocketService.connect(currentBatchJobId, response.websocket_url)
 
+      // Track file completion status
+      const fileStatuses = new Map()
+      files.forEach((_, index) => {
+        fileStatuses.set(index, 'pending')
+      })
+
       // Handle progress updates
       websocketService.on('progress', (data) => {
         if (data.file_index >= 0) {
           batchQueue.updateProgress(data.file_index, data.progress)
           batchQueue.updateStatus(data.file_index, data.status, data.message)
+          
+          // Track file status
+          fileStatuses.set(data.file_index, data.status)
+          
+          // Check if all files are done (completed, failed, or cancelled)
+          const allDone = Array.from(fileStatuses.values()).every(status => 
+            ['completed', 'failed', 'cancelled'].includes(status)
+          )
+          
+          if (allDone && !downloadTriggered) {
+            downloadTriggered = true
+            clearInterval(statusInterval)
+            // Wait a bit to ensure all UI updates are done
+            setTimeout(() => autoDownloadBatchResults(), 500)
+          }
         }
       })
 
+      // Track if download was triggered to prevent duplicate downloads
+      let downloadTriggered = false
+      
       // Handle job status updates
       websocketService.on('job_status', async (data) => {
-        if (data.status === 'completed') {
-          console.log('Batch job completed successfully')
-          // Auto-download the results
-          await autoDownloadBatchResults()
+        if (data.status === 'completed' && !downloadTriggered) {
+          // Don't immediately download - wait for all progress updates
+          // The progress handler will trigger download when all files are done
         } else if (data.status === 'failed') {
-          console.log('Batch job failed')
+          // Batch job failed
+          clearInterval(statusInterval)
           showBatchError('Batch processing failed. Some files could not be converted.')
         }
       })
 
       // Poll for status as backup (in case WebSocket messages are missed)
+      // But don't trigger download immediately - wait for all files to complete
       const statusInterval = setInterval(async () => {
         try {
           const status = await getBatchStatus(currentBatchJobId)
-          if (status.status === 'completed') {
+          
+          // Update file statuses from the status response
+          if (status.items) {
+            status.items.forEach(item => {
+              const itemStatus = item.status.toLowerCase()
+              fileStatuses.set(item.file_index, itemStatus)
+              batchQueue.updateStatus(item.file_index, itemStatus, item.error_message)
+              if (item.progress !== undefined) {
+                batchQueue.updateProgress(item.file_index, item.progress)
+              }
+            })
+          }
+          
+          // Check if all files are done
+          const allDone = Array.from(fileStatuses.values()).every(status => 
+            ['completed', 'failed', 'cancelled'].includes(status)
+          )
+          
+          if (allDone && !downloadTriggered) {
+            downloadTriggered = true
             clearInterval(statusInterval)
-            await autoDownloadBatchResults()
+            // Wait a bit to ensure all UI updates are done
+            setTimeout(() => autoDownloadBatchResults(), 500)
           } else if (status.status === 'failed' || status.status === 'cancelled') {
             clearInterval(statusInterval)
-            showBatchError(`Batch processing ${status.status}. Some files could not be converted.`)
+            if (!downloadTriggered) {
+              showBatchError(`Batch processing ${status.status}. Some files could not be converted.`)
+            }
           }
         } catch (error) {
           console.error('Failed to get batch status:', error)
         }
-      }, 2000) // Check every 2 seconds
+      }, 3000) // Check every 3 seconds (less frequently since we're not relying on it for download)
 
       // Handle cancel callbacks
-      batchQueue.onCancelItem((index) => {
+      batchQueue.onCancelItem((_index) => {
         // TODO: Implement cancel item API call
-        console.log('Cancel item:', index)
+        // Cancel item at index
       })
 
       batchQueue.onCancelAll(() => {
         // TODO: Implement cancel all API call
-        console.log('Cancel all')
+        // Cancel all items
       })
     } catch (error) {
       console.error('Failed to start batch conversion:', error)
@@ -566,7 +789,7 @@ export function initializeApp() {
     const fileInfoElement = document.getElementById('fileInfo')
     if (fileInfoElement) {
       fileInfoElement.innerHTML = ''
-      fileInfoElement.appendChild(createSuccessMessage(message, ''))
+      fileInfoElement.appendChild(createBatchSuccessMessage(message))
       fileInfoElement.classList.remove('hidden')
     }
   }
@@ -589,15 +812,20 @@ export function initializeApp() {
       queueContainer.remove()
     }
 
+    // Disconnect WebSocket if still connected
+    if (websocketService) {
+      websocketService.disconnect()
+      websocketService = null
+    }
+
     // Reset components
     fileListPreview = null
     batchQueue = null
     batchPresetSelector = null
     currentBatchJobId = null
 
-    // Reset dropzone
-    dropzone.reset()
-    uiStateManager.setState(UIStates.IDLE)
+    // Use comprehensive reset for proper cleanup
+    resetApplicationState()
   }
 
   // Handle UI state changes
@@ -696,7 +924,7 @@ export function initializeApp() {
   function setupApiKeyManager() {
     // Initialize the API key manager UI
     apiKeyManager.render()
-    
+
     // Add event listener to the API management button
     const apiButton = document.getElementById('apiManagementBtn')
     if (apiButton) {
@@ -704,7 +932,7 @@ export function initializeApp() {
         apiKeyManager.show()
       })
     }
-    
+
     // Handle escape key to close API key manager
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && apiKeyManager.isVisible) {
@@ -747,6 +975,43 @@ export function initializeApp() {
       // Close any open modals or dialogs
       const modals = document.querySelectorAll('.customization-modal')
       modals.forEach((modal) => modal.remove())
+
+      // Also close any test preview if open
+      if (testPreviewElement) {
+        testPreviewElement.remove()
+        testPreviewElement = null
+        // Clean up test blob URLs
+        if (testBlobUrls.original) {
+          blobUrlManager.revokeUrl('test-original')
+          testBlobUrls.original = null
+        }
+        if (testBlobUrls.converted) {
+          blobUrlManager.revokeUrl('test-converted')
+          testBlobUrls.converted = null
+        }
+      }
+    })
+
+    // Add cleanup on page unload to prevent memory leaks
+    window.addEventListener('beforeunload', () => {
+      // Clean up all blob URLs
+      blobUrlManager.revokeAll()
+
+      // Destroy components with event listeners
+      if (conversionSettings?.destroy) {
+        conversionSettings.destroy()
+      }
+      if (dropzone?.destroy) {
+        dropzone.destroy()
+      }
+      if (keyboardShortcuts?.destroy) {
+        keyboardShortcuts.destroy()
+      }
+
+      // Disconnect WebSocket if active
+      if (websocketService) {
+        websocketService.disconnect()
+      }
     })
   }
 }

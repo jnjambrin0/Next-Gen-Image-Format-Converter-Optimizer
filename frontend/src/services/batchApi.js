@@ -74,9 +74,15 @@ export async function createBatchJob(files, settings) {
 export async function getBatchStatus(jobId, options = {}) {
   const params = new URLSearchParams()
 
-  if (options.statusFilter) params.append('status_filter', options.statusFilter)
-  if (options.limit) params.append('limit', options.limit)
-  if (options.offset) params.append('offset', options.offset)
+  if (options.statusFilter) {
+    params.append('status_filter', options.statusFilter)
+  }
+  if (options.limit) {
+    params.append('limit', options.limit)
+  }
+  if (options.offset) {
+    params.append('offset', options.offset)
+  }
 
   const endpoint = API_CONFIG.ENDPOINTS.BATCH_STATUS(jobId)
   const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
@@ -150,7 +156,9 @@ export async function cancelBatchItem(jobId, fileIndex) {
  */
 export async function downloadBatchResults(jobId, format = 'zip') {
   const params = new URLSearchParams()
-  if (format !== 'zip') params.append('format', format)
+  if (format !== 'zip') {
+    params.append('format', format)
+  }
 
   const endpoint = API_CONFIG.ENDPOINTS.BATCH_DOWNLOAD(jobId)
   const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
@@ -259,13 +267,17 @@ export function createBatchSSEConnection(jobId, onMessage, onError = null, onClo
         onMessage(data)
       } catch (e) {
         console.warn('Failed to parse SSE message:', event.data)
-        if (onError) onError(new Error('Invalid SSE message format'))
+        if (onError) {
+          onError(new Error('Invalid SSE message format'))
+        }
       }
     }
 
     eventSource.onerror = (event) => {
       console.warn('SSE connection error:', event)
-      if (onError) onError(new Error('SSE connection failed'))
+      if (onError) {
+        onError(new Error('SSE connection failed'))
+      }
     }
 
     if (onClose) {
@@ -279,7 +291,9 @@ export function createBatchSSEConnection(jobId, onMessage, onError = null, onClo
 
     return eventSource
   } catch (error) {
-    if (onError) onError(error)
+    if (onError) {
+      onError(error)
+    }
     throw new APIError(0, 'Failed to create SSE connection', 'BAT500')
   }
 }
@@ -307,8 +321,12 @@ export function createBatchProgressTracker(jobId, onProgress, options = {}) {
   const cleanup = () => {
     isActive = false
     if (connection) {
-      if (connection.close) connection.close()
-      if (connection.terminate) connection.terminate()
+      if (connection.close) {
+        connection.close()
+      }
+      if (connection.terminate) {
+        connection.terminate()
+      }
       connection = null
     }
     if (pollingTimer) {
@@ -318,7 +336,9 @@ export function createBatchProgressTracker(jobId, onProgress, options = {}) {
   }
 
   const startPolling = () => {
-    if (!isActive || pollingTimer) return
+    if (!isActive || pollingTimer) {
+      return
+    }
 
     pollingTimer = setInterval(async () => {
       try {
@@ -328,10 +348,14 @@ export function createBatchProgressTracker(jobId, onProgress, options = {}) {
         // Stop polling if job is complete
         if (['completed', 'failed', 'cancelled'].includes(status.status)) {
           cleanup()
-          if (onComplete) onComplete(status)
+          if (onComplete) {
+            onComplete(status)
+          }
         }
       } catch (error) {
-        if (onError) onError(error)
+        if (onError) {
+          onError(error)
+        }
       }
     }, pollingInterval)
   }
@@ -347,22 +371,30 @@ export function createBatchProgressTracker(jobId, onProgress, options = {}) {
             ['completed', 'failed', 'cancelled'].includes(data.status)
           ) {
             cleanup()
-            if (onComplete) onComplete(data)
+            if (onComplete) {
+              onComplete(data)
+            }
           }
         },
         (error) => {
-          if (onError) onError(error)
+          if (onError) {
+            onError(error)
+          }
           if (fallbackToPolling) {
             console.warn('SSE failed, falling back to polling')
             startPolling()
           }
         },
         () => {
-          if (onComplete) onComplete({ event: 'close' })
+          if (onComplete) {
+            onComplete({ event: 'close' })
+          }
         }
       )
     } catch (error) {
-      if (onError) onError(error)
+      if (onError) {
+        onError(error)
+      }
       if (fallbackToPolling) {
         startPolling()
       }

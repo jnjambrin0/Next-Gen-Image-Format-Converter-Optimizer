@@ -46,14 +46,21 @@ class BatchService:
         
         job_id = str(uuid.uuid4())
         
-        # Create batch items
-        items = []
+        # CRITICAL FIX: Read file data IMMEDIATELY before request completes
+        # FastAPI will close file handles after request, so we must read now
         file_data_list = []
+        items = []
         
         for i, file in enumerate(files):
-            # Read file data
-            file_data = await file.read()
-            file_data_list.append(file_data)
+            # Read file data NOW while handle is still open
+            try:
+                file_data = await file.read()
+                file_data_list.append(file_data)
+                # Reset file position in case it's needed elsewhere
+                await file.seek(0)
+            except Exception as e:
+                logger.error(f"Failed to read file {file.filename}: {e}")
+                file_data_list.append(b'')  # Add empty data for failed reads
             
             # Create batch item
             item = BatchItem(
@@ -76,6 +83,9 @@ class BatchService:
             user_ip=user_ip
         )
         
+        # Store the job immediately
+        self.batch_manager._jobs[job_id] = job
+        
         # Persist job to database
         await batch_history_service.create_job(
             job_id=job_id,
@@ -92,6 +102,10 @@ class BatchService:
                 filename=item.filename,
                 status=item.status.value
             )
+        
+        # Store the READ file data (not file handles) for later processing
+        # This fixes the "read of closed file" error
+        self.batch_manager._pending_file_data[job_id] = file_data_list
         
         # Create progress callback for WebSocket updates and persistence
         async def progress_callback(progress: BatchProgress):
@@ -116,13 +130,11 @@ class BatchService:
                     failed_files=job.failed_files
                 )
         
-        # Start processing through BatchManager
-        await self.batch_manager.create_job(
-            job_id=job_id,
-            batch_job=job,
-            file_data_list=file_data_list,
-            progress_callback=progress_callback
-        )
+        # Store callback for later use
+        self.batch_manager._progress_callbacks[job_id] = progress_callback
+        
+        # Don't start processing yet - wait for client to be ready
+        # Processing will start when start_processing() is called
         
         return job
     

@@ -120,3 +120,30 @@ export const STATE_TRANSITIONS = {
   SUCCESS: ['IDLE'],
   ERROR: ['IDLE'],
 }
+
+// Feature Flags
+export const FEATURE_FLAGS = {
+  // Enable unified settings panel for both single and batch modes
+  UNIFIED_SETTINGS:
+    process.env.NODE_ENV === 'development' ||
+    localStorage.getItem('feature_unified_settings') === 'true',
+
+  // Enable refactored unified settings with smaller sub-components
+  REFACTORED_SETTINGS:
+    process.env.NODE_ENV === 'development' ||
+    localStorage.getItem('feature_refactored_settings') === 'true',
+
+  // Helper function to check feature flag
+  isEnabled(flag) {
+    return this[flag] === true
+  },
+
+  // Helper function to enable/disable feature flag
+  setFlag(flag, enabled) {
+    if (flag === 'UNIFIED_SETTINGS') {
+      localStorage.setItem('feature_unified_settings', enabled ? 'true' : 'false')
+      // Reload to apply changes
+      window.location.reload()
+    }
+  },
+}

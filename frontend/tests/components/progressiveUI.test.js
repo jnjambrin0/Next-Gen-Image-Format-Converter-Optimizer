@@ -9,7 +9,7 @@ describe('ProgressiveUI', () => {
 
   beforeEach(() => {
     // Mock matchMedia for reduced motion tests
-    window.matchMedia = vi.fn().mockImplementation(query => ({
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
       onchange: null,
@@ -19,7 +19,7 @@ describe('ProgressiveUI', () => {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     }))
-    
+
     // Create DOM elements
     toggleButton = document.createElement('button')
     advancedContainer = document.createElement('div')
@@ -70,7 +70,7 @@ describe('ProgressiveUI', () => {
       await vi.waitFor(() => {
         expect(onModeChange).toHaveBeenCalledWith(true)
       })
-      
+
       expect(progressiveUI.isAdvancedMode).toBe(true)
     })
   })

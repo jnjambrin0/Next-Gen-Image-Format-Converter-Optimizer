@@ -49,7 +49,8 @@ function createHeader() {
   // API management button
   const apiButton = document.createElement('button')
   apiButton.id = 'apiManagementBtn'
-  apiButton.className = 'inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+  apiButton.className =
+    'inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
   apiButton.innerHTML = `
     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
@@ -82,34 +83,39 @@ function createHeader() {
 
 function createMainContent() {
   const main = document.createElement('main')
-  main.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
+  main.className = 'unified-layout-container'
 
-  const grid = document.createElement('div')
-  grid.className = 'grid grid-cols-1 lg:grid-cols-3 gap-8'
+  // Create the flex container for consistent layout
+  const layoutWrapper = document.createElement('div')
+  layoutWrapper.className = 'unified-layout-wrapper'
 
-  // Left column - Upload area
-  const leftCol = document.createElement('div')
-  leftCol.className = 'lg:col-span-2'
+  // Main content area (left side) - for dropzone/file list
+  const contentArea = document.createElement('div')
+  contentArea.className = 'unified-content-area'
+  contentArea.id = 'mainContentArea'
 
   const uploadCard = createUploadCard()
-  leftCol.appendChild(uploadCard)
+  contentArea.appendChild(uploadCard)
 
-  // Right column - Settings and Features
-  const rightCol = document.createElement('div')
-  rightCol.className = 'lg:col-span-1 space-y-6'
+  // Settings panel (right side) - fixed position
+  const settingsPanel = document.createElement('aside')
+  settingsPanel.className = 'unified-settings-sidebar'
+  settingsPanel.id = 'settingsSidebar'
 
   // Settings card placeholder
   const settingsCard = document.createElement('div')
   settingsCard.id = 'conversionSettings'
-  settingsCard.className = 'card'
-  rightCol.appendChild(settingsCard)
+  settingsCard.className = 'unified-settings-container'
 
   const featuresCard = createFeaturesCard()
-  rightCol.appendChild(featuresCard)
 
-  grid.appendChild(leftCol)
-  grid.appendChild(rightCol)
-  main.appendChild(grid)
+  settingsPanel.appendChild(settingsCard)
+  settingsPanel.appendChild(featuresCard)
+
+  // Append both areas to the layout wrapper
+  layoutWrapper.appendChild(contentArea)
+  layoutWrapper.appendChild(settingsPanel)
+  main.appendChild(layoutWrapper)
 
   return main
 }

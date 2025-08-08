@@ -275,6 +275,23 @@ async def websocket_endpoint(
         disconnect_handler = connection_manager.disconnect
         message_handler = connection_manager.handle_client_message
     
+    # Start processing the batch job now that WebSocket is connected
+    # This avoids the race condition where files process before client is ready
+    try:
+        from app.services.batch_service import batch_service
+        processing_started = await batch_service.batch_manager.start_processing(job_id)
+        if processing_started:
+            logger.info(f"Started batch processing for job {job_id} after WebSocket connection")
+        else:
+            logger.warning(f"Could not start processing for job {job_id} - may already be processing")
+    except Exception as e:
+        logger.error(f"Error starting batch processing for job {job_id}: {e}")
+        # Clean up pending data on error
+        try:
+            await batch_service.batch_manager.cleanup_pending_job(job_id)
+        except Exception as cleanup_error:
+            logger.error(f"Error cleaning up job {job_id}: {cleanup_error}")
+    
     try:
         # Keep connection alive and handle incoming messages
         while True:

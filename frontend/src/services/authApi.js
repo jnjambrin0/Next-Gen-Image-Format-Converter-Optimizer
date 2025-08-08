@@ -76,8 +76,8 @@ class AuthApi {
   /**
    * Create a new API key
    */
-  async createApiKey(keyData) {
-    return await this.makeRequest('/api-keys', {
+  createApiKey(keyData) {
+    return this.makeRequest('/api-keys', {
       method: 'POST',
       body: JSON.stringify(keyData),
     })
@@ -86,28 +86,28 @@ class AuthApi {
   /**
    * List all API keys
    */
-  async listApiKeys(includeInactive = false) {
+  listApiKeys(includeInactive = false) {
     const params = new URLSearchParams()
     if (includeInactive) {
       params.append('include_inactive', 'true')
     }
 
     const endpoint = `/api-keys${params.toString() ? '?' + params.toString() : ''}`
-    return await this.makeRequest(endpoint)
+    return this.makeRequest(endpoint)
   }
 
   /**
    * Get a specific API key by ID
    */
-  async getApiKey(keyId) {
-    return await this.makeRequest(`/api-keys/${keyId}`)
+  getApiKey(keyId) {
+    return this.makeRequest(`/api-keys/${keyId}`)
   }
 
   /**
    * Update an API key
    */
-  async updateApiKey(keyId, updateData) {
-    return await this.makeRequest(`/api-keys/${keyId}`, {
+  updateApiKey(keyId, updateData) {
+    return this.makeRequest(`/api-keys/${keyId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
     })
@@ -116,8 +116,8 @@ class AuthApi {
   /**
    * Revoke (deactivate) an API key
    */
-  async revokeApiKey(keyId) {
-    return await this.makeRequest(`/api-keys/${keyId}`, {
+  revokeApiKey(keyId) {
+    return this.makeRequest(`/api-keys/${keyId}`, {
       method: 'DELETE',
     })
   }
@@ -125,28 +125,28 @@ class AuthApi {
   /**
    * Get usage statistics for a specific API key
    */
-  async getApiKeyUsage(keyId, days = 7) {
+  getApiKeyUsage(keyId, days = 7) {
     const params = new URLSearchParams()
     params.append('days', days.toString())
 
-    return await this.makeRequest(`/api-keys/${keyId}/usage?${params.toString()}`)
+    return this.makeRequest(`/api-keys/${keyId}/usage?${params.toString()}`)
   }
 
   /**
    * Get overall usage statistics
    */
-  async getOverallUsage(days = 7) {
+  getOverallUsage(days = 7) {
     const params = new URLSearchParams()
     params.append('days', days.toString())
 
-    return await this.makeRequest(`/usage?${params.toString()}`)
+    return this.makeRequest(`/usage?${params.toString()}`)
   }
 
   /**
    * Clean up expired API keys
    */
-  async cleanupExpiredKeys() {
-    return await this.makeRequest('/cleanup-expired', {
+  cleanupExpiredKeys() {
+    return this.makeRequest('/cleanup-expired', {
       method: 'POST',
     })
   }

@@ -223,7 +223,7 @@ describe('Tooltip', () => {
 
     it('should properly clean up event listeners on remove', () => {
       const removeEventListenerSpy = vi.spyOn(element, 'removeEventListener')
-      
+
       tooltip.create(element, { content: 'Test tooltip' })
       tooltip.remove(element)
 

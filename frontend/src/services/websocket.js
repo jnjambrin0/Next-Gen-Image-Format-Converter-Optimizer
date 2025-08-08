@@ -27,15 +27,28 @@ export class WebSocketService {
     this.jobId = jobId
     this.isIntentionallyClosed = false
 
-    // Extract token from URL if present
-    const urlObj = new URL(wsUrl, window.location.origin)
-    this.authToken = urlObj.searchParams.get('token')
-
-    // Build full WebSocket URL
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    this.url = `${protocol}//${urlObj.host}${urlObj.pathname}`
-    if (this.authToken) {
-      this.url += `?token=${this.authToken}`
+    // Parse the WebSocket URL properly
+    // wsUrl from backend is like "ws://localhost:8000/ws/batch/{job_id}?token=xxx"
+    if (wsUrl.startsWith('ws://') || wsUrl.startsWith('wss://')) {
+      // Full URL provided from backend - use it directly
+      this.url = wsUrl
+      const urlObj = new URL(wsUrl)
+      this.authToken = urlObj.searchParams.get('token')
+    } else {
+      // Relative URL - build with backend port
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      // Use backend port 8000, not frontend port 5173
+      const host = `${window.location.hostname}:8000`
+      
+      // Parse any query parameters
+      const urlObj = new URL(wsUrl, `http://${host}`)
+      this.authToken = urlObj.searchParams.get('token')
+      
+      // Build the full WebSocket URL
+      this.url = `${protocol}//${host}${urlObj.pathname}`
+      if (this.authToken) {
+        this.url += `?token=${this.authToken}`
+      }
     }
 
     return this.createConnection()
@@ -47,7 +60,7 @@ export class WebSocketService {
         this.ws = new WebSocket(this.url)
 
         this.ws.onopen = () => {
-          console.log(`WebSocket connected for job ${this.jobId}`)
+          // WebSocket connected successfully
           this.reconnectAttempts = 0
           this.reconnectDelay = 1000
           this.notifyConnectionStatus('connected')
@@ -59,12 +72,12 @@ export class WebSocketService {
         }
 
         this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error)
+          // WebSocket error occurred
           this.notifyConnectionStatus('error')
         }
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket closed:', event.code, event.reason)
+          // WebSocket closed
           this.notifyConnectionStatus('disconnected')
 
           if (!this.isIntentionallyClosed) {
@@ -93,7 +106,6 @@ export class WebSocketService {
       // Handle different message types
       switch (data.type) {
         case 'connection':
-          console.log('Connected to batch job:', data.job_id)
           break
 
         case 'progress':
@@ -160,9 +172,7 @@ export class WebSocketService {
       this.maxReconnectDelay
     )
 
-    console.log(
-      `Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`
-    )
+    // Attempting reconnect
     this.notifyConnectionStatus('reconnecting')
 
     setTimeout(() => {

@@ -23,7 +23,9 @@ export function sanitizeText(text) {
 export class UIStateManager {
   constructor() {
     this.currentState = UIStates.IDLE
+    this.mode = 'single' // 'single' | 'batch'
     this.stateChangeCallbacks = []
+    this.modeChangeCallbacks = []
   }
 
   getState() {
@@ -82,5 +84,63 @@ export class UIStateManager {
 
   isDownloading() {
     return this.currentState === UIStates.DOWNLOADING
+  }
+
+  /**
+   * Get current mode
+   */
+  getMode() {
+    return this.mode
+  }
+
+  /**
+   * Switch between single and batch modes
+   */
+  switchMode(newMode) {
+    if (newMode !== 'single' && newMode !== 'batch') {
+      console.error('Invalid mode:', newMode)
+      return
+    }
+
+    if (this.mode === newMode) {
+      return
+    }
+
+    const oldMode = this.mode
+    this.mode = newMode
+
+    // Notify all mode change listeners
+    this.modeChangeCallbacks.forEach((callback) => {
+      callback(newMode, oldMode)
+    })
+  }
+
+  /**
+   * Register mode change callback
+   */
+  onModeChange(callback) {
+    this.modeChangeCallbacks.push(callback)
+
+    // Return unsubscribe function
+    return () => {
+      const index = this.modeChangeCallbacks.indexOf(callback)
+      if (index > -1) {
+        this.modeChangeCallbacks.splice(index, 1)
+      }
+    }
+  }
+
+  /**
+   * Check if in single mode
+   */
+  isSingleMode() {
+    return this.mode === 'single'
+  }
+
+  /**
+   * Check if in batch mode
+   */
+  isBatchMode() {
+    return this.mode === 'batch'
   }
 }

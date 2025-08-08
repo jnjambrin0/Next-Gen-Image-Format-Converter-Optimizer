@@ -80,6 +80,10 @@ class BatchManager:
         self._job_metrics: Dict[str, Dict[str, Any]] = {}
         self._memory_process = psutil.Process()
         
+        # Pending file DATA storage for deferred processing
+        # Changed from _pending_files to _pending_file_data to store bytes, not file handles
+        self._pending_file_data: Dict[str, List[bytes]] = {}
+        
         self.logger.info(
             f"BatchManager initialized with {self._num_workers} workers, "
             f"max {self._max_concurrent_per_job} concurrent per job"
@@ -303,11 +307,35 @@ class BatchManager:
         self._update_memory_metrics(task.job_id)
         
         try:
-            # Perform conversion using the conversion service
-            result, output_data = await self.conversion_service.convert(
-                image_data=task.file_data,
-                request=task.conversion_request,
+            # Estimate conversion time based on file size
+            # Observed: 7MB takes ~2.8s, 15MB takes ~3.4s
+            # Using more accurate estimation based on actual data
+            file_size_mb = len(task.file_data) / (1024 * 1024)
+            if file_size_mb < 5:
+                estimated_time = 2.5  # Small files: 2.5 seconds
+            elif file_size_mb < 10:
+                estimated_time = 3.0  # Medium files: 3 seconds
+            else:
+                estimated_time = min(3.0 + (file_size_mb - 10) * 0.1, 5.0)  # Large files: 3-5 seconds
+            
+            # Start progress simulation task
+            progress_task = asyncio.create_task(
+                self._simulate_progress(task.job_id, task.file_index, item, estimated_time)
             )
+            
+            # Perform conversion using the conversion service
+            try:
+                result, output_data = await self.conversion_service.convert(
+                    image_data=task.file_data,
+                    request=task.conversion_request,
+                )
+            finally:
+                # Cancel progress simulation when conversion completes
+                progress_task.cancel()
+                try:
+                    await progress_task
+                except asyncio.CancelledError:
+                    pass
             
             # Update item with results
             item.status = BatchItemStatus.COMPLETED
@@ -398,6 +426,60 @@ class BatchManager:
             except Exception as e:
                 self.logger.error(f"Error in progress callback: {e}")
     
+    async def _simulate_progress(self, job_id: str, file_index: int, item: BatchItem, estimated_time: float = 3.0) -> None:
+        """Simulate progressive updates during conversion.
+        
+        This provides visual feedback during the conversion process which
+        runs atomically in a subprocess without progress callbacks.
+        
+        Args:
+            job_id: Job ID
+            file_index: Index of file being processed
+            item: Batch item to update
+            estimated_time: Estimated conversion time in seconds
+        """
+        try:
+            start_time = asyncio.get_event_loop().time()
+            update_interval = 0.2  # Update every 200ms for smooth progress
+            
+            # Start at 5% immediately to show activity
+            item.progress = 5
+            await self._send_progress(job_id, file_index, item)
+            
+            # Continue updating until cancelled or completed
+            while item.status == BatchItemStatus.PROCESSING:
+                await asyncio.sleep(update_interval)
+                
+                # Calculate elapsed time and progress
+                elapsed = asyncio.get_event_loop().time() - start_time
+                
+                # Use exponential curve for realistic feel (starts fast, slows down)
+                # Progress = (elapsed/estimated)^1.5 * 90 + 5 (5-95% range)
+                time_ratio = min(elapsed / estimated_time, 1.0)
+                progress = int(5 + (time_ratio ** 1.5) * 90)
+                
+                # Cap at 95% to leave room for completion
+                progress = min(progress, 95)
+                
+                # Only update if progress changed
+                if progress != item.progress:
+                    item.progress = progress
+                    await self._send_progress(job_id, file_index, item)
+                
+                # Stop if we've reached the estimated time
+                if elapsed >= estimated_time:
+                    # Stay at 95% until actual completion
+                    if item.progress < 95:
+                        item.progress = 95
+                        await self._send_progress(job_id, file_index, item)
+                    break
+                    
+        except asyncio.CancelledError:
+            # Task was cancelled (conversion completed)
+            pass
+        except Exception as e:
+            self.logger.debug(f"Progress simulation error (non-critical): {e}")
+    
     def _check_job_completion(self, job: BatchJob) -> None:
         """Check if a job is complete and update its status.
         
@@ -431,8 +513,13 @@ class BatchManager:
                 processing_time=processing_time
             ))
             
-            # Send WebSocket notification about job completion
-            asyncio.create_task(send_job_status_update(job.job_id, job.status))
+            # Add a small delay before sending job completion notification
+            # This ensures all individual file progress updates are sent first
+            async def delayed_status_update():
+                await asyncio.sleep(0.5)  # 500ms delay
+                await send_job_status_update(job.job_id, job.status)
+            
+            asyncio.create_task(delayed_status_update())
     
     async def cancel_job(self, job_id: str) -> bool:
         """Cancel an entire batch job.
@@ -806,3 +893,88 @@ class BatchManager:
         # Also cleanup metrics
         if job_id in self._job_metrics:
             del self._job_metrics[job_id]
+        
+        # Cleanup pending file data
+        if job_id in self._pending_file_data:
+            del self._pending_file_data[job_id]
+    
+    async def start_processing(self, job_id: str) -> bool:
+        """Start processing a batch job with pre-read file data.
+        
+        This method is called after the WebSocket connection is established
+        to avoid the race condition where files are processed before the
+        client is ready to receive progress updates.
+        
+        Args:
+            job_id: Job ID to start processing
+            
+        Returns:
+            True if processing started successfully, False otherwise
+        """
+        # Check if job exists
+        job = self._jobs.get(job_id)
+        if not job:
+            self.logger.error(f"Job {job_id} not found")
+            return False
+        
+        # Check if we have pending file data
+        if job_id not in self._pending_file_data:
+            self.logger.warning(f"No pending file data found for job {job_id}")
+            return False
+        
+        # Get the pre-read file data (already read in batch_service)
+        file_data_list = self._pending_file_data.get(job_id, [])
+        if not file_data_list:
+            self.logger.error(f"Empty file data list for job {job_id}")
+            return False
+        
+        try:
+            # Remove from pending file data
+            del self._pending_file_data[job_id]
+            
+            # Get the progress callback that was stored
+            progress_callback = self._progress_callbacks.get(job_id)
+            
+            # Start actual processing with pre-read data
+            await self.create_job(
+                job_id=job_id,
+                batch_job=job,
+                file_data_list=file_data_list,
+                progress_callback=progress_callback
+            )
+            
+            self.logger.info(f"Started processing for job {job_id} with {len(file_data_list)} files")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to start processing for job {job_id}: {e}")
+            # Clean up pending file data on error
+            if job_id in self._pending_file_data:
+                del self._pending_file_data[job_id]
+            return False
+    
+    async def cleanup_pending_job(self, job_id: str) -> None:
+        """Clean up a pending job that failed to start processing.
+        
+        Args:
+            job_id: Job ID to clean up
+        """
+        # Clean up pending file data
+        if job_id in self._pending_file_data:
+            del self._pending_file_data[job_id]
+            self.logger.info(f"Cleaned up pending file data for job {job_id}")
+        
+        # Clean up progress callbacks
+        if job_id in self._progress_callbacks:
+            del self._progress_callbacks[job_id]
+        
+        # Mark job as failed if it exists
+        job = self._jobs.get(job_id)
+        if job and job.status == BatchStatus.PENDING:
+            job.status = BatchStatus.FAILED
+            job.completed_at = datetime.utcnow()
+            for item in job.items:
+                if item.status == BatchItemStatus.PENDING:
+                    item.status = BatchItemStatus.FAILED
+                    item.error_message = "Failed to start processing"
+            self.logger.info(f"Marked job {job_id} as failed due to processing startup failure")

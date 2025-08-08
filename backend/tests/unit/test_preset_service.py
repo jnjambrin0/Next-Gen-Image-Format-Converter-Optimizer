@@ -323,3 +323,303 @@ class TestPresetService:
         assert len(exported) == 3  # Only user presets, not built-in
         assert all(isinstance(p, PresetBase) for p in exported)
         assert all(p.name.startswith("Export Test") for p in exported)
+
+
+class TestListPresetsAdvanced:
+    """Test suite for list_presets_advanced method."""
+    
+    @pytest.mark.asyncio
+    async def test_list_all_with_pagination_metadata(self, preset_service):
+        """Test listing all presets returns correct metadata."""
+        result = await preset_service.list_presets_advanced()
+        
+        assert "presets" in result
+        assert "total" in result
+        assert "page" in result
+        assert "page_size" in result
+        assert "total_pages" in result
+        assert "has_next" in result
+        assert "has_previous" in result
+        
+        # Should have 3 built-in presets
+        assert result["total"] == 3
+        assert len(result["presets"]) == 3
+        assert result["page"] == 1
+        assert result["has_next"] is False
+        assert result["has_previous"] is False
+    
+    @pytest.mark.asyncio
+    async def test_search_functionality(self, preset_service):
+        """Test search in name and description."""
+        # Create a preset with specific search terms
+        await preset_service.create_preset(
+            PresetCreate(
+                name="Custom Photo Preset",
+                description="Special preset for photo processing",
+                settings=PresetSettings(output_format="jpeg", quality=95)
+            )
+        )
+        
+        # Search for "photo"
+        result = await preset_service.list_presets_advanced(search="photo")
+        
+        assert result["total"] == 1
+        assert len(result["presets"]) == 1
+        assert "photo" in result["presets"][0].name.lower() or "photo" in result["presets"][0].description.lower()
+        
+        # Search for "web" should find "Web Optimized"
+        result = await preset_service.list_presets_advanced(search="web")
+        
+        assert result["total"] >= 1
+        found_web = any("web" in p.name.lower() or "web" in p.description.lower() 
+                       for p in result["presets"])
+        assert found_web
+    
+    @pytest.mark.asyncio
+    async def test_format_filter(self, preset_service):
+        """Test filtering by output format."""
+        # Create presets with different formats
+        await preset_service.create_preset(
+            PresetCreate(
+                name="AVIF Test",
+                settings=PresetSettings(output_format="avif", quality=85)
+            )
+        )
+        await preset_service.create_preset(
+            PresetCreate(
+                name="Another AVIF",
+                settings=PresetSettings(output_format="avif", quality=90)
+            )
+        )
+        
+        # Filter by AVIF format
+        result = await preset_service.list_presets_advanced(format_filter="avif")
+        
+        assert result["total"] == 2
+        assert all(p.settings.output_format == "avif" for p in result["presets"])
+        
+        # Filter by WebP format (from built-in presets)
+        result = await preset_service.list_presets_advanced(format_filter="webp")
+        
+        assert result["total"] >= 2  # At least 2 built-in presets use webp
+    
+    @pytest.mark.asyncio
+    async def test_exclude_builtin(self, preset_service):
+        """Test excluding built-in presets."""
+        # Create custom presets
+        for i in range(2):
+            await preset_service.create_preset(
+                PresetCreate(
+                    name=f"Custom {i}",
+                    settings=PresetSettings(output_format="jpeg", quality=85)
+                )
+            )
+        
+        # Get only custom presets
+        result = await preset_service.list_presets_advanced(include_builtin=False)
+        
+        assert result["total"] == 2
+        assert all(not p.is_builtin for p in result["presets"])
+    
+    @pytest.mark.asyncio
+    async def test_sorting_by_name(self, preset_service):
+        """Test sorting by name ascending and descending."""
+        # Create presets with specific names
+        await preset_service.create_preset(
+            PresetCreate(name="Alpha", settings=PresetSettings(output_format="jpeg"))
+        )
+        await preset_service.create_preset(
+            PresetCreate(name="Zeta", settings=PresetSettings(output_format="jpeg"))
+        )
+        
+        # Sort ascending
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False, 
+            sort_by="name", 
+            sort_order="asc"
+        )
+        
+        names = [p.name for p in result["presets"]]
+        assert names == sorted(names)
+        
+        # Sort descending
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            sort_by="name",
+            sort_order="desc"
+        )
+        
+        names = [p.name for p in result["presets"]]
+        assert names == sorted(names, reverse=True)
+    
+    @pytest.mark.asyncio
+    async def test_sorting_by_created_at(self, preset_service):
+        """Test sorting by creation date."""
+        # Sort by created_at works with existing presets created in other tests
+        # Simply verify the sort functionality works without timing dependencies
+        
+        # Create a couple of presets
+        await preset_service.create_preset(
+            PresetCreate(name="SortTest1", settings=PresetSettings(output_format="jpeg"))
+        )
+        await preset_service.create_preset(
+            PresetCreate(name="SortTest2", settings=PresetSettings(output_format="jpeg"))
+        )
+        
+        # Sort by created_at ascending
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            sort_by="created_at",
+            sort_order="asc"
+        )
+        
+        # Verify we got results and they have created_at timestamps
+        assert len(result["presets"]) >= 2
+        for i in range(len(result["presets"]) - 1):
+            # Each preset's created_at should be <= the next one
+            assert result["presets"][i].created_at <= result["presets"][i + 1].created_at
+        
+        # Sort by created_at descending
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            sort_by="created_at",
+            sort_order="desc"
+        )
+        
+        # Verify descending order
+        assert len(result["presets"]) >= 2
+        for i in range(len(result["presets"]) - 1):
+            # Each preset's created_at should be >= the next one
+            assert result["presets"][i].created_at >= result["presets"][i + 1].created_at
+    
+    @pytest.mark.asyncio
+    async def test_pagination_with_limit(self, preset_service):
+        """Test pagination with limit and offset."""
+        # Create 5 custom presets
+        for i in range(5):
+            await preset_service.create_preset(
+                PresetCreate(
+                    name=f"Page Test {i}",
+                    settings=PresetSettings(output_format="jpeg", quality=80)
+                )
+            )
+        
+        # Get first page (2 items)
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            limit=2,
+            offset=0
+        )
+        
+        assert result["total"] == 5
+        assert len(result["presets"]) == 2
+        assert result["page"] == 1
+        assert result["page_size"] == 2
+        assert result["total_pages"] == 3
+        assert result["has_next"] is True
+        assert result["has_previous"] is False
+        
+        # Get second page
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            limit=2,
+            offset=2
+        )
+        
+        assert len(result["presets"]) == 2
+        assert result["page"] == 2
+        assert result["has_next"] is True
+        assert result["has_previous"] is True
+        
+        # Get last page
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            limit=2,
+            offset=4
+        )
+        
+        assert len(result["presets"]) == 1
+        assert result["page"] == 3
+        assert result["has_next"] is False
+        assert result["has_previous"] is True
+    
+    @pytest.mark.asyncio
+    async def test_combined_filters(self, preset_service):
+        """Test combining multiple filters."""
+        # Create diverse presets
+        await preset_service.create_preset(
+            PresetCreate(
+                name="WebP Ultra",
+                description="Ultra quality WebP",
+                settings=PresetSettings(output_format="webp", quality=100)
+            )
+        )
+        await preset_service.create_preset(
+            PresetCreate(
+                name="JPEG Basic",
+                description="Basic JPEG conversion",
+                settings=PresetSettings(output_format="jpeg", quality=75)
+            )
+        )
+        await preset_service.create_preset(
+            PresetCreate(
+                name="WebP Standard",
+                description="Standard WebP preset",
+                settings=PresetSettings(output_format="webp", quality=85)
+            )
+        )
+        
+        # Search for "webp" with format filter and sorting
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            search="webp",
+            format_filter="webp",
+            sort_by="name",
+            sort_order="desc",
+            limit=10
+        )
+        
+        # Should find both custom WebP presets
+        assert result["total"] == 2
+        assert all("webp" in p.name.lower() or "webp" in p.description.lower() 
+                  for p in result["presets"])
+        assert all(p.settings.output_format == "webp" for p in result["presets"])
+        
+        # Names should be in descending order
+        names = [p.name for p in result["presets"]]
+        assert names == sorted(names, reverse=True)
+    
+    @pytest.mark.asyncio
+    async def test_no_results(self, preset_service):
+        """Test when no presets match the filters."""
+        # Search for non-existent term
+        result = await preset_service.list_presets_advanced(
+            search="nonexistentterm123"
+        )
+        
+        assert result["total"] == 0
+        assert len(result["presets"]) == 0
+        assert result["has_next"] is False
+        assert result["has_previous"] is False
+    
+    @pytest.mark.asyncio
+    async def test_usage_count_sorting_fallback(self, preset_service):
+        """Test that usage_count sorting falls back to name sorting."""
+        # Create presets
+        await preset_service.create_preset(
+            PresetCreate(name="Beta", settings=PresetSettings(output_format="jpeg"))
+        )
+        await preset_service.create_preset(
+            PresetCreate(name="Alpha", settings=PresetSettings(output_format="jpeg"))
+        )
+        
+        # Sort by usage_count (should fallback to name)
+        result = await preset_service.list_presets_advanced(
+            include_builtin=False,
+            sort_by="usage_count",
+            sort_order="asc"
+        )
+        
+        # Should be sorted by name since usage_count isn't tracked
+        names = [p.name for p in result["presets"]]
+        assert names == ["Alpha", "Beta"]

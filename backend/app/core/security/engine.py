@@ -385,7 +385,7 @@ class SecurityEngine:
         """Test if network is properly isolated."""
         try:
             # Try to ping a public DNS server
-            result = sandbox.execute_sandboxed(
+            result = await sandbox.execute_sandboxed_async(
                 command=["ping", "-c", "1", "-W", "1", "8.8.8.8"], timeout=2
             )
             # If ping succeeds, network is not isolated
@@ -400,7 +400,7 @@ class SecurityEngine:
         """Test if filesystem access is properly restricted."""
         try:
             # Try to read a system file
-            result = sandbox.execute_sandboxed(
+            result = await sandbox.execute_sandboxed_async(
                 command=["cat", "/etc/passwd"], timeout=2
             )
             # If read succeeds, filesystem is not restricted
@@ -413,7 +413,7 @@ class SecurityEngine:
         """Test if resource limits are enforced."""
         try:
             # Try to allocate excessive memory
-            result = sandbox.execute_sandboxed(
+            result = await sandbox.execute_sandboxed_async(
                 command=["python3", "-c", "x = 'a' * (1024 * 1024 * 1024)"],  # 1GB
                 timeout=2,
                 max_memory_mb=50,  # Should fail with 50MB limit
@@ -430,7 +430,7 @@ class SecurityEngine:
         """Test if environment variables are properly sanitized."""
         try:
             # Check if sensitive env vars are removed
-            result = sandbox.execute_sandboxed(command=["printenv"], timeout=2)
+            result = await sandbox.execute_sandboxed_async(command=["printenv"], timeout=2)
 
             output = result["output"].decode("utf-8", errors="ignore")
             sensitive_vars = ["AWS_SECRET_ACCESS_KEY", "DATABASE_URL", "API_KEY"]
@@ -473,8 +473,9 @@ class SecurityEngine:
                 )
 
         try:
-            # Execute command in sandbox
-            result = sandbox.execute_sandboxed(
+            # Execute command in sandbox using async version to avoid blocking event loop
+            # This allows progress updates to run concurrently during conversion
+            result = await sandbox.execute_sandboxed_async(
                 command=command,
                 input_data=input_data,
             )

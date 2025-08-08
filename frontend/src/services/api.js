@@ -53,6 +53,55 @@ export const apiClient = {
     }
     return response
   },
+
+  /**
+   * POST request with FormData (for file uploads)
+   * @param {string} endpoint - API endpoint
+   * @param {FormData} formData - FormData object with files and fields
+   * @param {Object} options - Additional options (e.g., timeout)
+   * @returns {Promise<Response>} The fetch response
+   */
+  async postForm(endpoint, formData, options = {}) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      options.timeout || API_CONFIG.TIMEOUT
+    )
+
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+        // Note: Don't set Content-Type header - browser will set it with boundary for FormData
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new APIError(
+          response.status,
+          errorData.detail || getDefaultErrorMessage(response.status),
+          errorData.error_code
+        )
+      }
+
+      return response
+    } catch (error) {
+      clearTimeout(timeoutId)
+
+      if (error.name === 'AbortError') {
+        throw new APIError(0, 'Request timed out. Please try again.', 'TIMEOUT')
+      }
+
+      if (error instanceof APIError) {
+        throw error
+      }
+
+      throw new APIError(0, 'Network error. Please check your connection.', 'NETWORK_ERROR')
+    }
+  },
 }
 
 /**
@@ -228,7 +277,7 @@ export async function detectImageFormat(file) {
   formData.append('file', file)
 
   const response = await apiClient.postForm(API_CONFIG.ENDPOINTS.DETECT_FORMAT, formData)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -241,7 +290,7 @@ export async function getFormatRecommendations(file) {
   formData.append('file', file)
 
   const response = await apiClient.postForm(API_CONFIG.ENDPOINTS.RECOMMEND_FORMAT, formData)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -250,7 +299,7 @@ export async function getFormatRecommendations(file) {
  */
 export async function getFormatCompatibility() {
   const response = await apiClient.get(API_CONFIG.ENDPOINTS.FORMAT_COMPATIBILITY)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -261,19 +310,33 @@ export async function getFormatCompatibility() {
 export async function listPresets(options = {}) {
   const params = new URLSearchParams()
 
-  if (options.search) params.append('search', options.search)
-  if (options.formatFilter) params.append('format_filter', options.formatFilter)
-  if (options.sortBy) params.append('sort_by', options.sortBy)
-  if (options.sortOrder) params.append('sort_order', options.sortOrder)
-  if (options.limit) params.append('limit', options.limit)
-  if (options.offset) params.append('offset', options.offset)
-  if (options.includeBuiltin !== undefined) params.append('include_builtin', options.includeBuiltin)
+  if (options.search) {
+    params.append('search', options.search)
+  }
+  if (options.formatFilter) {
+    params.append('format_filter', options.formatFilter)
+  }
+  if (options.sortBy) {
+    params.append('sort_by', options.sortBy)
+  }
+  if (options.sortOrder) {
+    params.append('sort_order', options.sortOrder)
+  }
+  if (options.limit) {
+    params.append('limit', options.limit)
+  }
+  if (options.offset) {
+    params.append('offset', options.offset)
+  }
+  if (options.includeBuiltin !== undefined) {
+    params.append('include_builtin', options.includeBuiltin)
+  }
 
   const endpoint = params.toString()
     ? `${API_CONFIG.ENDPOINTS.PRESETS}?${params}`
     : API_CONFIG.ENDPOINTS.PRESETS
   const response = await apiClient.get(endpoint)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -286,18 +349,33 @@ export async function searchPresets(query, filters = {}) {
   const params = new URLSearchParams()
   params.append('q', query)
 
-  if (filters.formats) params.append('formats', filters.formats.join(','))
-  if (filters.minQuality) params.append('min_quality', filters.minQuality)
-  if (filters.maxQuality) params.append('max_quality', filters.maxQuality)
-  if (filters.optimizationModes)
+  if (filters.formats) {
+    params.append('formats', filters.formats.join(','))
+  }
+  if (filters.minQuality) {
+    params.append('min_quality', filters.minQuality)
+  }
+  if (filters.maxQuality) {
+    params.append('max_quality', filters.maxQuality)
+  }
+  if (filters.optimizationModes) {
     params.append('optimization_modes', filters.optimizationModes.join(','))
-  if (filters.minUsage) params.append('min_usage', filters.minUsage)
-  if (filters.includeBuiltin !== undefined) params.append('include_builtin', filters.includeBuiltin)
-  if (filters.limit) params.append('limit', filters.limit)
-  if (filters.offset) params.append('offset', filters.offset)
+  }
+  if (filters.minUsage) {
+    params.append('min_usage', filters.minUsage)
+  }
+  if (filters.includeBuiltin !== undefined) {
+    params.append('include_builtin', filters.includeBuiltin)
+  }
+  if (filters.limit) {
+    params.append('limit', filters.limit)
+  }
+  if (filters.offset) {
+    params.append('offset', filters.offset)
+  }
 
   const response = await apiClient.get(`${API_CONFIG.ENDPOINTS.PRESET_SEARCH}?${params}`)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -308,14 +386,18 @@ export async function searchPresets(query, filters = {}) {
  */
 export async function getPreset(presetId, options = {}) {
   const params = new URLSearchParams()
-  if (options.includeUsage) params.append('include_usage', 'true')
-  if (options.version) params.append('version', options.version)
+  if (options.includeUsage) {
+    params.append('include_usage', 'true')
+  }
+  if (options.version) {
+    params.append('version', options.version)
+  }
 
   const endpoint = params.toString()
     ? `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}?${params}`
     : `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}`
   const response = await apiClient.get(endpoint)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -325,7 +407,7 @@ export async function getPreset(presetId, options = {}) {
  */
 export async function createPreset(presetData) {
   const response = await apiClient.post(API_CONFIG.ENDPOINTS.PRESETS, presetData)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -337,13 +419,15 @@ export async function createPreset(presetData) {
  */
 export async function updatePreset(presetId, updateData, versionNote = null) {
   const params = new URLSearchParams()
-  if (versionNote) params.append('version_note', versionNote)
+  if (versionNote) {
+    params.append('version_note', versionNote)
+  }
 
   const endpoint = params.toString()
     ? `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}?${params}`
     : `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}`
   const response = await apiClient.put(endpoint, updateData)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -354,7 +438,9 @@ export async function updatePreset(presetId, updateData, versionNote = null) {
  */
 export async function deletePreset(presetId, force = false) {
   const params = new URLSearchParams()
-  if (force) params.append('force', 'true')
+  if (force) {
+    params.append('force', 'true')
+  }
 
   const endpoint = params.toString()
     ? `${API_CONFIG.ENDPOINTS.PRESETS}/${presetId}?${params}`
@@ -370,13 +456,17 @@ export async function deletePreset(presetId, force = false) {
  */
 export async function getPresetVersions(presetId, options = {}) {
   const params = new URLSearchParams()
-  if (options.limit) params.append('limit', options.limit)
-  if (options.includeContent) params.append('include_content', 'true')
+  if (options.limit) {
+    params.append('limit', options.limit)
+  }
+  if (options.includeContent) {
+    params.append('include_content', 'true')
+  }
 
   const endpoint = API_CONFIG.ENDPOINTS.PRESET_VERSIONS(presetId)
   const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
   const response = await apiClient.get(finalEndpoint)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -388,12 +478,14 @@ export async function getPresetVersions(presetId, options = {}) {
  */
 export async function restorePresetVersion(presetId, version, restoreNote = null) {
   const params = new URLSearchParams()
-  if (restoreNote) params.append('restore_note', restoreNote)
+  if (restoreNote) {
+    params.append('restore_note', restoreNote)
+  }
 
   const endpoint = API_CONFIG.ENDPOINTS.PRESET_RESTORE(presetId, version)
   const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
   const response = await apiClient.post(finalEndpoint)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -404,14 +496,20 @@ export async function restorePresetVersion(presetId, version, restoreNote = null
  */
 export async function exportPreset(presetId, options = {}) {
   const params = new URLSearchParams()
-  if (options.includeHistory) params.append('include_history', 'true')
-  if (options.includeUsage) params.append('include_usage', 'true')
-  if (options.formatVersion) params.append('format_version', options.formatVersion)
+  if (options.includeHistory) {
+    params.append('include_history', 'true')
+  }
+  if (options.includeUsage) {
+    params.append('include_usage', 'true')
+  }
+  if (options.formatVersion) {
+    params.append('format_version', options.formatVersion)
+  }
 
   const endpoint = API_CONFIG.ENDPOINTS.PRESET_EXPORT(presetId)
   const finalEndpoint = params.toString() ? `${endpoint}?${params}` : endpoint
   const response = await apiClient.get(finalEndpoint)
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -434,7 +532,7 @@ export async function importPresets(
     `${API_CONFIG.ENDPOINTS.PRESET_IMPORT}?${params}`,
     importData
   )
-  return await response.json()
+  return response.json()
 }
 
 /**
@@ -444,13 +542,19 @@ export async function importPresets(
  */
 export async function exportAllPresets(options = {}) {
   const params = new URLSearchParams()
-  if (options.formatFilter) params.append('format_filter', options.formatFilter)
-  if (options.includeUnused !== undefined) params.append('include_unused', options.includeUnused)
-  if (options.exportFormat) params.append('export_format', options.exportFormat)
+  if (options.formatFilter) {
+    params.append('format_filter', options.formatFilter)
+  }
+  if (options.includeUnused !== undefined) {
+    params.append('include_unused', options.includeUnused)
+  }
+  if (options.exportFormat) {
+    params.append('export_format', options.exportFormat)
+  }
 
   const endpoint = params.toString()
     ? `${API_CONFIG.ENDPOINTS.PRESETS_EXPORT_ALL}?${params}`
     : API_CONFIG.ENDPOINTS.PRESETS_EXPORT_ALL
   const response = await apiClient.get(endpoint)
-  return await response.json()
+  return response.json()
 }

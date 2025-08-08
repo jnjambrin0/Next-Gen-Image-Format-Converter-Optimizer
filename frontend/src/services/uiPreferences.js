@@ -210,7 +210,8 @@ export class UIPreferences {
    * Migrate preferences from old version
    */
   migrate(oldPreferences) {
-    console.log('Migrating UI preferences from version', oldPreferences.version || 'unknown')
+    // Migration from older version - silently handle
+    // console.log('Migrating UI preferences from version', oldPreferences.version || 'unknown')
 
     // For now, just merge with defaults
     // Add specific migration logic here as needed
