@@ -5,13 +5,13 @@ export function createLoadingSpinner(statusText = null) {
   // Logo with pulse animation
   const logoContainer = document.createElement('div')
   logoContainer.className = 'relative mb-4'
-  
+
   const logo = document.createElement('img')
   logo.src = '/logo.png'
   logo.alt = 'Image Converter Logo'
   logo.className = 'w-12 h-12 animate-pulse'
   logo.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
-  
+
   logoContainer.appendChild(logo)
   spinner.appendChild(logoContainer)
 
