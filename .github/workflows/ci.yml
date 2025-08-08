@@ -133,12 +133,16 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
+    - name: Create minimal .env file for Docker Compose
+      run: |
+        echo "# CI environment" > .env
+
     - name: Test Docker Compose
       run: |
         docker compose build
         docker compose up -d
         sleep 10
-        curl -f http://localhost:8000/health || exit 1
+        curl -f http://localhost:8000/api/health || exit 1
         docker compose down
 
   security-scan:
