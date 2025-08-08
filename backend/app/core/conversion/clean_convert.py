@@ -19,7 +19,7 @@ clean_env = {
 proc = subprocess.Popen(
     [sys.executable, convert_script] + sys.argv[1:],
     stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE, 
+    stdout=subprocess.PIPE,
     stderr=subprocess.DEVNULL,  # Discard all stderr
     env=clean_env,
     close_fds=True,  # Don't inherit any file descriptors

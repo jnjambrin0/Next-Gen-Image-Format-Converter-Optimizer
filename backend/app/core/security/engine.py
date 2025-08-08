@@ -21,7 +21,7 @@ from app.core.exceptions import ConversionError
 from app.config import settings
 from app.core.constants import (
     SANDBOX_TIMEOUTS,
-    SANDBOX_MEMORY_LIMITS, 
+    SANDBOX_MEMORY_LIMITS,
     SANDBOX_CPU_LIMITS,
     SANDBOX_OUTPUT_LIMITS,
     IMAGE_MAGIC_BYTES,
@@ -32,7 +32,7 @@ from app.core.constants import (
     MIN_VALIDATION_FILE_SIZE,
     IMAGE_BUFFER_CHECK_LIMIT,
     STDERR_TRUNCATION_LENGTH,
-    MAX_SECURITY_EVENTS
+    MAX_SECURITY_EVENTS,
 )
 from app.models.security_event import SecurityEvent, SecurityEventType, SecuritySeverity
 
@@ -58,12 +58,13 @@ class SecurityEngine:
         self._metadata_stripper = MetadataStripper()
         self._security_tracker = None
         self._configure_logging()
-    
+
     @property
     def security_tracker(self):
         """Lazy load security tracker to avoid circular imports."""
         if self._security_tracker is None:
             from app.api.routes.monitoring import security_tracker
+
             self._security_tracker = security_tracker
         return self._security_tracker
 
@@ -99,7 +100,9 @@ class SecurityEngine:
             sandbox_gid=settings.sandbox_gid,
             enable_memory_tracking=True,
             enable_memory_locking=strictness in ["strict", "paranoid"],
-            memory_violation_threshold=MAX_MEMORY_VIOLATIONS.get(strictness, MAX_MEMORY_VIOLATIONS["standard"]),
+            memory_violation_threshold=MAX_MEMORY_VIOLATIONS.get(
+                strictness, MAX_MEMORY_VIOLATIONS["standard"]
+            ),
         )
 
         # Create and return sandbox
@@ -111,7 +114,7 @@ class SecurityEngine:
             conversion_id=conversion_id,
             resource_limits=resource_limits,
         )
-        
+
         # Thread-safe sandbox tracking
         with self._sandbox_lock:
             self._sandboxes[conversion_id] = process_sandbox
@@ -122,17 +125,19 @@ class SecurityEngine:
             strictness=strictness,
             resource_limits=resource_limits,
         )
-        
+
         # Record security event
-        asyncio.create_task(self.security_tracker.record_sandbox_event(
-            event_type="create",
-            severity=SecuritySeverity.INFO,
-            conversion_id=conversion_id,
-            strictness=strictness,
-            memory_limit_mb=resource_limits["memory_mb"],
-            cpu_limit_percent=resource_limits["cpu_percent"],
-            timeout_seconds=resource_limits["timeout_seconds"]
-        ))
+        asyncio.create_task(
+            self.security_tracker.record_sandbox_event(
+                event_type="create",
+                severity=SecuritySeverity.INFO,
+                conversion_id=conversion_id,
+                strictness=strictness,
+                memory_limit_mb=resource_limits["memory_mb"],
+                cpu_limit_percent=resource_limits["cpu_percent"],
+                timeout_seconds=resource_limits["timeout_seconds"],
+            )
+        )
 
         return sandbox
 
@@ -147,10 +152,18 @@ class SecurityEngine:
             Resource limit configuration
         """
         return {
-            "memory_mb": SANDBOX_MEMORY_LIMITS.get(strictness, SANDBOX_MEMORY_LIMITS["standard"]),
-            "cpu_percent": SANDBOX_CPU_LIMITS.get(strictness, SANDBOX_CPU_LIMITS["standard"]),
-            "timeout_seconds": SANDBOX_TIMEOUTS.get(strictness, SANDBOX_TIMEOUTS["standard"]),
-            "max_output_mb": SANDBOX_OUTPUT_LIMITS.get(strictness, SANDBOX_OUTPUT_LIMITS["standard"]),
+            "memory_mb": SANDBOX_MEMORY_LIMITS.get(
+                strictness, SANDBOX_MEMORY_LIMITS["standard"]
+            ),
+            "cpu_percent": SANDBOX_CPU_LIMITS.get(
+                strictness, SANDBOX_CPU_LIMITS["standard"]
+            ),
+            "timeout_seconds": SANDBOX_TIMEOUTS.get(
+                strictness, SANDBOX_TIMEOUTS["standard"]
+            ),
+            "max_output_mb": SANDBOX_OUTPUT_LIMITS.get(
+                strictness, SANDBOX_OUTPUT_LIMITS["standard"]
+            ),
         }
 
     async def scan_file(self, file_data: bytes) -> Dict[str, Any]:
@@ -194,13 +207,13 @@ class SecurityEngine:
                 report["threats_found"].append(
                     f"Suspicious pattern detected: {pattern.decode('utf-8', errors='ignore')}"
                 )
-        
+
         # Verify it's a valid image by checking magic bytes
-        
+
         # Check if file starts with any known image signature
         is_valid_image = False
         detected_format = None
-        
+
         for signature, format_name in IMAGE_MAGIC_BYTES.items():
             if file_data.startswith(signature):
                 # Special handling for container formats
@@ -224,23 +237,27 @@ class SecurityEngine:
                     is_valid_image = True
                     detected_format = format_name
                     break
-        
+
         # PIL verification fallback
         if not is_valid_image and len(file_data) > 0:
             # Try to open with PIL as a final check with security limits
             try:
                 # Set PIL security limits
-                Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS  # Prevents decompression bombs
-                
+                Image.MAX_IMAGE_PIXELS = (
+                    MAX_IMAGE_PIXELS  # Prevents decompression bombs
+                )
+
                 # Use a limited BytesIO buffer
-                img_buffer = io.BytesIO(file_data[:IMAGE_BUFFER_CHECK_LIMIT])  # Only check first 1MB
-                
+                img_buffer = io.BytesIO(
+                    file_data[:IMAGE_BUFFER_CHECK_LIMIT]
+                )  # Only check first 1MB
+
                 img = Image.open(img_buffer)
                 # Verify format without decompressing
                 img.verify()
-                
+
                 # Check if it's actually an image format
-                if hasattr(img, 'format') and img.format is not None:
+                if hasattr(img, "format") and img.format is not None:
                     is_valid_image = True
                     detected_format = img.format
             except Image.DecompressionBombError:
@@ -250,11 +267,15 @@ class SecurityEngine:
                 # Log the specific error for debugging but don't expose it
                 logger.debug(f"PIL verification failed: {str(e)}")
                 pass
-        
-        if not is_valid_image and "File too small" not in str(report.get("threats_found", [])):
+
+        if not is_valid_image and "File too small" not in str(
+            report.get("threats_found", [])
+        ):
             report["is_safe"] = False
-            report["threats_found"].append("File does not appear to be a valid image format")
-        
+            report["threats_found"].append(
+                "File does not appear to be a valid image format"
+            )
+
         # Log detected format if valid
         if is_valid_image and detected_format:
             logger.debug(f"Detected image format: {detected_format}")
@@ -276,11 +297,11 @@ class SecurityEngine:
         image_data: bytes,
         format: str,
         preserve_metadata: bool = False,
-        preserve_gps: bool = False
+        preserve_gps: bool = False,
     ) -> Tuple[bytes, Dict[str, Any]]:
         """
         Remove EXIF and other metadata from image.
-        
+
         DEPRECATED: Use analyze_and_process_metadata instead.
 
         Args:
@@ -295,7 +316,7 @@ class SecurityEngine:
         return await self._metadata_stripper.analyze_and_strip_metadata(
             image_data, format, preserve_metadata, preserve_gps
         )
-    
+
     async def analyze_and_process_metadata(
         self,
         image_data: bytes,
@@ -306,36 +327,34 @@ class SecurityEngine:
     ) -> Tuple[bytes, Dict[str, Any]]:
         """
         Analyze and process metadata for image conversion.
-        
+
         This method handles metadata analysis and optional stripping
         before image conversion, ensuring accurate tracking of what
         metadata was present in the original image.
-        
+
         Args:
             image_data: Raw image data
             input_format: Input image format
             strip_metadata: If True, remove metadata (unless preserve_metadata overrides)
             preserve_metadata: If True, keep non-GPS metadata (overrides strip_metadata)
             preserve_gps: If True, keep GPS data (only if preserve_metadata is True)
-            
+
         Returns:
             Tuple of (processed_image_data, metadata_summary)
         """
         result = await self._metadata_stripper.process_metadata_for_conversion(
-            image_data,
-            input_format,
-            strip_metadata,
-            preserve_metadata,
-            preserve_gps
+            image_data, input_format, strip_metadata, preserve_metadata, preserve_gps
         )
-        
+
         # Record metadata stripping event if metadata was removed
         if result[1].get("metadata_removed") and result[1].get("fields_removed"):
-            asyncio.create_task(self.security_tracker.record_metadata_event(
-                removed_fields=result[1]["fields_removed"],
-                input_format=input_format
-            ))
-        
+            asyncio.create_task(
+                self.security_tracker.record_metadata_event(
+                    removed_fields=result[1]["fields_removed"],
+                    input_format=input_format,
+                )
+            )
+
         return result
 
     async def verify_process_isolation(
@@ -430,7 +449,9 @@ class SecurityEngine:
         """Test if environment variables are properly sanitized."""
         try:
             # Check if sensitive env vars are removed
-            result = await sandbox.execute_sandboxed_async(command=["printenv"], timeout=2)
+            result = await sandbox.execute_sandboxed_async(
+                command=["printenv"], timeout=2
+            )
 
             output = result["output"].decode("utf-8", errors="ignore")
             sensitive_vars = ["AWS_SECRET_ACCESS_KEY", "DATABASE_URL", "API_KEY"]
@@ -482,13 +503,15 @@ class SecurityEngine:
 
             # Update process sandbox record
             process_sandbox.process_id = str(result.get("process_id", "unknown"))
-            
+
             # Check for conversion errors
             if result["returncode"] != 0:
                 # Try to parse JSON error from stderr
                 error_message = "Conversion failed"
                 try:
-                    stderr_str = result.get("stderr", b"").decode("utf-8", errors="ignore")
+                    stderr_str = result.get("stderr", b"").decode(
+                        "utf-8", errors="ignore"
+                    )
                     if stderr_str:
                         # Look for JSON error message
                         for line in stderr_str.strip().split("\n"):
@@ -498,8 +521,10 @@ class SecurityEngine:
                                 break
                 except Exception:
                     # If we can't parse the error, use raw stderr
-                    error_message = f"Conversion failed with code {result['returncode']}"
-                
+                    error_message = (
+                        f"Conversion failed with code {result['returncode']}"
+                    )
+
                 process_sandbox.mark_completed(
                     exit_code=result["returncode"],
                     actual_usage={
@@ -509,17 +534,19 @@ class SecurityEngine:
                     },
                     error_message=error_message,
                 )
-                
+
                 logger.error(
                     "Sandboxed conversion failed",
                     conversion_id=conversion_id,
                     error=error_message,
                     exit_code=result["returncode"],
-                    stderr=result.get("stderr", b"").decode("utf-8", errors="replace")[:STDERR_TRUNCATION_LENGTH],  # First 500 chars of stderr
+                    stderr=result.get("stderr", b"").decode("utf-8", errors="replace")[
+                        :STDERR_TRUNCATION_LENGTH
+                    ],  # First 500 chars of stderr
                 )
-                
+
                 raise ConversionError(error_message)
-            
+
             # Mark successful completion
             process_sandbox.mark_completed(
                 exit_code=result["returncode"],
@@ -589,12 +616,16 @@ class SecurityEngine:
                     )
 
                 # Log final audit entry
-                logger.info("Sandbox cleanup completed", **process_sandbox.to_audit_log())
+                logger.info(
+                    "Sandbox cleanup completed", **process_sandbox.to_audit_log()
+                )
 
                 # Remove from tracking
                 del self._sandboxes[conversion_id]
 
-    def get_sandbox_history(self, limit: int = MAX_SECURITY_EVENTS) -> List[Dict[str, Any]]:
+    def get_sandbox_history(
+        self, limit: int = MAX_SECURITY_EVENTS
+    ) -> List[Dict[str, Any]]:
         """
         Get recent sandbox execution history for monitoring.
 

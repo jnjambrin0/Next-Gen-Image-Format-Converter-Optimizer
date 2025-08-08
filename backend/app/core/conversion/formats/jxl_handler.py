@@ -7,6 +7,7 @@ import structlog
 
 try:
     import jxlpy
+
     JXL_AVAILABLE = True
 except ImportError:
     JXL_AVAILABLE = False
@@ -26,11 +27,11 @@ class JxlHandler(BaseFormatHandler):
         super().__init__()
         self.supported_formats = ["jxl", "jpegxl", "jpeg_xl"]
         self.format_name = "JPEG_XL"
-        
+
         if not JXL_AVAILABLE:
             raise UnsupportedFormatError(
                 "JPEG XL support not available. Install jxlpy package.",
-                details={"format": "JPEG_XL", "required_package": "jxlpy"}
+                details={"format": "JPEG_XL", "required_package": "jxlpy"},
             )
 
     def can_handle(self, format_name: str) -> bool:
@@ -44,9 +45,9 @@ class JxlHandler(BaseFormatHandler):
 
         # Check for JPEG XL magic bytes
         # Codestream: starts with 0xFF0A
-        if image_data[:2] == b"\xFF\x0A":
+        if image_data[:2] == b"\xff\x0a":
             return True
-        
+
         # ISO container: "JXL " signature at offset 4-8
         if len(image_data) >= 12 and image_data[4:8] == b"JXL ":
             return True
@@ -66,7 +67,7 @@ class JxlHandler(BaseFormatHandler):
         try:
             # Decode JPEG XL to RGB/RGBA array
             decoded = jxlpy.decode_jpeg_xl(image_data)
-            
+
             # Convert numpy array to PIL Image
             if decoded.shape[2] == 4:
                 mode = "RGBA"
@@ -75,16 +76,16 @@ class JxlHandler(BaseFormatHandler):
             else:
                 raise ConversionFailedError(
                     f"Unsupported JPEG XL color channels: {decoded.shape[2]}",
-                    details={"format": "JPEG_XL"}
+                    details={"format": "JPEG_XL"},
                 )
-            
+
             img = Image.fromarray(decoded, mode=mode)
             return img
 
         except Exception as e:
             raise ConversionFailedError(
-                f"Failed to load JPEG XL image: {str(e)}", 
-                details={"format": "JPEG_XL", "error": str(e)}
+                f"Failed to load JPEG XL image: {str(e)}",
+                details={"format": "JPEG_XL", "error": str(e)},
             )
 
     def save_image(
@@ -94,7 +95,7 @@ class JxlHandler(BaseFormatHandler):
         try:
             # Convert image to numpy array
             import numpy as np
-            
+
             # Ensure RGB or RGBA mode
             if image.mode not in ("RGB", "RGBA"):
                 if "transparency" in image.info or image.mode in ("RGBA", "LA", "P"):
@@ -104,27 +105,27 @@ class JxlHandler(BaseFormatHandler):
 
             # Convert to numpy array
             img_array = np.array(image)
-            
+
             # Get encoding options
             encode_options = self._get_encode_options(settings)
-            
+
             # Encode to JPEG XL
             jxl_data = jxlpy.encode_jpeg_xl(img_array, **encode_options)
-            
+
             # Write to buffer
             output_buffer.write(jxl_data)
             output_buffer.seek(0)
 
         except Exception as e:
             raise ConversionFailedError(
-                f"Failed to save image as JPEG XL: {str(e)}", 
-                details={"format": "JPEG_XL", "error": str(e)}
+                f"Failed to save image as JPEG XL: {str(e)}",
+                details={"format": "JPEG_XL", "error": str(e)},
             )
 
     def _get_encode_options(self, settings: ConversionSettings) -> Dict[str, Any]:
         """Get JPEG XL encoding options."""
         options = {}
-        
+
         # Quality mapping: our 1-100 to JXL distance parameter
         # Lower distance = higher quality
         # Distance 0 = lossless, 1.0 = visually lossless, 3.0 = acceptable quality
@@ -136,16 +137,16 @@ class JxlHandler(BaseFormatHandler):
             distance = 15.0 - (settings.quality / 99.0 * 14.9)
             options["distance"] = distance
             options["lossless"] = False
-        
+
         # Effort level (1-9, higher = slower but better compression)
         if settings.optimize:
             options["effort"] = 7  # High effort for optimization
         else:
             options["effort"] = 4  # Balanced effort
-        
+
         # Enable progressive decoding
         options["progressive"] = True
-        
+
         return options
 
     def get_quality_param(self, settings: ConversionSettings) -> Dict[str, Any]:

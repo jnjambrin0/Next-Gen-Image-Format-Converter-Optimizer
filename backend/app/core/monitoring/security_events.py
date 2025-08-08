@@ -24,7 +24,7 @@ from app.core.constants import (
     SECURITY_EVENT_RETENTION_DAYS,
     MAX_RECENT_EVENTS_DISPLAY,
     DB_CHECK_SAME_THREAD,
-    SECURITY_EVENT_TABLE_NAME
+    SECURITY_EVENT_TABLE_NAME,
 )
 
 logger = get_logger(__name__)
@@ -36,7 +36,11 @@ class SecurityEventTracker:
     No PII is stored in security events.
     """
 
-    def __init__(self, db_path: Optional[str] = None, rate_limit_config: Optional[RateLimitConfig] = None):
+    def __init__(
+        self,
+        db_path: Optional[str] = None,
+        rate_limit_config: Optional[RateLimitConfig] = None,
+    ):
         """
         Initialize security event tracker.
 
@@ -67,7 +71,7 @@ class SecurityEventTracker:
                 )
             """
             )
-            
+
             # Create indexes separately
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_timestamp ON security_events (timestamp)"
@@ -107,10 +111,10 @@ class SecurityEventTracker:
                 "Security event rate limited",
                 event_type=event.event_type.value,
                 severity=event.severity.value,
-                rate_limited_count=self._rate_limited_events
+                rate_limited_count=self._rate_limited_events,
             )
             return -1
-        
+
         try:
             with self._lock:
                 with self._get_db() as conn:
@@ -142,7 +146,9 @@ class SecurityEventTracker:
             logger.error(f"Failed to record security event: {e}")
             return -1
 
-    def get_event_summary(self, hours: int = DEFAULT_MONITORING_HOURS) -> SecurityEventSummary:
+    def get_event_summary(
+        self, hours: int = DEFAULT_MONITORING_HOURS
+    ) -> SecurityEventSummary:
         """
         Get summary of security events.
 
@@ -204,7 +210,11 @@ class SecurityEventTracker:
                 ORDER BY timestamp DESC
                 LIMIT ?
             """,
-                (cutoff_time, SecurityEventType.VIOLATION.value, MAX_RECENT_EVENTS_DISPLAY),
+                (
+                    cutoff_time,
+                    SecurityEventType.VIOLATION.value,
+                    MAX_RECENT_EVENTS_DISPLAY,
+                ),
             )
 
             for row in cursor:
@@ -310,7 +320,9 @@ class SecurityEventTracker:
 
         return await self.record_event(event)
 
-    async def cleanup_old_events(self, retention_days: int = SECURITY_EVENT_RETENTION_DAYS):
+    async def cleanup_old_events(
+        self, retention_days: int = SECURITY_EVENT_RETENTION_DAYS
+    ):
         """
         Clean up old security events.
 
@@ -408,7 +420,7 @@ class SecurityEventTracker:
                 else "stable"
             ),
         }
-    
+
     def get_rate_limit_stats(self) -> Dict[str, Any]:
         """Get rate limiting statistics."""
         stats = self._rate_limiter.get_stats()

@@ -11,29 +11,29 @@ import locale
 
 class I18nManager:
     """Manages internationalization for the CLI"""
-    
+
     def __init__(self):
         self.current_language = self._detect_system_language()
         self.translations: Dict[str, Dict[str, str]] = {}
         self.fallback_language = "en"
         self._load_translations()
-    
+
     def _detect_system_language(self) -> str:
         """Detect system language"""
         try:
             system_locale = locale.getdefaultlocale()[0]
             if system_locale:
                 # Extract language code (e.g., "en" from "en_US")
-                return system_locale.split('_')[0].lower()
+                return system_locale.split("_")[0].lower()
         except:
             pass
         return "en"
-    
+
     def _load_translations(self):
         """Load translation files"""
         # For now, we'll use embedded translations
         # In production, these would be loaded from JSON files
-        
+
         self.translations = {
             "en": {
                 "welcome": "Welcome to Image Converter CLI",
@@ -124,9 +124,9 @@ class I18nManager:
                 "invalid_format": "無効な形式",
                 "conversion_complete": "変換完了",
                 "batch_processing": "バッチ処理中",
-            }
+            },
         }
-    
+
     def set_language(self, language: str):
         """Set the current language"""
         if language in self.translations:
@@ -134,7 +134,7 @@ class I18nManager:
         else:
             # Fallback to English if language not supported
             self.current_language = self.fallback_language
-    
+
     def get(self, key: str, **kwargs) -> str:
         """Get translated string"""
         # Get translation for current language
@@ -143,16 +143,16 @@ class I18nManager:
             if text:
                 # Format with any provided arguments
                 return text.format(**kwargs) if kwargs else text
-        
+
         # Fallback to English
         if self.fallback_language in self.translations:
             text = self.translations[self.fallback_language].get(key)
             if text:
                 return text.format(**kwargs) if kwargs else text
-        
+
         # Return key if no translation found
         return key
-    
+
     def get_available_languages(self) -> Dict[str, str]:
         """Get available languages"""
         return {
@@ -161,7 +161,7 @@ class I18nManager:
             "fr": "Français",
             "de": "Deutsch",
             "zh": "中文",
-            "ja": "日本語"
+            "ja": "日本語",
         }
 
 

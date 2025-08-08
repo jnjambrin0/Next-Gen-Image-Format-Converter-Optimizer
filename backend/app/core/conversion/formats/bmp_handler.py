@@ -49,7 +49,7 @@ class BmpHandler(BaseFormatHandler):
                 img = Image.open(buffer)
                 # Load image data to ensure it's fully read
                 img.load()
-                
+
                 # BMP files can have various bit depths and color modes
                 # Normalize to RGB/RGBA for consistent processing
                 if img.mode == "P":
@@ -64,13 +64,13 @@ class BmpHandler(BaseFormatHandler):
                 elif img.mode not in ("RGB", "RGBA"):
                     # Other modes
                     img = img.convert("RGB")
-                
+
                 return img
 
         except Exception as e:
             raise BmpDecodingError(
-                f"Failed to load BMP image: {str(e)}", 
-                details={"format": "BMP", "error": str(e)}
+                f"Failed to load BMP image: {str(e)}",
+                details={"format": "BMP", "error": str(e)},
             )
 
     def save_image(
@@ -89,7 +89,7 @@ class BmpHandler(BaseFormatHandler):
 
             # BMP doesn't have quality settings, but we can control bit depth
             save_params = {}
-            
+
             # Use 24-bit for RGB (default)
             if image.mode == "RGB":
                 save_params["bits"] = 24
@@ -104,8 +104,8 @@ class BmpHandler(BaseFormatHandler):
 
         except Exception as e:
             raise BmpDecodingError(
-                f"Failed to save image as BMP: {str(e)}", 
-                details={"format": "BMP", "error": str(e)}
+                f"Failed to save image as BMP: {str(e)}",
+                details={"format": "BMP", "error": str(e)},
             )
 
     def get_quality_param(self, settings: ConversionSettings) -> Dict[str, Any]:

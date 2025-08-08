@@ -38,42 +38,39 @@ class TestFormatFallbackIntegration:
         """Test WebP2 request falls back to WebP when WebP2 not available."""
         # Create request for WebP2
         request = ConversionRequest(
-            output_format="webp2",
-            settings=ConversionSettings(quality=85)
+            output_format="webp2", settings=ConversionSettings(quality=85)
         )
-        
+
         # Convert
         result = await conversion_manager.convert_image(
-            sample_image_data,
-            "png",
-            request
+            sample_image_data, "png", request
         )
-        
+
         # Check result
         assert result.status.value == "completed"
         assert result.output_size > 0
-        
+
         # Check fallback was used
         if "format_fallback" in result.quality_settings:
             assert result.quality_settings["format_fallback"]["requested"] == "webp2"
-            assert result.quality_settings["format_fallback"]["actual"] in ["webp", "png"]
+            assert result.quality_settings["format_fallback"]["actual"] in [
+                "webp",
+                "png",
+            ]
 
     @pytest.mark.asyncio
     async def test_jpeg_optimized_fallback(self, conversion_manager, sample_image_data):
         """Test JPEG optimized falls back to regular JPEG when mozjpeg not available."""
         # Create request for optimized JPEG
         request = ConversionRequest(
-            output_format="jpeg_optimized",
-            settings=ConversionSettings(quality=85)
+            output_format="jpeg_optimized", settings=ConversionSettings(quality=85)
         )
-        
+
         # Convert
         result = await conversion_manager.convert_image(
-            sample_image_data,
-            "png",
-            request
+            sample_image_data, "png", request
         )
-        
+
         # Check result
         assert result.status.value == "completed"
         assert result.output_size > 0
@@ -83,36 +80,31 @@ class TestFormatFallbackIntegration:
         """Test PNG optimized falls back to regular PNG when tools not available."""
         # Create request for optimized PNG
         request = ConversionRequest(
-            output_format="png_optimized",
-            settings=ConversionSettings(quality=85)
+            output_format="png_optimized", settings=ConversionSettings(quality=85)
         )
-        
+
         # Convert
         result = await conversion_manager.convert_image(
-            sample_image_data,
-            "jpeg",
-            request
+            sample_image_data, "jpeg", request
         )
-        
+
         # Check result
         assert result.status.value == "completed"
         assert result.output_size > 0
 
     @pytest.mark.asyncio
-    async def test_unavailable_format_raises_error(self, conversion_manager, sample_image_data):
+    async def test_unavailable_format_raises_error(
+        self, conversion_manager, sample_image_data
+    ):
         """Test that completely unavailable format raises error."""
         # Mock a format that has no handler and no fallback
         with pytest.raises(UnsupportedFormatError):
             request = ConversionRequest(
                 output_format="completely_unknown_format",
-                settings=ConversionSettings(quality=85)
+                settings=ConversionSettings(quality=85),
             )
-            
-            await conversion_manager.convert_image(
-                sample_image_data,
-                "png",
-                request
-            )
+
+            await conversion_manager.convert_image(sample_image_data, "png", request)
 
     @pytest.mark.asyncio
     async def test_format_availability_check(self, conversion_manager):
@@ -121,52 +113,49 @@ class TestFormatFallbackIntegration:
         assert conversion_manager.is_format_available("png") is True
         assert conversion_manager.is_format_available("jpeg") is True
         assert conversion_manager.is_format_available("webp") is True
-        
+
         # Optimized formats should be available via fallback
         assert conversion_manager.is_format_available("png_optimized") is True
         assert conversion_manager.is_format_available("jpeg_optimized") is True
-        
+
         # Completely unknown format
         assert conversion_manager.is_format_available("unknown_format") is False
 
     def test_available_formats_list(self, conversion_manager):
         """Test getting list of available formats."""
         formats = conversion_manager.get_available_formats()
-        
+
         # Should include basic formats
         assert "png" in formats
         assert "jpeg" in formats
         assert "jpg" in formats
         assert "webp" in formats
-        
+
         # Should include formats with fallbacks
         assert "png_optimized" in formats
         assert "jpeg_optimized" in formats
-        
+
         # List should be sorted
         assert formats == sorted(formats)
 
-    @pytest.mark.asyncio 
-    async def test_fallback_preserves_settings(self, conversion_manager, sample_image_data):
+    @pytest.mark.asyncio
+    async def test_fallback_preserves_settings(
+        self, conversion_manager, sample_image_data
+    ):
         """Test that conversion settings are preserved when using fallback."""
         # Create request with specific settings
         request = ConversionRequest(
             output_format="jpeg_optimized",
             settings=ConversionSettings(
-                quality=95,
-                strip_metadata=False,
-                preserve_metadata=True,
-                optimize=True
-            )
+                quality=95, strip_metadata=False, preserve_metadata=True, optimize=True
+            ),
         )
-        
+
         # Convert
         result = await conversion_manager.convert_image(
-            sample_image_data,
-            "png", 
-            request
+            sample_image_data, "png", request
         )
-        
+
         # Check settings were preserved
         assert result.quality_settings["quality"] == 95
         assert result.quality_settings["strip_metadata"] is False

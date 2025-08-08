@@ -50,4 +50,3 @@ class BatchConversionRequest(BaseModel):
     max_parallel: int = Field(
         5, ge=1, le=10, description="Maximum parallel conversions"
     )
-

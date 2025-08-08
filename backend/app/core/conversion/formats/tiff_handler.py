@@ -47,7 +47,7 @@ class TiffHandler(BaseFormatHandler):
         try:
             with BytesIO(image_data) as buffer:
                 img = Image.open(buffer)
-                
+
                 # Check if it's a multi-page TIFF
                 try:
                     img.seek(1)
@@ -55,19 +55,19 @@ class TiffHandler(BaseFormatHandler):
                     img.seek(0)
                     logger.debug(
                         "Multi-page TIFF detected, extracting first frame",
-                        n_frames=getattr(img, "n_frames", 1)
+                        n_frames=getattr(img, "n_frames", 1),
                     )
                 except EOFError:
                     # Single page TIFF
                     pass
-                
+
                 # Load the first frame/page
                 img.load()
-                
+
                 # Create a copy to ensure we have a standalone image
                 # (not linked to the BytesIO buffer)
                 first_frame = img.copy()
-                
+
                 # TIFF can have various color modes, normalize as needed
                 if first_frame.mode == "CMYK":
                     first_frame = first_frame.convert("RGB")
@@ -76,13 +76,13 @@ class TiffHandler(BaseFormatHandler):
                         first_frame = first_frame.convert("RGBA")
                     else:
                         first_frame = first_frame.convert("RGB")
-                
+
                 return first_frame
 
         except Exception as e:
             raise TiffDecodingError(
-                f"Failed to load TIFF image: {str(e)}", 
-                details={"format": "TIFF", "error": str(e)}
+                f"Failed to load TIFF image: {str(e)}",
+                details={"format": "TIFF", "error": str(e)},
             )
 
     def save_image(
@@ -100,7 +100,7 @@ class TiffHandler(BaseFormatHandler):
 
             # Get save parameters
             save_params = self.get_quality_param(settings)
-            
+
             # TIFF compression options
             if settings.optimize:
                 # Use LZW compression for lossless compression
@@ -108,7 +108,7 @@ class TiffHandler(BaseFormatHandler):
             else:
                 # No compression for faster saving
                 save_params["compression"] = "none"
-            
+
             # Remove metadata if requested
             if settings.strip_metadata:
                 # TIFF-specific metadata removal - more efficient approach
@@ -123,8 +123,8 @@ class TiffHandler(BaseFormatHandler):
 
         except Exception as e:
             raise TiffDecodingError(
-                f"Failed to save image as TIFF: {str(e)}", 
-                details={"format": "TIFF", "error": str(e)}
+                f"Failed to save image as TIFF: {str(e)}",
+                details={"format": "TIFF", "error": str(e)},
             )
 
     def get_quality_param(self, settings: ConversionSettings) -> Dict[str, Any]:
@@ -132,12 +132,12 @@ class TiffHandler(BaseFormatHandler):
         # TIFF doesn't have quality settings for lossless compression
         # Quality only applies to JPEG compression within TIFF
         params = {}
-        
+
         # Only use JPEG compression for very low quality settings
         if settings.quality < 50:
             params["compression"] = "jpeg"
             params["quality"] = settings.quality
-        
+
         return params
 
     def _supports_transparency(self) -> bool:

@@ -16,6 +16,7 @@ logger = structlog.get_logger()
 @dataclass
 class ExecutionResult:
     """Result from external tool execution."""
+
     stdout: bytes
     stderr: str
     returncode: int
@@ -24,28 +25,28 @@ class ExecutionResult:
 
 class ExternalToolExecutor:
     """Secure executor for external image processing tools."""
-    
+
     # Default restricted environment for subprocess execution
     DEFAULT_RESTRICTED_ENV = {
         "PATH": "/usr/bin:/bin:/usr/local/bin",  # Minimal PATH
-        "HOME": "/tmp",                           # Restrict home directory
-        "TMPDIR": "/tmp",                         # Restrict temp directory
-        "LC_ALL": "C",                           # Consistent locale
+        "HOME": "/tmp",  # Restrict home directory
+        "TMPDIR": "/tmp",  # Restrict temp directory
+        "LC_ALL": "C",  # Consistent locale
     }
-    
+
     # Default resource limits
     DEFAULT_TIMEOUT = 30  # seconds
     DEFAULT_NICE_VALUE = 10  # Lower priority
-    
+
     def __init__(
-        self, 
-        tool_name: str, 
+        self,
+        tool_name: str,
         tool_variants: Optional[List[str]] = None,
-        custom_env: Optional[Dict[str, str]] = None
+        custom_env: Optional[Dict[str, str]] = None,
     ):
         """
         Initialize external tool executor.
-        
+
         Args:
             tool_name: Primary name of the tool
             tool_variants: Alternative names to search for
@@ -54,12 +55,12 @@ class ExternalToolExecutor:
         self.tool_name = tool_name
         self.tool_variants = tool_variants or [tool_name]
         self.tool_path = self._find_tool()
-        
+
         # Merge custom environment with defaults
         self.restricted_env = self.DEFAULT_RESTRICTED_ENV.copy()
         if custom_env:
             self.restricted_env.update(custom_env)
-    
+
     def _find_tool(self) -> Optional[str]:
         """Find the tool executable in the system."""
         for variant in self.tool_variants:
@@ -69,107 +70,105 @@ class ExternalToolExecutor:
                     "Found external tool",
                     tool_name=self.tool_name,
                     variant=variant,
-                    path=tool_path
+                    path=tool_path,
                 )
                 return tool_path
-        
+
         logger.warning(
             "External tool not found",
             tool_name=self.tool_name,
-            variants=self.tool_variants
+            variants=self.tool_variants,
         )
         return None
-    
+
     @property
     def is_available(self) -> bool:
         """Check if the tool is available."""
         return self.tool_path is not None
-    
+
     def check_version(self, version_args: List[str] = None) -> Optional[str]:
         """
         Check tool version for debugging.
-        
+
         Args:
             version_args: Arguments to get version (default: ["--version"])
-            
+
         Returns:
             Version string if available
         """
         if not self.is_available:
             return None
-            
+
         version_args = version_args or ["--version"]
-        
+
         try:
             result = subprocess.run(
                 [self.tool_path] + version_args,
                 capture_output=True,
                 text=True,
                 timeout=2,
-                env=self.restricted_env
+                env=self.restricted_env,
             )
-            
+
             # Some tools output version to stderr
             version_output = result.stdout or result.stderr
             return version_output.strip() if version_output else None
-            
+
         except (subprocess.SubprocessError, Exception) as e:
             logger.debug(
-                "Failed to get tool version",
-                tool_name=self.tool_name,
-                error=str(e)
+                "Failed to get tool version", tool_name=self.tool_name, error=str(e)
             )
             return None
-    
+
     async def execute_async(
         self,
         args: List[str],
         input_data: Optional[bytes] = None,
         timeout: Optional[int] = None,
         cwd: str = "/tmp",
-        nice_value: Optional[int] = None
+        nice_value: Optional[int] = None,
     ) -> ExecutionResult:
         """
         Execute tool asynchronously with security controls.
-        
+
         Args:
             args: Command line arguments for the tool
             input_data: Optional input data to pipe to stdin
             timeout: Execution timeout in seconds
             cwd: Working directory (default: /tmp)
             nice_value: Process nice value for priority
-            
+
         Returns:
             ExecutionResult with output and status
-            
+
         Raises:
             ConversionFailedError: If tool is not available or execution fails
         """
         if not self.is_available:
             raise ConversionFailedError(
                 f"External tool '{self.tool_name}' not available",
-                details={"tool": self.tool_name, "variants": self.tool_variants}
+                details={"tool": self.tool_name, "variants": self.tool_variants},
             )
-        
+
         # Build command
         cmd = [self.tool_path] + args
-        
+
         # Set resource limits
         timeout = timeout or self.DEFAULT_TIMEOUT
         nice_value = nice_value if nice_value is not None else self.DEFAULT_NICE_VALUE
-        
+
         # Log execution (privacy-aware)
         logger.debug(
             "Executing external tool",
             tool_name=self.tool_name,
             arg_count=len(args),
             has_input=input_data is not None,
-            timeout=timeout
+            timeout=timeout,
         )
-        
+
         # Execute in subprocess
         start_time = asyncio.get_event_loop().time()
-        
+
         try:
             # Run subprocess asynchronously
             process = await asyncio.create_subprocess_exec(
@@ -179,94 +178,94 @@ class ExternalToolExecutor:
                 stderr=asyncio.subprocess.PIPE,
                 env=self.restricted_env,
                 cwd=cwd,
-                preexec_fn=lambda: os.nice(nice_value) if os.name != 'nt' else None
+                preexec_fn=lambda: os.nice(nice_value) if os.name != "nt" else None,
             )
-            
+
             # Communicate with timeout
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(input=input_data),
-                    timeout=timeout
+                    process.communicate(input=input_data), timeout=timeout
                 )
             except asyncio.TimeoutError:
                 process.kill()
                 await process.wait()
                 raise ConversionFailedError(
                     f"External tool execution timed out after {timeout}s",
-                    details={"tool": self.tool_name, "timeout": timeout}
+                    details={"tool": self.tool_name, "timeout": timeout},
                 )
-            
+
             execution_time = asyncio.get_event_loop().time() - start_time
-            
+
             return ExecutionResult(
                 stdout=stdout,
-                stderr=stderr.decode('utf-8', errors='ignore') if stderr else "",
+                stderr=stderr.decode("utf-8", errors="ignore") if stderr else "",
                 returncode=process.returncode,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
-            
+
         except Exception as e:
             if isinstance(e, ConversionFailedError):
                 raise
             raise ConversionFailedError(
                 f"External tool execution failed: {str(e)}",
-                details={"tool": self.tool_name, "error": str(e)}
+                details={"tool": self.tool_name, "error": str(e)},
             )
-    
+
     def execute(
         self,
         args: List[str],
         input_data: Optional[bytes] = None,
         timeout: Optional[int] = None,
         cwd: str = "/tmp",
-        nice_value: Optional[int] = None
+        nice_value: Optional[int] = None,
     ) -> ExecutionResult:
         """
         Execute tool synchronously with security controls.
-        
+
         Args:
             args: Command line arguments for the tool
             input_data: Optional input data to pipe to stdin
             timeout: Execution timeout in seconds
             cwd: Working directory (default: /tmp)
             nice_value: Process nice value for priority
-            
+
         Returns:
             ExecutionResult with output and status
-            
+
         Raises:
             ConversionFailedError: If tool is not available or execution fails
         """
         if not self.is_available:
             raise ConversionFailedError(
                 f"External tool '{self.tool_name}' not available",
-                details={"tool": self.tool_name, "variants": self.tool_variants}
+                details={"tool": self.tool_name, "variants": self.tool_variants},
             )
-        
+
         # Build command
         cmd = [self.tool_path] + args
-        
+
         # Set resource limits
         timeout = timeout or self.DEFAULT_TIMEOUT
         nice_value = nice_value if nice_value is not None else self.DEFAULT_NICE_VALUE
-        
+
         # Log execution (privacy-aware)
         logger.debug(
             "Executing external tool",
             tool_name=self.tool_name,
             arg_count=len(args),
             has_input=input_data is not None,
-            timeout=timeout
+            timeout=timeout,
         )
-        
+
         # Execute in subprocess
         import time
+
         start_time = time.time()
-        
+
         try:
             # Use restricted environment
             env = self.restricted_env
-            
+
             result = subprocess.run(
                 cmd,
                 input=input_data,
@@ -274,54 +273,58 @@ class ExternalToolExecutor:
                 timeout=timeout,
                 env=env,
                 cwd=cwd,
-                preexec_fn=lambda: os.nice(nice_value) if os.name != 'nt' else None
+                preexec_fn=lambda: os.nice(nice_value) if os.name != "nt" else None,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             return ExecutionResult(
                 stdout=result.stdout,
-                stderr=result.stderr.decode('utf-8', errors='ignore') if result.stderr else "",
+                stderr=(
+                    result.stderr.decode("utf-8", errors="ignore")
+                    if result.stderr
+                    else ""
+                ),
                 returncode=result.returncode,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
-            
+
         except subprocess.TimeoutExpired:
             raise ConversionFailedError(
                 f"External tool execution timed out after {timeout}s",
-                details={"tool": self.tool_name, "timeout": timeout}
+                details={"tool": self.tool_name, "timeout": timeout},
             )
         except Exception as e:
             raise ConversionFailedError(
                 f"External tool execution failed: {str(e)}",
-                details={"tool": self.tool_name, "error": str(e)}
+                details={"tool": self.tool_name, "error": str(e)},
             )
-    
+
     def validate_output(self, output: bytes, min_size: int = 100) -> bool:
         """
         Validate tool output.
-        
+
         Args:
             output: Output data to validate
             min_size: Minimum acceptable size in bytes
-            
+
         Returns:
             True if output appears valid
         """
         if not output:
             return False
-            
+
         if len(output) < min_size:
             logger.warning(
                 "External tool output suspiciously small",
                 tool_name=self.tool_name,
                 output_size=len(output),
-                min_size=min_size
+                min_size=min_size,
             )
             return False
-            
+
         return True
-    
+
     def __repr__(self) -> str:
         """String representation."""
         return (

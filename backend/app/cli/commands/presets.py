@@ -15,7 +15,7 @@ console = Console()
 def presets_list():
     """
     List available presets
-    
+
     Examples:
       img presets list
     """
@@ -24,17 +24,17 @@ def presets_list():
     table.add_column("Name", style="cyan")
     table.add_column("Type", style="green")
     table.add_column("Description", style="dim")
-    
+
     # Sample data - will be fetched from API
     presets = [
         ("web", "Built-in", "Optimized for web delivery"),
         ("thumbnail", "Built-in", "Small thumbnail generation"),
         ("archive", "Built-in", "High quality archival"),
     ]
-    
+
     for name, type_, desc in presets:
         table.add_row(name, type_, desc)
-    
+
     console.print(table)
 
 
@@ -46,7 +46,7 @@ def presets_create(
 ):
     """
     Create a new preset
-    
+
     Examples:
       img presets create my-preset webp --quality 90
     """
@@ -61,7 +61,7 @@ def presets_delete(
 ):
     """
     Delete a preset
-    
+
     Examples:
       img presets delete my-preset
     """

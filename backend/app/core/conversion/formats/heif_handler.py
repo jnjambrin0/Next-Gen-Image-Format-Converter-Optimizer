@@ -7,6 +7,7 @@ import structlog
 
 try:
     import pillow_heif
+
     # Register HEIF opener with Pillow
     pillow_heif.register_heif_opener()
     HEIF_AVAILABLE = True
@@ -15,7 +16,11 @@ except ImportError:
 
 from app.models.conversion import ConversionSettings
 from app.core.conversion.formats.base import BaseFormatHandler
-from app.core.exceptions import ConversionFailedError, UnsupportedFormatError, HeifDecodingError
+from app.core.exceptions import (
+    ConversionFailedError,
+    UnsupportedFormatError,
+    HeifDecodingError,
+)
 
 logger = structlog.get_logger()
 
@@ -28,11 +33,11 @@ class HeifHandler(BaseFormatHandler):
         super().__init__()
         self.supported_formats = ["heif", "heic", "heix", "hevc", "hevx"]
         self.format_name = "HEIF"
-        
+
         if not HEIF_AVAILABLE:
             raise UnsupportedFormatError(
                 "HEIF support not available. Install pillow-heif package.",
-                details={"format": "HEIF", "required_package": "pillow-heif"}
+                details={"format": "HEIF", "required_package": "pillow-heif"},
             )
 
     def can_handle(self, format_name: str) -> bool:
@@ -67,7 +72,7 @@ class HeifHandler(BaseFormatHandler):
                 img = Image.open(buffer)
                 # Load image data to ensure it's fully read
                 img.load()
-                
+
                 # HEIF images from iOS often have special handling needs
                 # 1. Handle orientation EXIF data
                 if hasattr(img, "_getexif"):
@@ -81,20 +86,20 @@ class HeifHandler(BaseFormatHandler):
                             img = img.rotate(270, expand=True)
                         elif orientation == 8:
                             img = img.rotate(90, expand=True)
-                
+
                 # 2. Convert color space - HEIF often uses non-standard color spaces
                 if img.mode not in ("RGB", "RGBA"):
                     if "transparency" in img.info or img.mode == "LA":
                         img = img.convert("RGBA")
                     else:
                         img = img.convert("RGB")
-                
+
                 return img
 
         except Exception as e:
             raise HeifDecodingError(
-                f"Failed to load HEIF image: {str(e)}", 
-                details={"format": "HEIF", "error": str(e)}
+                f"Failed to load HEIF image: {str(e)}",
+                details={"format": "HEIF", "error": str(e)},
             )
 
     def save_image(
@@ -111,29 +116,29 @@ class HeifHandler(BaseFormatHandler):
 
             # Get save parameters
             save_params = self.get_quality_param(settings)
-            
+
             # HEIF-specific parameters
             save_params["format"] = "HEIF"
             save_params["save_all"] = False  # Don't save multi-page
-            
+
             # Add compression options if available in pillow-heif
-            if hasattr(pillow_heif, 'options'):
+            if hasattr(pillow_heif, "options"):
                 # Set encoder (x265 is default, but can specify)
                 save_params["encoder"] = "x265"
-                
+
                 # Set compression preset (speed vs compression trade-off)
                 if settings.optimize:
                     save_params["preset"] = "slower"  # Better compression
                     save_params["compression"] = "hevc"  # Use HEVC compression
                 else:
                     save_params["preset"] = "medium"  # Balanced
-                
+
                 # Color subsampling (4:2:0 is default, 4:4:4 for higher quality)
                 if settings.quality >= 90:
                     save_params["chroma"] = "444"
                 else:
                     save_params["chroma"] = "420"
-            
+
             # Remove metadata if requested
             if settings.strip_metadata:
                 # Don't set empty exif as it causes errors
@@ -146,8 +151,8 @@ class HeifHandler(BaseFormatHandler):
 
         except Exception as e:
             raise HeifDecodingError(
-                f"Failed to save image as HEIF: {str(e)}", 
-                details={"format": "HEIF", "error": str(e)}
+                f"Failed to save image as HEIF: {str(e)}",
+                details={"format": "HEIF", "error": str(e)},
             )
 
     def get_quality_param(self, settings: ConversionSettings) -> Dict[str, Any]:
@@ -155,13 +160,13 @@ class HeifHandler(BaseFormatHandler):
         # HEIF quality range is 0-100 (same as our range)
         # But HEIF tends to be more aggressive, so we adjust slightly
         heif_quality = max(1, min(100, settings.quality))
-        
+
         params = {"quality": heif_quality}
-        
+
         # Add lossless option for quality 100
         if settings.quality == 100:
             params["lossless"] = True
-            
+
         # Add compression level based on quality
         # Higher compression level = slower but smaller file
         if settings.optimize:
@@ -171,7 +176,7 @@ class HeifHandler(BaseFormatHandler):
                 params["compression_level"] = 6  # Good compression
         else:
             params["compression_level"] = 3  # Fast compression
-            
+
         return params
 
     def _supports_transparency(self) -> bool:

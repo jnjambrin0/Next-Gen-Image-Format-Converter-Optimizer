@@ -16,12 +16,12 @@ logger = structlog.get_logger()
 
 class MemoryError(SecurityError):
     """Exception raised for memory-related security violations."""
-    
+
     def __init__(self, message: str, **details):
         super().__init__(
             category="sandbox",
             details={"reason": "memory_tracking", **details},
-            message=message
+            message=message,
         )
 
 

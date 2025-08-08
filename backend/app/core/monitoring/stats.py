@@ -22,7 +22,7 @@ from app.core.constants import (
     FILE_SIZE_CATEGORIES,
     KB_TO_BYTES_FACTOR,
     MB_TO_BYTES_FACTOR,
-    DB_CHECK_SAME_THREAD
+    DB_CHECK_SAME_THREAD,
 )
 
 logger = get_logger(__name__)
@@ -324,7 +324,9 @@ class StatsCollector:
         return stats
 
     async def cleanup_old_stats(
-        self, hourly_retention: int = HOURLY_STATS_RETENTION_HOURS, daily_retention: int = DAILY_STATS_RETENTION_DAYS
+        self,
+        hourly_retention: int = HOURLY_STATS_RETENTION_HOURS,
+        daily_retention: int = DAILY_STATS_RETENTION_DAYS,
     ):
         """
         Clean up old statistics.
@@ -397,7 +399,7 @@ class StatsCollector:
     async def track_event(self, event_name: str, event_data: Dict[str, Any]) -> None:
         """
         Track a custom event with associated data.
-        
+
         Args:
             event_name: Name of the event to track
             event_data: Dictionary of event data
@@ -406,37 +408,35 @@ class StatsCollector:
         logger.info(
             "Event tracked",
             event_name=event_name,
-            **{k: v for k, v in event_data.items() if k not in ['password', 'token', 'secret', 'event']}
+            **{
+                k: v
+                for k, v in event_data.items()
+                if k not in ["password", "token", "secret", "event"]
+            },
         )
-    
+
     async def increment_counter(self, counter_name: str, value: int = 1) -> None:
         """
         Increment a named counter.
-        
+
         Args:
             counter_name: Name of the counter to increment
             value: Amount to increment by (default 1)
         """
         # For now, just log - can be extended to maintain counters
-        logger.debug(
-            "Counter incremented",
-            counter=counter_name,
-            increment=value
-        )
-    
+        logger.debug("Counter incremented", counter=counter_name, increment=value)
+
     async def record_timing(self, metric_name: str, duration_ms: float) -> None:
         """
         Record a timing metric.
-        
+
         Args:
             metric_name: Name of the timing metric
             duration_ms: Duration in milliseconds
         """
         # For now, just log - can be extended to calculate percentiles
         logger.debug(
-            "Timing recorded",
-            metric=metric_name,
-            duration_ms=round(duration_ms, 2)
+            "Timing recorded", metric=metric_name, duration_ms=round(duration_ms, 2)
         )
 
 

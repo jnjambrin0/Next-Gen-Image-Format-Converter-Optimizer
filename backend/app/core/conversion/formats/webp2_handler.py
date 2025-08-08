@@ -7,6 +7,7 @@ import structlog
 
 try:
     import webp2
+
     WEBP2_AVAILABLE = True
 except ImportError:
     WEBP2_AVAILABLE = False
@@ -27,11 +28,11 @@ class WebP2Handler(WebPHandler):
         self.supported_formats = ["webp2"]
         self.format_name = "WEBP2"
         self.webp2_available = WEBP2_AVAILABLE
-        
+
         if not self.webp2_available:
             logger.info(
                 "WebP2 support not available, will fallback to WebP",
-                webp2_available=False
+                webp2_available=False,
             )
 
     def can_handle(self, format_name: str) -> bool:
@@ -43,7 +44,7 @@ class WebP2Handler(WebPHandler):
         if not self.webp2_available:
             # Fallback to WebP validation
             return super().validate_image(image_data)
-        
+
         if len(image_data) < 12:
             return False
 
@@ -62,11 +63,11 @@ class WebP2Handler(WebPHandler):
         if not self.webp2_available:
             # Fallback to WebP loading
             return super().load_image(image_data)
-        
+
         try:
             # Decode WebP2 to RGB/RGBA array
             decoded = webp2.decode(image_data)
-            
+
             # Convert to PIL Image
             if decoded.shape[2] == 4:
                 mode = "RGBA"
@@ -75,9 +76,9 @@ class WebP2Handler(WebPHandler):
             else:
                 raise ConversionFailedError(
                     f"Unsupported WebP2 color channels: {decoded.shape[2]}",
-                    details={"format": "WEBP2"}
+                    details={"format": "WEBP2"},
                 )
-            
+
             img = Image.fromarray(decoded, mode=mode)
             return img
 
@@ -89,8 +90,8 @@ class WebP2Handler(WebPHandler):
             except Exception:
                 # Re-raise original WebP2 error
                 raise ConversionFailedError(
-                    f"Failed to load WebP2 image: {str(e)}", 
-                    details={"format": "WEBP2", "error": str(e)}
+                    f"Failed to load WebP2 image: {str(e)}",
+                    details={"format": "WEBP2", "error": str(e)},
                 )
 
     def save_image(
@@ -101,7 +102,7 @@ class WebP2Handler(WebPHandler):
             logger.debug("WebP2 not available, using WebP fallback")
             super().save_image(image, output_buffer, settings)
             return
-        
+
         try:
             # Ensure RGB or RGBA mode
             if image.mode not in ("RGB", "RGBA"):
@@ -112,48 +113,46 @@ class WebP2Handler(WebPHandler):
 
             # Convert to numpy array for WebP2
             import numpy as np
+
             img_array = np.array(image)
-            
+
             # Get encoding options
             encode_options = self._get_webp2_encode_options(settings)
-            
+
             # Encode to WebP2
             webp2_data = webp2.encode(img_array, **encode_options)
-            
+
             # Write to buffer
             output_buffer.write(webp2_data)
             output_buffer.seek(0)
 
         except Exception as e:
-            logger.warning(
-                "WebP2 encoding failed, falling back to WebP",
-                error=str(e)
-            )
+            logger.warning("WebP2 encoding failed, falling back to WebP", error=str(e))
             # Fallback to regular WebP
             super().save_image(image, output_buffer, settings)
 
     def _get_webp2_encode_options(self, settings: ConversionSettings) -> Dict[str, Any]:
         """Get WebP2-specific encoding options."""
         options = {}
-        
+
         # Quality mapping
         options["quality"] = settings.quality
-        
+
         # WebP2 specific options
         if settings.optimize:
             options["effort"] = 9  # Maximum compression effort
-            options["pass"] = 10   # Multi-pass encoding
+            options["pass"] = 10  # Multi-pass encoding
         else:
             options["effort"] = 4  # Balanced effort
-            options["pass"] = 1    # Single pass
-        
+            options["pass"] = 1  # Single pass
+
         # Enable advanced features
         options["use_adv_features"] = True
         options["sns"] = 50  # Spatial noise shaping
-        
+
         # Threading for performance
         options["thread_level"] = 1
-        
+
         return options
 
     def get_quality_param(self, settings: ConversionSettings) -> Dict[str, Any]:
@@ -165,7 +164,7 @@ class WebP2Handler(WebPHandler):
                 "quality": settings.quality,
                 "effort": encode_opts["effort"],
                 "multi_pass": encode_opts["pass"] > 1,
-                "advanced_features": encode_opts.get("use_adv_features", False)
+                "advanced_features": encode_opts.get("use_adv_features", False),
             }
         else:
             # Fallback to WebP quality parameters

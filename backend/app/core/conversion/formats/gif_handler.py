@@ -47,7 +47,7 @@ class GifHandler(BaseFormatHandler):
         try:
             with BytesIO(image_data) as buffer:
                 img = Image.open(buffer)
-                
+
                 # Check if it's an animated GIF
                 is_animated = False
                 try:
@@ -57,15 +57,15 @@ class GifHandler(BaseFormatHandler):
                     img.seek(0)
                     logger.debug(
                         "Animated GIF detected, extracting first frame",
-                        n_frames=getattr(img, "n_frames", 1)
+                        n_frames=getattr(img, "n_frames", 1),
                     )
                 except EOFError:
                     # Static GIF
                     pass
-                
+
                 # Load the first frame
                 img.load()
-                
+
                 # Convert to RGBA to preserve transparency if present
                 # GIF uses palette mode with potential transparency
                 if img.mode == "P":
@@ -81,16 +81,16 @@ class GifHandler(BaseFormatHandler):
                     img = img.convert("RGB")
                 elif img.mode not in ("RGB", "RGBA"):
                     img = img.convert("RGB")
-                
+
                 # Create a copy to ensure we have a standalone image
                 first_frame = img.copy()
-                
+
                 return first_frame
 
         except Exception as e:
             raise GifDecodingError(
-                f"Failed to load GIF image: {str(e)}", 
-                details={"format": "GIF", "error": str(e)}
+                f"Failed to load GIF image: {str(e)}",
+                details={"format": "GIF", "error": str(e)},
             )
 
     def save_image(
@@ -104,23 +104,27 @@ class GifHandler(BaseFormatHandler):
                 # Convert RGBA to P mode with transparency
                 # This approach preserves transparency better by quantizing with alpha
                 img_rgba = image.convert("RGBA")
-                
+
                 # Extract alpha for transparency mask
                 alpha = img_rgba.split()[3]
-                
+
                 # Convert to palette mode with 255 colors (leaving one for transparency)
-                img_p = img_rgba.convert("P", palette=Image.Palette.ADAPTIVE, colors=255)
-                
+                img_p = img_rgba.convert(
+                    "P", palette=Image.Palette.ADAPTIVE, colors=255
+                )
+
                 # Use a more sophisticated approach to find transparent pixels
                 # Set fully transparent pixels (alpha < 128) to index 255
                 mask = Image.eval(alpha, lambda a: 255 if a < 128 else 0)
-                
+
                 # Create a new palette image with transparency
                 img_with_transparency = Image.new("P", img_p.size, 255)
-                img_with_transparency.paste(img_p, mask=Image.eval(alpha, lambda a: 255 if a >= 128 else 0))
+                img_with_transparency.paste(
+                    img_p, mask=Image.eval(alpha, lambda a: 255 if a >= 128 else 0)
+                )
                 img_with_transparency.putpalette(img_p.getpalette())
                 img_with_transparency.info["transparency"] = 255
-                
+
                 image = img_with_transparency
             elif image.mode != "P":
                 # Convert to palette mode
@@ -129,15 +133,17 @@ class GifHandler(BaseFormatHandler):
                     pass
                 else:
                     # Convert to palette mode with adaptive colors
-                    image = image.convert("P", palette=Image.Palette.ADAPTIVE, colors=256)
+                    image = image.convert(
+                        "P", palette=Image.Palette.ADAPTIVE, colors=256
+                    )
 
             # Get save parameters
             save_params = {}
-            
+
             # GIF doesn't have quality settings, but we can control dithering
             if settings.optimize:
                 save_params["optimize"] = True
-            
+
             # Preserve transparency if present
             if "transparency" in image.info:
                 save_params["transparency"] = image.info["transparency"]
@@ -148,8 +154,8 @@ class GifHandler(BaseFormatHandler):
 
         except Exception as e:
             raise GifDecodingError(
-                f"Failed to save image as GIF: {str(e)}", 
-                details={"format": "GIF", "error": str(e)}
+                f"Failed to save image as GIF: {str(e)}",
+                details={"format": "GIF", "error": str(e)},
             )
 
     def get_quality_param(self, settings: ConversionSettings) -> Dict[str, Any]:

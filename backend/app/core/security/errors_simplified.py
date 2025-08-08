@@ -15,19 +15,24 @@ logger = structlog.get_logger()
 
 class SecurityError(Exception):
     """Base security error with category-based approach."""
-    
+
     CATEGORIES = {
-        'network': 'Network access violation',
-        'sandbox': 'Sandbox security violation', 
-        'rate_limit': 'Rate limit exceeded',
-        'verification': 'Security verification failed',
-        'file': 'File security violation'
+        "network": "Network access violation",
+        "sandbox": "Sandbox security violation",
+        "rate_limit": "Rate limit exceeded",
+        "verification": "Security verification failed",
+        "file": "File security violation",
     }
-    
-    def __init__(self, category: str, details: Optional[Dict[str, Any]] = None, message: Optional[str] = None):
+
+    def __init__(
+        self,
+        category: str,
+        details: Optional[Dict[str, Any]] = None,
+        message: Optional[str] = None,
+    ):
         """
         Initialize security error.
-        
+
         Args:
             category: Error category (network, sandbox, rate_limit, verification, file)
             details: Optional context details (no PII allowed)
@@ -35,17 +40,13 @@ class SecurityError(Exception):
         """
         self.category = category
         self.details = details or {}
-        
+
         # Use custom message or default category description
-        error_message = message or self.CATEGORIES.get(category, 'Security violation')
+        error_message = message or self.CATEGORIES.get(category, "Security violation")
         super().__init__(error_message)
-        
+
         # Log error with category and details (no PII)
-        logger.warning(
-            "Security error occurred",
-            category=category,
-            **self.details
-        )
+        logger.warning("Security error occurred", category=category, **self.details)
 
 
 def create_network_error(reason: str = "access_denied", **kwargs) -> SecurityError:
@@ -80,15 +81,15 @@ def create_file_error(operation: str = "access", **kwargs) -> SecurityError:
 
 class SecurityErrorHandler:
     """Handler for consistent security error responses."""
-    
+
     @staticmethod
     def handle_error(error: Exception) -> Dict[str, Any]:
         """
         Convert an exception to a standardized error response.
-        
+
         Args:
             error: The exception to handle
-            
+
         Returns:
             Dict with error details (no PII)
         """
@@ -97,43 +98,44 @@ class SecurityErrorHandler:
                 "error": "security_violation",
                 "category": error.category,
                 "message": str(error),
-                "details": error.details
+                "details": error.details,
             }
-        
+
         # Handle specific Python exceptions
         error_mappings = {
             TimeoutError: ("sandbox", "timeout"),
             MemoryError: ("sandbox", "memory_limit"),
             PermissionError: ("file", "permission_denied"),
             OSError: ("network", "system_error"),
-            asyncio.TimeoutError: ("sandbox", "async_timeout")
+            asyncio.TimeoutError: ("sandbox", "async_timeout"),
         }
-        
+
         for error_type, (category, reason) in error_mappings.items():
             if isinstance(error, error_type):
                 return {
                     "error": "security_violation",
                     "category": category,
                     "message": SecurityError.CATEGORIES[category],
-                    "details": {"reason": reason}
+                    "details": {"reason": reason},
                 }
-        
+
         # Unknown error - don't expose details
         logger.error("Unexpected error in security module", error=str(error))
         return {
             "error": "security_violation",
             "category": "unknown",
             "message": "Security check failed",
-            "details": {}
+            "details": {},
         }
 
 
 def handle_security_errors(func):
     """
     Decorator to handle security errors consistently.
-    
+
     Wraps async functions to catch and convert exceptions to SecurityError.
     """
+
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
@@ -144,9 +146,7 @@ def handle_security_errors(func):
             handler = SecurityErrorHandler()
             error_info = handler.handle_error(e)
             raise SecurityError(
-                error_info["category"],
-                error_info["details"],
-                error_info["message"]
+                error_info["category"], error_info["details"], error_info["message"]
             )
-    
+
     return wrapper

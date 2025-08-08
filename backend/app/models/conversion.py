@@ -68,24 +68,24 @@ class ConversionSettings(BaseModel):
         default=True, description="Remove EXIF and other metadata"
     )
     preserve_metadata: bool = Field(
-        default=False, description="Preserve non-GPS metadata (overrides strip_metadata)"
+        default=False,
+        description="Preserve non-GPS metadata (overrides strip_metadata)",
     )
     preserve_gps: bool = Field(
-        default=False, description="Preserve GPS location data (only if preserve_metadata is True)"
+        default=False,
+        description="Preserve GPS location data (only if preserve_metadata is True)",
     )
     optimize: bool = Field(
         default=True, description="Apply format-specific optimizations"
     )
     # Reference to advanced optimization settings
     optimization_preset: Optional[str] = Field(
-        default=None, 
-        description="Optimization preset: 'fast', 'balanced', 'best'"
+        default=None, description="Optimization preset: 'fast', 'balanced', 'best'"
     )
-    
+
     # Advanced optimization options (Story 3.5)
     advanced_optimization: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Advanced optimization parameters"
+        default=None, description="Advanced optimization parameters"
     )
 
     @field_validator("quality")
@@ -99,149 +99,128 @@ class ConversionSettings(BaseModel):
 
 class OptimizationSettings(BaseModel):
     """Format-specific optimization settings."""
-    
+
     # General optimization options
     algorithm: Optional[str] = Field(
-        None, 
-        description="Optimization algorithm (e.g., 'pngquant', 'optipng', 'mozjpeg')"
+        None,
+        description="Optimization algorithm (e.g., 'pngquant', 'optipng', 'mozjpeg')",
     )
     effort: Optional[int] = Field(
-        None, 
-        ge=1, 
-        le=10, 
-        description="Optimization effort level (1-10, higher = slower but better)"
+        None,
+        ge=1,
+        le=10,
+        description="Optimization effort level (1-10, higher = slower but better)",
     )
-    
+
     # Lossy compression options
     lossless: Optional[bool] = Field(
-        None, 
-        description="Use lossless compression if available"
+        None, description="Use lossless compression if available"
     )
-    
+
     # Progressive/interlaced encoding
     progressive: Optional[bool] = Field(
-        None, 
-        description="Use progressive/interlaced encoding"
+        None, description="Use progressive/interlaced encoding"
     )
-    
+
     # Format-specific options
     # PNG options
     png_color_type: Optional[str] = Field(
-        None, 
-        description="PNG color type: 'auto', 'grayscale', 'rgb', 'palette'"
+        None, description="PNG color type: 'auto', 'grayscale', 'rgb', 'palette'"
     )
     png_palette_size: Optional[int] = Field(
-        None, 
-        ge=2, 
-        le=256, 
-        description="Maximum colors in PNG palette (2-256)"
+        None, ge=2, le=256, description="Maximum colors in PNG palette (2-256)"
     )
-    
+
     # JPEG options
     jpeg_subsampling: Optional[str] = Field(
-        None, 
-        description="JPEG chroma subsampling: '4:4:4', '4:2:2', '4:2:0'"
+        None, description="JPEG chroma subsampling: '4:4:4', '4:2:2', '4:2:0'"
     )
     jpeg_trellis: Optional[bool] = Field(
-        None, 
-        description="Use trellis quantization for JPEG"
+        None, description="Use trellis quantization for JPEG"
     )
     jpeg_overshoot: Optional[bool] = Field(
-        None, 
-        description="Use overshooting for JPEG"
+        None, description="Use overshooting for JPEG"
     )
-    
+
     # WebP/WebP2 options
     webp_method: Optional[int] = Field(
-        None, 
-        ge=0, 
-        le=6, 
-        description="WebP compression method (0-6, higher = slower but better)"
+        None,
+        ge=0,
+        le=6,
+        description="WebP compression method (0-6, higher = slower but better)",
     )
     webp_segments: Optional[int] = Field(
-        None, 
-        ge=1, 
-        le=4, 
-        description="WebP segment count (1-4)"
+        None, ge=1, le=4, description="WebP segment count (1-4)"
     )
     webp_sns: Optional[int] = Field(
-        None, 
-        ge=0, 
-        le=100, 
-        description="WebP spatial noise shaping (0-100)"
+        None, ge=0, le=100, description="WebP spatial noise shaping (0-100)"
     )
-    
+
     # HEIF options
     heif_preset: Optional[str] = Field(
-        None, 
-        description="HEIF encoder preset: 'ultrafast', 'fast', 'medium', 'slow', 'slower'"
+        None,
+        description="HEIF encoder preset: 'ultrafast', 'fast', 'medium', 'slow', 'slower'",
     )
     heif_chroma: Optional[str] = Field(
-        None, 
-        description="HEIF chroma format: '420', '422', '444'"
+        None, description="HEIF chroma format: '420', '422', '444'"
     )
-    
+
     # JPEG XL options
     jxl_distance: Optional[float] = Field(
-        None, 
-        ge=0.0, 
-        le=25.0, 
-        description="JPEG XL distance parameter (0=lossless, higher=more lossy)"
+        None,
+        ge=0.0,
+        le=25.0,
+        description="JPEG XL distance parameter (0=lossless, higher=more lossy)",
     )
-    jxl_modular: Optional[bool] = Field(
-        None, 
-        description="Use JPEG XL modular mode"
-    )
-    
+    jxl_modular: Optional[bool] = Field(None, description="Use JPEG XL modular mode")
+
     # JPEG 2000 options
     jp2_rate: Optional[float] = Field(
-        None, 
-        ge=0.1, 
-        le=10.0, 
-        description="JPEG 2000 compression rate (bits per pixel)"
+        None, ge=0.1, le=10.0, description="JPEG 2000 compression rate (bits per pixel)"
     )
     jp2_layers: Optional[int] = Field(
-        None, 
-        ge=1, 
-        le=10, 
-        description="JPEG 2000 quality layers"
+        None, ge=1, le=10, description="JPEG 2000 quality layers"
     )
-    
+
     # AVIF options
     avif_speed: Optional[int] = Field(
-        None, 
-        ge=0, 
-        le=10, 
-        description="AVIF encoding speed (0-10, higher = faster)"
+        None, ge=0, le=10, description="AVIF encoding speed (0-10, higher = faster)"
     )
     avif_pixel_format: Optional[str] = Field(
-        None, 
-        description="AVIF pixel format: 'yuv420', 'yuv422', 'yuv444'"
+        None, description="AVIF pixel format: 'yuv420', 'yuv422', 'yuv444'"
     )
-    
+
     # Custom options for advanced users
     custom_options: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, 
-        description="Custom format-specific options"
+        default_factory=dict, description="Custom format-specific options"
     )
-    
+
     @field_validator("algorithm")
     @classmethod
     def validate_algorithm(cls, v: Optional[str]) -> Optional[str]:
         """Validate optimization algorithm."""
         if v is None:
             return v
-        
+
         valid_algorithms = {
-            "pngquant", "optipng", "pngcrush", "advpng",
-            "mozjpeg", "jpegoptim", "jpegtran",
-            "cwebp", "gif2webp", "gifsicle",
-            "avifenc", "heif-enc", "cjxl"
+            "pngquant",
+            "optipng",
+            "pngcrush",
+            "advpng",
+            "mozjpeg",
+            "jpegoptim",
+            "jpegtran",
+            "cwebp",
+            "gif2webp",
+            "gifsicle",
+            "avifenc",
+            "heif-enc",
+            "cjxl",
         }
-        
+
         if v.lower() not in valid_algorithms:
             raise ValueError(f"Unknown optimization algorithm: {v}")
-        
+
         return v.lower()
 
 
@@ -274,7 +253,9 @@ class ConversionResult(BaseModel):
     error_message: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
-    metadata_removed: bool = Field(default=False, description="Whether metadata was stripped from the image")
+    metadata_removed: bool = Field(
+        default=False, description="Whether metadata was stripped from the image"
+    )
 
     @property
     def compression_ratio(self) -> Optional[float]:
@@ -316,7 +297,9 @@ class BoundingBox(BaseModel):
     y: int = Field(ge=0, description="Y coordinate of top-left corner")
     width: int = Field(gt=0, description="Width of the bounding box")
     height: int = Field(gt=0, description="Height of the bounding box")
-    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Detection confidence")
+    confidence: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Detection confidence"
+    )
 
     @property
     def area(self) -> int:
@@ -333,16 +316,24 @@ class ContentClassification(BaseModel):
     """Classification result for image content detection."""
 
     primary_type: ContentType = Field(description="Primary detected content type")
-    confidence: float = Field(ge=0.0, le=1.0, description="Confidence score for primary type")
+    confidence: float = Field(
+        ge=0.0, le=1.0, description="Confidence score for primary type"
+    )
     secondary_types: Optional[List[Tuple[ContentType, float]]] = Field(
         None, description="Secondary content types with confidence scores"
     )
-    has_text: bool = Field(default=False, description="Whether text regions were detected")
-    text_regions: Optional[List[BoundingBox]] = Field(None, description="Detected text regions")
+    has_text: bool = Field(
+        default=False, description="Whether text regions were detected"
+    )
+    text_regions: Optional[List[BoundingBox]] = Field(
+        None, description="Detected text regions"
+    )
     has_faces: bool = Field(default=False, description="Whether faces were detected")
-    face_regions: Optional[List[BoundingBox]] = Field(None, description="Detected face regions")
+    face_regions: Optional[List[BoundingBox]] = Field(
+        None, description="Detected face regions"
+    )
     processing_time_ms: float = Field(description="Processing time in milliseconds")
-    
+
     # Additional content analysis
     complexity_score: Optional[float] = Field(
         None, ge=0.0, le=1.0, description="Image complexity score"
@@ -350,12 +341,12 @@ class ContentClassification(BaseModel):
     dominant_colors: Optional[List[str]] = Field(
         None, description="List of dominant colors in hex format"
     )
-    
+
     @property
     def mixed_content(self) -> bool:
         """Check if image contains mixed content types."""
         return self.secondary_types is not None and len(self.secondary_types) > 0
-    
+
     @property
     def text_coverage(self) -> float:
         """Calculate percentage of image covered by text regions."""

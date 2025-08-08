@@ -41,7 +41,7 @@ class TestWebSocketProgress:
     def test_websocket_connection_success(self, client):
         """Test successful WebSocket connection."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Should receive connection message
             data = websocket.receive_json()
@@ -59,14 +59,14 @@ class TestWebSocketProgress:
     def test_websocket_ping_pong(self, client):
         """Test WebSocket ping/pong mechanism."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Skip connection message
             websocket.receive_json()
-            
+
             # Send ping
             websocket.send_json({"type": "ping"})
-            
+
             # Should receive pong
             data = websocket.receive_json()
             assert data["type"] == "pong"
@@ -75,11 +75,11 @@ class TestWebSocketProgress:
     def test_websocket_progress_broadcast(self, client):
         """Test broadcasting progress updates."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Skip connection message
             websocket.receive_json()
-            
+
             # Create progress update
             progress = BatchProgress(
                 job_id=job_id,
@@ -89,10 +89,10 @@ class TestWebSocketProgress:
                 progress=50,
                 message=None,
             )
-            
+
             # Broadcast progress (simulate from batch manager)
             asyncio.run(send_batch_progress(progress))
-            
+
             # Should receive progress update
             data = websocket.receive_json()
             assert data["type"] == "progress"
@@ -105,14 +105,14 @@ class TestWebSocketProgress:
     def test_websocket_job_status_broadcast(self, client):
         """Test broadcasting job status updates."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Skip connection message
             websocket.receive_json()
-            
+
             # Broadcast job status
             asyncio.run(send_job_status_update(job_id, BatchStatus.COMPLETED))
-            
+
             # Should receive status update
             data = websocket.receive_json()
             assert data["type"] == "job_status"
@@ -122,16 +122,16 @@ class TestWebSocketProgress:
     def test_websocket_multiple_connections(self, client):
         """Test multiple WebSocket connections to same job."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as ws1:
             with client.websocket_connect(f"/ws/batch/{job_id}") as ws2:
                 # Skip connection messages
                 ws1.receive_json()
                 ws2.receive_json()
-                
+
                 # Verify connection count
                 assert connection_manager.get_connection_count(job_id) == 2
-                
+
                 # Broadcast progress
                 progress = BatchProgress(
                     job_id=job_id,
@@ -141,11 +141,11 @@ class TestWebSocketProgress:
                     progress=100,
                 )
                 asyncio.run(send_batch_progress(progress))
-                
+
                 # Both should receive update
                 data1 = ws1.receive_json()
                 data2 = ws2.receive_json()
-                
+
                 assert data1["type"] == "progress"
                 assert data2["type"] == "progress"
                 assert data1["progress"] == 100
@@ -154,14 +154,14 @@ class TestWebSocketProgress:
     def test_websocket_invalid_json(self, client):
         """Test handling of invalid JSON messages."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Skip connection message
             websocket.receive_json()
-            
+
             # Send invalid JSON
             websocket.send_text("invalid json")
-            
+
             # Should receive error message
             data = websocket.receive_json()
             assert data["type"] == "error"
@@ -170,14 +170,14 @@ class TestWebSocketProgress:
     def test_websocket_unknown_message_type(self, client):
         """Test handling of unknown message types."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Skip connection message
             websocket.receive_json()
-            
+
             # Send unknown message type
             websocket.send_json({"type": "unknown"})
-            
+
             # Connection should still be alive (send ping to verify)
             websocket.send_json({"type": "ping"})
             data = websocket.receive_json()
@@ -188,11 +188,11 @@ class TestWebSocketProgress:
         """Test connection manager disconnect handling."""
         job_id = str(uuid.uuid4())
         mock_websocket = AsyncMock()
-        
+
         # Connect
         await connection_manager.connect(mock_websocket, job_id)
         assert connection_manager.get_connection_count(job_id) == 1
-        
+
         # Disconnect
         await connection_manager.disconnect(mock_websocket)
         assert connection_manager.get_connection_count(job_id) == 0
@@ -202,13 +202,13 @@ class TestWebSocketProgress:
         """Test broadcasting to disconnected clients."""
         job_id = str(uuid.uuid4())
         mock_websocket = AsyncMock()
-        
+
         # Make send_json fail (simulating disconnection)
         mock_websocket.send_json.side_effect = Exception("Connection lost")
-        
+
         # Connect
         await connection_manager.connect(mock_websocket, job_id)
-        
+
         # Broadcast progress
         progress = BatchProgress(
             job_id=job_id,
@@ -217,10 +217,10 @@ class TestWebSocketProgress:
             status=BatchItemStatus.PROCESSING,
             progress=50,
         )
-        
+
         # Should handle disconnection gracefully
         await connection_manager.broadcast_progress(progress)
-        
+
         # Connection should be removed
         assert connection_manager.get_connection_count(job_id) == 0
 
@@ -228,20 +228,20 @@ class TestWebSocketProgress:
     async def test_close_all_job_connections(self):
         """Test closing all connections for a job."""
         job_id = str(uuid.uuid4())
-        
+
         # Create multiple mock connections
         mock_ws1 = AsyncMock()
         mock_ws2 = AsyncMock()
-        
+
         # Connect both
         await connection_manager.connect(mock_ws1, job_id)
         await connection_manager.connect(mock_ws2, job_id)
-        
+
         assert connection_manager.get_connection_count(job_id) == 2
-        
+
         # Close all connections
         await connection_manager.close_all_job_connections(job_id)
-        
+
         # Verify all closed
         mock_ws1.close.assert_called_once()
         mock_ws2.close.assert_called_once()
@@ -250,11 +250,11 @@ class TestWebSocketProgress:
     def test_websocket_timeout_ping(self, client):
         """Test WebSocket timeout and ping mechanism."""
         job_id = str(uuid.uuid4())
-        
+
         with client.websocket_connect(f"/ws/batch/{job_id}") as websocket:
             # Skip connection message
             websocket.receive_json()
-            
+
             # Wait for timeout ping (this test might be flaky due to timing)
             # In real implementation, you'd mock the timeout
             # For now, just verify the connection stays alive
@@ -270,21 +270,21 @@ class TestWebSocketIntegrationWithBatch:
     async def test_batch_progress_integration(self):
         """Test progress updates from batch processing."""
         job_id = str(uuid.uuid4())
-        
+
         # Track received messages
         received_messages = []
-        
+
         async def mock_send_json(data):
             received_messages.append(data)
-        
+
         # Create mock websocket
         mock_websocket = AsyncMock()
         mock_websocket.send_json = mock_send_json
         mock_websocket.accept = AsyncMock()
-        
+
         # Connect
         await connection_manager.connect(mock_websocket, job_id)
-        
+
         # Simulate batch processing progress
         progress_updates = [
             BatchProgress(
@@ -309,14 +309,14 @@ class TestWebSocketIntegrationWithBatch:
                 progress=100,
             ),
         ]
-        
+
         # Send all progress updates
         for progress in progress_updates:
             await send_batch_progress(progress)
-        
+
         # Verify all updates were sent (including connection message)
         assert len(received_messages) == 4  # 1 connection + 3 progress
-        
+
         # Verify progress sequence
         assert received_messages[1]["progress"] == 0
         assert received_messages[2]["progress"] == 50
@@ -328,28 +328,28 @@ class TestWebSocketIntegrationWithBatch:
         """Test broadcasting to multiple jobs concurrently."""
         job1_id = str(uuid.uuid4())
         job2_id = str(uuid.uuid4())
-        
+
         # Create mock websockets
         mock_ws1 = AsyncMock()
         mock_ws2 = AsyncMock()
-        
+
         # Track messages per job
         job1_messages = []
         job2_messages = []
-        
+
         async def send_json1(data):
             job1_messages.append(data)
-        
+
         async def send_json2(data):
             job2_messages.append(data)
-        
+
         mock_ws1.send_json = send_json1
         mock_ws2.send_json = send_json2
-        
+
         # Connect to different jobs
         await connection_manager.connect(mock_ws1, job1_id)
         await connection_manager.connect(mock_ws2, job2_id)
-        
+
         # Send progress to job1
         progress1 = BatchProgress(
             job_id=job1_id,
@@ -359,7 +359,7 @@ class TestWebSocketIntegrationWithBatch:
             progress=50,
         )
         await send_batch_progress(progress1)
-        
+
         # Send progress to job2
         progress2 = BatchProgress(
             job_id=job2_id,
@@ -369,13 +369,13 @@ class TestWebSocketIntegrationWithBatch:
             progress=75,
         )
         await send_batch_progress(progress2)
-        
+
         # Verify each connection only received its job's updates
         assert len(job1_messages) == 2  # connection + progress
         assert len(job2_messages) == 2  # connection + progress
-        
+
         assert job1_messages[1]["filename"] == "job1.jpg"
         assert job1_messages[1]["progress"] == 50
-        
+
         assert job2_messages[1]["filename"] == "job2.jpg"
         assert job2_messages[1]["progress"] == 75

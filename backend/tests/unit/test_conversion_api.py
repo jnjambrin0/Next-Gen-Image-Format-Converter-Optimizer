@@ -60,9 +60,7 @@ class TestConversionAPI:
         # Arrange
         output_data = b"converted image data"
 
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(
                 return_value=(mock_conversion_result, output_data)
             )
@@ -78,7 +76,10 @@ class TestConversionAPI:
             # Assert
             assert response.body == output_data
             assert response.media_type == "image/webp"
-            assert response.headers["Content-Disposition"] == 'attachment; filename="test.webp"'
+            assert (
+                response.headers["Content-Disposition"]
+                == 'attachment; filename="test.webp"'
+            )
             assert response.headers["X-Conversion-Id"] == "test-id"
             assert response.headers["X-Processing-Time"] == "0.5"
             assert response.headers["X-Compression-Ratio"] == "0.8"
@@ -168,9 +169,7 @@ class TestConversionAPI:
     async def test_convert_image_timeout(self, mock_request, mock_file):
         """Test conversion timeout handling."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(side_effect=asyncio.TimeoutError())
 
             # Act & Assert
@@ -190,9 +189,7 @@ class TestConversionAPI:
     async def test_convert_image_invalid_image(self, mock_request, mock_file):
         """Test handling of invalid image error."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(
                 side_effect=InvalidImageError("Not a valid image")
             )
@@ -214,9 +211,7 @@ class TestConversionAPI:
     async def test_convert_image_unsupported_format(self, mock_request, mock_file):
         """Test handling of unsupported format error."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(
                 side_effect=UnsupportedFormatError("Format not supported")
             )
@@ -238,9 +233,7 @@ class TestConversionAPI:
     async def test_convert_image_conversion_failed(self, mock_request, mock_file):
         """Test handling of conversion failure."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(
                 side_effect=ConversionFailedError("Processing failed")
             )
@@ -264,9 +257,7 @@ class TestConversionAPI:
     ):
         """Test handling when conversion produces no output."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(
                 return_value=(mock_conversion_result, None)
             )
@@ -288,9 +279,7 @@ class TestConversionAPI:
     async def test_convert_image_at_capacity(self, mock_request, mock_file):
         """Test handling when service is at capacity."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_semaphore"
-        ) as mock_semaphore:
+        with patch("app.api.routes.conversion.conversion_semaphore") as mock_semaphore:
             mock_semaphore.locked.return_value = True
 
             # Act & Assert
@@ -324,9 +313,7 @@ class TestConversionAPI:
             OutputFormat.JP2: "image/jp2",
         }
 
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             for output_format, expected_content_type in format_content_types.items():
                 # Update mock result
                 mock_conversion_result.output_format = output_format
@@ -345,7 +332,10 @@ class TestConversionAPI:
                 # Assert
                 assert response.media_type == expected_content_type
                 ext = output_format.value.lower()
-                assert response.headers["Content-Disposition"] == f'attachment; filename="test.{ext}"'
+                assert (
+                    response.headers["Content-Disposition"]
+                    == f'attachment; filename="test.{ext}"'
+                )
 
     @pytest.mark.asyncio
     async def test_convert_image_quality_bounds(self, mock_request, mock_file):
@@ -358,12 +348,8 @@ class TestConversionAPI:
     async def test_convert_image_unexpected_error(self, mock_request, mock_file):
         """Test handling of unexpected errors."""
         # Arrange
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
-            mock_service.convert = AsyncMock(
-                side_effect=Exception("Unexpected error")
-            )
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
+            mock_service.convert = AsyncMock(side_effect=Exception("Unexpected error"))
 
             # Act & Assert
             with pytest.raises(HTTPException) as exc_info:
@@ -392,22 +378,20 @@ class TestConversionAPI:
             "/etc/passwd.jpg",
             "C:\\Windows\\system.jpg",
         ]
-        
+
         output_data = b"converted image data"
-        
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             mock_service.convert = AsyncMock(
                 return_value=(mock_conversion_result, output_data)
             )
-            
+
             for malicious_name in malicious_filenames:
                 mock_file = Mock(spec=UploadFile)
                 mock_file.filename = malicious_name
                 mock_file.content_type = "image/jpeg"
                 mock_file.read = AsyncMock(return_value=b"fake image data")
-                
+
                 # Act
                 response = await convert_image(
                     request=mock_request,
@@ -415,7 +399,7 @@ class TestConversionAPI:
                     output_format=OutputFormat.WEBP,
                     quality=85,
                 )
-                
+
                 # Assert - filename should be sanitized
                 assert response.status_code == 200
                 # Check that the conversion was called with sanitized filename
@@ -436,15 +420,15 @@ class TestConversionAPI:
         mock_file.content_type = "image/jpeg"
         # This is not a valid JPEG file
         mock_file.read = AsyncMock(return_value=b"Not a real image file")
-        
-        with patch(
-            "app.api.routes.conversion.conversion_service"
-        ) as mock_service:
+
+        with patch("app.api.routes.conversion.conversion_service") as mock_service:
             # Service should reject invalid image
             mock_service.convert = AsyncMock(
-                side_effect=InvalidImageError("File content does not match expected format")
+                side_effect=InvalidImageError(
+                    "File content does not match expected format"
+                )
             )
-            
+
             # Act & Assert
             with pytest.raises(HTTPException) as exc_info:
                 await convert_image(
@@ -453,6 +437,6 @@ class TestConversionAPI:
                     output_format=OutputFormat.WEBP,
                     quality=85,
                 )
-            
+
             assert exc_info.value.status_code == 422
             assert exc_info.value.detail["error_code"] == "CONV210"

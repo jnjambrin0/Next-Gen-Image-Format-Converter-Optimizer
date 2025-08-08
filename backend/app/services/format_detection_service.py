@@ -15,7 +15,7 @@ logger = structlog.get_logger()
 
 class FormatDetectionService:
     """Service for detecting image formats from file content."""
-    
+
     def __init__(self):
         """Initialize format detection service."""
         # Map of MIME types to our internal format names
@@ -35,7 +35,7 @@ class FormatDetectionService:
             "image/x-icon": "ico",
             "image/vnd.microsoft.icon": "ico",
         }
-        
+
         # PIL format to our format mapping
         self._pil_format_map = {
             "JPEG": "jpeg",
@@ -49,59 +49,55 @@ class FormatDetectionService:
             "HEIC": "heif",
             "AVIF": "avif",
         }
-        
+
     async def detect_format(self, image_data: bytes) -> Tuple[str, bool]:
         """
         Detect image format from file content.
-        
+
         Args:
             image_data: Raw image data
-            
+
         Returns:
             Tuple of (detected_format, is_confident)
             - detected_format: The detected format name (e.g., 'jpeg', 'png')
             - is_confident: Whether the detection is confident (True) or a guess (False)
         """
         if not image_data or len(image_data) < 12:
-            raise ValueError("The provided image data is invalid or empty. Please ensure you've selected a valid image file.")
-            
+            raise ValueError(
+                "The provided image data is invalid or empty. Please ensure you've selected a valid image file."
+            )
+
         # First try: Magic bytes detection (most reliable)
         format_name, confident = self._detect_by_magic_bytes(image_data)
         if format_name and confident:
             logger.debug(
-                "Format detected by magic bytes",
-                format=format_name,
-                confident=True
+                "Format detected by magic bytes", format=format_name, confident=True
             )
             return self._normalize_format_name(format_name), True
-            
+
         # Second try: PIL detection (good fallback)
         pil_format = self._detect_by_pil(image_data)
         if pil_format:
-            logger.debug(
-                "Format detected by PIL",
-                format=pil_format,
-                confident=True
-            )
+            logger.debug("Format detected by PIL", format=pil_format, confident=True)
             return self._normalize_format_name(pil_format), True
-            
+
         # Third try: Extended magic bytes check
         if format_name:  # We had a partial match
             logger.debug(
-                "Format detected by extended check",
-                format=format_name,
-                confident=False
+                "Format detected by extended check", format=format_name, confident=False
             )
             return self._normalize_format_name(format_name), False
-            
+
         # Failed to detect
         logger.warning("Failed to detect image format")
-        raise ValueError("Unable to detect the image format. The file may be corrupted, truncated, or in an unsupported format. Supported formats include: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, and AVIF.")
-        
+        raise ValueError(
+            "Unable to detect the image format. The file may be corrupted, truncated, or in an unsupported format. Supported formats include: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, and AVIF."
+        )
+
     def _detect_by_magic_bytes(self, data: bytes) -> Tuple[Optional[str], bool]:
         """
         Detect format using magic bytes.
-        
+
         Returns:
             Tuple of (format_name, is_confident)
         """
@@ -115,7 +111,7 @@ class FormatDetectionService:
                         return "webp", True
                     # Could be other RIFF format
                     return "riff", False
-                    
+
                 elif format_name == "HEIF/AVIF":
                     # Check ftyp box for specific format
                     if len(data) >= 12:
@@ -125,33 +121,39 @@ class FormatDetectionService:
                             return specific_format.lower(), True
                     # Generic HEIF container
                     return "heif", False
-                    
+
                 else:
                     # Direct match
                     return format_name.lower(), True
-                    
+
         # Extended checks for formats with non-standard headers
-        
+
         # JPEG with EXIF
-        if len(data) > 4 and data[0:2] == b'\xff\xd8' and data[2:4] in [b'\xff\xe0', b'\xff\xe1', b'\xff\xe2']:
+        if (
+            len(data) > 4
+            and data[0:2] == b"\xff\xd8"
+            and data[2:4] in [b"\xff\xe0", b"\xff\xe1", b"\xff\xe2"]
+        ):
             return "jpeg", True
-            
+
         # JPEG 2000 variations
         if len(data) > 12:
-            if data[0:12] == b'\x00\x00\x00\x0cjP  \r\n\x87\n':
+            if data[0:12] == b"\x00\x00\x00\x0cjP  \r\n\x87\n":
                 return "jp2", True
-            elif data[0:4] == b'\xff\x4f\xff\x51':
+            elif data[0:4] == b"\xff\x4f\xff\x51":
                 return "j2k", True
-                
+
         # JPEG XL variations
         if len(data) > 2:
-            if data[0:2] == b'\xff\x0a':
+            if data[0:2] == b"\xff\x0a":
                 return "jxl", True
-            elif len(data) > 12 and data[0:12] == b'\x00\x00\x00\x0cJXL \x0d\x0a\x87\x0a':
+            elif (
+                len(data) > 12 and data[0:12] == b"\x00\x00\x00\x0cJXL \x0d\x0a\x87\x0a"
+            ):
                 return "jxl", True
-                
+
         return None, False
-        
+
     def _detect_by_pil(self, data: bytes) -> Optional[str]:
         """Detect format using PIL."""
         try:
@@ -164,24 +166,24 @@ class FormatDetectionService:
                         return self._pil_format_map.get(pil_format, pil_format.lower())
         except Exception as e:
             logger.debug("PIL detection failed", error=str(e))
-            
+
         return None
-        
+
     def _normalize_format_name(self, format_name: str) -> str:
         """
         Normalize format name to our standard naming.
-        
+
         Args:
             format_name: Raw format name
-            
+
         Returns:
             Normalized format name
         """
         format_lower = format_name.lower()
-        
+
         # Apply aliases
         canonical = FORMAT_ALIASES.get(format_lower, format_lower)
-        
+
         # Additional normalizations
         if canonical == "jpg":
             return "jpeg"
@@ -193,17 +195,26 @@ class FormatDetectionService:
             return "jp2"
         elif canonical in ["jxl", "jpegxl", "jpeg_xl"]:
             return "jxl"
-            
+
         return canonical
-        
+
     def is_format_supported(self, format_name: str) -> bool:
         """Check if a format is supported."""
         normalized = self._normalize_format_name(format_name)
         # This should check against actual registered handlers
         # For now, we'll use a basic list
         supported = {
-            "jpeg", "png", "webp", "gif", "bmp", "tiff",
-            "avif", "heif", "jp2", "jxl", "ico"
+            "jpeg",
+            "png",
+            "webp",
+            "gif",
+            "bmp",
+            "tiff",
+            "avif",
+            "heif",
+            "jp2",
+            "jxl",
+            "ico",
         }
         return normalized in supported
 

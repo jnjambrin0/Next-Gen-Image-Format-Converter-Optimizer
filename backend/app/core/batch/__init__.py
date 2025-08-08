@@ -4,7 +4,7 @@ from .models import BatchJob, BatchItem, BatchProgress, BatchStatus, BatchItemSt
 
 __all__ = [
     "BatchJob",
-    "BatchItem", 
+    "BatchItem",
     "BatchProgress",
     "BatchStatus",
     "BatchItemStatus",

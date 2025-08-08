@@ -17,7 +17,12 @@ from app.cli import __version__
 from app.cli.commands import convert, batch, optimize, analyze, formats, presets, chain
 from app.cli.plugins import loader as plugin_loader
 from app.cli.utils import aliases, errors, i18n
-from app.cli.utils.branding import show_cli_banner, show_version_info, show_success_message, show_error_message
+from app.cli.utils.branding import (
+    show_cli_banner,
+    show_version_info,
+    show_success_message,
+    show_error_message,
+)
 from app.cli.config import CLIConfig, get_config, update_config
 from app.cli.ui.themes import get_theme_manager
 from app.cli.utils.terminal import get_terminal_detector

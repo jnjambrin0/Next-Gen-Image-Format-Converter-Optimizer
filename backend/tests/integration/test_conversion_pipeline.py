@@ -42,14 +42,10 @@ class TestConversionPipeline:
         # Arrange
         with open(sample_image_path, "rb") as f:
             jpeg_data = f.read()
-        
+
         request = ConversionRequest(
             output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(
-                quality=85,
-                strip_metadata=True,
-                optimize=True
-            )
+            settings=ConversionSettings(quality=85, strip_metadata=True, optimize=True),
         )
 
         # Act
@@ -60,27 +56,24 @@ class TestConversionPipeline:
         assert result.output_format == OutputFormat.WEBP
         assert result.output_size > 0
         assert result.compression_ratio < 1.0  # Should be compressed
-        
+
         # Verify output is valid WebP
         output_img = Image.open(io.BytesIO(result._output_data))
         assert output_img.format == "WEBP"
-        
+
         # Verify metadata was stripped
         assert not hasattr(output_img, "_getexif") or output_img._getexif() is None
 
     @pytest.mark.asyncio
-    async def test_full_pipeline_png_to_avif(
-        self, conversion_manager, all_test_images
-    ):
+    async def test_full_pipeline_png_to_avif(self, conversion_manager, all_test_images):
         """Test complete pipeline: PNG input to AVIF output."""
         # Arrange
         png_path = all_test_images["screenshot"]["path"]
         with open(png_path, "rb") as f:
             png_data = f.read()
-        
+
         request = ConversionRequest(
-            output_format=OutputFormat.AVIF,
-            settings=ConversionSettings(quality=80)
+            output_format=OutputFormat.AVIF, settings=ConversionSettings(quality=80)
         )
 
         # Act
@@ -100,10 +93,9 @@ class TestConversionPipeline:
         transparent_png_path = all_test_images["illustration"]["path"]
         with open(transparent_png_path, "rb") as f:
             png_data = f.read()
-        
+
         request = ConversionRequest(
-            output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=90)
+            output_format=OutputFormat.WEBP, settings=ConversionSettings(quality=90)
         )
 
         # Act
@@ -111,7 +103,7 @@ class TestConversionPipeline:
 
         # Assert
         assert result.status == ConversionStatus.COMPLETED
-        
+
         # Verify transparency is preserved
         output_img = Image.open(io.BytesIO(result._output_data))
         assert output_img.mode == "RGBA"
@@ -129,7 +121,7 @@ class TestConversionPipeline:
         for quality in quality_levels:
             request = ConversionRequest(
                 output_format=OutputFormat.JPEG,
-                settings=ConversionSettings(quality=quality)
+                settings=ConversionSettings(quality=quality),
             )
             result = await conversion_manager.convert_image(
                 sample_image_bytes, "jpeg", request
@@ -138,10 +130,12 @@ class TestConversionPipeline:
 
         # Assert
         assert all(r.status == ConversionStatus.COMPLETED for r in results)
-        
+
         # Verify general trend that higher quality produces larger files
         # (Note: JPEG compression can sometimes produce counterintuitive results at extremes)
-        assert results[0].output_size < results[3].output_size  # Lowest vs highest quality
+        assert (
+            results[0].output_size < results[3].output_size
+        )  # Lowest vs highest quality
 
     @pytest.mark.asyncio
     async def test_pipeline_handles_large_images(
@@ -152,10 +146,10 @@ class TestConversionPipeline:
         large_image_path = all_test_images["large_photo"]["path"]
         with open(large_image_path, "rb") as f:
             large_data = f.read()
-        
+
         request = ConversionRequest(
             output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=75, optimize=True)
+            settings=ConversionSettings(quality=75, optimize=True),
         )
 
         # Act
@@ -163,7 +157,9 @@ class TestConversionPipeline:
 
         # Assert
         assert result.status == ConversionStatus.COMPLETED
-        assert result.processing_time < 3.0  # Should complete within 3 seconds (large images may take longer)
+        assert (
+            result.processing_time < 3.0
+        )  # Should complete within 3 seconds (large images may take longer)
         assert result.compression_ratio < 0.5  # Should achieve good compression
 
     @pytest.mark.asyncio
@@ -175,10 +171,9 @@ class TestConversionPipeline:
         tiny_image_path = all_test_images["tiny_icon"]["path"]
         with open(tiny_image_path, "rb") as f:
             tiny_data = f.read()
-        
+
         request = ConversionRequest(
-            output_format=OutputFormat.PNG,
-            settings=ConversionSettings(quality=100)
+            output_format=OutputFormat.PNG, settings=ConversionSettings(quality=100)
         )
 
         # Act
@@ -196,7 +191,7 @@ class TestConversionPipeline:
         # Arrange
         with open(corrupted_image_path, "rb") as f:
             corrupted_data = f.read()
-        
+
         request = ConversionRequest(output_format=OutputFormat.WEBP)
 
         # Act & Assert
@@ -210,20 +205,22 @@ class TestConversionPipeline:
         """Test pipeline handles concurrent conversions."""
         # Arrange
         conversions = []
-        
+
         # Prepare different conversion tasks
         for img_name, img_info in list(all_test_images.items())[:4]:
             with open(img_info["path"], "rb") as f:
                 img_data = f.read()
-            
-            conversions.append({
-                "data": img_data,
-                "format": img_info["format"].lower(),
-                "request": ConversionRequest(
-                    output_format=OutputFormat.WEBP,
-                    settings=ConversionSettings(quality=80)
-                )
-            })
+
+            conversions.append(
+                {
+                    "data": img_data,
+                    "format": img_info["format"].lower(),
+                    "request": ConversionRequest(
+                        output_format=OutputFormat.WEBP,
+                        settings=ConversionSettings(quality=80),
+                    ),
+                }
+            )
 
         # Act - Run conversions concurrently
         tasks = [
@@ -237,7 +234,7 @@ class TestConversionPipeline:
         # Assert
         successful_results = [r for r in results if not isinstance(r, Exception)]
         assert len(successful_results) >= 3  # Most should succeed
-        
+
         for result in successful_results:
             assert result.status == ConversionStatus.COMPLETED
             assert result.output_format == OutputFormat.WEBP
@@ -249,11 +246,10 @@ class TestConversionPipeline:
         """Test that memory is properly cleaned up after conversion."""
         # This test is more conceptual - in real implementation,
         # you might use memory profiling tools
-        
+
         # Arrange
         request = ConversionRequest(
-            output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=85)
+            output_format=OutputFormat.WEBP, settings=ConversionSettings(quality=85)
         )
 
         # Act - Perform multiple conversions
@@ -262,7 +258,7 @@ class TestConversionPipeline:
                 sample_image_bytes, "jpeg", request
             )
             assert result.status == ConversionStatus.COMPLETED
-            
+
             # Clear reference to result
             del result
 
@@ -278,21 +274,24 @@ class TestConversionPipeline:
             ("png", "screenshot", OutputFormat.WEBP),
             ("png", "document_scan", OutputFormat.JPEG),
             ("png", "illustration", OutputFormat.AVIF),
-        ]
+        ],
     )
     async def test_pipeline_format_combinations(
-        self, conversion_manager, all_test_images,
-        input_format, input_file, output_format
+        self,
+        conversion_manager,
+        all_test_images,
+        input_format,
+        input_file,
+        output_format,
     ):
         """Test various input/output format combinations."""
         # Arrange
         image_path = all_test_images[input_file]["path"]
         with open(image_path, "rb") as f:
             image_data = f.read()
-        
+
         request = ConversionRequest(
-            output_format=output_format,
-            settings=ConversionSettings(quality=85)
+            output_format=output_format, settings=ConversionSettings(quality=85)
         )
 
         # Act
@@ -304,7 +303,7 @@ class TestConversionPipeline:
         assert result.status == ConversionStatus.COMPLETED
         assert result.output_format == output_format
         assert result.output_size > 0
-        
+
         # Verify output is valid
         output_img = Image.open(io.BytesIO(result._output_data))
         assert output_img.size[0] > 0 and output_img.size[1] > 0
@@ -317,11 +316,11 @@ class TestConversionPipeline:
         # Arrange
         request_optimized = ConversionRequest(
             output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=80, optimize=True)
+            settings=ConversionSettings(quality=80, optimize=True),
         )
         request_normal = ConversionRequest(
             output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=80, optimize=False)
+            settings=ConversionSettings(quality=80, optimize=False),
         )
 
         # Act
@@ -335,7 +334,7 @@ class TestConversionPipeline:
         # Assert
         assert result_optimized.status == ConversionStatus.COMPLETED
         assert result_normal.status == ConversionStatus.COMPLETED
-        
+
         # Optimized should take longer but produce smaller file
         assert result_optimized.processing_time >= result_normal.processing_time
         # Note: In some cases, optimization might not reduce size significantly

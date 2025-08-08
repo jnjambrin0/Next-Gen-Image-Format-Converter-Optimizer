@@ -10,31 +10,31 @@ import typer
 
 class CLIPlugin(ABC):
     """Base class for CLI plugins"""
-    
+
     @abstractmethod
     def plugin_info(self) -> Dict[str, Any]:
         """
         Return plugin information
-        
+
         Returns:
             Dict with keys: name, version, description, author
         """
         pass
-    
+
     @abstractmethod
     def register(self, app: typer.Typer):
         """
         Register plugin commands with the CLI app
-        
+
         Args:
             app: The main Typer application
         """
         pass
-    
+
     def on_load(self):
         """Called when plugin is loaded (optional)"""
         pass
-    
+
     def on_unload(self):
         """Called when plugin is unloaded (optional)"""
         pass
@@ -97,6 +97,6 @@ def register(app):
 def create_plugin_template(path: Path):
     """Create a plugin template file"""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         f.write(PLUGIN_TEMPLATE)
     return path

@@ -28,7 +28,11 @@ from app.api.utils.validation import (
     validate_content_type,
 )
 from app.api.utils.error_handling import EndpointErrorHandler
-from app.core.constants import FORMAT_TO_MIME_TYPE, SUPPORTED_INPUT_FORMATS, SUPPORTED_OUTPUT_FORMATS
+from app.core.constants import (
+    FORMAT_TO_MIME_TYPE,
+    SUPPORTED_INPUT_FORMATS,
+    SUPPORTED_OUTPUT_FORMATS,
+)
 
 logger = structlog.get_logger()
 
@@ -40,14 +44,19 @@ detection_semaphore = asyncio.Semaphore(settings.max_concurrent_conversions)
 # Error handlers for detection endpoints
 detect_error_handler = EndpointErrorHandler("detection", "detect_format")
 recommend_error_handler = EndpointErrorHandler("recommendation", "recommend_format")
-compatibility_error_handler = EndpointErrorHandler("compatibility", "get_format_compatibility")
+compatibility_error_handler = EndpointErrorHandler(
+    "compatibility", "get_format_compatibility"
+)
 
 
 @router.post(
     "/detect-format",
     response_model=FormatDetectionResponse,
     responses={
-        200: {"model": FormatDetectionResponse, "description": "Format detected successfully"},
+        200: {
+            "model": FormatDetectionResponse,
+            "description": "Format detected successfully",
+        },
         400: {"model": ErrorResponse, "description": "Bad Request"},
         413: {"model": ErrorResponse, "description": "Payload Too Large"},
         422: {"model": ErrorResponse, "description": "Validation Error"},
@@ -83,10 +92,9 @@ async def detect_format(
     # Validate content type
     if not validate_content_type(file):
         raise detect_error_handler.unsupported_media_type_error(
-            "Unsupported media type. Please upload a valid image file.",
-            request
+            "Unsupported media type. Please upload a valid image file.", request
         )
-    
+
     contents = None
     async with SemaphoreContextManager(
         detection_semaphore, 0.01, "DET503", "Detection service", request
@@ -103,12 +111,14 @@ async def detect_format(
                 file_extension = Path(file.filename).suffix.lower().lstrip(".")
 
             # Perform format detection
-            detected_format, confidence = await format_detection_service.detect_format(contents)
+            detected_format, confidence = await format_detection_service.detect_format(
+                contents
+            )
 
             if not detected_format:
                 raise detect_error_handler.unprocessable_entity_error(
                     "Unable to detect image format. The file may be corrupted or in an unsupported format.",
-                    request
+                    request,
                 )
 
             # Get additional format details
@@ -117,20 +127,21 @@ async def detect_format(
                 # Import PIL here to avoid import errors and improve startup time
                 from PIL import Image
                 from io import BytesIO
-                
+
                 # Try to get more detailed format information
                 with Image.open(BytesIO(contents)) as img:
                     format_details = {
                         "dimensions": {"width": img.width, "height": img.height},
                         "mode": img.mode,
-                        "has_transparency": img.mode in ("RGBA", "LA", "P") and "transparency" in img.info,
+                        "has_transparency": img.mode in ("RGBA", "LA", "P")
+                        and "transparency" in img.info,
                         "animated": getattr(img, "is_animated", False),
                     }
-                    
+
                     # Add format-specific details
                     if img.format:
                         format_details["pil_format"] = img.format
-                        
+
             except Exception as e:
                 logger.warning(
                     "Failed to extract detailed format information",
@@ -169,8 +180,7 @@ async def detect_format(
                 correlation_id=request.state.correlation_id,
             )
             raise detect_error_handler.internal_server_error(
-                "An unexpected error occurred during format detection",
-                request
+                "An unexpected error occurred during format detection", request
             )
 
         finally:
@@ -182,7 +192,10 @@ async def detect_format(
     "/recommend-format",
     response_model=FormatRecommendationResponse,
     responses={
-        200: {"model": FormatRecommendationResponse, "description": "Recommendations generated successfully"},
+        200: {
+            "model": FormatRecommendationResponse,
+            "description": "Recommendations generated successfully",
+        },
         400: {"model": ErrorResponse, "description": "Bad Request"},
         413: {"model": ErrorResponse, "description": "Payload Too Large"},
         422: {"model": ErrorResponse, "description": "Validation Error"},
@@ -210,16 +223,17 @@ async def detect_format(
 )
 async def recommend_format(
     request: Request,
-    file: UploadFile = File(..., description="Image file to analyze for recommendations"),
+    file: UploadFile = File(
+        ..., description="Image file to analyze for recommendations"
+    ),
 ):
     """Get format recommendations based on image content analysis."""
     # Validate content type
     if not validate_content_type(file):
         raise recommend_error_handler.unsupported_media_type_error(
-            "Unsupported media type. Please upload a valid image file.",
-            request
+            "Unsupported media type. Please upload a valid image file.", request
         )
-    
+
     contents = None
     async with SemaphoreContextManager(
         detection_semaphore, 0.01, "REC503", "Recommendation service", request
@@ -231,12 +245,13 @@ async def recommend_format(
             )
 
             # Detect input format first
-            detected_format, confidence = await format_detection_service.detect_format(contents)
+            detected_format, confidence = await format_detection_service.detect_format(
+                contents
+            )
 
             if not detected_format:
                 raise recommend_error_handler.unprocessable_entity_error(
-                    "Unable to detect input format for analysis",
-                    request
+                    "Unable to detect input format for analysis", request
                 )
 
             # Perform content analysis using intelligence engine
@@ -260,7 +275,7 @@ async def recommend_format(
             recommendations = []
             for rec in recommendations_data.get("recommendations", []):
                 reasons = rec.get("reasons", [])
-                
+
                 # Determine quality impact
                 quality_score = rec.get("quality_score", 0.8)
                 if quality_score >= 0.9:
@@ -270,7 +285,7 @@ async def recommend_format(
                 elif quality_score >= 0.7:
                     quality_impact = "Good - Acceptable quality trade-off"
                 elif quality_score >= 0.6:
-                    quality_impact = "Fair - Noticeable quality reduction"  
+                    quality_impact = "Fair - Noticeable quality reduction"
                 else:
                     quality_impact = "Poor - Significant quality loss"
 
@@ -314,8 +329,7 @@ async def recommend_format(
                 correlation_id=request.state.correlation_id,
             )
             raise recommend_error_handler.internal_server_error(
-                "An unexpected error occurred during format recommendation",
-                request
+                "An unexpected error occurred during format recommendation", request
             )
 
         finally:
@@ -327,7 +341,10 @@ async def recommend_format(
     "/formats/compatibility",
     response_model=FormatCompatibilityResponse,
     responses={
-        200: {"model": FormatCompatibilityResponse, "description": "Compatibility matrix retrieved"},
+        200: {
+            "model": FormatCompatibilityResponse,
+            "description": "Compatibility matrix retrieved",
+        },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
     summary="Get format compatibility matrix",
@@ -350,31 +367,35 @@ async def get_format_compatibility(request: Request):
     try:
         # Use centralized format constants
         supported_input_formats = list(SUPPORTED_INPUT_FORMATS)
-        
+
         # Filter output formats to only include main formats, not optimized variants
         supported_output_formats = [
-            fmt for fmt in SUPPORTED_OUTPUT_FORMATS 
-            if not fmt.endswith('_optimized') and fmt not in ['jpg', 'tif', 'jpegxl', 'jpeg_xl', 'jpeg2000']
+            fmt
+            for fmt in SUPPORTED_OUTPUT_FORMATS
+            if not fmt.endswith("_optimized")
+            and fmt not in ["jpg", "tif", "jpegxl", "jpeg_xl", "jpeg2000"]
         ]
 
         # Build compatibility matrix
         compatibility_matrix = []
-        
+
         for input_format in supported_input_formats:
             limitations = []
             compatible_outputs = supported_output_formats.copy()
-            
+
             # Add format-specific limitations
             if input_format == "gif":
                 limitations.append("Animation support varies by output format")
-                limitations.append("WebP and AVIF preserve animation, others use first frame")
-            
+                limitations.append(
+                    "WebP and AVIF preserve animation, others use first frame"
+                )
+
             if input_format in ["heif", "heic"]:
                 limitations.append("Requires compatible system codecs")
-                
+
             if input_format == "tiff":
                 limitations.append("Multi-page TIFF uses first page only")
-            
+
             compatibility_matrix.append(
                 FormatCompatibilityMatrix(
                     input_format=input_format,
@@ -402,5 +423,5 @@ async def get_format_compatibility(request: Request):
         )
         raise compatibility_error_handler.internal_server_error(
             "An unexpected error occurred while retrieving compatibility information",
-            request
+            request,
         )

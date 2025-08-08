@@ -13,6 +13,7 @@ from app.cli.config import get_config
 
 class EmojiCategory(str, Enum):
     """Emoji categories"""
+
     FORMAT = "format"
     STATUS = "status"
     PROGRESS = "progress"
@@ -40,7 +41,6 @@ EMOJI_MAP = {
     "svg": "📐",
     "ico": "🔷",
     "raw": "📸",
-    
     # Status indicators
     "success": "✅",
     "error": "❌",
@@ -53,7 +53,6 @@ EMOJI_MAP = {
     "failed": "✖️",
     "skipped": "⏭️",
     "cancelled": "🚫",
-    
     # Progress indicators
     "start": "🚀",
     "processing": "⚙️",
@@ -65,7 +64,6 @@ EMOJI_MAP = {
     "saving": "💾",
     "loading": "📂",
     "complete_progress": "🎉",
-    
     # Actions
     "convert": "🔄",
     "optimize": "⚡",
@@ -82,28 +80,24 @@ EMOJI_MAP = {
     "paste": "📌",
     "undo": "↩️",
     "redo": "↪️",
-    
     # Quality indicators
     "high_quality": "⭐⭐⭐⭐⭐",
     "good_quality": "⭐⭐⭐⭐",
     "medium_quality": "⭐⭐⭐",
     "low_quality": "⭐⭐",
     "poor_quality": "⭐",
-    
     # File operations
     "file": "📄",
     "folder": "📁",
     "archive": "🗜️",
     "lock": "🔒",
     "unlock": "🔓",
-    
     # Performance
     "fast": "🚀",
     "slow": "🐌",
     "memory": "🧠",
     "cpu": "💻",
     "disk": "💿",
-    
     # UI elements
     "menu": "☰",
     "close": "❌",
@@ -113,7 +107,6 @@ EMOJI_MAP = {
     "checkbox_unchecked": "☐",
     "radio_selected": "🔘",
     "radio_unselected": "⚪",
-    
     # Miscellaneous
     "clock": "🕐",
     "calendar": "📅",
@@ -152,7 +145,6 @@ TEXT_FALLBACK = {
     "svg": "[SVG]",
     "ico": "[ICO]",
     "raw": "[RAW]",
-    
     # Status indicators
     "success": "[OK]",
     "error": "[ERROR]",
@@ -165,7 +157,6 @@ TEXT_FALLBACK = {
     "failed": "[FAIL]",
     "skipped": "[SKIP]",
     "cancelled": "[CANCEL]",
-    
     # Progress indicators
     "start": "[START]",
     "processing": "[PROC]",
@@ -177,7 +168,6 @@ TEXT_FALLBACK = {
     "saving": "[SAVE]",
     "loading": "[LOAD]",
     "complete_progress": "[COMPLETE]",
-    
     # Actions
     "convert": ">>",
     "optimize": "++",
@@ -194,28 +184,24 @@ TEXT_FALLBACK = {
     "paste": "P",
     "undo": "<",
     "redo": ">",
-    
     # Quality indicators
     "high_quality": "*****",
     "good_quality": "****",
     "medium_quality": "***",
     "low_quality": "**",
     "poor_quality": "*",
-    
     # File operations
     "file": "-",
     "folder": "+",
     "archive": "#",
     "lock": "L",
     "unlock": "U",
-    
     # Performance
     "fast": ">>",
     "slow": "<<",
     "memory": "M",
     "cpu": "C",
     "disk": "D",
-    
     # UI elements
     "menu": "=",
     "close": "X",
@@ -225,7 +211,6 @@ TEXT_FALLBACK = {
     "checkbox_unchecked": "[ ]",
     "radio_selected": "(o)",
     "radio_unselected": "( )",
-    
     # Miscellaneous
     "clock": "@",
     "calendar": "#",
@@ -249,23 +234,23 @@ TEXT_FALLBACK = {
 def get_emoji(key: str, fallback: Optional[str] = None) -> str:
     """
     Get emoji or fallback text based on configuration
-    
+
     Args:
         key: Emoji key from EMOJI_MAP
         fallback: Optional custom fallback text
-    
+
     Returns:
         Emoji character or fallback text
     """
     config = get_config()
-    
+
     # Check if emoji should be used
     if not should_use_emoji() or not config.emoji_enabled:
         # Use text fallback
         if fallback:
             return fallback
         return TEXT_FALLBACK.get(key, "")
-    
+
     # Return emoji
     return EMOJI_MAP.get(key, fallback or "")
 
@@ -273,11 +258,11 @@ def get_emoji(key: str, fallback: Optional[str] = None) -> str:
 def format_with_emoji(text: str, emoji_key: str) -> str:
     """
     Format text with optional emoji prefix
-    
+
     Args:
         text: Text to format
         emoji_key: Emoji key from EMOJI_MAP
-    
+
     Returns:
         Formatted text with or without emoji
     """
@@ -290,10 +275,10 @@ def format_with_emoji(text: str, emoji_key: str) -> str:
 def get_format_emoji(format_name: str) -> str:
     """
     Get emoji for image format
-    
+
     Args:
         format_name: Image format name
-    
+
     Returns:
         Format emoji or fallback
     """
@@ -303,10 +288,10 @@ def get_format_emoji(format_name: str) -> str:
 def get_status_emoji(status: str) -> str:
     """
     Get emoji for status indicator
-    
+
     Args:
         status: Status type (success, error, warning, etc.)
-    
+
     Returns:
         Status emoji or fallback
     """
@@ -316,10 +301,10 @@ def get_status_emoji(status: str) -> str:
 def get_quality_stars(quality: int) -> str:
     """
     Get star rating for quality level
-    
+
     Args:
         quality: Quality percentage (0-100)
-    
+
     Returns:
         Star rating string
     """
@@ -338,15 +323,15 @@ def get_quality_stars(quality: int) -> str:
 def format_file_size_with_emoji(size_bytes: int) -> str:
     """
     Format file size with appropriate emoji
-    
+
     Args:
         size_bytes: File size in bytes
-    
+
     Returns:
         Formatted file size with emoji
     """
     size_mb = size_bytes / (1024 * 1024)
-    
+
     if size_mb < 1:
         emoji = get_emoji("fast")
         size_str = f"{size_bytes / 1024:.1f} KB"
@@ -359,7 +344,7 @@ def format_file_size_with_emoji(size_bytes: int) -> str:
     else:
         emoji = get_emoji("slow")
         size_str = f"{size_mb:.0f} MB"
-    
+
     if emoji:
         return f"{emoji} {size_str}"
     return size_str
@@ -368,10 +353,10 @@ def format_file_size_with_emoji(size_bytes: int) -> str:
 def format_duration_with_emoji(seconds: float) -> str:
     """
     Format duration with appropriate emoji
-    
+
     Args:
         seconds: Duration in seconds
-    
+
     Returns:
         Formatted duration with emoji
     """
@@ -388,7 +373,7 @@ def format_duration_with_emoji(seconds: float) -> str:
         emoji = get_emoji("slow")
         minutes = seconds / 60
         duration = f"{minutes:.1f}m"
-    
+
     if emoji:
         return f"{emoji} {duration}"
     return duration
@@ -397,29 +382,30 @@ def format_duration_with_emoji(seconds: float) -> str:
 def strip_emoji(text: str) -> str:
     """
     Remove all emoji from text
-    
+
     Args:
         text: Text containing emoji
-    
+
     Returns:
         Text with emoji removed
     """
     import re
+
     # Remove emoji using regex pattern
     emoji_pattern = re.compile(
         "["
-        "\U0001F600-\U0001F64F"  # emoticons
-        "\U0001F300-\U0001F5FF"  # symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        "\U00002500-\U00002BEF"  # chinese char
-        "\U00002702-\U000027B0"
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
+        "\U0001f600-\U0001f64f"  # emoticons
+        "\U0001f300-\U0001f5ff"  # symbols & pictographs
+        "\U0001f680-\U0001f6ff"  # transport & map symbols
+        "\U0001f1e0-\U0001f1ff"  # flags (iOS)
+        "\U00002500-\U00002bef"  # chinese char
+        "\U00002702-\U000027b0"
+        "\U00002702-\U000027b0"
+        "\U000024c2-\U0001f251"
         "\U0001f926-\U0001f937"
         "\U00010000-\U0010ffff"
         "\u2640-\u2642"
-        "\u2600-\u2B55"
+        "\u2600-\u2b55"
         "\u200d"
         "\u23cf"
         "\u23e9"
@@ -427,6 +413,6 @@ def strip_emoji(text: str) -> str:
         "\ufe0f"  # dingbats
         "\u3030"
         "]+",
-        flags=re.UNICODE
+        flags=re.UNICODE,
     )
     return emoji_pattern.sub("", text).strip()

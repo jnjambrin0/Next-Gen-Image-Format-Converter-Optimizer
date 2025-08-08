@@ -11,28 +11,30 @@ logger = get_logger(__name__)
 
 def _sanitize_endpoint_path(path: str) -> str:
     """Sanitize endpoint path for statistics by removing IDs and sensitive data.
-    
+
     Args:
         path: Original endpoint path
-        
+
     Returns:
         Sanitized path with IDs replaced by placeholders
     """
     import re
-    
+
     # Replace UUIDs with placeholder
-    path = re.sub(r'/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', '/{id}', path)
-    
+    path = re.sub(
+        r"/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "/{id}", path
+    )
+
     # Replace numeric IDs with placeholder
-    path = re.sub(r'/\d+(?=/|$)', '/{id}', path)
-    
+    path = re.sub(r"/\d+(?=/|$)", "/{id}", path)
+
     # Replace file indexes in batch endpoints
-    path = re.sub(r'/items/\d+', '/items/{index}', path)
-    
+    path = re.sub(r"/items/\d+", "/items/{index}", path)
+
     # Remove query parameters if any got through
-    if '?' in path:
-        path = path.split('?')[0]
-    
+    if "?" in path:
+        path = path.split("?")[0]
+
     return path
 
 
@@ -64,21 +66,23 @@ async def logging_middleware(request: Request, call_next: Callable):
             duration_ms = (time() - start_time) * 1000
 
             # Get API key info for privacy-aware logging
-            api_key_record = getattr(request.state, 'api_key', None)
+            api_key_record = getattr(request.state, "api_key", None)
             api_key_id = api_key_record.id if api_key_record else None
-            
+
             # Enhanced logging with API key context (privacy-aware)
             log_data = {
                 "status_code": response.status_code,
                 "duration_ms": round(duration_ms, 2),
-                "authenticated": getattr(request.state, 'authenticated', False),
-                **request_info
+                "authenticated": getattr(request.state, "authenticated", False),
+                **request_info,
             }
-            
+
             # Add API key hash for correlation (never log the actual key)
             if api_key_record:
-                log_data["api_key_hash"] = api_key_record.key_hash[:8]  # First 8 chars for correlation
-            
+                log_data["api_key_hash"] = api_key_record.key_hash[
+                    :8
+                ]  # First 8 chars for correlation
+
             # Log response
             logger.info("Request completed", **log_data)
 
@@ -86,20 +90,20 @@ async def logging_middleware(request: Request, call_next: Callable):
             try:
                 # Sanitize endpoint path for statistics (remove IDs, etc.)
                 sanitized_path = _sanitize_endpoint_path(request.url.path)
-                
+
                 api_key_service.record_usage(
                     api_key_id=api_key_id,
                     endpoint=sanitized_path,
                     method=request.method,
                     status_code=response.status_code,
-                    response_time_ms=int(duration_ms)
+                    response_time_ms=int(duration_ms),
                 )
             except Exception as usage_error:
                 # Don't let usage tracking failures break the API
                 logger.warning(
                     "Failed to record API usage statistics",
                     error=str(usage_error),
-                    correlation_id=correlation_id
+                    correlation_id=correlation_id,
                 )
 
             # Add correlation ID to response headers

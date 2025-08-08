@@ -11,6 +11,7 @@ import json
 
 class SecurityEventType(str, Enum):
     """Types of security events."""
+
     VIOLATION = "violation"
     SCAN = "scan"
     SANDBOX_CREATE = "sandbox_create"
@@ -22,6 +23,7 @@ class SecurityEventType(str, Enum):
 
 class SecuritySeverity(str, Enum):
     """Security event severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -32,25 +34,36 @@ class SecurityEvent(BaseModel):
     Security event for audit logging.
     All fields must be privacy-compliant (no PII).
     """
+
     id: Optional[int] = None
     event_type: SecurityEventType
     severity: SecuritySeverity
     details: Dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.now)
-    
-    @field_validator('details')
+
+    @field_validator("details")
     @classmethod
     def validate_no_pii(cls, v: Dict[str, Any]) -> Dict[str, Any]:
         """Ensure details contain no PII."""
         # List of keys that should not appear in security events
         forbidden_keys = {
-            'filename', 'file_name', 'filepath', 'file_path',
-            'path', 'directory', 'folder',
-            'username', 'user_id', 'email',
-            'ip_address', 'ip', 'host',
-            'name', 'identifier'
+            "filename",
+            "file_name",
+            "filepath",
+            "file_path",
+            "path",
+            "directory",
+            "folder",
+            "username",
+            "user_id",
+            "email",
+            "ip_address",
+            "ip",
+            "host",
+            "name",
+            "identifier",
         }
-        
+
         def check_dict(d: dict) -> dict:
             """Recursively check dictionary for PII."""
             clean = {}
@@ -61,31 +74,32 @@ class SecurityEvent(BaseModel):
                 if isinstance(value, dict):
                     clean[key] = check_dict(value)
                 elif isinstance(value, list):
-                    clean[key] = [check_dict(item) if isinstance(item, dict) else item 
-                                 for item in value]
+                    clean[key] = [
+                        check_dict(item) if isinstance(item, dict) else item
+                        for item in value
+                    ]
                 else:
                     clean[key] = value
             return clean
-        
+
         return check_dict(v)
-    
+
     def to_db_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage."""
         return {
             "event_type": self.event_type.value,
             "severity": self.severity.value,
             "details": json.dumps(self.details),
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class SecurityEventSummary(BaseModel):
     """Summary of security events for reporting."""
+
     time_period_hours: int
     total_events: int
     events_by_type: Dict[str, int]

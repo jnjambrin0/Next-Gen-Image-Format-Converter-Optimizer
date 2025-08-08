@@ -53,8 +53,7 @@ class TestConversionManager:
         """Test successful JPEG to WebP conversion."""
         # Arrange
         request = ConversionRequest(
-            output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=85)
+            output_format=OutputFormat.WEBP, settings=ConversionSettings(quality=85)
         )
 
         # Act
@@ -78,8 +77,7 @@ class TestConversionManager:
         """Test successful PNG to AVIF conversion."""
         # Arrange
         request = ConversionRequest(
-            output_format=OutputFormat.AVIF,
-            settings=ConversionSettings(quality=80)
+            output_format=OutputFormat.AVIF, settings=ConversionSettings(quality=80)
         )
 
         # Act
@@ -120,7 +118,7 @@ class TestConversionManager:
         # Arrange
         request = ConversionRequest(
             output_format=OutputFormat.JPEG,
-            settings=ConversionSettings(strip_metadata=True)
+            settings=ConversionSettings(strip_metadata=True),
         )
 
         # Act
@@ -165,10 +163,10 @@ class TestConversionManager:
 
         # Act & Assert
         # The error happens during conversion because we validate dynamically
-        with pytest.raises(Exception):  # Will be either ValueError or UnsupportedFormatError
-            await conversion_manager.convert_image(
-                sample_jpeg_bytes, "xyz", request
-            )
+        with pytest.raises(
+            Exception
+        ):  # Will be either ValueError or UnsupportedFormatError
+            await conversion_manager.convert_image(sample_jpeg_bytes, "xyz", request)
 
     @pytest.mark.asyncio
     async def test_convert_unsupported_output_format_raises_error(
@@ -178,7 +176,7 @@ class TestConversionManager:
         # This test now validates at the Pydantic level
         # which is actually better - invalid formats are caught earlier
         from pydantic import ValidationError
-        
+
         # Act & Assert
         with pytest.raises(ValidationError):
             ConversionRequest(output_format="xyz")
@@ -207,8 +205,9 @@ class TestConversionManager:
 
         # Mock processing error
         with patch.object(
-            conversion_manager, "_process_image",
-            side_effect=ConversionFailedError("Processing failed")
+            conversion_manager,
+            "_process_image",
+            side_effect=ConversionFailedError("Processing failed"),
         ):
             # Act & Assert
             with pytest.raises(ConversionFailedError):
@@ -223,12 +222,10 @@ class TestConversionManager:
         """Test that quality setting affects output size."""
         # Arrange
         high_quality_request = ConversionRequest(
-            output_format=OutputFormat.JPEG,
-            settings=ConversionSettings(quality=95)
+            output_format=OutputFormat.JPEG, settings=ConversionSettings(quality=95)
         )
         low_quality_request = ConversionRequest(
-            output_format=OutputFormat.JPEG,
-            settings=ConversionSettings(quality=30)
+            output_format=OutputFormat.JPEG, settings=ConversionSettings(quality=30)
         )
 
         # Act
@@ -241,7 +238,9 @@ class TestConversionManager:
 
         # Assert
         assert high_quality_result.output_size > low_quality_result.output_size
-        assert low_quality_result.compression_ratio < high_quality_result.compression_ratio
+        assert (
+            low_quality_result.compression_ratio < high_quality_result.compression_ratio
+        )
 
     @pytest.mark.asyncio
     async def test_convert_preserves_transparency(
@@ -256,14 +255,11 @@ class TestConversionManager:
         transparent_png = buffer.getvalue()
 
         request = ConversionRequest(
-            output_format=OutputFormat.WEBP,
-            settings=ConversionSettings(quality=85)
+            output_format=OutputFormat.WEBP, settings=ConversionSettings(quality=85)
         )
 
         # Act
-        result = await conversion_manager.convert_image(
-            transparent_png, "png", request
-        )
+        result = await conversion_manager.convert_image(transparent_png, "png", request)
 
         # Assert
         assert result.status == ConversionStatus.COMPLETED
@@ -271,9 +267,7 @@ class TestConversionManager:
         assert output_image.mode == "RGBA"
 
     @pytest.mark.asyncio
-    async def test_convert_handles_cmyk_images(
-        self, conversion_manager
-    ):
+    async def test_convert_handles_cmyk_images(self, conversion_manager):
         """Test conversion of CMYK images."""
         # Arrange
         # Create CMYK image
@@ -285,9 +279,7 @@ class TestConversionManager:
         request = ConversionRequest(output_format=OutputFormat.WEBP)
 
         # Act
-        result = await conversion_manager.convert_image(
-            cmyk_jpeg, "jpeg", request
-        )
+        result = await conversion_manager.convert_image(cmyk_jpeg, "jpeg", request)
 
         # Assert
         assert result.status == ConversionStatus.COMPLETED
@@ -301,9 +293,21 @@ class TestConversionManager:
         """Test handling multiple concurrent conversions."""
         # Arrange
         requests = [
-            (sample_jpeg_bytes, "jpeg", ConversionRequest(output_format=OutputFormat.WEBP)),
-            (sample_png_bytes, "png", ConversionRequest(output_format=OutputFormat.AVIF)),
-            (sample_jpeg_bytes, "jpeg", ConversionRequest(output_format=OutputFormat.PNG)),
+            (
+                sample_jpeg_bytes,
+                "jpeg",
+                ConversionRequest(output_format=OutputFormat.WEBP),
+            ),
+            (
+                sample_png_bytes,
+                "png",
+                ConversionRequest(output_format=OutputFormat.AVIF),
+            ),
+            (
+                sample_jpeg_bytes,
+                "jpeg",
+                ConversionRequest(output_format=OutputFormat.PNG),
+            ),
         ]
 
         # Act
@@ -327,7 +331,7 @@ class TestConversionManager:
             ("jpeg", OutputFormat.AVIF),
             ("png", OutputFormat.WEBP),
             ("png", OutputFormat.AVIF),
-        ]
+        ],
     )
     @pytest.mark.asyncio
     async def test_convert_format_combinations(
@@ -346,50 +350,51 @@ class TestConversionManager:
         # Assert
         assert result.status == ConversionStatus.COMPLETED
         assert result.output_format == output_format
-    
+
     @pytest.mark.asyncio
-    async def test_convert_with_output_returns_data(self, conversion_manager, sample_jpeg_bytes):
+    async def test_convert_with_output_returns_data(
+        self, conversion_manager, sample_jpeg_bytes
+    ):
         """Test convert_with_output method returns both result and data."""
         # Create request
         request = ConversionRequest(
-            output_format="webp",
-            settings=ConversionSettings(quality=85)
+            output_format="webp", settings=ConversionSettings(quality=85)
         )
-        
+
         # Perform conversion with output
         result, output_data = await conversion_manager.convert_with_output(
             sample_jpeg_bytes, "jpeg", request
         )
-        
+
         # Verify result
         assert result.status == ConversionStatus.COMPLETED
         assert result.output_size > 0
         assert output_data is not None
         assert len(output_data) == result.output_size
         assert output_data.startswith(b"RIFF")  # WebP magic bytes
-    
+
     @pytest.mark.asyncio
     async def test_convert_with_output_timeout(self, conversion_manager):
         """Test convert_with_output handles timeout properly."""
         # Create request
         request = ConversionRequest(
-            output_format="webp",
-            settings=ConversionSettings(quality=85)
+            output_format="webp", settings=ConversionSettings(quality=85)
         )
-        
+
         # Mock slow conversion
         original_convert = conversion_manager.convert_image
+
         async def slow_convert(*args, **kwargs):
             await asyncio.sleep(5)  # Simulate slow conversion
             return await original_convert(*args, **kwargs)
-            
+
         conversion_manager.convert_image = slow_convert
-        
+
         # Test with short timeout
         result, output_data = await conversion_manager.convert_with_output(
-            b"\xFF\xD8\xFF\xE0" + b"\x00" * 1000, "jpeg", request, timeout=0.1
+            b"\xff\xd8\xff\xe0" + b"\x00" * 1000, "jpeg", request, timeout=0.1
         )
-        
+
         # Verify timeout handling
         assert result.status == ConversionStatus.FAILED
         assert "timed out" in result.error_message

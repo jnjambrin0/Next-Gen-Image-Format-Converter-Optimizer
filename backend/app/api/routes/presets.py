@@ -11,7 +11,7 @@ from app.models.schemas import (
     PresetImport,
     PresetExport,
     PresetListResponse,
-    PresetBase
+    PresetBase,
 )
 from app.models.responses import ErrorResponse
 from app.services.preset_service import preset_service
@@ -38,7 +38,10 @@ preset_search_error_handler = EndpointErrorHandler("preset", "search_presets")
     "",
     response_model=PresetListResponse,
     responses={
-        200: {"model": PresetListResponse, "description": "Presets retrieved successfully"},
+        200: {
+            "model": PresetListResponse,
+            "description": "Presets retrieved successfully",
+        },
         400: {"model": ErrorResponse, "description": "Bad Request"},
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -68,9 +71,13 @@ async def list_presets(
     include_builtin: bool = Query(True, description="Include built-in presets"),
     search: Optional[str] = Query(None, description="Search term for name/description"),
     format_filter: Optional[str] = Query(None, description="Filter by output format"),
-    sort_by: Optional[str] = Query("name", description="Sort field (name, created_at, usage_count)"),
+    sort_by: Optional[str] = Query(
+        "name", description="Sort field (name, created_at, usage_count)"
+    ),
     sort_order: Optional[str] = Query("asc", description="Sort direction (asc, desc)"),
-    limit: Optional[int] = Query(None, ge=1, le=100, description="Maximum presets to return"),
+    limit: Optional[int] = Query(
+        None, ge=1, le=100, description="Maximum presets to return"
+    ),
     offset: Optional[int] = Query(0, ge=0, description="Number of presets to skip"),
 ) -> PresetListResponse:
     """List all available presets with advanced filtering and pagination."""
@@ -81,27 +88,43 @@ async def list_presets(
             raise preset_list_error_handler.validation_error(
                 "Invalid sort field",
                 request,
-                details={"provided_field": sort_by, "valid_fields": valid_sort_fields}
+                details={"provided_field": sort_by, "valid_fields": valid_sort_fields},
             )
-        
+
         valid_sort_orders = ["asc", "desc"]
         if sort_order not in valid_sort_orders:
             raise preset_list_error_handler.validation_error(
                 "Invalid sort order",
                 request,
-                details={"provided_order": sort_order, "valid_orders": valid_sort_orders}
+                details={
+                    "provided_order": sort_order,
+                    "valid_orders": valid_sort_orders,
+                },
             )
-        
+
         # Validate format filter if provided
         if format_filter:
-            valid_formats = ["webp", "avif", "jpeg", "png", "jxl", "heif", "jpeg_optimized", "png_optimized", "webp2"]
+            valid_formats = [
+                "webp",
+                "avif",
+                "jpeg",
+                "png",
+                "jxl",
+                "heif",
+                "jpeg_optimized",
+                "png_optimized",
+                "webp2",
+            ]
             if format_filter not in valid_formats:
                 raise preset_list_error_handler.validation_error(
                     "Invalid format filter",
                     request,
-                    details={"provided_format": format_filter, "valid_formats": valid_formats}
+                    details={
+                        "provided_format": format_filter,
+                        "valid_formats": valid_formats,
+                    },
                 )
-        
+
         # Build filter parameters
         filter_params = {
             "include_builtin": include_builtin,
@@ -112,10 +135,10 @@ async def list_presets(
             "limit": limit,
             "offset": offset,
         }
-        
+
         # Get filtered and paginated presets
         result = await preset_service.list_presets_advanced(**filter_params)
-        
+
         logger.info(
             "Presets listed",
             total_presets=result.get("total", 0),
@@ -124,16 +147,16 @@ async def list_presets(
             format_filter=format_filter,
             correlation_id=request.state.correlation_id,
         )
-        
+
         # Create response with metadata
         response = PresetListResponse(
             presets=result.get("presets", []),
             total=result.get("total", 0),
             offset=offset,
             limit=limit,
-            has_more=result.get("has_more", False)
+            has_more=result.get("has_more", False),
         )
-        
+
         # Add pagination headers
         if limit or offset:
             request.state.response_headers = {
@@ -144,16 +167,15 @@ async def list_presets(
             }
             if limit:
                 request.state.response_headers["X-Limit"] = str(limit)
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error listing presets: {e}")
         raise preset_list_error_handler.internal_server_error(
-            "Failed to retrieve presets",
-            request
+            "Failed to retrieve presets", request
         )
 
 
@@ -188,18 +210,16 @@ async def get_preset(
     try:
         # Get preset with optional version and usage info
         preset = await preset_service.get_preset_detailed(
-            preset_id,
-            include_usage=include_usage,
-            version=version
+            preset_id, include_usage=include_usage, version=version
         )
-        
+
         if not preset:
             raise preset_get_error_handler.not_found_error(
                 "Preset not found",
                 request,
-                details={"preset_id": preset_id, "version": version}
+                details={"preset_id": preset_id, "version": version},
             )
-        
+
         logger.info(
             "Preset retrieved",
             preset_id=preset_id,
@@ -207,16 +227,15 @@ async def get_preset(
             version=version,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return preset
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error getting preset: {e}")
         raise preset_get_error_handler.internal_server_error(
-            "Failed to retrieve preset",
-            request
+            "Failed to retrieve preset", request
         )
 
 
@@ -224,7 +243,10 @@ async def get_preset(
     "/search/advanced",
     response_model=PresetListResponse,
     responses={
-        200: {"model": PresetListResponse, "description": "Search results retrieved successfully"},
+        200: {
+            "model": PresetListResponse,
+            "description": "Search results retrieved successfully",
+        },
         400: {"model": ErrorResponse, "description": "Bad Request"},
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -265,50 +287,82 @@ async def get_preset(
 async def search_presets_advanced(
     request: Request,
     q: str = Query(..., min_length=1, description="Search query"),
-    formats: Optional[str] = Query(None, description="Comma-separated formats to include"),
-    min_quality: Optional[int] = Query(None, ge=1, le=100, description="Minimum quality setting"),
-    max_quality: Optional[int] = Query(None, ge=1, le=100, description="Maximum quality setting"),
-    optimization_modes: Optional[str] = Query(None, description="Comma-separated optimization modes"),
+    formats: Optional[str] = Query(
+        None, description="Comma-separated formats to include"
+    ),
+    min_quality: Optional[int] = Query(
+        None, ge=1, le=100, description="Minimum quality setting"
+    ),
+    max_quality: Optional[int] = Query(
+        None, ge=1, le=100, description="Maximum quality setting"
+    ),
+    optimization_modes: Optional[str] = Query(
+        None, description="Comma-separated optimization modes"
+    ),
     min_usage: Optional[int] = Query(None, ge=0, description="Minimum usage count"),
     include_builtin: bool = Query(True, description="Include built-in presets"),
-    limit: Optional[int] = Query(20, ge=1, le=100, description="Maximum results to return"),
+    limit: Optional[int] = Query(
+        20, ge=1, le=100, description="Maximum results to return"
+    ),
     offset: Optional[int] = Query(0, ge=0, description="Number of results to skip"),
 ) -> PresetListResponse:
     """Advanced preset search with fuzzy matching and ranking."""
     try:
         # Validate quality range
-        if min_quality is not None and max_quality is not None and min_quality > max_quality:
+        if (
+            min_quality is not None
+            and max_quality is not None
+            and min_quality > max_quality
+        ):
             raise preset_search_error_handler.validation_error(
                 "Minimum quality cannot be greater than maximum quality",
                 request,
-                details={"min_quality": min_quality, "max_quality": max_quality}
+                details={"min_quality": min_quality, "max_quality": max_quality},
             )
-        
+
         # Parse comma-separated lists
         format_list = None
         if formats:
             format_list = [f.strip().lower() for f in formats.split(",") if f.strip()]
-            valid_formats = ["webp", "avif", "jpeg", "png", "jxl", "heif", "jpeg_optimized", "png_optimized", "webp2"]
+            valid_formats = [
+                "webp",
+                "avif",
+                "jpeg",
+                "png",
+                "jxl",
+                "heif",
+                "jpeg_optimized",
+                "png_optimized",
+                "webp2",
+            ]
             invalid_formats = [f for f in format_list if f not in valid_formats]
             if invalid_formats:
                 raise preset_search_error_handler.validation_error(
                     "Invalid formats specified",
                     request,
-                    details={"invalid_formats": invalid_formats, "valid_formats": valid_formats}
+                    details={
+                        "invalid_formats": invalid_formats,
+                        "valid_formats": valid_formats,
+                    },
                 )
-        
+
         optimization_mode_list = None
         if optimization_modes:
-            optimization_mode_list = [m.strip().lower() for m in optimization_modes.split(",") if m.strip()]
+            optimization_mode_list = [
+                m.strip().lower() for m in optimization_modes.split(",") if m.strip()
+            ]
             valid_modes = ["size", "quality", "balanced", "lossless"]
             invalid_modes = [m for m in optimization_mode_list if m not in valid_modes]
             if invalid_modes:
                 raise preset_search_error_handler.validation_error(
                     "Invalid optimization modes specified",
                     request,
-                    details={"invalid_modes": invalid_modes, "valid_modes": valid_modes}
+                    details={
+                        "invalid_modes": invalid_modes,
+                        "valid_modes": valid_modes,
+                    },
                 )
-        
+
         # Build search parameters
         search_params = {
             "query": q,
@@ -321,10 +375,10 @@ async def search_presets_advanced(
             "limit": limit,
             "offset": offset,
         }
-        
+
         # Perform advanced search
         result = await preset_service.search_presets_advanced(**search_params)
-        
+
         logger.info(
             "Advanced preset search completed",
             query=q,
@@ -333,7 +387,7 @@ async def search_presets_advanced(
             formats=format_list,
             correlation_id=request.state.correlation_id,
         )
-        
+
         # Create response with search metadata
         response = PresetListResponse(
             presets=result.get("presets", []),
@@ -347,22 +401,25 @@ async def search_presets_advanced(
                 "max_relevance_score": result.get("max_relevance_score", 0.0),
                 "filters_applied": {
                     "formats": format_list,
-                    "quality_range": [min_quality, max_quality] if min_quality or max_quality else None,
+                    "quality_range": (
+                        [min_quality, max_quality]
+                        if min_quality or max_quality
+                        else None
+                    ),
                     "optimization_modes": optimization_mode_list,
                     "min_usage": min_usage,
-                }
-            }
+                },
+            },
         )
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error in advanced search: {e}")
         raise preset_search_error_handler.internal_server_error(
-            "Failed to perform advanced search",
-            request
+            "Failed to perform advanced search", request
         )
 
 
@@ -409,21 +466,37 @@ async def create_preset(preset_data: PresetCreate, request: Request) -> PresetRe
             raise preset_create_error_handler.validation_error(
                 "Preset name must be at least 3 characters long",
                 request,
-                details={"provided_length": len(preset_data.name.strip()), "min_length": 3}
+                details={
+                    "provided_length": len(preset_data.name.strip()),
+                    "min_length": 3,
+                },
             )
-        
+
         # Validate format is supported
-        valid_formats = ["webp", "avif", "jpeg", "png", "jxl", "heif", "jpeg_optimized", "png_optimized", "webp2"]
+        valid_formats = [
+            "webp",
+            "avif",
+            "jpeg",
+            "png",
+            "jxl",
+            "heif",
+            "jpeg_optimized",
+            "png_optimized",
+            "webp2",
+        ]
         if preset_data.settings.output_format not in valid_formats:
             raise preset_create_error_handler.validation_error(
                 "Unsupported output format",
                 request,
-                details={"provided_format": preset_data.settings.output_format, "valid_formats": valid_formats}
+                details={
+                    "provided_format": preset_data.settings.output_format,
+                    "valid_formats": valid_formats,
+                },
             )
-        
+
         # Create preset with version tracking
         preset = await preset_service.create_preset_versioned(preset_data)
-        
+
         logger.info(
             "Preset created",
             preset_id=preset.id,
@@ -431,21 +504,17 @@ async def create_preset(preset_data: PresetCreate, request: Request) -> PresetRe
             output_format=preset_data.settings.output_format,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return preset
-        
+
     except ValidationError as e:
-        raise preset_create_error_handler.validation_error(
-            str(e),
-            request
-        )
+        raise preset_create_error_handler.validation_error(str(e), request)
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error creating preset: {e}")
         raise preset_create_error_handler.internal_server_error(
-            "Failed to create preset",
-            request
+            "Failed to create preset", request
         )
 
 
@@ -488,7 +557,9 @@ async def update_preset(
     preset_id: str,
     update_data: PresetUpdate,
     request: Request,
-    version_note: Optional[str] = Query(None, description="Optional change description"),
+    version_note: Optional[str] = Query(
+        None, description="Optional change description"
+    ),
 ) -> PresetResponse:
     """Update an existing preset with version tracking."""
     try:
@@ -496,54 +567,46 @@ async def update_preset(
         existing_preset = await preset_service.get_preset(preset_id)
         if not existing_preset:
             raise preset_update_error_handler.not_found_error(
-                "Preset not found",
-                request,
-                details={"preset_id": preset_id}
+                "Preset not found", request, details={"preset_id": preset_id}
             )
-        
+
         # Enhanced update with version tracking
         preset = await preset_service.update_preset_versioned(
-            preset_id,
-            update_data,
-            version_note=version_note
+            preset_id, update_data, version_note=version_note
         )
-        
+
         if not preset:
             raise preset_update_error_handler.not_found_error(
                 "Preset not found or no changes applied",
                 request,
-                details={"preset_id": preset_id}
+                details={"preset_id": preset_id},
             )
-        
+
         logger.info(
             "Preset updated",
             preset_id=preset_id,
             preset_name=preset.name,
-            new_version=getattr(preset, 'version', 'unknown'),
+            new_version=getattr(preset, "version", "unknown"),
             version_note=version_note,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return preset
-        
+
     except SecurityError as e:
         raise preset_update_error_handler.forbidden_error(
             str(e),
             request,
-            details={"preset_id": preset_id, "reason": "builtin_preset"}
+            details={"preset_id": preset_id, "reason": "builtin_preset"},
         )
     except ValidationError as e:
-        raise preset_update_error_handler.validation_error(
-            str(e),
-            request
-        )
+        raise preset_update_error_handler.validation_error(str(e), request)
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error updating preset: {e}")
         raise preset_update_error_handler.internal_server_error(
-            "Failed to update preset",
-            request
+            "Failed to update preset", request
         )
 
 
@@ -585,21 +648,19 @@ async def delete_preset(
         existing_preset = await preset_service.get_preset(preset_id)
         if not existing_preset:
             raise preset_delete_error_handler.not_found_error(
-                "Preset not found",
-                request,
-                details={"preset_id": preset_id}
+                "Preset not found", request, details={"preset_id": preset_id}
             )
-        
+
         # Perform safe deletion
         deleted = await preset_service.delete_preset_safe(preset_id, force=force)
-        
+
         if not deleted:
             raise preset_delete_error_handler.not_found_error(
                 "Preset not found or already deleted",
                 request,
-                details={"preset_id": preset_id}
+                details={"preset_id": preset_id},
             )
-        
+
         logger.info(
             "Preset deleted",
             preset_id=preset_id,
@@ -607,22 +668,21 @@ async def delete_preset(
             force=force,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return Response(status_code=204)
-        
+
     except SecurityError as e:
         raise preset_delete_error_handler.forbidden_error(
             str(e),
             request,
-            details={"preset_id": preset_id, "reason": "builtin_preset"}
+            details={"preset_id": preset_id, "reason": "builtin_preset"},
         )
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error deleting preset: {e}")
         raise preset_delete_error_handler.internal_server_error(
-            "Failed to delete preset",
-            request
+            "Failed to delete preset", request
         )
 
 
@@ -656,8 +716,12 @@ async def delete_preset(
 async def get_preset_versions(
     preset_id: str,
     request: Request,
-    limit: Optional[int] = Query(None, ge=1, le=50, description="Maximum versions to return"),
-    include_content: bool = Query(False, description="Include full content for each version"),
+    limit: Optional[int] = Query(
+        None, ge=1, le=50, description="Maximum versions to return"
+    ),
+    include_content: bool = Query(
+        False, description="Include full content for each version"
+    ),
 ) -> List[dict]:
     """Get version history for a preset."""
     try:
@@ -665,18 +729,14 @@ async def get_preset_versions(
         preset = await preset_service.get_preset(preset_id)
         if not preset:
             raise preset_get_error_handler.not_found_error(
-                "Preset not found",
-                request,
-                details={"preset_id": preset_id}
+                "Preset not found", request, details={"preset_id": preset_id}
             )
-        
+
         # Get version history
         versions = await preset_service.get_preset_versions(
-            preset_id,
-            limit=limit,
-            include_content=include_content
+            preset_id, limit=limit, include_content=include_content
         )
-        
+
         logger.info(
             "Preset versions retrieved",
             preset_id=preset_id,
@@ -684,16 +744,15 @@ async def get_preset_versions(
             include_content=include_content,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return versions
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error getting preset versions: {e}")
         raise preset_get_error_handler.internal_server_error(
-            "Failed to retrieve preset versions",
-            request
+            "Failed to retrieve preset versions", request
         )
 
 
@@ -736,47 +795,41 @@ async def restore_preset_version(
     try:
         # Restore to previous version
         preset = await preset_service.restore_preset_version(
-            preset_id,
-            version,
-            restore_note=restore_note
+            preset_id, version, restore_note=restore_note
         )
-        
+
         if not preset:
             raise preset_update_error_handler.not_found_error(
                 "Preset or version not found",
                 request,
-                details={"preset_id": preset_id, "version": version}
+                details={"preset_id": preset_id, "version": version},
             )
-        
+
         logger.info(
             "Preset version restored",
             preset_id=preset_id,
             restored_from_version=version,
-            new_version=getattr(preset, 'version', 'unknown'),
+            new_version=getattr(preset, "version", "unknown"),
             restore_note=restore_note,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return preset
-        
+
     except SecurityError as e:
         raise preset_update_error_handler.forbidden_error(
             str(e),
             request,
-            details={"preset_id": preset_id, "reason": "builtin_preset"}
+            details={"preset_id": preset_id, "reason": "builtin_preset"},
         )
     except ValidationError as e:
-        raise preset_update_error_handler.validation_error(
-            str(e),
-            request
-        )
+        raise preset_update_error_handler.validation_error(str(e), request)
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error restoring preset version: {e}")
         raise preset_update_error_handler.internal_server_error(
-            "Failed to restore preset version",
-            request
+            "Failed to restore preset version", request
         )
 
 
@@ -785,7 +838,10 @@ async def restore_preset_version(
     response_model=List[PresetResponse],
     status_code=201,
     responses={
-        201: {"model": List[PresetResponse], "description": "Presets imported successfully"},
+        201: {
+            "model": List[PresetResponse],
+            "description": "Presets imported successfully",
+        },
         400: {"model": ErrorResponse, "description": "Invalid import data"},
         409: {"model": ErrorResponse, "description": "Name conflicts detected"},
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
@@ -829,19 +885,22 @@ async def import_presets(
             raise preset_import_error_handler.validation_error(
                 "Invalid conflict resolution strategy",
                 request,
-                details={"provided_strategy": conflict_strategy, "valid_strategies": valid_strategies}
+                details={
+                    "provided_strategy": conflict_strategy,
+                    "valid_strategies": valid_strategies,
+                },
             )
-        
+
         # Enhanced import with conflict resolution
         result = await preset_service.import_presets_enhanced(
             import_data,
             conflict_strategy=conflict_strategy,
-            validate_settings=validate_settings
+            validate_settings=validate_settings,
         )
-        
+
         imported_presets = result.get("imported", [])
         skipped_count = result.get("skipped", 0)
-        
+
         logger.info(
             "Presets imported",
             imported_count=len(imported_presets),
@@ -849,28 +908,24 @@ async def import_presets(
             conflict_strategy=conflict_strategy,
             correlation_id=request.state.correlation_id,
         )
-        
+
         # Add import summary to response headers
         request.state.response_headers = {
             "X-Imported-Count": str(len(imported_presets)),
             "X-Skipped-Count": str(skipped_count),
             "X-Conflict-Strategy": conflict_strategy,
         }
-        
+
         return imported_presets
-        
+
     except ValidationError as e:
-        raise preset_import_error_handler.validation_error(
-            str(e),
-            request
-        )
+        raise preset_import_error_handler.validation_error(str(e), request)
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error importing presets: {e}")
         raise preset_import_error_handler.internal_server_error(
-            "Failed to import presets",
-            request
+            "Failed to import presets", request
         )
 
 
@@ -917,16 +972,14 @@ async def export_preset(
             preset_id,
             include_history=include_history,
             include_usage=include_usage,
-            format_version=format_version
+            format_version=format_version,
         )
-        
+
         if not export:
             raise preset_export_error_handler.not_found_error(
-                "Preset not found",
-                request,
-                details={"preset_id": preset_id}
+                "Preset not found", request, details={"preset_id": preset_id}
             )
-        
+
         logger.info(
             "Preset exported",
             preset_id=preset_id,
@@ -935,16 +988,15 @@ async def export_preset(
             format_version=format_version,
             correlation_id=request.state.correlation_id,
         )
-        
+
         return export
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error exporting preset: {e}")
         raise preset_export_error_handler.internal_server_error(
-            "Failed to export preset",
-            request
+            "Failed to export preset", request
         )
 
 
@@ -952,7 +1004,10 @@ async def export_preset(
     "/export/all",
     response_model=List[PresetBase],
     responses={
-        200: {"model": List[PresetBase], "description": "All presets exported successfully"},
+        200: {
+            "model": List[PresetBase],
+            "description": "All presets exported successfully",
+        },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
     summary="Export all user presets with filtering",
@@ -985,29 +1040,45 @@ async def export_all_presets(
     try:
         # Validate parameters
         if format_filter:
-            valid_formats = ["webp", "avif", "jpeg", "png", "jxl", "heif", "jpeg_optimized", "png_optimized", "webp2"]
+            valid_formats = [
+                "webp",
+                "avif",
+                "jpeg",
+                "png",
+                "jxl",
+                "heif",
+                "jpeg_optimized",
+                "png_optimized",
+                "webp2",
+            ]
             if format_filter not in valid_formats:
                 raise preset_export_error_handler.validation_error(
                     "Invalid format filter",
                     request,
-                    details={"provided_format": format_filter, "valid_formats": valid_formats}
+                    details={
+                        "provided_format": format_filter,
+                        "valid_formats": valid_formats,
+                    },
                 )
-        
+
         valid_export_formats = ["json", "yaml"]
         if export_format not in valid_export_formats:
             raise preset_export_error_handler.validation_error(
                 "Invalid export format",
                 request,
-                details={"provided_format": export_format, "valid_formats": valid_export_formats}
+                details={
+                    "provided_format": export_format,
+                    "valid_formats": valid_export_formats,
+                },
             )
-        
+
         # Enhanced export with filtering
         presets = await preset_service.export_all_presets_filtered(
             format_filter=format_filter,
             include_unused=include_unused,
-            export_format=export_format
+            export_format=export_format,
         )
-        
+
         logger.info(
             "All presets exported",
             preset_count=len(presets),
@@ -1016,21 +1087,20 @@ async def export_all_presets(
             export_format=export_format,
             correlation_id=request.state.correlation_id,
         )
-        
+
         # Add export metadata to headers
         request.state.response_headers = {
             "X-Export-Count": str(len(presets)),
             "X-Export-Format": export_format,
             "X-Format-Filter": format_filter or "none",
         }
-        
+
         return presets
-        
+
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error exporting all presets: {e}")
         raise preset_export_error_handler.internal_server_error(
-            "Failed to export presets",
-            request
+            "Failed to export presets", request
         )

@@ -14,11 +14,11 @@ from .macros import MacroManager
 
 __all__ = [
     "AutocompleteEngine",
-    "FuzzySearcher", 
+    "FuzzySearcher",
     "ProfileManager",
     "ShellIntegrator",
     "DirectoryWatcher",
     "DryRunSimulator",
     "OutputFormatter",
-    "MacroManager"
+    "MacroManager",
 ]

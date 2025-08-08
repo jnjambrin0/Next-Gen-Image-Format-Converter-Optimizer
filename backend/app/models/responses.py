@@ -19,11 +19,9 @@ class ErrorResponse(BaseModel):
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Error timestamp"
     )
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class ConversionApiResponse(BaseModel):
@@ -163,4 +161,3 @@ class ApiVersionResponse(BaseModel):
     version_info: Dict[str, Dict[str, Any]] = Field(
         ..., description="Detailed version information"
     )
-

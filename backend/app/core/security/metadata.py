@@ -28,26 +28,28 @@ class MetadataStripper:
     - Format-specific metadata handling
     """
 
-    async def _save_image_async(self, image: Image.Image, format: str, **save_kwargs) -> bytes:
+    async def _save_image_async(
+        self, image: Image.Image, format: str, **save_kwargs
+    ) -> bytes:
         """
         Save image to bytes in thread pool to avoid blocking event loop.
-        
+
         Args:
             image: PIL Image object
             format: Output format
             **save_kwargs: Additional arguments for image.save()
-            
+
         Returns:
             Saved image as bytes
         """
         loop = asyncio.get_event_loop()
-        
+
         def save_sync():
             output_buffer = io.BytesIO()
             image.save(output_buffer, format=format, **save_kwargs)
             output_buffer.seek(0)
             return output_buffer.read()
-        
+
         return await loop.run_in_executor(_executor, save_sync)
 
     # GPS tags that should always be removed unless explicitly preserved
@@ -170,8 +172,7 @@ class MetadataStripper:
             # Load image in thread pool to avoid blocking event loop
             loop = asyncio.get_event_loop()
             image = await loop.run_in_executor(
-                _executor,
-                lambda: Image.open(io.BytesIO(image_data))
+                _executor, lambda: Image.open(io.BytesIO(image_data))
             )
 
             # Check what metadata exists
@@ -329,7 +330,7 @@ class MetadataStripper:
                 "optimize": True,
                 "progressive": format == "JPEG",
             }
-            
+
             # Only JPEG supports quality="keep", others need numeric
             if format == "JPEG":
                 save_kwargs["quality"] = "keep"
@@ -359,14 +360,18 @@ class MetadataStripper:
 
         # PNG metadata is in text chunks and other metadata
         metadata_keys = ["exif", "xmp", "icc_profile", "dpi", "pnginfo"]
-        
+
         # Check for text metadata in pnginfo
         if hasattr(image, "info") and "pnginfo" in image.info:
             summary["metadata_removed"].append("pnginfo")
-        
+
         # Check for other text chunks stored directly in info
         for key in image.info:
-            if isinstance(key, str) and key not in metadata_keys and key not in ["transparency", "gamma"]:
+            if (
+                isinstance(key, str)
+                and key not in metadata_keys
+                and key not in ["transparency", "gamma"]
+            ):
                 # These are likely PNG text chunks
                 if key not in summary["metadata_removed"]:
                     summary["metadata_removed"].append(f"text:{key}")
@@ -382,7 +387,7 @@ class MetadataStripper:
                         summary["metadata_preserved"].append(key)
                     else:
                         summary["metadata_removed"].append(key)
-            
+
             # Preserve text chunks if requested
             if "pnginfo" in image.info:
                 save_kwargs["pnginfo"] = image.info["pnginfo"]
@@ -408,7 +413,7 @@ class MetadataStripper:
         # Check what metadata exists before conversion
         has_exif = "exif" in image.info
         has_xmp = "xmp" in image.info
-        
+
         save_kwargs = {"optimize": True}
 
         # WebP can have EXIF and XMP
@@ -502,7 +507,7 @@ class MetadataStripper:
         except Exception as e:
             logger.error(f"Error extracting metadata info: {e}")
             return {"error": str(e)}
-    
+
     async def process_metadata_for_conversion(
         self,
         image_data: bytes,
@@ -513,32 +518,32 @@ class MetadataStripper:
     ) -> Tuple[bytes, Dict[str, Any]]:
         """
         Process metadata for image conversion based on settings.
-        
+
         This is a convenience method that handles the common logic of
         determining whether to strip metadata based on the flags.
-        
+
         Args:
             image_data: Raw image data
             input_format: Input image format
             strip_metadata: If True, remove metadata (unless preserve_metadata overrides)
             preserve_metadata: If True, keep non-GPS metadata (overrides strip_metadata)
             preserve_gps: If True, keep GPS data (only if preserve_metadata is True)
-            
+
         Returns:
             Tuple of (processed_image_data, metadata_summary)
         """
         # Determine if we should actually strip
         should_strip = strip_metadata and not preserve_metadata
-        
+
         if not should_strip and not preserve_metadata:
             # No metadata handling requested, just analyze
             summary = self.get_metadata_info(image_data, input_format)
             return image_data, summary
-            
+
         # Process metadata according to settings
         return await self.analyze_and_strip_metadata(
             image_data,
             input_format,
             preserve_metadata=preserve_metadata,
-            preserve_gps=preserve_gps
+            preserve_gps=preserve_gps,
         )

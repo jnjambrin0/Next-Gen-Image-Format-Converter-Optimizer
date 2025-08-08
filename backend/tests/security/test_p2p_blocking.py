@@ -11,14 +11,20 @@ from pathlib import Path
 
 class TestP2PBlocking:
     """Test P2P and WebRTC blocking in sandboxed environment."""
-    
+
     def test_p2p_module_blocking(self):
         """Test that P2P modules are blocked from import."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         # Test various P2P modules
         p2p_modules = ["pyp2p", "webrtc", "aiortc", "ipfs", "libtorrent"]
-        
+
         for module in p2p_modules:
             test_code = f"""
 import sys
@@ -41,20 +47,24 @@ except ImportError as e:
         print("SUCCESS: {module} not available")
         sys.exit(0)
 """
-            
+
             result = subprocess.run(
-                [sys.executable, "-c", test_code],
-                capture_output=True,
-                text=True
+                [sys.executable, "-c", test_code], capture_output=True, text=True
             )
-            
+
             assert result.returncode == 0, f"Failed to block {module}: {result.stderr}"
             assert "SUCCESS" in result.stdout
-    
+
     def test_udp_socket_blocking(self):
         """Test that UDP sockets are blocked (commonly used for P2P)."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         test_code = f"""
 import sys
 sys.path.insert(0, '{str(script_path.parent)}')
@@ -77,20 +87,24 @@ except OSError as e:
         print(f"ERROR: Unexpected error: {{e}}")
         sys.exit(1)
 """
-        
+
         result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
+            [sys.executable, "-c", test_code], capture_output=True, text=True
         )
-        
+
         assert result.returncode == 0
         assert "SUCCESS: UDP socket blocked" in result.stdout
-    
+
     def test_webrtc_submodule_blocking(self):
         """Test that WebRTC submodules are also blocked."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         test_code = f"""
 import sys
 sys.path.insert(0, '{str(script_path.parent)}')
@@ -111,20 +125,24 @@ except ImportError as e:
         print(f"ERROR: Unexpected error: {{e}}")
         sys.exit(1)
 """
-        
+
         result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
+            [sys.executable, "-c", test_code], capture_output=True, text=True
         )
-        
+
         assert result.returncode == 0
         assert "SUCCESS" in result.stdout
-    
+
     def test_p2p_blocker_in_sys_meta_path(self):
         """Test that P2P blocker is installed in sys.meta_path."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         test_code = f"""
 import sys
 sys.path.insert(0, '{str(script_path.parent)}')
@@ -146,20 +164,24 @@ else:
     print("ERROR: P2P blocker not found in sys.meta_path")
     sys.exit(1)
 """
-        
+
         result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
+            [sys.executable, "-c", test_code], capture_output=True, text=True
         )
-        
+
         assert result.returncode == 0
         assert "SUCCESS: P2P blocker installed" in result.stdout
-    
+
     def test_comprehensive_p2p_blocking(self):
         """Test comprehensive P2P blocking with multiple protocols."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         test_code = f"""
 import sys
 sys.path.insert(0, '{str(script_path.parent)}')
@@ -213,20 +235,24 @@ else:
     print(f"ERROR: Only {{blocked_count}}/{{total_tests}} tests blocked")
     sys.exit(1)
 """
-        
+
         result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
+            [sys.executable, "-c", test_code], capture_output=True, text=True
         )
-        
+
         assert result.returncode == 0
         assert "SUCCESS" in result.stdout
-    
+
     def test_asyncio_still_works(self):
         """Test that asyncio still works (but monitored)."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         test_code = f"""
 import sys
 sys.path.insert(0, '{str(script_path.parent)}')
@@ -255,20 +281,24 @@ except Exception as e:
     print(f"ERROR: asyncio failed: {{e}}")
     sys.exit(1)
 """
-        
+
         result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
+            [sys.executable, "-c", test_code], capture_output=True, text=True
         )
-        
+
         assert result.returncode == 0
         assert "SUCCESS: asyncio works" in result.stdout
-    
+
     def test_raw_sockets_blocked(self):
         """Test that raw sockets (used for P2P NAT traversal) are blocked."""
-        script_path = Path(__file__).parent.parent.parent / "app" / "core" / "conversion" / "sandboxed_convert.py"
-        
+        script_path = (
+            Path(__file__).parent.parent.parent
+            / "app"
+            / "core"
+            / "conversion"
+            / "sandboxed_convert.py"
+        )
+
         test_code = f"""
 import sys
 sys.path.insert(0, '{str(script_path.parent)}')
@@ -291,12 +321,10 @@ except (OSError, PermissionError) as e:
         print(f"ERROR: Unexpected error: {{e}}")
         sys.exit(1)
 """
-        
+
         result = subprocess.run(
-            [sys.executable, "-c", test_code],
-            capture_output=True,
-            text=True
+            [sys.executable, "-c", test_code], capture_output=True, text=True
         )
-        
+
         assert result.returncode == 0
         assert "SUCCESS: Raw socket blocked" in result.stdout

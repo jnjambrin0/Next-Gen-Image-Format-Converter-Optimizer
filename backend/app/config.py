@@ -13,7 +13,7 @@ try:
         ERROR_RETENTION_DAYS,
         DEFAULT_MONITORING_INTERVAL,
         MONITORING_INTERVAL_SECONDS,
-        MAX_BATCH_SIZE as DEFAULT_MAX_BATCH_SIZE
+        MAX_BATCH_SIZE as DEFAULT_MAX_BATCH_SIZE,
     )
 except ImportError:
     # Fallback values if constants can't be imported (e.g., during initial setup)
@@ -66,9 +66,7 @@ class Settings(BaseSettings):
     max_request_body_size: int = Field(
         default=104857600, description="Maximum request body size in bytes (100MB)"
     )
-    request_timeout: int = Field(
-        default=120, description="Request timeout in seconds"
-    )
+    request_timeout: int = Field(default=120, description="Request timeout in seconds")
 
     # File Processing
     max_upload_size: int = Field(
@@ -94,15 +92,19 @@ class Settings(BaseSettings):
 
     # Performance
     conversion_timeout: int = Field(
-        default=SANDBOX_TIMEOUTS["standard"], description="Conversion timeout in seconds"
+        default=SANDBOX_TIMEOUTS["standard"],
+        description="Conversion timeout in seconds",
     )
     max_concurrent_conversions: int = Field(
         default=10, description="Max concurrent conversions"
     )
     memory_limit_mb: int = Field(
-        default=SANDBOX_MEMORY_LIMITS["standard"], description="Memory limit per conversion in MB"
+        default=SANDBOX_MEMORY_LIMITS["standard"],
+        description="Memory limit per conversion in MB",
     )
-    cpu_limit_percent: int = Field(default=SANDBOX_CPU_LIMITS["standard"], description="CPU limit percentage")
+    cpu_limit_percent: int = Field(
+        default=SANDBOX_CPU_LIMITS["standard"], description="CPU limit percentage"
+    )
 
     # Process Sandboxing
     enable_sandboxing: bool = Field(
@@ -111,8 +113,8 @@ class Settings(BaseSettings):
     sandbox_uid: Optional[int] = Field(default=None, description="Sandbox user ID")
     sandbox_gid: Optional[int] = Field(default=None, description="Sandbox group ID")
     sandbox_strictness: str = Field(
-        default="standard", 
-        description="Sandbox strictness level: standard, strict, paranoid"
+        default="standard",
+        description="Sandbox strictness level: standard, strict, paranoid",
     )
     # Sandbox resource limits per strictness level
     sandbox_limits_standard: Dict[str, int] = Field(
@@ -122,7 +124,7 @@ class Settings(BaseSettings):
             "timeout_seconds": SANDBOX_TIMEOUTS["standard"],
             "max_output_mb": SANDBOX_OUTPUT_LIMITS["standard"],
         },
-        description="Resource limits for standard sandbox mode"
+        description="Resource limits for standard sandbox mode",
     )
     sandbox_limits_strict: Dict[str, int] = Field(
         default={
@@ -131,7 +133,7 @@ class Settings(BaseSettings):
             "timeout_seconds": SANDBOX_TIMEOUTS["strict"],
             "max_output_mb": SANDBOX_OUTPUT_LIMITS["strict"],
         },
-        description="Resource limits for strict sandbox mode"
+        description="Resource limits for strict sandbox mode",
     )
     sandbox_limits_paranoid: Dict[str, int] = Field(
         default={
@@ -140,7 +142,7 @@ class Settings(BaseSettings):
             "timeout_seconds": SANDBOX_TIMEOUTS["paranoid"],
             "max_output_mb": SANDBOX_OUTPUT_LIMITS["paranoid"],
         },
-        description="Resource limits for paranoid sandbox mode"
+        description="Resource limits for paranoid sandbox mode",
     )
 
     # ML Models
@@ -172,7 +174,7 @@ class Settings(BaseSettings):
     batch_websocket_auth_enabled: bool = Field(
         default=True, description="Enable WebSocket authentication for batch jobs"
     )
-    
+
     # Feature Flags
     enable_batch_processing: bool = Field(
         default=True, description="Enable batch processing"
@@ -197,14 +199,12 @@ class Settings(BaseSettings):
     retain_history_days: int = Field(
         default=ERROR_RETENTION_DAYS, description="Days to retain conversion history"
     )
-    
+
     # Logging Configuration
     logging_enabled: bool = Field(
         default=True, description="Enable file logging (False for paranoia mode)"
     )
-    log_dir: str = Field(
-        default="./logs", description="Directory for log files"
-    )
+    log_dir: str = Field(default="./logs", description="Directory for log files")
     max_log_size_mb: int = Field(
         default=10, description="Maximum size of each log file in MB"
     )
@@ -214,26 +214,26 @@ class Settings(BaseSettings):
     log_retention_hours: int = Field(
         default=24, description="Hours to retain log files"
     )
-    
+
     # Network Isolation
     network_verification_enabled: bool = Field(
         default=True, description="Enable network isolation verification"
     )
     network_verification_strictness: str = Field(
-        default="standard", 
-        description="Network verification strictness: standard, strict, paranoid"
+        default="standard",
+        description="Network verification strictness: standard, strict, paranoid",
     )
     network_monitoring_enabled: bool = Field(
-        default=False, 
-        description="Enable real-time network monitoring (strict/paranoid modes)"
+        default=False,
+        description="Enable real-time network monitoring (strict/paranoid modes)",
     )
     network_monitoring_interval: int = Field(
-        default=DEFAULT_MONITORING_INTERVAL, 
-        description="Network monitoring check interval in seconds"
+        default=DEFAULT_MONITORING_INTERVAL,
+        description="Network monitoring check interval in seconds",
     )
     terminate_on_network_violation: bool = Field(
         default=False,
-        description="Terminate processes on network violation (paranoid mode only)"
+        description="Terminate processes on network violation (paranoid mode only)",
     )
 
     @field_validator("env")
@@ -272,7 +272,9 @@ class Settings(BaseSettings):
     def validate_network_strictness(cls, v):
         allowed = ["standard", "strict", "paranoid"]
         if v not in allowed:
-            raise ValueError(f"network_verification_strictness must be one of {allowed}")
+            raise ValueError(
+                f"network_verification_strictness must be one of {allowed}"
+            )
         return v
 
     model_config = SettingsConfigDict(
@@ -285,8 +287,10 @@ class Settings(BaseSettings):
         env_parse_none_str=None,
         json_schema_serialization_defaults_required=True,
     )
-    
-    @field_validator('cors_origins', 'allowed_input_formats', 'allowed_output_formats', mode='before')
+
+    @field_validator(
+        "cors_origins", "allowed_input_formats", "allowed_output_formats", mode="before"
+    )
     @classmethod
     def parse_comma_separated_list(cls, v):
         """Parse comma-separated string into list."""
@@ -302,11 +306,15 @@ class Settings(BaseSettings):
         else:
             # For any other type, try to convert to string first
             return cls.parse_comma_separated_list(str(v))
-    
+
     def __init__(self, **values):
         super().__init__(**values)
         # Ensure list fields are lists after initialization
-        for field in ['cors_origins', 'allowed_input_formats', 'allowed_output_formats']:
+        for field in [
+            "cors_origins",
+            "allowed_input_formats",
+            "allowed_output_formats",
+        ]:
             val = getattr(self, field)
             if isinstance(val, str):
                 setattr(self, field, self.parse_comma_separated_list(val))

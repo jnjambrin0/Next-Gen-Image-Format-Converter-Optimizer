@@ -17,7 +17,7 @@ def analyze_info(
 ):
     """
     Show detailed image information
-    
+
     Examples:
       img analyze info photo.jpg
     """
@@ -32,7 +32,7 @@ def analyze_preview(
 ):
     """
     Preview image in terminal
-    
+
     Examples:
       img analyze preview photo.jpg
       img analyze preview photo.jpg --mode ascii
@@ -41,7 +41,7 @@ def analyze_preview(
     # Implementation will use the preview module
     from app.cli.ui.preview import create_ascii_preview
     from pathlib import Path
-    
+
     try:
         preview = create_ascii_preview(Path(input_path), mode=mode)
         console.print(preview)

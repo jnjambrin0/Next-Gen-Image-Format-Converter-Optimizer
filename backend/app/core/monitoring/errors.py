@@ -24,7 +24,7 @@ from app.core.constants import (
     MAX_TOP_ERRORS_DISPLAY,
     MAX_CATEGORY_ERRORS_DISPLAY,
     DB_CHECK_SAME_THREAD,
-    ERROR_EVENT_TABLE_NAME
+    ERROR_EVENT_TABLE_NAME,
 )
 
 logger = get_logger(__name__)
@@ -191,7 +191,7 @@ class ErrorReporter:
 
         # Truncate if too long
         if len(sanitized_msg) > ERROR_MESSAGE_MAX_LENGTH:
-            sanitized_msg = sanitized_msg[:ERROR_MESSAGE_MAX_LENGTH - 3] + "..."
+            sanitized_msg = sanitized_msg[: ERROR_MESSAGE_MAX_LENGTH - 3] + "..."
 
         return sanitized_msg
 
@@ -217,7 +217,9 @@ class ErrorReporter:
                     signature_parts.append(f"{match.group(1)}:{match.group(2)}")
 
         signature = "|".join(signature_parts)
-        return hashlib.sha256(signature.encode()).hexdigest()[:ERROR_SIGNATURE_HASH_LENGTH]
+        return hashlib.sha256(signature.encode()).hexdigest()[
+            :ERROR_SIGNATURE_HASH_LENGTH
+        ]
 
     async def record_error(
         self, error: Exception, context: Optional[Dict[str, Any]] = None
@@ -318,7 +320,9 @@ class ErrorReporter:
         except Exception as e:
             logger.error(f"Failed to persist error report: {e}")
 
-    def get_error_summary(self, hours: int = DEFAULT_MONITORING_HOURS) -> Dict[str, Any]:
+    def get_error_summary(
+        self, hours: int = DEFAULT_MONITORING_HOURS
+    ) -> Dict[str, Any]:
         """
         Get summary of errors in the specified time period.
 

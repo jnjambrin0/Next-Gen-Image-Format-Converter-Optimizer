@@ -35,7 +35,7 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
     message = "An unexpected error occurred"
     details = None
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    
+
     # Record error for local monitoring (privacy-safe)
     try:
         context = {
@@ -65,15 +65,14 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
         details = {"validation_errors": exc.errors()}
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         logger.bind(
-            correlation_id=correlation_id,
-            validation_errors=exc.errors()
+            correlation_id=correlation_id, validation_errors=exc.errors()
         ).warning("Request validation error")
 
     # Handle Starlette HTTP exceptions (including FastAPI HTTPException)
     elif isinstance(exc, StarletteHTTPException):
         error_code = f"HTTP{exc.status_code}"
         status_code = exc.status_code
-        
+
         # Check if detail is already in ErrorResponse format (from our APIError)
         if isinstance(exc.detail, dict) and "error_code" in exc.detail:
             # Use the standardized error format from APIError/endpoint
@@ -86,11 +85,10 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
         else:
             # Legacy format - convert to standard
             message = str(exc.detail) if exc.detail else "HTTP error"
-        
-        logger.bind(
-            correlation_id=correlation_id,
-            status_code=exc.status_code
-        ).warning("HTTP exception", detail=exc.detail)
+
+        logger.bind(correlation_id=correlation_id, status_code=exc.status_code).warning(
+            "HTTP exception", detail=exc.detail
+        )
 
     # Handle all other exceptions
     else:
@@ -106,7 +104,7 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
         message=message,
         correlation_id=correlation_id,
         details=details,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.utcnow(),
     )
 
     return JSONResponse(

@@ -25,7 +25,7 @@ class TestFormatDetection:
     def test_detect_jpeg_by_magic_bytes(self, image_processor):
         """Test JPEG detection by magic bytes."""
         # JPEG magic bytes
-        jpeg_data = b"\xFF\xD8\xFF\xE0" + b"\x00" * 100
+        jpeg_data = b"\xff\xd8\xff\xe0" + b"\x00" * 100
         assert image_processor.detect_format(jpeg_data) == "jpeg"
 
     def test_detect_png_by_magic_bytes(self, image_processor):
@@ -45,7 +45,7 @@ class TestFormatDetection:
         # GIF87a magic bytes
         gif87_data = b"GIF87a" + b"\x00" * 100
         assert image_processor.detect_format(gif87_data) == "gif"
-        
+
         # GIF89a magic bytes
         gif89_data = b"GIF89a" + b"\x00" * 100
         assert image_processor.detect_format(gif89_data) == "gif"
@@ -61,7 +61,7 @@ class TestFormatDetection:
         # Little-endian TIFF
         tiff_le_data = b"II*\x00" + b"\x00" * 100
         assert image_processor.detect_format(tiff_le_data) == "tiff"
-        
+
         # Big-endian TIFF
         tiff_be_data = b"MM\x00*" + b"\x00" * 100
         assert image_processor.detect_format(tiff_be_data) == "tiff"
@@ -71,7 +71,7 @@ class TestFormatDetection:
         # AVIF with ftyp box
         avif_data = b"\x00\x00\x00\x18" + b"ftyp" + b"avif" + b"\x00" * 100
         assert image_processor.detect_format(avif_data) == "avif"
-        
+
         # AVIF with avis brand
         avis_data = b"\x00\x00\x00\x18" + b"ftyp" + b"avis" + b"\x00" * 100
         assert image_processor.detect_format(avis_data) == "avif"
@@ -81,7 +81,7 @@ class TestFormatDetection:
         # HEIC with ftyp box
         heic_data = b"\x00\x00\x00\x18" + b"ftyp" + b"heic" + b"\x00" * 100
         assert image_processor.detect_format(heic_data) == "heif"
-        
+
         # HEIF with mif1 brand
         mif1_data = b"\x00\x00\x00\x18" + b"ftyp" + b"mif1" + b"\x00" * 100
         assert image_processor.detect_format(mif1_data) == "heif"
@@ -93,7 +93,7 @@ class TestFormatDetection:
         buffer = BytesIO()
         img.save(buffer, format="PNG")
         png_data = buffer.getvalue()
-        
+
         assert image_processor.detect_format(png_data) == "png"
 
     def test_detect_format_invalid_data(self, image_processor):
@@ -117,7 +117,7 @@ class TestFormatDetection:
         """Test format detection with unknown magic bytes falls back to PIL."""
         # Unknown magic bytes but might be valid image
         unknown_data = b"XXXX" + b"\x00" * 100
-        
+
         # This should fall back to PIL and raise an error
         with pytest.raises(InvalidImageError):
             image_processor.detect_format(unknown_data)
@@ -134,8 +134,8 @@ class TestMagicByteDetection:
     def test_magic_byte_detection_priority(self, image_processor):
         """Test that magic byte detection has priority over PIL."""
         # Create data that looks like JPEG by magic bytes but isn't valid
-        fake_jpeg = b"\xFF\xD8\xFF\xE0" + b"not really a jpeg" * 10
-        
+        fake_jpeg = b"\xff\xd8\xff\xe0" + b"not really a jpeg" * 10
+
         # Magic byte detection should identify it as JPEG
         # (even though PIL would fail to open it)
         assert image_processor._detect_format_by_magic_bytes(fake_jpeg) == "jpeg"

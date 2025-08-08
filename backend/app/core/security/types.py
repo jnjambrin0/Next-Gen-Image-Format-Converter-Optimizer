@@ -8,6 +8,7 @@ from enum import Enum
 
 class NetworkStatus(TypedDict):
     """Type definition for network isolation status."""
+
     isolated: bool
     verified: bool
     strictness: str
@@ -18,6 +19,7 @@ class NetworkStatus(TypedDict):
 
 class ConnectionInfo(TypedDict):
     """Type definition for network connection information."""
+
     protocol: str
     is_localhost: bool
     state: str
@@ -27,6 +29,7 @@ class ConnectionInfo(TypedDict):
 
 class ViolationStats(TypedDict):
     """Type definition for violation statistics."""
+
     monitoring_active: bool
     baseline_connections: int
     violations_by_pid: Dict[int, int]
@@ -36,12 +39,14 @@ class ViolationStats(TypedDict):
 
 class VerificationResult(TypedDict):
     """Type definition for verification check results."""
+
     passed: bool
     warnings: List[str]
 
 
 class SecurityMetrics(TypedDict):
     """Type definition for security metrics."""
+
     verification_time_ms: float
     monitoring_cycles: int
     connections_checked: int
@@ -52,6 +57,7 @@ class SecurityMetrics(TypedDict):
 
 class RateLimitConfig(TypedDict):
     """Type definition for rate limit configuration."""
+
     max_events_per_minute: int
     max_events_per_hour: int
     burst_size: int
@@ -60,6 +66,7 @@ class RateLimitConfig(TypedDict):
 
 class NetworkEvent(TypedDict):
     """Type definition for network-related security events."""
+
     event_type: str
     severity: str
     timestamp: str

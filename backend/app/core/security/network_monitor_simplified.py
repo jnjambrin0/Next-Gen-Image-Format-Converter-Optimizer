@@ -15,10 +15,7 @@ from datetime import datetime
 from app.core.monitoring.security_events import SecurityEventTracker
 from app.models.security_event import SecurityEventType, SecuritySeverity
 from app.core.security.parsers import check_network_isolation
-from app.core.constants import (
-    DEFAULT_MONITORING_INTERVAL,
-    CONNECTION_CHECK_TIMEOUT
-)
+from app.core.constants import DEFAULT_MONITORING_INTERVAL, CONNECTION_CHECK_TIMEOUT
 
 logger = structlog.get_logger()
 
@@ -26,15 +23,15 @@ logger = structlog.get_logger()
 class NetworkMonitor:
     """
     Simplified network monitor that verifies network isolation.
-    
+
     In sandboxed environment, ANY network connection is a violation.
     """
-    
+
     def __init__(
         self,
         security_tracker: Optional[SecurityEventTracker] = None,
         check_interval: float = DEFAULT_MONITORING_INTERVAL,
-        enabled: bool = True
+        enabled: bool = True,
     ):
         """Initialize network monitor."""
         self.security_tracker = security_tracker
@@ -44,26 +41,26 @@ class NetworkMonitor:
         self._monitor_task = None
         self._last_check = None
         self._violation_count = 0
-        
+
     async def start_monitoring(self) -> None:
         """Start monitoring for network violations."""
         if not self.enabled:
             logger.info("Network monitoring disabled")
             return
-            
+
         if self._monitoring:
             logger.warning("Network monitoring already active")
             return
-            
+
         self._monitoring = True
         self._monitor_task = asyncio.create_task(self._monitor_loop())
         logger.info("Network monitoring started")
-        
+
     async def stop_monitoring(self) -> None:
         """Stop network monitoring."""
         if not self._monitoring:
             return
-            
+
         self._monitoring = False
         if self._monitor_task:
             self._monitor_task.cancel()
@@ -72,30 +69,30 @@ class NetworkMonitor:
             except asyncio.CancelledError:
                 pass
             self._monitor_task = None
-            
+
         logger.info("Network monitoring stopped")
-        
+
     async def check_now(self) -> dict:
         """Perform immediate network check."""
         return await self._check_network_isolation()
-        
+
     async def _monitor_loop(self) -> None:
         """Main monitoring loop."""
         while self._monitoring:
             try:
                 status = await self._check_network_isolation()
-                
+
                 if not status["isolated"]:
                     await self._handle_violation(status)
-                    
+
                 await asyncio.sleep(self.check_interval)
-                
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error("Error in network monitor loop", error=str(e))
                 await asyncio.sleep(self.check_interval)
-                
+
     async def _check_network_isolation(self) -> dict:
         """Check if network is properly isolated."""
         try:
@@ -104,43 +101,41 @@ class NetworkMonitor:
                 cmd = ["ss", "-tunap"]
             else:
                 cmd = ["netstat", "-tunap"]
-                
+
             # Run command with timeout
             try:
                 result = await asyncio.wait_for(
                     asyncio.create_subprocess_exec(
-                        *cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.DEVNULL
+                        *cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
                     ),
-                    timeout=CONNECTION_CHECK_TIMEOUT
+                    timeout=CONNECTION_CHECK_TIMEOUT,
                 )
                 stdout, _ = await result.communicate()
                 output = stdout.decode("utf-8", errors="ignore")
-                
+
             except asyncio.TimeoutError:
                 logger.warning("Network check command timed out")
                 return {"isolated": True, "connection_count": 0, "status": "timeout"}
-                
+
             # Check isolation status
             status = check_network_isolation(output)
             self._last_check = datetime.now()
             return status
-            
+
         except Exception as e:
             logger.error("Failed to check network isolation", error=str(e))
             return {"isolated": True, "connection_count": 0, "status": "error"}
-            
+
     async def _handle_violation(self, status: dict) -> None:
         """Handle network isolation violation."""
         self._violation_count += 1
-        
+
         logger.error(
             "CRITICAL: Network isolation violated in sandbox",
             connection_count=status["connection_count"],
-            violation_count=self._violation_count
+            violation_count=self._violation_count,
         )
-        
+
         # Report to security tracker if available
         if self.security_tracker:
             await self.security_tracker.record_event(
@@ -150,15 +145,17 @@ class NetworkMonitor:
                     "violation_type": "network_isolation_breach",
                     "connection_count": status["connection_count"],
                     "violation_count": self._violation_count,
-                    "timestamp": self._last_check.isoformat() if self._last_check else None
-                }
+                    "timestamp": (
+                        self._last_check.isoformat() if self._last_check else None
+                    ),
+                },
             )
-            
+
     def get_status(self) -> dict:
         """Get current monitor status."""
         return {
             "monitoring": self._monitoring,
             "enabled": self.enabled,
             "last_check": self._last_check.isoformat() if self._last_check else None,
-            "violation_count": self._violation_count
+            "violation_count": self._violation_count,
         }

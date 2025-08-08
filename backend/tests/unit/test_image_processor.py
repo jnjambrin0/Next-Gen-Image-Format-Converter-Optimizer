@@ -225,7 +225,9 @@ class TestImageProcessor:
         large_img = Image.new("RGB", (4000, 3000))
 
         # Act
-        optimized = image_processor.optimize_for_web(large_img, max_width=1920, max_height=1080)
+        optimized = image_processor.optimize_for_web(
+            large_img, max_width=1920, max_height=1080
+        )
 
         # Assert
         assert optimized.width <= 1920
@@ -259,19 +261,19 @@ class TestImageProcessor:
     @pytest.mark.parametrize(
         "mode,expected_bytes",
         [
-            ("1", 1),      # 1-bit
-            ("L", 1),      # 8-bit grayscale
-            ("P", 1),      # 8-bit palette
-            ("RGB", 3),    # 24-bit RGB
-            ("RGBA", 4),   # 32-bit RGBA
-            ("CMYK", 4),   # 32-bit CMYK
+            ("1", 1),  # 1-bit
+            ("L", 1),  # 8-bit grayscale
+            ("P", 1),  # 8-bit palette
+            ("RGB", 3),  # 24-bit RGB
+            ("RGBA", 4),  # 32-bit RGBA
+            ("CMYK", 4),  # 32-bit CMYK
             ("YCbCr", 3),  # 24-bit YCbCr
-            ("LAB", 3),    # 24-bit LAB
-            ("HSV", 3),    # 24-bit HSV
-            ("I", 4),      # 32-bit integer
-            ("F", 4),      # 32-bit float
+            ("LAB", 3),  # 24-bit LAB
+            ("HSV", 3),  # 24-bit HSV
+            ("I", 4),  # 32-bit integer
+            ("F", 4),  # 32-bit float
             ("UNKNOWN", 4),  # Unknown mode defaults to 4
-        ]
+        ],
     )
     def test_estimate_memory_usage_modes(self, image_processor, mode, expected_bytes):
         """Test memory estimation for different color modes."""

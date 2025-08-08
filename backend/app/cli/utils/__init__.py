@@ -12,7 +12,7 @@ def setup_sdk_path():
     # Find the SDK path relative to backend directory
     backend_dir = Path(__file__).parent.parent.parent
     sdk_path = backend_dir.parent / "sdks" / "python"
-    
+
     # Add to path if not already there
     sdk_path_str = str(sdk_path)
     if sdk_path_str not in sys.path:

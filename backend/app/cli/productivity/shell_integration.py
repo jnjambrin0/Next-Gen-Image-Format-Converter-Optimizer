@@ -13,63 +13,63 @@ import shlex
 
 class ShellIntegrator:
     """Generate shell-specific completion scripts"""
-    
+
     @staticmethod
     def detect_shell() -> Optional[str]:
         """
         Detect the user's current shell
-        
+
         Returns:
             Shell name (bash, zsh, fish, powershell) or None
         """
         # Check SHELL environment variable (Unix-like systems)
-        shell_env = os.environ.get('SHELL', '')
-        
-        if 'bash' in shell_env:
-            return 'bash'
-        elif 'zsh' in shell_env:
-            return 'zsh'
-        elif 'fish' in shell_env:
-            return 'fish'
-        
+        shell_env = os.environ.get("SHELL", "")
+
+        if "bash" in shell_env:
+            return "bash"
+        elif "zsh" in shell_env:
+            return "zsh"
+        elif "fish" in shell_env:
+            return "fish"
+
         # Check for PowerShell on Windows
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             try:
                 result = subprocess.run(
-                    ['powershell', '-Command', '$PSVersionTable.PSVersion'],
+                    ["powershell", "-Command", "$PSVersionTable.PSVersion"],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
                 )
                 if result.returncode == 0:
-                    return 'powershell'
+                    return "powershell"
             except (subprocess.SubprocessError, FileNotFoundError):
                 pass
-            
+
             # Fallback to cmd on Windows
-            return 'cmd'
-        
+            return "cmd"
+
         # Try to detect from parent process
         try:
             parent = Path(f"/proc/{os.getppid()}/exe").resolve()
             parent_name = parent.name
-            
-            if 'bash' in parent_name:
-                return 'bash'
-            elif 'zsh' in parent_name:
-                return 'zsh'
-            elif 'fish' in parent_name:
-                return 'fish'
+
+            if "bash" in parent_name:
+                return "bash"
+            elif "zsh" in parent_name:
+                return "zsh"
+            elif "fish" in parent_name:
+                return "fish"
         except (OSError, FileNotFoundError):
             pass
-        
+
         # Default to bash if unable to detect
-        return 'bash'
-    
+        return "bash"
+
     @staticmethod
     def generate_bash_completion() -> str:
         """Generate Bash completion script"""
-        return '''# Image Converter CLI - Bash Completion
+        return """# Image Converter CLI - Bash Completion
 # Add to ~/.bashrc or ~/.bash_profile
 
 _img_completion() {
@@ -178,12 +178,12 @@ complete -F _img_completion img
 alias imgc='img convert'
 alias imgb='img batch'
 alias imgo='img optimize'
-'''
-    
+"""
+
     @staticmethod
     def generate_zsh_completion() -> str:
         """Generate Zsh completion script"""
-        return '''# Image Converter CLI - Zsh Completion
+        return """# Image Converter CLI - Zsh Completion
 # Add to ~/.zshrc or ~/.zprofile
 
 _img_completion() {
@@ -286,12 +286,12 @@ compdef _img_completion img
 alias imgc='img convert'
 alias imgb='img batch'
 alias imgo='img optimize'
-'''
-    
+"""
+
     @staticmethod
     def generate_fish_completion() -> str:
         """Generate Fish completion script"""
-        return '''# Image Converter CLI - Fish Completion
+        return """# Image Converter CLI - Fish Completion
 # Save to ~/.config/fish/completions/img.fish
 
 # Disable file completion by default
@@ -366,12 +366,12 @@ complete -c img -n "__fish_seen_subcommand_from macro m" -l delete -d "Delete ma
 abbr imgc 'img convert'
 abbr imgb 'img batch'
 abbr imgo 'img optimize'
-'''
-    
+"""
+
     @staticmethod
     def generate_powershell_completion() -> str:
         """Generate PowerShell completion script"""
-        return '''# Image Converter CLI - PowerShell Completion
+        return """# Image Converter CLI - PowerShell Completion
 # Add to $PROFILE (run: notepad $PROFILE)
 #
 # IMPORTANT: PowerShell Execution Policy
@@ -499,93 +499,93 @@ Register-ArgumentCompleter -CommandName img -ScriptBlock {
 Set-Alias imgc 'img convert'
 Set-Alias imgb 'img batch'
 Set-Alias imgo 'img optimize'
-'''
-    
+"""
+
     @staticmethod
     def install_completion(shell: Optional[str] = None) -> bool:
         """
         Install completion script for the specified shell
-        
+
         Args:
             shell: Target shell (auto-detect if None)
-            
+
         Returns:
             True if installation successful
         """
         if not shell:
             shell = ShellIntegrator.detect_shell()
-        
+
         if not shell:
             return False
-        
+
         generators = {
-            'bash': ShellIntegrator.generate_bash_completion,
-            'zsh': ShellIntegrator.generate_zsh_completion,
-            'fish': ShellIntegrator.generate_fish_completion,
-            'powershell': ShellIntegrator.generate_powershell_completion
+            "bash": ShellIntegrator.generate_bash_completion,
+            "zsh": ShellIntegrator.generate_zsh_completion,
+            "fish": ShellIntegrator.generate_fish_completion,
+            "powershell": ShellIntegrator.generate_powershell_completion,
         }
-        
+
         if shell not in generators:
             return False
-        
+
         script = generators[shell]()
-        
+
         # Determine installation path
         install_paths = {
-            'bash': Path.home() / '.img_completion.bash',
-            'zsh': Path.home() / '.img_completion.zsh',
-            'fish': Path.home() / '.config' / 'fish' / 'completions' / 'img.fish',
-            'powershell': None  # Handled differently
+            "bash": Path.home() / ".img_completion.bash",
+            "zsh": Path.home() / ".img_completion.zsh",
+            "fish": Path.home() / ".config" / "fish" / "completions" / "img.fish",
+            "powershell": None,  # Handled differently
         }
-        
-        if shell == 'powershell':
+
+        if shell == "powershell":
             # For PowerShell, we need to add to the profile
             print("PowerShell Completion Script:")
             print(script)
             print("\nAdd the above script to your PowerShell profile.")
             print("Run: notepad $PROFILE")
             return True
-        
+
         install_path = install_paths.get(shell)
         if not install_path:
             return False
-        
+
         # Create parent directory if needed
         install_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Write completion script
         install_path.write_text(script)
         install_path.chmod(0o644)
-        
+
         # Provide sourcing instructions
-        if shell == 'bash':
-            rc_file = Path.home() / '.bashrc'
-            source_line = f'source {install_path}'
+        if shell == "bash":
+            rc_file = Path.home() / ".bashrc"
+            source_line = f"source {install_path}"
             print(f"Completion script installed to: {install_path}")
             print(f"Add this line to {rc_file}:")
             print(f"  {source_line}")
-        elif shell == 'zsh':
-            rc_file = Path.home() / '.zshrc'
-            source_line = f'source {install_path}'
+        elif shell == "zsh":
+            rc_file = Path.home() / ".zshrc"
+            source_line = f"source {install_path}"
             print(f"Completion script installed to: {install_path}")
             print(f"Add this line to {rc_file}:")
             print(f"  {source_line}")
-        elif shell == 'fish':
+        elif shell == "fish":
             print(f"Completion script installed to: {install_path}")
             print("Fish will load it automatically on next start.")
-        
+
         return True
-    
+
     @staticmethod
     def generate_helper_functions() -> Dict[str, str]:
         """
         Generate shell helper functions for common tasks
-        
+
         Returns:
             Dictionary of shell -> helper functions script
         """
         return {
-            'bash': '''
+            "bash": """
 # Image Converter Helper Functions
 
 # Quick convert to WebP
@@ -612,8 +612,8 @@ imgbatch() {
 imgwatch() {
     img watch . --format "${1:-webp}" --preset "${2:-web}"
 }
-''',
-            'zsh': '''
+""",
+            "zsh": """
 # Image Converter Helper Functions
 
 # Quick convert to WebP
@@ -640,8 +640,8 @@ imgbatch() {
 imgwatch() {
     img watch . --format "${1:-webp}" --preset "${2:-web}"
 }
-''',
-            'fish': '''
+""",
+            "fish": """
 # Image Converter Helper Functions
 
 # Quick convert to WebP
@@ -672,8 +672,8 @@ function imgwatch
     set -l preset (test -n "$argv[2]"; and echo $argv[2]; or echo "web")
     img watch . --format $format --preset $preset
 end
-''',
-            'powershell': '''
+""",
+            "powershell": """
 # Image Converter Helper Functions
 
 # Quick convert to WebP
@@ -713,5 +713,5 @@ function imgwatch {
     )
     img watch . --format $format --preset $preset
 }
-'''
+""",
         }

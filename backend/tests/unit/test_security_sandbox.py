@@ -21,7 +21,7 @@ class TestSecuritySandbox:
             max_memory_mb=512,
             max_cpu_percent=80,
             timeout_seconds=30,
-            max_output_size_mb=50
+            max_output_size_mb=50,
         )
         return SecuritySandbox(config)
 
@@ -29,10 +29,12 @@ class TestSecuritySandbox:
     def temp_dir(self):
         """Create a temporary directory for testing."""
         import tempfile
+
         temp_path = Path(tempfile.mkdtemp())
         yield temp_path
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_path, ignore_errors=True)
 
     @pytest.fixture
@@ -85,9 +87,7 @@ class TestSecuritySandbox:
         mock_process.poll.return_value = 0
 
         # Act
-        result = security_sandbox.execute_sandboxed(
-            command=["echo", "test"]
-        )
+        result = security_sandbox.execute_sandboxed(command=["echo", "test"])
 
         # Assert
         mock_popen.assert_called_once()
@@ -95,8 +95,8 @@ class TestSecuritySandbox:
 
         # Verify resource limits are set
         assert call_args.kwargs.get("preexec_fn") is not None
-        assert result['returncode'] == 0
-        assert result['output'] == b"output"
+        assert result["returncode"] == 0
+        assert result["output"] == b"output"
 
     def test_sandbox_blocks_dangerous_commands(self, security_sandbox):
         """Test sandbox blocks dangerous shell commands."""
@@ -111,15 +111,15 @@ class TestSecuritySandbox:
 
         # Act & Assert
         for cmd in dangerous_commands:
-            with pytest.raises(
-                SecurityError, match="Forbidden command"
-            ):
+            with pytest.raises(SecurityError, match="Forbidden command"):
                 security_sandbox.validate_command(cmd)
 
     @patch("os.killpg")
     @patch("os.getpgid")
     @patch("subprocess.Popen")
-    def test_sandbox_timeout_enforcement(self, mock_popen, mock_getpgid, mock_killpg, security_sandbox):
+    def test_sandbox_timeout_enforcement(
+        self, mock_popen, mock_getpgid, mock_killpg, security_sandbox
+    ):
         """Test sandbox enforces execution timeout."""
         # Arrange
         mock_process = Mock()
@@ -134,9 +134,7 @@ class TestSecuritySandbox:
 
         # Act & Assert
         with pytest.raises(TimeoutError, match="Execution timeout"):
-            security_sandbox.execute_sandboxed(
-                command=["echo", "test"], timeout=5
-            )
+            security_sandbox.execute_sandboxed(command=["echo", "test"], timeout=5)
 
         # Verify process was killed (may be called multiple times due to cleanup)
         assert mock_process.kill.call_count >= 1
@@ -186,7 +184,9 @@ class TestSecuritySandbox:
 
         # Act & Assert
         for path in restricted_paths:
-            with pytest.raises(SecurityError, match="Path traversal detected|Access denied"):
+            with pytest.raises(
+                SecurityError, match="Path traversal detected|Access denied"
+            ):
                 security_sandbox.validate_file_access(path, mode="read")
 
     def test_sandbox_prevents_code_injection(self, security_sandbox):
