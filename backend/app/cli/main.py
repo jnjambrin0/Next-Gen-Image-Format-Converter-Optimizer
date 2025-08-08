@@ -17,6 +17,7 @@ from app.cli import __version__
 from app.cli.commands import convert, batch, optimize, analyze, formats, presets, chain
 from app.cli.plugins import loader as plugin_loader
 from app.cli.utils import aliases, errors, i18n
+from app.cli.utils.branding import show_cli_banner, show_version_info, show_success_message, show_error_message
 from app.cli.config import CLIConfig, get_config, update_config
 from app.cli.ui.themes import get_theme_manager
 from app.cli.utils.terminal import get_terminal_detector
@@ -28,7 +29,7 @@ console = None  # Will be initialized with theme
 # Create main Typer app with custom help
 app = typer.Typer(
     name="img",
-    help="🖼️  Professional Image Converter CLI - Next-gen format conversion & optimization",
+    help="🛡️ IC Professional Image Converter CLI - Next-gen format conversion & optimization",
     no_args_is_help=True,
     rich_markup_mode="rich",
     pretty_exceptions_enable=True,
@@ -102,17 +103,7 @@ def main(
         console = theme_manager.create_console()
 
     if version:
-        version_table = Table(show_header=False, box=None)
-        version_table.add_column("Component", style="cyan")
-        version_table.add_column("Version", style="green")
-
-        version_table.add_row("Image Converter CLI", __version__)
-        version_table.add_row(
-            "Python",
-            f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-        )
-
-        console.print(version_table)
+        show_version_info(console)
         raise typer.Exit()
 
     # Update global state
@@ -141,8 +132,9 @@ def main(
             if state["debug"]:
                 console.print(f"[yellow]Warning: Failed to apply aliases: {e}[/yellow]")
 
-    # If no command was invoked and no version flag, show help
+    # If no command was invoked and no version flag, show branded help
     if ctx.invoked_subcommand is None and not version:
+        show_cli_banner(console)
         console.print(ctx.get_help())
         raise typer.Exit()
 

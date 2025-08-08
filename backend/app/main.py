@@ -186,9 +186,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Image Converter API",
+    title="🛡️ IC Image Converter API",
     description="Privacy-focused local image conversion service with advanced optimization capabilities",
-    version="0.1.0",
+    version="1.0.0",
     openapi_url="/api/openapi.json",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -235,7 +235,7 @@ def custom_openapi() -> Dict[str, Any]:
     openapi_schema["info"].update(
         {
             "version": "1.0.0",
-            "title": "Image Converter API",
+            "title": "🛡️ IC Image Converter API",
             "description": """
         Privacy-focused local image conversion service with advanced optimization capabilities.
         
