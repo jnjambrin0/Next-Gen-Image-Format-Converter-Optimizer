@@ -95,13 +95,13 @@ jobs:
           echo "📝 Changes detected, committing auto-fixes..."
           git add .
           git commit -m "🤖 Auto-fix: code formatting and style issues
-
-- Applied Black formatting to Python code
-- Organized imports with isort  
-- Applied Prettier formatting to frontend
-- Fixed auto-fixable ESLint issues
-
-Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+        
+        - Applied Black formatting to Python code
+        - Organized imports with isort  
+        - Applied Prettier formatting to frontend
+        - Fixed auto-fixable ESLint issues
+        
+        Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
           
           # Push changes back to PR branch
           git push
