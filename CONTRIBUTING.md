@@ -50,7 +50,7 @@ We are committed to providing a friendly, safe, and welcoming environment for al
 
 ### Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at jnjambrino@github.com. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at jnjambrin0@github.com. All complaints will be reviewed and investigated promptly and fairly.
 
 ## How Can I Contribute?
 
@@ -164,7 +164,7 @@ Look for issues labeled with:
 # Fork the repository on GitHub, then:
 git clone https://github.com/YOUR_USERNAME/Next-Gen-Image-Format-Converter-Optimizer.git
 cd Next-Gen-Image-Format-Converter-Optimizer
-git remote add upstream https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer.git
+git remote add upstream https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer.git
 ```
 
 ### 2. Create a Branch
@@ -298,6 +298,7 @@ npm run test:ui           # Interactive UI
    black backend/
    ```
 3. **Type Hints**: Required for all functions
+
    ```python
    def convert_image(
        input_data: bytes,
@@ -315,6 +316,7 @@ npm run test:ui           # Interactive UI
            Tuple of converted bytes and result metadata
        """
    ```
+
 4. **Docstrings**: Use Google style
 5. **Imports**: Sort with isort
    ```bash
@@ -464,7 +466,7 @@ describe("Image Validation", () => {
 
 **NEVER** report security vulnerabilities through public issues. Instead:
 
-1. Email: jnjambrino@github.com
+1. Email: jnjambrin0@github.com
 2. Subject: "SECURITY: [Brief description]"
 3. Include:
    - Description of vulnerability

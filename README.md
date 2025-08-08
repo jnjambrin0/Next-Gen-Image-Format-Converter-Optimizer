@@ -8,23 +8,23 @@
   </p>
   
   <p>
-    <a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/blob/main/LICENSE">
+    <a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
     </a>
-    <a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/releases">
-      <img src="https://img.shields.io/github/v/release/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer" alt="Release" />
+    <a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/releases">
+      <img src="https://img.shields.io/github/v/release/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer" alt="Release" />
     </a>
-    <a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/stargazers">
-      <img src="https://img.shields.io/github/stars/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer" alt="Stars" />
+    <a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/stargazers">
+      <img src="https://img.shields.io/github/stars/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer" alt="Stars" />
     </a>
-    <a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/network/members">
-      <img src="https://img.shields.io/github/forks/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer" alt="Forks" />
+    <a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/network/members">
+      <img src="https://img.shields.io/github/forks/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer" alt="Forks" />
     </a>
-    <a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/issues">
-      <img src="https://img.shields.io/github/issues/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer" alt="Issues" />
+    <a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/issues">
+      <img src="https://img.shields.io/github/issues/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer" alt="Issues" />
     </a>
-    <a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/pulls">
-      <img src="https://img.shields.io/github/issues-pr/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer" alt="Pull Requests" />
+    <a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/pulls">
+      <img src="https://img.shields.io/github/issues-pr/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer" alt="Pull Requests" />
     </a>
   </p>
 
@@ -296,7 +296,7 @@ result, output_data = client.convert_image(
 
 ```bash
 # Clone the repository
-git clone https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer.git
+git clone https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer.git
 cd Next-Gen-Image-Format-Converter-Optimizer
 
 # Backend setup
@@ -322,7 +322,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ```powershell
 # Clone the repository
-git clone https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer.git
+git clone https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer.git
 cd Next-Gen-Image-Format-Converter-Optimizer
 
 # Backend setup
@@ -758,7 +758,7 @@ image_converter/
 
 ```bash
 # Clone repository
-git clone https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer.git
+git clone https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer.git
 cd Next-Gen-Image-Format-Converter-Optimizer
 
 # Install pre-commit hooks
@@ -917,8 +917,8 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 
 ### Contributors
 
-<a href="https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=jnjambrino/Next-Gen-Image-Format-Converter-Optimizer" />
+<a href="https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer" />
 </a>
 
 ### Special Thanks
@@ -936,7 +936,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ```
 MIT License
 
-Copyright (c) 2025 jnjambrino
+Copyright (c) 2025 jnjambrin0
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -963,23 +963,23 @@ SOFTWARE.
 
 ### Getting Help
 
-- 📖 [Documentation](https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/wiki)
-- 💬 [Discussions](https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/discussions)
-- 🐛 [Issue Tracker](https://github.com/jnjambrino/Next-Gen-Image-Format-Converter-Optimizer/issues)
-- 📧 Email: [jnjambrino@github.com](mailto:jnjambrino@github.com)
+- 📖 [Documentation](https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/wiki)
+- 💬 [Discussions](https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/discussions)
+- 🐛 [Issue Tracker](https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer/issues)
+- 📧 Email: [jnjambrin0@github.com](mailto:jnjambrin0@github.com)
 
 ### Social
 
-- 🐦 Twitter: [@jnjambrino](https://twitter.com/jnjambrino)
-- 💼 LinkedIn: [jnjambrino](https://linkedin.com/in/jnjambrino)
-- 🌐 Website: [jnjambrino.dev](https://jnjambrino.dev)
+- 🐦 Twitter: [@jnjambrin0](https://twitter.com/jnjambrin0)
+- 💼 LinkedIn: [jnjambrin0](https://linkedin.com/in/jnjambrin0)
+- 🌐 Website: [jnjambrin0.dev](https://jnjambrin0.dev)
 
 ---
 
 <div align="center">
   <br />
   <p>
-    <b>Made with ❤️ by <a href="https://github.com/jnjambrino">jnjambrino</a> and contributors</b>
+    <b>Made with ❤️ by <a href="https://github.com/jnjambrin0">jnjambrin0</a> and contributors</b>
   </p>
   <p>
     <i>If you find this project useful, please consider giving it a ⭐!</i>
