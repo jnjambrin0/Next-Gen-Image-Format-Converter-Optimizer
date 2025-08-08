@@ -133,17 +133,18 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
-    - name: Create minimal .env file for Docker Compose
+    - name: Create minimal .env.production file for Docker Compose
       run: |
-        echo "# CI environment" > .env
+        echo "# CI production environment" > .env.production
 
-    - name: Test Docker Compose
+    - name: Test Docker Compose Production
       run: |
-        docker compose build
-        docker compose up -d
-        sleep 10
+        docker compose -f docker-compose.prod.yml build
+        docker compose -f docker-compose.prod.yml up -d
+        sleep 15
         curl -f http://localhost:8000/api/health || exit 1
-        docker compose down
+        curl -f http://localhost:80/ || exit 1
+        docker compose -f docker-compose.prod.yml down
 
   security-scan:
     name: Security Scan
