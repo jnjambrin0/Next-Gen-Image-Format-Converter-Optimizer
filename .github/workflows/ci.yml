@@ -135,15 +135,19 @@ jobs:
     
     - name: Test Docker Compose
       run: |
-        docker-compose build
-        docker-compose up -d
+        docker compose build
+        docker compose up -d
         sleep 10
         curl -f http://localhost:8000/health || exit 1
-        docker-compose down
+        docker compose down
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     
     steps:
     - uses: actions/checkout@v4
@@ -161,3 +165,15 @@ jobs:
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
+    
+    - name: Show Trivy results (if upload failed)
+      if: failure()
+      run: |
+        echo "Code scanning upload failed, but security scan completed."
+        echo "Trivy results:"
+        if [ -f trivy-results.sarif ]; then
+          cat trivy-results.sarif | jq '.runs[0].results[] | {ruleId, level, message}' || echo "SARIF file exists but could not parse with jq"
+        else
+          echo "No SARIF file generated"
+        fi
