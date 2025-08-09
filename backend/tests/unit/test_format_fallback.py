@@ -1,17 +1,17 @@
 """Unit tests for format fallback system."""
 
-import pytest
-from unittest.mock import Mock, patch
-from typing import Set
-
 # Import fixtures
 import sys
 from pathlib import Path
+from typing import Set
+from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from app.core.conversion.manager import ConversionManager
 from app.core.conversion.formats.base import BaseFormatHandler
+from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import UnsupportedFormatError
 
 

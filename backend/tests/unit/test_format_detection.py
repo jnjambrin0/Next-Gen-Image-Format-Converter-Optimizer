@@ -1,12 +1,12 @@
 """Unit tests for format detection."""
 
-import pytest
-from io import BytesIO
-from PIL import Image
-
 # Import fixtures
 import sys
+from io import BytesIO
 from pathlib import Path
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 

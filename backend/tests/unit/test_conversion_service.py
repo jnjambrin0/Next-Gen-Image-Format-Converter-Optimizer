@@ -1,20 +1,21 @@
 """Unit tests for conversion service layer."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
+import asyncio
 from typing import Tuple
+from unittest.mock import AsyncMock, Mock, patch
 
-from app.services.conversion_service import ConversionService
-from app.models.requests import ConversionApiRequest
+import pytest
+
+from app.core.exceptions import ConversionError, InvalidImageError
 from app.models.conversion import (
     ConversionResult,
-    ConversionStatus,
-    OutputFormat,
     ConversionSettings,
+    ConversionStatus,
     InputFormat,
+    OutputFormat,
 )
-from app.core.exceptions import ConversionError, InvalidImageError
-import asyncio
+from app.models.requests import ConversionApiRequest
+from app.services.conversion_service import ConversionService
 
 
 class TestConversionService:

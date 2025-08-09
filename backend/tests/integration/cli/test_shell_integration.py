@@ -3,25 +3,26 @@ Comprehensive tests for platform-specific shell integration
 Tests bash, zsh, fish, and PowerShell completion and integration
 """
 
-import pytest
+import io
+import json
 import os
-import sys
 import platform
+import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
-import json
-import shutil
-from unittest.mock import MagicMock, patch, mock_open
-import io
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 from app.cli.productivity.shell_integration import (
+    CompletionScript,
+    FunctionLibrary,
+    ShellDetector,
+    ShellHelper,
     ShellIntegrator,
     ShellType,
-    CompletionScript,
-    ShellHelper,
-    ShellDetector,
-    FunctionLibrary,
 )
 
 

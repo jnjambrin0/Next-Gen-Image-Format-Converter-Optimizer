@@ -2,11 +2,12 @@
 Unit tests for alias system
 """
 
-import pytest
-from unittest.mock import Mock, patch, mock_open
-from pathlib import Path
 import json
 import tempfile
+from pathlib import Path
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 
 from app.cli.utils.aliases import AliasManager
 

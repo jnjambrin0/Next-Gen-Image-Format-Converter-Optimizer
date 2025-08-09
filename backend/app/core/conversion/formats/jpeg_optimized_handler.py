@@ -2,16 +2,17 @@
 
 import os
 import tempfile
-from typing import BinaryIO, Dict, Any, Optional
 from io import BytesIO
-from PIL import Image
-import structlog
+from typing import Any, BinaryIO, Dict, Optional
 
-from app.models.conversion import ConversionSettings
-from app.core.conversion.formats.jpeg_handler import JPEGHandler
-from app.core.exceptions import ConversionFailedError
-from app.core.conversion.tools import ExternalToolExecutor
+import structlog
+from PIL import Image
+
 from app.config import settings
+from app.core.conversion.formats.jpeg_handler import JPEGHandler
+from app.core.conversion.tools import ExternalToolExecutor
+from app.core.exceptions import ConversionFailedError
+from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
 

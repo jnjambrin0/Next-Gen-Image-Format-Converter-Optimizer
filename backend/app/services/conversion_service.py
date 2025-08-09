@@ -1,7 +1,8 @@
 """Service layer for image conversion operations."""
 
-from typing import Tuple, Optional
 import asyncio
+from typing import Optional, Tuple
+
 import structlog
 
 # Try to import magic, but make it optional
@@ -13,12 +14,12 @@ except ImportError:
     HAS_MAGIC = False
 
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import ConversionError, InvalidImageError
+from app.models.conversion import ConversionRequest as CoreConversionRequest
 from app.models.conversion import (
     ConversionResult,
-    ConversionRequest as CoreConversionRequest,
 )
 from app.models.requests import ConversionApiRequest
-from app.core.exceptions import ConversionError, InvalidImageError
 from app.services.format_detection_service import format_detection_service
 
 # Removed circular import - stats_collector will be injected or imported elsewhere

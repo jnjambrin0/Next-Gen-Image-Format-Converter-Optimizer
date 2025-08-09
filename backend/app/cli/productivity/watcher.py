@@ -4,20 +4,20 @@ Monitor directories for changes and automatically process files
 """
 
 import asyncio
+import fnmatch
+import hashlib
 import os
+import threading
 import time
-from pathlib import Path
-from typing import Dict, List, Optional, Callable, Set, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-import threading
-from queue import Queue, Empty
-import fnmatch
-import hashlib
+from pathlib import Path
+from queue import Empty, Queue
+from typing import Any, Callable, Dict, List, Optional, Set
 
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 
 class WatcherStatus(Enum):

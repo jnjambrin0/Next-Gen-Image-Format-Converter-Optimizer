@@ -1,13 +1,15 @@
 """Security tests for process isolation verification."""
 
-import pytest
 import os
-import tempfile
-from unittest.mock import Mock, patch, MagicMock
 import subprocess
+import tempfile
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from app.core.security.engine import SecurityEngine
-from app.core.security.sandbox import SecuritySandbox, SecurityError
+from app.core.security.errors import SecurityError
+from app.core.security.sandbox import SecuritySandbox
 
 
 class TestProcessIsolation:

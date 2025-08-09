@@ -1,13 +1,14 @@
 """Authentication middleware for optional API key support."""
 
 from typing import Optional, Tuple
-from fastapi import Request, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from fastapi import HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 
-from app.services.api_key_service import api_key_service
-from app.models.database import ApiKey
 from app.config import settings
+from app.models.database import ApiKey
+from app.services.api_key_service import api_key_service
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

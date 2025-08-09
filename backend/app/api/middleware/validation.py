@@ -1,13 +1,13 @@
 """Request validation middleware for enhanced API security."""
 
-import time
 import asyncio
-from typing import Dict, Optional, Set
+import time
 from collections import defaultdict, deque
+from typing import Dict, Optional, Set
 
-from fastapi import Request, Response, HTTPException
-from fastapi.responses import JSONResponse
 import structlog
+from fastapi import HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.core.security.rate_limiter import api_rate_limiter

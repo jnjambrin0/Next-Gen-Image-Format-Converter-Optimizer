@@ -2,16 +2,18 @@
 Test suite to verify no external network connections are made.
 """
 
-import pytest
-import socket
-import unittest.mock as mock
-from unittest.mock import patch, MagicMock
 import asyncio
 import logging
-from app.main import app
+import socket
+import unittest.mock as mock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from app.core.conversion.manager import ConversionManager
 from app.core.monitoring.stats import StatsCollector
-from app.utils.logging import setup_logging, get_logger
+from app.main import app
+from app.utils.logging import get_logger, setup_logging
 
 
 class TestNetworkIsolation:
@@ -136,8 +138,9 @@ class TestNetworkIsolation:
         """Test that startup doesn't make network connections."""
         mock_connection.side_effect = RuntimeError("Network blocked")
 
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         # Creating test client should not make network connections
         client = TestClient(app)

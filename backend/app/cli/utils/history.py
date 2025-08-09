@@ -4,19 +4,19 @@ Handles command history for undo/redo functionality with fuzzy search
 """
 
 import json
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Tuple
 from collections import deque
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-from app.cli.config import get_history_dir, get_config
+from app.cli.config import get_config, get_history_dir
+from app.cli.productivity.autocomplete import PrivacySanitizer
 from app.cli.productivity.fuzzy_search import (
     FuzzySearcher,
     HistoryEntry,
-    InteractiveHistoryBrowser,
     HistoryExporter,
+    InteractiveHistoryBrowser,
 )
-from app.cli.productivity.autocomplete import PrivacySanitizer
 
 
 class HistoryManager:

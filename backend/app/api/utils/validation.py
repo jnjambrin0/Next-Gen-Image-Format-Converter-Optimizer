@@ -2,12 +2,13 @@
 
 import asyncio
 from typing import Optional, Tuple
-from fastapi import HTTPException, Request, UploadFile
+
 import structlog
+from fastapi import HTTPException, Request, UploadFile
 
 from app.config import settings
-from app.core.security.memory import secure_clear as security_secure_clear
 from app.core.constants import ALLOWED_UPLOAD_MIME_TYPES
+from app.core.security.memory import secure_clear as security_secure_clear
 
 logger = structlog.get_logger()
 

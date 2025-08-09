@@ -1,9 +1,10 @@
 """Request models for API endpoints."""
 
 from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.conversion import OutputFormat, ConversionSettings, OptimizationSettings
+from app.models.conversion import ConversionSettings, OptimizationSettings, OutputFormat
 
 
 class ConversionApiRequest(BaseModel):

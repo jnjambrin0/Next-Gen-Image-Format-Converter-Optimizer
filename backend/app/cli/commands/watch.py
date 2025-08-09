@@ -6,26 +6,26 @@ Monitor directories and automatically convert images
 import asyncio
 import signal
 import sys
-from pathlib import Path
-from typing import List, Optional, Annotated
 import tempfile
+from pathlib import Path
+from typing import Annotated, List, Optional
 
 import typer
 from rich.console import Console
-from rich.table import Table
+from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from rich.layout import Layout
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 from rich.text import Text
 
+from app.cli.config import get_config
 from app.cli.productivity.watcher import (
     DirectoryWatcher,
+    FileEvent,
     ResourceLimits,
     WatcherStatus,
-    FileEvent,
 )
-from app.cli.config import get_config
 from app.cli.utils.errors import handle_error
 from app.cli.utils.terminal import get_terminal_detector
 

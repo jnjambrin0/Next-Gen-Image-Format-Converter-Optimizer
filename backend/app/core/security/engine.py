@@ -1,39 +1,40 @@
 """Security engine for managing sandboxed image processing."""
 
+import asyncio
+import io
+import json
 import os
 import tempfile
-import asyncio
-import json
 import threading
-from typing import Dict, Any, Optional, Tuple, List
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import structlog
 from PIL import Image
 from PIL.ExifTags import TAGS
-import io
 
-from app.core.security.sandbox import SecuritySandbox, SandboxConfig
-from app.core.security.metadata import MetadataStripper
-from app.core.security.memory import SecureMemoryManager, secure_memory_context
-from app.models.process_sandbox import ProcessSandbox
-from app.core.exceptions import ConversionError
 from app.config import settings
 from app.core.constants import (
-    SANDBOX_TIMEOUTS,
-    SANDBOX_MEMORY_LIMITS,
-    SANDBOX_CPU_LIMITS,
-    SANDBOX_OUTPUT_LIMITS,
-    IMAGE_MAGIC_BYTES,
-    SUSPICIOUS_PATTERNS,
     HEIF_AVIF_BRANDS,
+    IMAGE_BUFFER_CHECK_LIMIT,
+    IMAGE_MAGIC_BYTES,
     MAX_IMAGE_PIXELS,
     MAX_MEMORY_VIOLATIONS,
-    MIN_VALIDATION_FILE_SIZE,
-    IMAGE_BUFFER_CHECK_LIMIT,
-    STDERR_TRUNCATION_LENGTH,
     MAX_SECURITY_EVENTS,
+    MIN_VALIDATION_FILE_SIZE,
+    SANDBOX_CPU_LIMITS,
+    SANDBOX_MEMORY_LIMITS,
+    SANDBOX_OUTPUT_LIMITS,
+    SANDBOX_TIMEOUTS,
+    STDERR_TRUNCATION_LENGTH,
+    SUSPICIOUS_PATTERNS,
 )
+from app.core.exceptions import ConversionError
+from app.core.security.memory import SecureMemoryManager, secure_memory_context
+from app.core.security.metadata import MetadataStripper
+from app.core.security.sandbox import SandboxConfig, SecuritySandbox
+from app.models.process_sandbox import ProcessSandbox
 from app.models.security_event import SecurityEvent, SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()

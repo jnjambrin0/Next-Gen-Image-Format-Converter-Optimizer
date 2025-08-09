@@ -1,9 +1,10 @@
 """Data models for advanced optimization features."""
 
-from typing import Optional, Dict, Any, List, Literal
-from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
+
+from pydantic import BaseModel, Field, validator
 
 from app.core.optimization.encoding_options import ChromaSubsampling
 from app.core.optimization.optimization_engine import OptimizationMode

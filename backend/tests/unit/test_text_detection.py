@@ -1,10 +1,11 @@
 """Unit tests for text detection functionality."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import numpy as np
-from PIL import Image
 import io
+from unittest.mock import MagicMock, Mock, patch
+
+import numpy as np
+import pytest
+from PIL import Image
 
 from app.core.intelligence.text_detector import TextDetector
 from app.models.conversion import BoundingBox

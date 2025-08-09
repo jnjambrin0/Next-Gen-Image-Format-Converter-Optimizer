@@ -2,9 +2,9 @@
 
 import asyncio
 import time
-from typing import Dict, Any, Optional, Callable, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from app.core.constants import INTELLIGENCE_TIMEOUT_MS
 from app.core.security.errors_simplified import create_file_error

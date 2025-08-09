@@ -3,43 +3,44 @@ Convert Command
 Single image conversion with rich progress and options
 """
 
+import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Optional, Annotated
-import asyncio
+from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
 from rich.progress import (
+    BarColumn,
     Progress,
     SpinnerColumn,
-    TextColumn,
-    BarColumn,
     TaskProgressColumn,
+    TextColumn,
 )
 from rich.table import Table
 
 from app.cli.config import get_config
-from app.cli.utils.validation import validate_input_file, validate_output_path
-from app.cli.utils.progress import (
-    create_progress_bar,
-    InterruptableProgress,
-    progress_context,
-)
-from app.cli.utils.errors import handle_api_error
-from app.cli.utils.history import record_command
 from app.cli.ui.themes import get_theme_manager
 from app.cli.utils.emoji import get_emoji, get_format_emoji
-from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
+from app.cli.utils.errors import handle_api_error
+from app.cli.utils.history import record_command
 from app.cli.utils.profiler import cli_profiler, profile_command
+from app.cli.utils.progress import (
+    InterruptableProgress,
+    create_progress_bar,
+    progress_context,
+)
+from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
+from app.cli.utils.validation import validate_input_file, validate_output_path
 
 # Import SDK client
 sys.path.insert(
     0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python")
 )
 from image_converter.client import ImageConverterClient
-from image_converter.models import ConversionRequest, OutputFormat as SDKOutputFormat
+from image_converter.models import ConversionRequest
+from image_converter.models import OutputFormat as SDKOutputFormat
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -203,8 +204,8 @@ def convert_file(
         )
 
         # Show enhanced progress with interruption support
-        import tempfile
         import os
+        import tempfile
 
         with InterruptableProgress(
             description="Converting image",
@@ -352,8 +353,8 @@ def convert_stdin(
         )
 
         # Create temp file for SDK
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".tmp", delete=False) as tmp_input:
             tmp_input.write(image_data)

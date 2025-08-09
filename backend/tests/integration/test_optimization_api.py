@@ -1,10 +1,11 @@
 """Integration tests for optimization API endpoints."""
 
-import pytest
 import io
-from PIL import Image
-from httpx import AsyncClient
+
+import pytest
 from fastapi import status
+from httpx import AsyncClient
+from PIL import Image
 
 from app.main import app
 

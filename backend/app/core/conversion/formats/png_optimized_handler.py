@@ -2,17 +2,18 @@
 
 import os
 import tempfile
-from typing import BinaryIO, Dict, Any, Optional, Tuple
 from io import BytesIO
-from PIL import Image
-import structlog
+from typing import Any, BinaryIO, Dict, Optional, Tuple
 
-from app.models.conversion import ConversionSettings
-from app.core.conversion.formats.png_handler import PNGHandler
-from app.core.exceptions import ConversionFailedError
-from app.core.conversion.tools import ExternalToolExecutor
-from app.core.monitoring import metrics_collector
+import structlog
+from PIL import Image
+
 from app.config import settings
+from app.core.conversion.formats.png_handler import PNGHandler
+from app.core.conversion.tools import ExternalToolExecutor
+from app.core.exceptions import ConversionFailedError
+from app.core.monitoring import metrics_collector
+from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
 

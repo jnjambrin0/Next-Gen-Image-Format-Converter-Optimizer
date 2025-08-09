@@ -3,20 +3,20 @@ ASCII Demo Framework
 Plays ASCII-based terminal demonstrations
 """
 
-import time
-import json
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
-from enum import Enum
 import asyncio
+import json
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from rich.prompt import Prompt
-from rich.live import Live
 from rich.layout import Layout
+from rich.live import Live
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.prompt import Prompt
 from rich.text import Text
 
 

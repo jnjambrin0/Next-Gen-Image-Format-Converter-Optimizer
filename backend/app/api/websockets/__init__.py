@@ -1,8 +1,10 @@
 """WebSocket endpoints for real-time communication."""
 
 from .progress import (
-    router as progress_router,
     connection_manager,
+)
+from .progress import router as progress_router
+from .progress import (
     send_batch_progress,
     send_job_status_update,
 )

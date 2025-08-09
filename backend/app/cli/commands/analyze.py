@@ -39,8 +39,9 @@ def analyze_preview(
     """
     console.print(f"[cyan]Generating preview for {input_path}...[/cyan]")
     # Implementation will use the preview module
-    from app.cli.ui.preview import create_ascii_preview
     from pathlib import Path
+
+    from app.cli.ui.preview import create_ascii_preview
 
     try:
         preview = create_ascii_preview(Path(input_path), mode=mode)

@@ -1,23 +1,24 @@
-import pytest
-from fastapi.testclient import TestClient
-from fastapi import HTTPException
-from unittest.mock import patch, Mock
-import sys
 import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from app.main import app
+from app.api.middleware.error_handler import handle_exception
 from app.core.exceptions import (
     ConversionError,
-    ValidationError,
-    SecurityError,
-    ResourceLimitError,
     FormatNotSupportedError,
     ProcessingTimeoutError,
+    ResourceLimitError,
+    SecurityError,
+    ValidationError,
 )
-from app.api.middleware.error_handler import handle_exception
+from app.main import app
 
 
 class TestErrorHandling:

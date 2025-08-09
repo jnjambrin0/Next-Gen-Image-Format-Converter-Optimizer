@@ -1,13 +1,14 @@
 """Unit tests for WebSocket security and authentication."""
 
-import pytest
-import secrets
 import hashlib
+import secrets
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from app.api.websockets.secure_progress import SecureConnectionManager
-from app.core.batch.models import BatchJob, BatchStatus, BatchProgress, BatchItemStatus
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchProgress, BatchStatus
 
 
 class TestSecureConnectionManager:

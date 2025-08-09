@@ -3,10 +3,11 @@ CLI Branding utilities
 Logo display and branding consistency for CLI
 """
 
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from rich.align import Align
+
 from app.cli import __version__
 
 

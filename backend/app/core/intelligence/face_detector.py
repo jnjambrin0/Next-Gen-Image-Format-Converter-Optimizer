@@ -1,10 +1,11 @@
 """Face detection module for privacy-aware photo analysis."""
 
-import numpy as np
-from PIL import Image
-from typing import List, Optional, Tuple, Dict, Any
 import logging
 import time
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+from PIL import Image
 
 from app.models.conversion import BoundingBox
 

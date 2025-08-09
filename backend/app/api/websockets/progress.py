@@ -2,14 +2,15 @@
 
 import asyncio
 import json
-from typing import Dict, Set, Optional
 from datetime import datetime
-from fastapi import WebSocket, WebSocketDisconnect, WebSocketException, status, Query
+from typing import Any, Dict, Optional, Set, Tuple
+
+from fastapi import Query, WebSocket, WebSocketDisconnect, WebSocketException, status
 from fastapi.routing import APIRouter
 
+from app.config import settings
 from app.core.batch.models import BatchProgress, BatchStatus
 from app.utils.logging import get_logger
-from app.config import settings
 
 logger = get_logger(__name__)
 
@@ -234,27 +235,18 @@ class ConnectionManager:
 connection_manager = ConnectionManager()
 
 
-@router.websocket("/ws/batch/{job_id}")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    job_id: str,
-    token: Optional[str] = Query(
-        None, description="Authentication token for job access"
-    ),
-):
-    """WebSocket endpoint for batch job progress updates.
-
-    Args:
-        websocket: WebSocket connection
-        job_id: Batch job ID to subscribe to
-        token: Optional authentication token
-    """
-    # Validate job_id format
+async def _validate_job_id(websocket: WebSocket, job_id: str) -> bool:
+    """Validate job ID format."""
     if not job_id or len(job_id) != 36:  # UUID format
         await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA)
-        return
+        return False
+    return True
 
-    # Use secure connection manager if authentication is enabled
+
+async def _setup_connection_manager(
+    websocket: WebSocket, job_id: str, token: Optional[str]
+) -> Optional[Tuple[Any, Any]]:
+    """Setup appropriate connection manager based on auth settings."""
     if (
         hasattr(settings, "batch_websocket_auth_enabled")
         and settings.batch_websocket_auth_enabled
@@ -272,24 +264,27 @@ async def websocket_endpoint(
             websocket, job_id, token, client_ip
         )
         if not connected:
-            return  # Connection already closed with appropriate error
+            return None  # Connection already closed with appropriate error
 
-        # Use secure connection manager for disconnect
-        disconnect_handler = secure_connection_manager.disconnect
-        message_handler = secure_connection_manager.handle_client_message
+        return (
+            secure_connection_manager.disconnect,
+            secure_connection_manager.handle_client_message,
+        )
     else:
         # Use regular connection manager (backward compatibility)
         connected = await connection_manager.connect(websocket, job_id)
         if not connected:
             await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
-            return
+            return None
 
-        # Use regular connection manager for disconnect
-        disconnect_handler = connection_manager.disconnect
-        message_handler = connection_manager.handle_client_message
+        return (
+            connection_manager.disconnect,
+            connection_manager.handle_client_message,
+        )
 
-    # Start processing the batch job now that WebSocket is connected
-    # This avoids the race condition where files process before client is ready
+
+async def _start_batch_processing(job_id: str) -> None:
+    """Start batch processing for the job."""
     try:
         from app.services.batch_service import batch_service
 
@@ -310,39 +305,76 @@ async def websocket_endpoint(
         except Exception as cleanup_error:
             logger.error(f"Error cleaning up job {job_id}: {cleanup_error}")
 
-    try:
-        # Keep connection alive and handle incoming messages
-        while True:
+
+async def _handle_websocket_messages(
+    websocket: WebSocket, message_handler: Any
+) -> None:
+    """Handle incoming WebSocket messages."""
+    while True:
+        try:
+            # Wait for client messages with timeout
+            data = await asyncio.wait_for(
+                websocket.receive_text(), timeout=30.0  # 30 second timeout
+            )
+
+            # Parse and handle message
             try:
-                # Wait for client messages with timeout
-                data = await asyncio.wait_for(
-                    websocket.receive_text(), timeout=30.0  # 30 second timeout
+                message = json.loads(data)
+                await message_handler(websocket, message)
+            except json.JSONDecodeError:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": "Invalid JSON format",
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
                 )
 
-                # Parse and handle message
-                try:
-                    message = json.loads(data)
-                    await message_handler(websocket, message)
-                except json.JSONDecodeError:
-                    await websocket.send_json(
-                        {
-                            "type": "error",
-                            "message": "Invalid JSON format",
-                            "timestamp": datetime.utcnow().isoformat(),
-                        }
-                    )
+        except asyncio.TimeoutError:
+            # Send ping to keep connection alive
+            try:
+                await websocket.send_json(
+                    {
+                        "type": "ping",
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
+                )
+            except Exception:
+                break
 
-            except asyncio.TimeoutError:
-                # Send ping to keep connection alive
-                try:
-                    await websocket.send_json(
-                        {
-                            "type": "ping",
-                            "timestamp": datetime.utcnow().isoformat(),
-                        }
-                    )
-                except Exception:
-                    break
+
+@router.websocket("/ws/batch/{job_id}")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    job_id: str,
+    token: Optional[str] = Query(
+        None, description="Authentication token for job access"
+    ),
+):
+    """WebSocket endpoint for batch job progress updates.
+
+    Args:
+        websocket: WebSocket connection
+        job_id: Batch job ID to subscribe to
+        token: Optional authentication token
+    """
+    # Validate job_id format
+    if not await _validate_job_id(websocket, job_id):
+        return
+
+    # Setup connection manager
+    manager_handlers = await _setup_connection_manager(websocket, job_id, token)
+    if not manager_handlers:
+        return
+
+    disconnect_handler, message_handler = manager_handlers
+
+    # Start processing the batch job
+    await _start_batch_processing(job_id)
+
+    try:
+        # Keep connection alive and handle incoming messages
+        await _handle_websocket_messages(websocket, message_handler)
 
     except WebSocketDisconnect:
         logger.info(f"Client disconnected from job {job_id}")

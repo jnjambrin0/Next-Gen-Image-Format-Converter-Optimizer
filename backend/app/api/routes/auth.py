@@ -1,14 +1,15 @@
 """API routes for authentication and API key management."""
 
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, status, Depends, Request
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from app.services.api_key_service import api_key_service
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
+
+from app.core.exceptions import SecurityError, ValidationError
 from app.models.database import ApiKey
+from app.services.api_key_service import api_key_service
 from app.utils.logging import get_logger
-from app.core.exceptions import ValidationError, SecurityError
 
 logger = get_logger(__name__)
 

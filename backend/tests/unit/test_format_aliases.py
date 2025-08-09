@@ -1,11 +1,12 @@
 """Unit tests for format alias system."""
 
-import pytest
 from unittest.mock import Mock, patch
 
-from app.core.conversion.manager import ConversionManager
+import pytest
+
+from app.core.constants import CANONICAL_FORMATS, FORMAT_ALIASES
 from app.core.conversion.formats.base import BaseFormatHandler
-from app.core.constants import FORMAT_ALIASES, CANONICAL_FORMATS
+from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import UnsupportedFormatError
 
 

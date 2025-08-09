@@ -1,11 +1,13 @@
 """Integration tests for batch image processing functionality."""
 
-import pytest
-from unittest.mock import Mock, patch
 import asyncio
+import concurrent.futures
 import time
 from pathlib import Path
-import concurrent.futures
+from unittest.mock import Mock, patch
+
+import pytest
+
 from tests.fixtures.generators import ImageGenerator
 
 # Fixtures are automatically discovered by pytest from conftest.py

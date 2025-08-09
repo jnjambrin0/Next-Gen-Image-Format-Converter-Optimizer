@@ -1,19 +1,20 @@
-import pytest
 import json
 import logging
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from app.utils.logging import (
-    setup_logging,
-    get_logger,
-    filter_sensitive_data,
-    add_correlation_id,
     LoggingContext,
+    add_correlation_id,
+    filter_sensitive_data,
+    get_logger,
+    setup_logging,
 )
 
 

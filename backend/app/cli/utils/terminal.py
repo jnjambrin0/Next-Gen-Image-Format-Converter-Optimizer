@@ -4,12 +4,12 @@ Detect terminal features and adapt output accordingly
 """
 
 import os
-import sys
 import shutil
-import time
+import sys
 import threading
-from typing import Optional, Tuple, Dict, Any
+import time
 from enum import Enum
+from typing import Any, Dict, Optional, Tuple
 
 
 class TerminalCapability(str, Enum):
@@ -27,7 +27,7 @@ class TerminalDetector:
     # Cache TTL in seconds (5 minutes)
     _CACHE_TTL = 300
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache: Dict[str, Any] = {}
         self._cache_timestamps: Dict[str, float] = {}
         self._cache_lock = threading.Lock()

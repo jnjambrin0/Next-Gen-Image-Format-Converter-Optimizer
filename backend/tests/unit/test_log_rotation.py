@@ -1,11 +1,13 @@
-import pytest
+import logging
 import os
 import tempfile
 import time
-import logging
-from pathlib import Path
-from app.utils.logging import setup_logging, cleanup_old_logs
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from app.utils.logging import cleanup_old_logs, setup_logging
 
 
 class TestLogRotation:

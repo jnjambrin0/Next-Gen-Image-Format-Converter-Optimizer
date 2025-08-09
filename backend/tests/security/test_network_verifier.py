@@ -2,14 +2,16 @@
 Tests for enhanced network isolation verification.
 """
 
-import pytest
 import asyncio
-import socket
 import shutil
-from unittest.mock import patch, MagicMock
+import socket
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from app.core.security.network_verifier import (
-    NetworkVerifier,
     NetworkStrictness,
+    NetworkVerifier,
     verify_network_at_startup,
 )
 

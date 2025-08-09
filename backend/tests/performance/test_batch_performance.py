@@ -4,18 +4,19 @@ import asyncio
 import gc
 import io
 import os
-import psutil
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
+
+import psutil
 import pytest
 from PIL import Image
 
+from app.core.batch.models import BatchItemStatus, BatchStatus
 from app.services.batch_service import batch_service
 from app.services.conversion_service import conversion_service
-from app.core.batch.models import BatchStatus, BatchItemStatus
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

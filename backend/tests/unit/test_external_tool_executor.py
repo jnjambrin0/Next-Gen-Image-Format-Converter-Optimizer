@@ -1,9 +1,10 @@
 """Unit tests for ExternalToolExecutor."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, MagicMock
 import subprocess
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from app.core.conversion.tools import ExternalToolExecutor
 from app.core.exceptions import ConversionFailedError

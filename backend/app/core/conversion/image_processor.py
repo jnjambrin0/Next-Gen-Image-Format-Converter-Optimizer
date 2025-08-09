@@ -2,14 +2,15 @@
 
 import io
 from typing import Optional, Tuple
-from PIL import Image
+
 import structlog
+from PIL import Image
 
 from app.core.exceptions import (
     ConversionError,
-    ValidationError,
-    InvalidImageError,
     ConversionFailedError,
+    InvalidImageError,
+    ValidationError,
 )
 
 logger = structlog.get_logger()

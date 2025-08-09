@@ -6,6 +6,7 @@ to ensure no unexpected connections exist in the sandboxed environment.
 """
 
 from typing import List
+
 import structlog
 
 logger = structlog.get_logger()

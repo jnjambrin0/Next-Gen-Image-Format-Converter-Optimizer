@@ -4,19 +4,20 @@ Browse and search offline documentation
 """
 
 import asyncio
-from typing import Optional, Annotated
+from typing import Annotated, Optional
+
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
-from app.cli.documentation.doc_browser import DocumentationBrowser
-from app.cli.documentation.examples import ExampleDatabase, ExampleCategory
-from app.cli.documentation.knowledge_base import KnowledgeBase, QuestionCategory
-from app.cli.documentation.reference_cards import ReferenceCardGenerator
 from app.cli.documentation.ascii_demos import AsciiDemoPlayer, DemoSpeed
+from app.cli.documentation.doc_browser import DocumentationBrowser
+from app.cli.documentation.examples import ExampleCategory, ExampleDatabase
+from app.cli.documentation.knowledge_base import KnowledgeBase, QuestionCategory
 from app.cli.documentation.man_generator import ManPageGenerator
+from app.cli.documentation.reference_cards import ReferenceCardGenerator
 from app.cli.ui.themes import get_theme_manager
 
 # Initialize theme manager and console

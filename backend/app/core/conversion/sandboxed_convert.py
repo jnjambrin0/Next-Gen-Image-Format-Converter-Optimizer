@@ -11,15 +11,16 @@ Usage:
     python sandboxed_convert.py <input_format> <output_format> <quality>
 """
 
-# Standard library imports only - no app imports to avoid logging initialization
-import sys
 import io
-import os
 import json
-import traceback
 
 # Disable all logging before any other imports
 import logging
+import os
+
+# Standard library imports only - no app imports to avoid logging initialization
+import sys
+import traceback
 
 logging.disable(logging.CRITICAL)
 
@@ -200,14 +201,14 @@ from PIL import Image
 # 3. Only specific constants are imported, not executable code
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from app.core.constants import (
+    MAX_FILE_SIZE,
     MAX_IMAGE_PIXELS,
+    MAX_QUALITY,
+    MIN_QUALITY,
+    PNG_COMPRESS_LEVEL,
     SUPPORTED_INPUT_FORMATS,
     SUPPORTED_OUTPUT_FORMATS,
-    MAX_FILE_SIZE,
     WEBP_METHOD,
-    PNG_COMPRESS_LEVEL,
-    MIN_QUALITY,
-    MAX_QUALITY,
 )
 
 # Set decompression bomb protection limit

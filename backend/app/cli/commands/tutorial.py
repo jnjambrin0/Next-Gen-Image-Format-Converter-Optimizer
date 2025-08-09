@@ -4,12 +4,13 @@ Interactive tutorial launcher and manager
 """
 
 import asyncio
-from typing import Optional, Annotated
+from typing import Annotated, Optional
+
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
 from app.cli.documentation.tutorial_engine import TutorialEngine
 from app.cli.ui.themes import get_theme_manager

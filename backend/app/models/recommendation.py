@@ -1,10 +1,11 @@
 """Data models for format recommendations."""
 
-from typing import Optional, Dict, Any, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.conversion import ContentClassification, OutputFormat, InputFormat
+from app.models.conversion import ContentClassification, InputFormat, OutputFormat
 
 
 class UseCaseType(str, Enum):

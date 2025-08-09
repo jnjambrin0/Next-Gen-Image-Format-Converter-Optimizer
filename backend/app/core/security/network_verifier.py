@@ -8,20 +8,21 @@ import socket
 import subprocess
 import sys
 from enum import Enum
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 import structlog
 
+from app.core.constants import NETWORK_CHECK_TIMEOUT
 from app.core.monitoring.network_check import NetworkIsolationChecker
 from app.core.monitoring.security_events import SecurityEventTracker
-from app.models.security_event import SecurityEventType, SecuritySeverity
-from app.core.security.types import NetworkStatus, VerificationResult
 from app.core.security.errors import (
     SecurityError,
-    create_verification_error,
     create_network_error,
+    create_verification_error,
 )
-from app.core.constants import NETWORK_CHECK_TIMEOUT
 from app.core.security.metrics import SecurityMetricsCollector
+from app.core.security.types import NetworkStatus, VerificationResult
+from app.models.security_event import SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()
 

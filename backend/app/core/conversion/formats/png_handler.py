@@ -1,13 +1,14 @@
 """PNG format handler."""
 
-from typing import BinaryIO, Dict, Any
 from io import BytesIO
-from PIL import Image, PngImagePlugin
-import structlog
+from typing import Any, BinaryIO, Dict
 
-from app.models.conversion import ConversionSettings
+import structlog
+from PIL import Image, PngImagePlugin
+
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.exceptions import ConversionFailedError
+from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
 

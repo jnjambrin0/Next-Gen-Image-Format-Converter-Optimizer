@@ -8,14 +8,15 @@ Provides real-time monitoring of:
 - Resource utilization
 """
 
-import time
 import asyncio
-import psutil
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
-from datetime import datetime
 import logging
 import statistics
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 logger = logging.getLogger(__name__)
 

@@ -3,21 +3,22 @@ Unit tests for performance metrics accuracy.
 Tests metrics collection, calculation, and reporting.
 """
 
-import pytest
-import time
 import json
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
+import time
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
+from app.cli.utils.profiler import CLIProfiler, cli_profiler
+from app.core.monitoring.metrics import MetricsCollector
 from app.core.monitoring.performance import (
-    ConversionMetrics,
     BatchMetrics,
+    ConversionMetrics,
     PerformanceMonitor,
     PerformanceProfiler,
 )
-from app.core.monitoring.metrics import MetricsCollector
-from app.cli.utils.profiler import CLIProfiler, cli_profiler
 
 
 class TestConversionMetrics:

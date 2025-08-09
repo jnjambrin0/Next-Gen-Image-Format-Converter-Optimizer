@@ -2,11 +2,12 @@
 Integration tests for command chaining and piping
 """
 
-import pytest
-from unittest.mock import Mock, patch, mock_open
-from typer.testing import CliRunner
 import sys
 from io import BytesIO
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
+from typer.testing import CliRunner
 
 from app.cli.commands.chain import app as chain_app
 

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Generate test images for the image converter test suite."""
 
-import os
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-from PIL.ExifTags import TAGS, GPSTAGS
-import piexif
-import numpy as np
-from datetime import datetime
 import json
+import os
+from datetime import datetime
+
+import numpy as np
+import piexif
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL.ExifTags import GPSTAGS, TAGS
 
 
 def create_sample_photo():

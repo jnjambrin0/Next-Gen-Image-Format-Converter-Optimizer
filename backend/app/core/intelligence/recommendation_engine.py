@@ -1,20 +1,20 @@
 """Format recommendation engine for intelligent format selection."""
 
 import asyncio
-from typing import Dict, List, Optional, Tuple, Any
-from collections import defaultdict
 import time
+from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.conversion import ContentType, OutputFormat, InputFormat
+from app.core.constants import SUPPORTED_OUTPUT_FORMATS
+from app.models.conversion import ContentType, InputFormat, OutputFormat
 from app.models.recommendation import (
+    FormatCharacteristics,
     FormatRecommendation,
     RecommendationRequest,
-    UseCaseType,
-    FormatCharacteristics,
     TradeOffAnalysis,
+    UseCaseType,
 )
 from app.utils.logging import get_logger
-from app.core.constants import SUPPORTED_OUTPUT_FORMATS
 
 logger = get_logger(__name__)
 

@@ -1,23 +1,23 @@
 """User preference tracking for format recommendations."""
 
-import sqlite3
 import json
 import os
+import re
+import sqlite3
 import time
 from contextlib import contextmanager
-from typing import Dict, List, Optional, Tuple, Any
-from threading import Lock
 from datetime import datetime, timedelta
-import re
+from threading import Lock
+from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.conversion import ContentType, OutputFormat
-from app.models.recommendation import UseCaseType, UserFormatPreference
-from app.utils.logging import get_logger
 from app.core.constants import DB_CHECK_SAME_THREAD
 from app.core.security.errors_simplified import (
     create_file_error,
     create_rate_limit_error,
 )
+from app.models.conversion import ContentType, OutputFormat
+from app.models.recommendation import UseCaseType, UserFormatPreference
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

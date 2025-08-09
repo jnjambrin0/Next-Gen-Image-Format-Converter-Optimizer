@@ -5,30 +5,30 @@ Enhanced Rich progress bars and indicators with animations
 
 import asyncio
 import time
-from typing import Optional, List, Callable, Any
 from contextlib import contextmanager
 from enum import Enum
+from typing import Any, Callable, List, Optional
 
-from rich.progress import (
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    BarColumn,
-    TaskProgressColumn,
-    TimeRemainingColumn,
-    TimeElapsedColumn,
-    MofNCompleteColumn,
-    DownloadColumn,
-    TransferSpeedColumn,
-    FileSizeColumn,
-    TotalFileSizeColumn,
-    ProgressColumn,
-    Task,
-)
 from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    DownloadColumn,
+    FileSizeColumn,
+    MofNCompleteColumn,
+    Progress,
+    ProgressColumn,
+    SpinnerColumn,
+    Task,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+    TotalFileSizeColumn,
+    TransferSpeedColumn,
+)
+from rich.style import Style
 from rich.table import Column
 from rich.text import Text
-from rich.style import Style
 
 from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
 
