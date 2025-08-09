@@ -1,7 +1,7 @@
 """Unit tests for face detection with real images."""
 
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 import pytest
 from PIL import Image

@@ -1,7 +1,7 @@
 """Integration tests for API authentication flow."""
 
-from typing import Any
 from datetime import datetime, timedelta
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient

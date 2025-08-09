@@ -1,9 +1,9 @@
 """Unit tests for user preference tracking."""
 
-from typing import Any
 import os
 import tempfile
 import time
+from typing import Any
 
 import pytest
 

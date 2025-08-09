@@ -1,6 +1,7 @@
 """WebSocket endpoints for real-time communication."""
 
 from typing import Any
+
 from .progress import (
     connection_manager,
 )

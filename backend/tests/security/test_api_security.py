@@ -1,9 +1,9 @@
 """Security tests for API authentication and rate limiting."""
 
-from typing import Any
 import hashlib
 import secrets
 import time
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient

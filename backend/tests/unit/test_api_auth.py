@@ -1,8 +1,8 @@
 """Unit tests for API authentication and key management."""
 
-from typing import Any
 import hashlib
 from datetime import datetime, timedelta
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest

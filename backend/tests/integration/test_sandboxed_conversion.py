@@ -1,9 +1,9 @@
 """Integration tests for sandboxed image conversions."""
 
-from typing import Any
 import asyncio
 import os
 from io import BytesIO
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest

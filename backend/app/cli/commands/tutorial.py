@@ -4,7 +4,7 @@ Interactive tutorial launcher and manager
 """
 
 import asyncio
-from typing import Any, Annotated, Optional
+from typing import Annotated, Any, Optional
 
 import typer
 from rich.console import Console

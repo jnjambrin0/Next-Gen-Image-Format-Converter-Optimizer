@@ -1,7 +1,7 @@
 """Unit tests for preset data models."""
 
-from typing import Any
 from datetime import datetime
+from typing import Any
 
 import pytest
 from pydantic import ValidationError

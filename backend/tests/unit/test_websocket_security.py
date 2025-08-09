@@ -1,7 +1,7 @@
 """Unit tests for WebSocket security and authentication."""
 
-from typing import Any
 from datetime import datetime, timedelta
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest

@@ -1,6 +1,7 @@
 """Integration tests for recommendation API endpoints."""
 
 from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 

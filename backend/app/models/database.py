@@ -1,7 +1,7 @@
 """Database models for the Image Converter application."""
 
-from typing import Any
 import uuid
+from typing import Any
 
 from sqlalchemy import (
     Boolean,

@@ -1,5 +1,5 @@
-from typing import Any
 from datetime import datetime, timedelta
+from typing import Any
 
 import pytest
 

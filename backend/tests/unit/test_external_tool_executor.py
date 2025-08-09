@@ -1,7 +1,7 @@
 """Unit tests for ExternalToolExecutor."""
 
-from typing import Any
 import subprocess
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest

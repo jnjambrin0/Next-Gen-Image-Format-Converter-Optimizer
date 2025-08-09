@@ -1,7 +1,7 @@
 """Unit tests for the SecurityEngine."""
 
-from typing import Any
 import io
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest

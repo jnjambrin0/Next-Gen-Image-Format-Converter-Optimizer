@@ -1,7 +1,7 @@
 """Unit tests for the LosslessCompressor."""
 
-from typing import Any
 import io
+from typing import Any
 
 import pytest
 from PIL import Image

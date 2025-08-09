@@ -1,8 +1,8 @@
 """Unit tests for the BatchManager class."""
 
-from typing import Any
 import asyncio
 import uuid
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest

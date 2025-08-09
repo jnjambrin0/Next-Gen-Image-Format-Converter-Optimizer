@@ -1,8 +1,8 @@
 """Unit tests for the QualityAnalyzer."""
 
-from typing import Any
 import asyncio
 import io
+from typing import Any
 
 import pytest
 from PIL import Image

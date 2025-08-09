@@ -1,10 +1,10 @@
 """Unit tests for format handlers."""
 
 # Import fixtures
-from typing import Any
 import sys
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock
 
 import pytest

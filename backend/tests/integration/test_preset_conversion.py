@@ -1,6 +1,7 @@
 """Integration tests for preset system with conversion pipeline."""
 
 from typing import Any
+
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient

@@ -1,11 +1,11 @@
 """Unit tests for sandboxed_convert.py script."""
 
-from typing import Any
 import io
 import json
 import os
 import subprocess
 import sys
+from typing import Any
 
 import pytest
 from PIL import Image

@@ -1,6 +1,7 @@
 """Unit tests for encoding options."""
 
 from typing import Any
+
 import pytest
 
 from app.core.optimization.encoding_options import (

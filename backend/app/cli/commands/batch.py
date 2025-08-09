@@ -7,7 +7,7 @@ import asyncio
 import time
 from glob import glob
 from pathlib import Path
-from typing import Any, Annotated, List, Optional
+from typing import Annotated, Any, List, Optional
 
 import typer
 from rich.progress import (

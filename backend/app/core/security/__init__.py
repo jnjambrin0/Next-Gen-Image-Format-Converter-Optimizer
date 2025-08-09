@@ -1,6 +1,7 @@
 """Security module for image converter application."""
 
 from typing import Any
+
 from app.core.security.engine import SecurityEngine
 from app.core.security.errors import SecurityError
 from app.core.security.sandbox import (

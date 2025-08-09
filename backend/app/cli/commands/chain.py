@@ -5,7 +5,7 @@ Command chaining and piping support
 
 import sys
 from pathlib import Path
-from typing import Any, Annotated, List, Optional
+from typing import Annotated, Any, List, Optional
 
 import typer
 from rich.console import Console
