@@ -1,9 +1,9 @@
 """Unit tests for user preference tracking."""
 
+from typing import Any
 import os
 import tempfile
 import time
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -16,7 +16,7 @@ class TestUserPreferenceTracker:
     """Test cases for UserPreferenceTracker."""
 
     @pytest.fixture
-    def temp_db_path(self):
+    def temp_db_path(self) -> None:
         """Create temporary database path."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as f:
             temp_path = f.name
@@ -26,12 +26,12 @@ class TestUserPreferenceTracker:
             os.unlink(temp_path)
 
     @pytest.fixture
-    def tracker(self, temp_db_path):
+    def tracker(self, temp_db_path) -> None:
         """Create preference tracker with temporary database."""
         return UserPreferenceTracker(db_path=temp_db_path)
 
     @pytest.fixture
-    def memory_tracker(self):
+    def memory_tracker(self) -> None:
         """Create preference tracker with in-memory database."""
         return UserPreferenceTracker(db_path=":memory:")
 
@@ -312,7 +312,7 @@ class TestUserPreferenceTracker:
             ).fetchone()["count"]
             assert count >= 1  # At least the new one
 
-    def test_preference_statistics(self, memory_tracker):
+    def test_preference_statistics(self, memory_tracker) -> None:
         """Test preference statistics generation."""
         # Add some test data
         with memory_tracker._get_db() as conn:
@@ -383,7 +383,7 @@ class TestUserPreferenceTracker:
         prefs = await tracker.get_format_preferences(ContentType.PHOTO)
         assert len(prefs) >= 1  # At least one format recorded
 
-    def test_database_initialization(self, temp_db_path):
+    def test_database_initialization(self, temp_db_path) -> None:
         """Test database file creation and initialization."""
         tracker = UserPreferenceTracker(db_path=temp_db_path)
 

@@ -47,7 +47,7 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Monitor and track Intelligence Engine performance."""
 
-    def __init__(self, window_size: int = 100):
+    def __init__(self, window_size: int = 100) -> None:
         """Initialize performance monitor.
 
         Args:

@@ -1,17 +1,16 @@
 """
+from typing import Any
 Unit tests for performance metrics accuracy.
 Tests metrics collection, calculation, and reporting.
 """
 
 import json
 import time
-from datetime import datetime
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
-from app.cli.utils.profiler import CLIProfiler, cli_profiler
+from app.cli.utils.profiler import CLIProfiler
 from app.core.monitoring.metrics import MetricsCollector
 from app.core.monitoring.performance import (
     BatchMetrics,
@@ -24,7 +23,7 @@ from app.core.monitoring.performance import (
 class TestConversionMetrics:
     """Test ConversionMetrics accuracy."""
 
-    def test_metrics_calculation(self):
+    def test_metrics_calculation(self) -> None:
         """Test that metrics are calculated correctly."""
         metrics = ConversionMetrics(
             file_size=1024 * 1024,  # 1MB
@@ -45,7 +44,7 @@ class TestConversionMetrics:
         assert json_data["compression_ratio"] == 2.0
         assert json_data["throughput_mbps"] == 2.0  # 1MB / 0.5s
 
-    def test_zero_handling(self):
+    def test_zero_handling(self) -> None:
         """Test metrics handle zero values correctly."""
         metrics = ConversionMetrics(
             file_size=0, processing_time=0, memory_used=0, output_size=0
@@ -62,7 +61,7 @@ class TestConversionMetrics:
 class TestBatchMetrics:
     """Test BatchMetrics accuracy."""
 
-    def test_batch_metrics_properties(self):
+    def test_batch_metrics_properties(self) -> None:
         """Test batch metrics calculated properties."""
         metrics = BatchMetrics(job_id="test_job", total_files=10, worker_count=4)
 
@@ -91,7 +90,7 @@ class TestBatchMetrics:
         efficiency = metrics.worker_efficiency
         assert 0 <= efficiency <= 100
 
-    def test_batch_metrics_json_report(self):
+    def test_batch_metrics_json_report(self) -> None:
         """Test batch metrics JSON report generation."""
         metrics = BatchMetrics(job_id="test_batch", total_files=5, worker_count=2)
 
@@ -125,10 +124,10 @@ class TestMetricsCollector:
     """Test MetricsCollector from existing metrics module."""
 
     @pytest.fixture
-    def collector(self):
+    def collector(self) -> None:
         return MetricsCollector(max_history=10)
 
-    def test_conversion_tracking_lifecycle(self, collector):
+    def test_conversion_tracking_lifecycle(self, collector) -> None:
         """Test complete conversion tracking lifecycle."""
         conversion_id = "test_conv_1"
 
@@ -163,7 +162,7 @@ class TestMetricsCollector:
         assert completed_metrics.peak_memory_mb == 25
         assert completed_metrics.duration_ms > 0
 
-    def test_aggregate_statistics(self, collector):
+    def test_aggregate_statistics(self, collector) -> None:
         """Test aggregate statistics calculation."""
         # Add several conversions
         for i in range(5):
@@ -202,10 +201,10 @@ class TestPerformanceProfiler:
     """Test PerformanceProfiler accuracy."""
 
     @pytest.fixture
-    def profiler(self):
+    def profiler(self) -> None:
         return PerformanceProfiler()
 
-    def test_profile_lifecycle(self, profiler):
+    def test_profile_lifecycle(self, profiler) -> None:
         """Test profiling lifecycle and report generation."""
         # Start profile
         profiler.start_profile("test_operation")
@@ -236,7 +235,7 @@ class TestPerformanceProfiler:
         assert op_stats["step2"]["count"] == 1
         assert op_stats["step2"]["total_seconds"] == 0.3
 
-    def test_profile_save_to_file(self, profiler, tmp_path):
+    def test_profile_save_to_file(self, profiler, tmp_path) -> None:
         """Test saving profile to JSON file."""
         profiler.start_profile("save_test")
         profiler.add_operation("test_op", 1.5)
@@ -259,7 +258,7 @@ class TestPerformanceProfiler:
 class TestCLIProfiler:
     """Test CLI-specific profiler."""
 
-    def test_cli_profiler_enable_disable(self):
+    def test_cli_profiler_enable_disable(self) -> None:
         """Test enabling and disabling CLI profiler."""
         profiler = CLIProfiler()
 
@@ -275,7 +274,7 @@ class TestCLIProfiler:
         profiler.disable()
         assert not profiler.enabled
 
-    def test_conversion_tracking(self):
+    def test_conversion_tracking(self) -> None:
         """Test tracking conversion metrics in CLI profiler."""
         profiler = CLIProfiler()
         profiler.enable()
@@ -297,7 +296,7 @@ class TestCLIProfiler:
         assert profiler.current_metrics.processing_time == 1.5
 
     @patch("app.cli.utils.profiler.console")
-    def test_profile_context_manager(self, mock_console):
+    def test_profile_context_manager(self, mock_console) -> None:
         """Test profile operation context manager."""
         profiler = CLIProfiler()
         profiler.enable()
@@ -316,7 +315,7 @@ class TestCLIProfiler:
 class TestPerformanceMonitor:
     """Test PerformanceMonitor accuracy."""
 
-    def test_monitor_sampling(self):
+    def test_monitor_sampling(self) -> None:
         """Test that monitor samples data correctly."""
         monitor = PerformanceMonitor(sample_interval=0.05)
 
@@ -335,7 +334,7 @@ class TestPerformanceMonitor:
         # Delta should be calculated
         assert "delta_mb" in stats["memory"]
 
-    def test_peak_memory_tracking(self):
+    def test_peak_memory_tracking(self) -> None:
         """Test that peak memory is tracked correctly."""
         monitor = PerformanceMonitor()
 
@@ -360,7 +359,7 @@ class TestPerformanceMonitor:
 class TestMetricsIntegration:
     """Test integration between different metrics components."""
 
-    def test_metrics_flow_integration(self):
+    def test_metrics_flow_integration(self) -> None:
         """Test complete metrics flow from collection to reporting."""
         # Create components
         collector = MetricsCollector()

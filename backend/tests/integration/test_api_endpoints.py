@@ -1,14 +1,10 @@
 """Integration tests for API endpoints."""
 
-import asyncio
+from typing import Any
 import io
-import json
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
 
 from app.main import app
 
@@ -19,16 +15,16 @@ class TestAPIEndpoints:
     """Integration tests for Image Converter API endpoints."""
 
     @pytest.fixture
-    def client(self):
+    def client(self) -> None:
         """Create test client."""
         return TestClient(app)
 
     @pytest.fixture
-    def auth_headers(self):
+    def auth_headers(self) -> None:
         """Mock authentication headers if needed."""
         return {"X-API-Key": "test-key"}
 
-    def test_health_check(self, client):
+    def test_health_check(self, client) -> None:
         """Test health check endpoint."""
         # Act
         response = client.get("/api/health")
@@ -40,7 +36,7 @@ class TestAPIEndpoints:
         assert "version" in data
         assert "uptime" in data
 
-    def test_convert_single_image_success(self, client, sample_image_path):
+    def test_convert_single_image_success(self, client, sample_image_path) -> None:
         """Test successful single image conversion."""
         # Arrange
         with open(sample_image_path, "rb") as f:
@@ -60,11 +56,10 @@ class TestAPIEndpoints:
         assert len(response.content) > 0
 
     @pytest.mark.skip(reason="Resize feature not implemented in this story")
-    def test_convert_with_resize(self, client, sample_image_path):
+    def test_convert_with_resize(self, client, sample_image_path) -> None:
         """Test image conversion with resizing."""
-        pass
 
-    def test_convert_invalid_format(self, client, sample_image_path):
+    def test_convert_invalid_format(self, client, sample_image_path) -> None:
         """Test conversion with invalid output format."""
         # Arrange
         with open(sample_image_path, "rb") as f:
@@ -77,7 +72,7 @@ class TestAPIEndpoints:
         # Assert
         assert response.status_code == 422  # FastAPI validation error
 
-    def test_convert_file_too_large(self, client):
+    def test_convert_file_too_large(self, client) -> None:
         """Test rejection of files exceeding size limit."""
         # Arrange
         # Create a mock large file (51MB, exceeds 50MB limit)
@@ -95,41 +90,34 @@ class TestAPIEndpoints:
         assert "exceeds maximum" in error["detail"]["message"]
 
     @pytest.mark.skip(reason="Batch conversion not implemented in this story")
-    def test_batch_conversion(self, client, all_test_images):
+    def test_batch_conversion(self, client, all_test_images) -> None:
         """Test batch image conversion."""
-        pass
 
     @pytest.mark.skip(reason="Formats endpoint not implemented in this story")
-    def test_get_supported_formats(self, client):
+    def test_get_supported_formats(self, client) -> None:
         """Test endpoint returning supported formats."""
-        pass
 
     @pytest.mark.skip(reason="Content detection not implemented in this story")
-    def test_content_detection(self, client, all_test_images):
+    def test_content_detection(self, client, all_test_images) -> None:
         """Test ML-based content detection endpoint."""
-        pass
 
     @pytest.mark.skip(reason="Presets not implemented in this story")
-    def test_preset_operations(self, client):
+    def test_preset_operations(self, client) -> None:
         """Test preset CRUD operations."""
-        pass
 
     @pytest.mark.skip(reason="Download endpoint not implemented in this story")
-    def test_download_converted_file(self, client, sample_image_path):
+    def test_download_converted_file(self, client, sample_image_path) -> None:
         """Test downloading converted files."""
-        pass
 
     @pytest.mark.skip(reason="WebSocket not implemented in this story")
-    def test_websocket_progress(self, client, sample_image_path):
+    def test_websocket_progress(self, client, sample_image_path) -> None:
         """Test WebSocket progress updates for conversion."""
-        pass
 
     @pytest.mark.skip(reason="Rate limiting not implemented in this story")
-    def test_rate_limiting(self, client, sample_image_path):
+    def test_rate_limiting(self, client, sample_image_path) -> None:
         """Test API rate limiting."""
-        pass
 
-    def test_cors_headers(self, client):
+    def test_cors_headers(self, client) -> None:
         """Test CORS headers are properly set."""
         # Act
         response = client.options(
@@ -147,7 +135,7 @@ class TestAPIEndpoints:
             response.headers["access-control-allow-origin"] == "http://localhost:5173"
         )
 
-    def test_error_handling_corrupted_file(self, client):
+    def test_error_handling_corrupted_file(self, client) -> None:
         """Test API handling of corrupted files."""
         # Arrange
         corrupted_data = b"Not a real image file"
@@ -162,7 +150,7 @@ class TestAPIEndpoints:
         error = response.json()
         assert "error_code" in error["detail"]
 
-    def test_concurrent_requests(self, client, sample_image_path):
+    def test_concurrent_requests(self, client, sample_image_path) -> None:
         """Test handling of concurrent conversion requests."""
         # Arrange
         with open(sample_image_path, "rb") as f:

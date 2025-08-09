@@ -1,8 +1,8 @@
 """Unit tests for ExternalToolExecutor."""
 
-import asyncio
+from typing import Any
 import subprocess
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,7 +13,7 @@ from app.core.exceptions import ConversionFailedError
 class TestExternalToolExecutor:
     """Test suite for ExternalToolExecutor."""
 
-    def test_init_basic(self):
+    def test_init_basic(self) -> None:
         """Test basic initialization."""
         executor = ExternalToolExecutor("test_tool")
 
@@ -23,7 +23,7 @@ class TestExternalToolExecutor:
         assert executor.restricted_env["HOME"] == "/tmp"
         assert executor.restricted_env["LC_ALL"] == "C"
 
-    def test_init_with_variants(self):
+    def test_init_with_variants(self) -> None:
         """Test initialization with tool variants."""
         executor = ExternalToolExecutor(
             "mozjpeg", tool_variants=["cjpeg", "mozjpeg", "mozjpeg-cjpeg"]
@@ -32,7 +32,7 @@ class TestExternalToolExecutor:
         assert executor.tool_name == "mozjpeg"
         assert executor.tool_variants == ["cjpeg", "mozjpeg", "mozjpeg-cjpeg"]
 
-    def test_init_with_custom_env(self):
+    def test_init_with_custom_env(self) -> None:
         """Test initialization with custom environment."""
         custom_env = {"CUSTOM_VAR": "test_value"}
         executor = ExternalToolExecutor("test_tool", custom_env=custom_env)
@@ -41,7 +41,7 @@ class TestExternalToolExecutor:
         assert executor.restricted_env["PATH"] == "/usr/bin:/bin:/usr/local/bin"
 
     @patch("shutil.which")
-    def test_find_tool_success(self, mock_which):
+    def test_find_tool_success(self, mock_which) -> None:
         """Test successful tool finding."""
         mock_which.return_value = "/usr/bin/test_tool"
 
@@ -52,7 +52,7 @@ class TestExternalToolExecutor:
         mock_which.assert_called_once_with("test_tool")
 
     @patch("shutil.which")
-    def test_find_tool_with_variants(self, mock_which):
+    def test_find_tool_with_variants(self, mock_which) -> None:
         """Test finding tool with variants."""
         mock_which.side_effect = [None, None, "/usr/local/bin/mozjpeg-cjpeg"]
 
@@ -65,7 +65,7 @@ class TestExternalToolExecutor:
         assert mock_which.call_count == 3
 
     @patch("shutil.which")
-    def test_find_tool_not_found(self, mock_which):
+    def test_find_tool_not_found(self, mock_which) -> None:
         """Test when tool is not found."""
         mock_which.return_value = None
 
@@ -76,7 +76,7 @@ class TestExternalToolExecutor:
 
     @patch("subprocess.run")
     @patch("shutil.which")
-    def test_check_version_success(self, mock_which, mock_run):
+    def test_check_version_success(self, mock_which, mock_run) -> None:
         """Test successful version check."""
         mock_which.return_value = "/usr/bin/test_tool"
         mock_run.return_value = MagicMock(
@@ -91,7 +91,7 @@ class TestExternalToolExecutor:
 
     @patch("subprocess.run")
     @patch("shutil.which")
-    def test_check_version_from_stderr(self, mock_which, mock_run):
+    def test_check_version_from_stderr(self, mock_which, mock_run) -> None:
         """Test version check when output is on stderr."""
         mock_which.return_value = "/usr/bin/mozjpeg"
         mock_run.return_value = MagicMock(
@@ -104,7 +104,7 @@ class TestExternalToolExecutor:
         assert version == "mozjpeg version 4.0.0"
 
     @patch("shutil.which")
-    def test_check_version_not_available(self, mock_which):
+    def test_check_version_not_available(self, mock_which) -> None:
         """Test version check when tool not available."""
         mock_which.return_value = None
 
@@ -115,7 +115,7 @@ class TestExternalToolExecutor:
 
     @patch("subprocess.run")
     @patch("shutil.which")
-    def test_execute_success(self, mock_which, mock_run):
+    def test_execute_success(self, mock_which, mock_run) -> None:
         """Test successful synchronous execution."""
         mock_which.return_value = "/usr/bin/test_tool"
         mock_run.return_value = MagicMock(
@@ -138,7 +138,7 @@ class TestExternalToolExecutor:
 
     @patch("subprocess.run")
     @patch("shutil.which")
-    def test_execute_with_input_data(self, mock_which, mock_run):
+    def test_execute_with_input_data(self, mock_which, mock_run) -> None:
         """Test execution with input data."""
         mock_which.return_value = "/usr/bin/test_tool"
         mock_run.return_value = MagicMock(
@@ -153,7 +153,7 @@ class TestExternalToolExecutor:
         assert mock_run.call_args[1]["input"] == input_data
 
     @patch("shutil.which")
-    def test_execute_tool_not_available(self, mock_which):
+    def test_execute_tool_not_available(self, mock_which) -> None:
         """Test execution when tool not available."""
         mock_which.return_value = None
 
@@ -166,7 +166,7 @@ class TestExternalToolExecutor:
 
     @patch("subprocess.run")
     @patch("shutil.which")
-    def test_execute_timeout(self, mock_which, mock_run):
+    def test_execute_timeout(self, mock_which, mock_run) -> None:
         """Test execution timeout."""
         mock_which.return_value = "/usr/bin/test_tool"
         mock_run.side_effect = subprocess.TimeoutExpired("test_tool", 5)
@@ -180,7 +180,7 @@ class TestExternalToolExecutor:
 
     @patch("subprocess.run")
     @patch("shutil.which")
-    def test_execute_failure(self, mock_which, mock_run):
+    def test_execute_failure(self, mock_which, mock_run) -> None:
         """Test execution with non-zero return code."""
         mock_which.return_value = "/usr/bin/test_tool"
         mock_run.return_value = MagicMock(
@@ -218,28 +218,28 @@ class TestExternalToolExecutor:
         assert result.returncode == 0
         assert result.execution_time > 0
 
-    def test_validate_output_success(self):
+    def test_validate_output_success(self) -> None:
         """Test output validation success."""
         executor = ExternalToolExecutor("test_tool")
 
         assert executor.validate_output(b"x" * 1000) is True
         assert executor.validate_output(b"x" * 100) is True
 
-    def test_validate_output_empty(self):
+    def test_validate_output_empty(self) -> None:
         """Test output validation with empty data."""
         executor = ExternalToolExecutor("test_tool")
 
         assert executor.validate_output(b"") is False
         assert executor.validate_output(None) is False
 
-    def test_validate_output_too_small(self):
+    def test_validate_output_too_small(self) -> None:
         """Test output validation with small data."""
         executor = ExternalToolExecutor("test_tool")
 
         assert executor.validate_output(b"x" * 50, min_size=100) is False
         assert executor.validate_output(b"x" * 150, min_size=100) is True
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         """Test string representation."""
         with patch("shutil.which") as mock_which:
             mock_which.return_value = "/usr/bin/test_tool"

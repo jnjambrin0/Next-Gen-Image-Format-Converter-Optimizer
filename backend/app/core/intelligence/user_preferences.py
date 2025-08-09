@@ -1,14 +1,11 @@
 """User preference tracking for format recommendations."""
 
-import json
 import os
-import re
 import sqlite3
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
 from threading import Lock
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from app.core.constants import DB_CHECK_SAME_THREAD
 from app.core.security.errors_simplified import (
@@ -34,7 +31,7 @@ class UserPreferenceTracker:
     PREFERENCE_RATE_LIMIT_WINDOW = 60  # Rate limit window in seconds
     PREFERENCE_RATE_LIMIT_MAX = 10  # Max preferences per window
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """Initialize preference tracker.
 
         Args:
@@ -48,7 +45,7 @@ class UserPreferenceTracker:
         self._cache_ttl = 300  # 5 minute cache
         self._rate_limit_tracker = {}  # Track rate limiting
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for preferences."""
         if self.db_path != ":memory:":
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -102,7 +99,7 @@ class UserPreferenceTracker:
             conn.close()
 
     @contextmanager
-    def _get_db(self):
+    def _get_db(self) -> None:
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
@@ -126,7 +123,7 @@ class UserPreferenceTracker:
         Args:
             content_type: Type of content
             chosen_format: Format chosen by user
-            use_case: Optional use case context
+            use_case: Optional[Any] use case context
         """
         # Rate limiting check
         if not self._check_rate_limit():
@@ -283,7 +280,7 @@ class UserPreferenceTracker:
         Args:
             content_type: Type of content
             format_option: Format to check preference for
-            use_case: Optional use case context
+            use_case: Optional[Any] use case context
 
         Returns:
             Preference score adjustment (-0.5 to 0.5)
@@ -358,11 +355,10 @@ class UserPreferenceTracker:
 
         Args:
             content_type: Type of content
-            use_case: Optional use case context
+            use_case: Optional[Any] use case context
             limit: Maximum number of preferences to return
 
-        Returns:
-            List of user format preferences
+        Returns: List[Any] of user format preferences
         """
         with self._lock:
             try:
@@ -419,8 +415,8 @@ class UserPreferenceTracker:
         """Reset user preferences.
 
         Args:
-            content_type: Optional content type to reset (all if None)
-            format_option: Optional format to reset (all if None)
+            content_type: Optional[Any] content type to reset (all if None)
+            format_option: Optional[Any] format to reset (all if None)
 
         Returns:
             Number of preferences reset

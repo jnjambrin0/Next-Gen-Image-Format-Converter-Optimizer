@@ -1,10 +1,10 @@
 """
+from typing import Any
 Unit tests for theme management system
 """
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -14,7 +14,7 @@ from app.cli.ui.themes import Theme, ThemeManager, ThemeType, get_theme_manager
 class TestTheme:
     """Test Theme class"""
 
-    def test_theme_creation(self):
+    def test_theme_creation(self) -> None:
         """Test creating a theme"""
         theme = Theme(
             name="Test Theme",
@@ -29,7 +29,7 @@ class TestTheme:
         assert theme.colors["primary"] == "#00D9FF"
         assert theme.styles["info"]["bold"] is True
 
-    def test_theme_to_rich_theme(self):
+    def test_theme_to_rich_theme(self) -> None:
         """Test converting to Rich theme"""
         theme = Theme(
             name="Test",
@@ -46,7 +46,7 @@ class TestTheme:
         assert "info" in rich_theme.styles
         assert "error" in rich_theme.styles
 
-    def test_theme_serialization(self):
+    def test_theme_serialization(self) -> None:
         """Test theme serialization"""
         theme = Theme(
             name="Test",
@@ -70,14 +70,14 @@ class TestThemeManager:
     """Test ThemeManager class"""
 
     @pytest.fixture
-    def temp_config_dir(self, tmp_path):
+    def temp_config_dir(self, tmp_path) -> None:
         """Create temporary config directory"""
         config_dir = tmp_path / "test_config"
         config_dir.mkdir()
         (config_dir / "themes").mkdir()
         return config_dir
 
-    def test_theme_manager_init(self, temp_config_dir):
+    def test_theme_manager_init(self, temp_config_dir) -> None:
         """Test theme manager initialization"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -85,7 +85,7 @@ class TestThemeManager:
         assert manager.themes_dir == temp_config_dir / "themes"
         assert manager.themes_dir.exists()
 
-    def test_built_in_themes(self):
+    def test_built_in_themes(self) -> None:
         """Test built-in themes are available"""
         manager = ThemeManager()
 
@@ -101,7 +101,7 @@ class TestThemeManager:
             theme = manager.THEMES[theme_type]
             assert isinstance(theme, Theme)
 
-    def test_get_theme(self, temp_config_dir):
+    def test_get_theme(self, temp_config_dir) -> None:
         """Test getting themes"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -114,7 +114,7 @@ class TestThemeManager:
         missing = manager.get_theme("nonexistent")
         assert missing is None
 
-    def test_list_themes(self, temp_config_dir):
+    def test_list_themes(self, temp_config_dir) -> None:
         """Test listing all themes"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -123,7 +123,7 @@ class TestThemeManager:
         assert "dark" in themes
         assert "light" in themes
 
-    def test_set_current_theme(self, temp_config_dir):
+    def test_set_current_theme(self, temp_config_dir) -> None:
         """Test setting current theme"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -136,7 +136,7 @@ class TestThemeManager:
         result = manager.set_current_theme("invalid")
         assert result is False
 
-    def test_save_custom_theme(self, temp_config_dir):
+    def test_save_custom_theme(self, temp_config_dir) -> None:
         """Test saving custom theme"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -160,7 +160,7 @@ class TestThemeManager:
             saved_data = json.load(f)
         assert saved_data["name"] == "Custom"
 
-    def test_load_custom_themes(self, temp_config_dir):
+    def test_load_custom_themes(self, temp_config_dir) -> None:
         """Test loading custom themes from disk"""
         # Create a custom theme file
         theme_data = {
@@ -181,7 +181,7 @@ class TestThemeManager:
         assert custom_theme is not None
         assert custom_theme.name == "TestCustom"
 
-    def test_delete_custom_theme(self, temp_config_dir):
+    def test_delete_custom_theme(self, temp_config_dir) -> None:
         """Test deleting custom theme"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -198,7 +198,7 @@ class TestThemeManager:
         theme_file = temp_config_dir / "themes" / "todelete.json"
         assert not theme_file.exists()
 
-    def test_create_console(self, temp_config_dir):
+    def test_create_console(self, temp_config_dir) -> None:
         """Test creating console with theme"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -212,7 +212,7 @@ class TestThemeManager:
         assert manager.get_current_theme().type == ThemeType.LIGHT
 
     @patch.dict("os.environ", {"COLORFGBG": "0;15"})
-    def test_detect_terminal_theme_light(self, temp_config_dir):
+    def test_detect_terminal_theme_light(self, temp_config_dir) -> None:
         """Test detecting light terminal theme"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -220,7 +220,7 @@ class TestThemeManager:
         assert detected == ThemeType.LIGHT
 
     @patch.dict("os.environ", {"COLORFGBG": "15;0"})
-    def test_detect_terminal_theme_dark(self, temp_config_dir):
+    def test_detect_terminal_theme_dark(self, temp_config_dir) -> None:
         """Test detecting dark terminal theme"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -228,7 +228,7 @@ class TestThemeManager:
         assert detected == ThemeType.DARK
 
     @patch.dict("os.environ", {"TERMINAL_THEME": "light"})
-    def test_detect_terminal_theme_env(self, temp_config_dir):
+    def test_detect_terminal_theme_env(self, temp_config_dir) -> None:
         """Test detecting theme from environment variable"""
         manager = ThemeManager(config_dir=temp_config_dir)
 
@@ -239,7 +239,7 @@ class TestThemeManager:
 class TestThemeManagerSingleton:
     """Test theme manager singleton"""
 
-    def test_get_theme_manager_singleton(self):
+    def test_get_theme_manager_singleton(self) -> None:
         """Test getting singleton instance"""
         manager1 = get_theme_manager()
         manager2 = get_theme_manager()

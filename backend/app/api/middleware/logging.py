@@ -1,6 +1,6 @@
 import uuid
 from time import time
-from typing import Callable
+from typing import Any, Callable
 
 from fastapi import Request
 

@@ -17,7 +17,6 @@ except ImportError:
 
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.exceptions import (
-    ConversionFailedError,
     HeifDecodingError,
     UnsupportedFormatError,
 )
@@ -29,7 +28,7 @@ logger = structlog.get_logger()
 class HeifHandler(BaseFormatHandler):
     """Handler for HEIF/HEIC format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HEIF handler."""
         super().__init__()
         self.supported_formats = ["heif", "heic", "heix", "hevc", "hevx"]

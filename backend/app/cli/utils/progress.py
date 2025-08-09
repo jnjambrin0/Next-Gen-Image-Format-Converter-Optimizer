@@ -4,10 +4,9 @@ Enhanced Rich progress bars and indicators with animations
 """
 
 import asyncio
-import time
 from contextlib import contextmanager
 from enum import Enum
-from typing import Any, Callable, List, Optional
+from typing import Any, List, Optional
 
 from rich.console import Console
 from rich.progress import (
@@ -19,15 +18,12 @@ from rich.progress import (
     ProgressColumn,
     SpinnerColumn,
     Task,
-    TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
     TotalFileSizeColumn,
     TransferSpeedColumn,
 )
-from rich.style import Style
-from rich.table import Column
 from rich.text import Text
 
 from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
@@ -104,7 +100,7 @@ class EmojiProgressColumn(ProgressColumn):
 class AdaptiveBarColumn(BarColumn):
     """Adaptive progress bar that adjusts to terminal width"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         detector = get_terminal_detector()
         width, _ = detector.get_terminal_size()
@@ -275,15 +271,15 @@ def create_multi_progress(
 class InterruptableProgress:
     """Progress bar that can be interrupted with Ctrl+C"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.progress = create_progress_bar(*args, **kwargs)
         self._interrupted = False
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.progress.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if exc_type is KeyboardInterrupt:
             self._interrupted = True
             self.progress.console.print(
@@ -291,14 +287,14 @@ class InterruptableProgress:
             )
         return self.progress.__exit__(exc_type, exc_val, exc_tb)
 
-    def add_task(self, *args, **kwargs):
+    def add_task(self, *args, **kwargs) -> None:
         return self.progress.add_task(*args, **kwargs)
 
-    def update(self, task_id, **kwargs):
+    def update(self, task_id, **kwargs) -> None:
         if not self._interrupted:
             self.progress.update(task_id, **kwargs)
 
-    def advance(self, task_id, advance: float = 1):
+    def advance(self, task_id, advance: float = 1) -> None:
         if not self._interrupted:
             self.progress.advance(task_id, advance)
 
@@ -308,7 +304,7 @@ class InterruptableProgress:
 
 
 @contextmanager
-def progress_context(description: str, total: Optional[int] = None, **kwargs):
+def progress_context(description: str, total: Optional[int] = None, **kwargs) -> None:
     """Context manager for progress display"""
     progress = create_progress_bar(description, total, **kwargs)
     task_id = None

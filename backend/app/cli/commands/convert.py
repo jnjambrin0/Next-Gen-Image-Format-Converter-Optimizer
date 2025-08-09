@@ -3,21 +3,12 @@ Convert Command
 Single image conversion with rich progress and options
 """
 
-import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Any, Annotated, Optional
 
 import typer
-from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-)
 from rich.table import Table
 
 from app.cli.config import get_config
@@ -25,13 +16,11 @@ from app.cli.ui.themes import get_theme_manager
 from app.cli.utils.emoji import get_emoji, get_format_emoji
 from app.cli.utils.errors import handle_api_error
 from app.cli.utils.history import record_command
-from app.cli.utils.profiler import cli_profiler, profile_command
+from app.cli.utils.profiler import cli_profiler
 from app.cli.utils.progress import (
     InterruptableProgress,
-    create_progress_bar,
-    progress_context,
 )
-from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
+from app.cli.utils.terminal import should_use_emoji
 from app.cli.utils.validation import validate_input_file, validate_output_path
 
 # Import SDK client
@@ -390,6 +379,5 @@ def convert_stdin(
 
 
 @app.callback()
-def convert_callback():
+def convert_callback() -> None:
     """Convert images to different formats"""
-    pass

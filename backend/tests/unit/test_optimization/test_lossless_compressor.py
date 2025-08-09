@@ -1,6 +1,6 @@
 """Unit tests for the LosslessCompressor."""
 
-import hashlib
+from typing import Any
 import io
 
 import pytest
@@ -14,12 +14,12 @@ class TestLosslessCompressor:
     """Test cases for LosslessCompressor."""
 
     @pytest.fixture
-    def compressor(self):
+    def compressor(self) -> None:
         """Create a LosslessCompressor instance."""
         return LosslessCompressor()
 
     @pytest.fixture
-    def test_image_png(self):
+    def test_image_png(self) -> None:
         """Create a test PNG image."""
         img = Image.new("RGB", (100, 100))
         pixels = img.load()
@@ -37,7 +37,7 @@ class TestLosslessCompressor:
         return buffer.getvalue()
 
     @pytest.fixture
-    def test_image_jpeg(self):
+    def test_image_jpeg(self) -> None:
         """Create a test JPEG image."""
         img = Image.new("RGB", (100, 100), color="blue")
         buffer = io.BytesIO()
@@ -45,7 +45,7 @@ class TestLosslessCompressor:
         return buffer.getvalue()
 
     @pytest.fixture
-    def test_image_webp(self):
+    def test_image_webp(self) -> None:
         """Create a test WebP image."""
         img = Image.new("RGB", (100, 100), color="green")
         buffer = io.BytesIO()

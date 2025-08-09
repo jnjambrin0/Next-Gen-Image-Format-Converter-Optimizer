@@ -10,7 +10,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -80,7 +80,7 @@ class PrivacySanitizer:
 class CommandLearner:
     """Learn from command usage patterns"""
 
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path) -> None:
         """
         Initialize command learner
 
@@ -166,7 +166,7 @@ class CommandLearner:
                 "last_updated": datetime.now().isoformat(),
             }
 
-    def _save_patterns(self):
+    def _save_patterns(self) -> None:
         """Save encrypted learning patterns"""
         # Convert Counter objects to dict for JSON serialization
         data = {
@@ -191,13 +191,13 @@ class CommandLearner:
         command: str,
         context: Optional[str] = None,
         previous_command: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Learn from a command execution
 
         Args:
             command: Sanitized command that was executed
-            context: Optional context (e.g., current directory type)
+            context: Optional[Any] context (e.g., current directory type)
             previous_command: Previous command for sequence learning
         """
         # Parse command and parameters
@@ -246,11 +246,10 @@ class CommandLearner:
 
         Args:
             partial: Partial command entered by user
-            context: Optional context for context-aware suggestions
+            context: Optional[Any] context for context-aware suggestions
             limit: Maximum number of suggestions
 
-        Returns:
-            List of suggested commands
+        Returns: List[Any] of suggested commands
         """
         suggestions = []
 
@@ -275,7 +274,7 @@ class CommandLearner:
         suggestions.sort(key=lambda x: x[1], reverse=True)
         return [cmd for cmd, _ in suggestions[:limit]]
 
-    def cleanup_old_data(self, days: int = 7):
+    def cleanup_old_data(self, days: int = 7) -> None:
         """
         Remove learning data older than specified days
 
@@ -299,7 +298,7 @@ class CommandLearner:
 class AutocompleteEngine:
     """Main autocomplete engine with privacy-aware learning"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize autocomplete engine"""
         self.config_dir = get_config_dir()
         self.autocomplete_dir = self.config_dir / "autocomplete"
@@ -402,13 +401,13 @@ class AutocompleteEngine:
             },
         }
 
-    def record_command(self, command: str, context: Optional[str] = None):
+    def record_command(self, command: str, context: Optional[str] = None) -> None:
         """
         Record a command execution for learning
 
         Args:
             command: Full command string entered by user
-            context: Optional context information
+            context: Optional[Any] context information
         """
         # Sanitize command to remove PII
         sanitized = self.sanitizer.sanitize(command)
@@ -427,10 +426,9 @@ class AutocompleteEngine:
 
         Args:
             partial_input: Partial command or parameter entered
-            context: Optional context for suggestions
+            context: Optional[Any] context for suggestions
 
-        Returns:
-            List of (suggestion, description) tuples
+        Returns: List[Any] of (suggestion, description) tuples
         """
         suggestions = []
         parts = partial_input.split()
@@ -481,8 +479,7 @@ class AutocompleteEngine:
             command: The command being used
             parameter: The parameter to get values for
 
-        Returns:
-            List of suggested values
+        Returns: List[Any] of suggested values
         """
         # Parameter-specific value suggestions
         value_suggestions = {
@@ -498,7 +495,7 @@ class AutocompleteEngine:
 
         return []
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup old learning data"""
         self.learner.cleanup_old_data(days=7)
 

@@ -1,4 +1,5 @@
 """
+from typing import Any
 CLI Branding utilities
 Logo display and branding consistency for CLI
 """

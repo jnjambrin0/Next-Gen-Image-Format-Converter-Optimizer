@@ -52,9 +52,6 @@ async def lifespan(app: FastAPI):
     from .services.recommendation_service import (
         RecommendationService,
     )
-    from .services.recommendation_service import (
-        recommendation_service as rec_service_import,
-    )
 
     rec_module.recommendation_service = RecommendationService()
 
@@ -82,8 +79,6 @@ async def lifespan(app: FastAPI):
     # Initialize API key service (Story 5.2)
     # Ensure data directory exists for database files
     import os
-
-    from .services.api_key_service import api_key_service
 
     os.makedirs("./data", exist_ok=True)
 

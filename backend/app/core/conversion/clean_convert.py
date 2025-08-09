@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Clean conversion wrapper to ensure no logging pollution."""
 
+from typing import Any
 import os
 import subprocess
 import sys

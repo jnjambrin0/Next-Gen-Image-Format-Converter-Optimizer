@@ -1,8 +1,8 @@
+from typing import Any
 import json
 import traceback
 import uuid
 from datetime import datetime
-from typing import Any, Dict
 
 import structlog
 from fastapi import Request, status
@@ -115,7 +115,7 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
     )
 
 
-def setup_exception_handlers(app):
+def setup_exception_handlers(app) -> None:
     """Set up exception handlers for the FastAPI app."""
 
     @app.exception_handler(ImageConverterError)

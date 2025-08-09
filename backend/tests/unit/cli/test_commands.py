@@ -1,4 +1,5 @@
 """
+from typing import Any
 Unit tests for CLI commands
 """
 
@@ -18,7 +19,7 @@ from app.cli.commands import analyze, batch, convert, formats, optimize, presets
 
 
 @pytest.fixture
-def runner():
+def runner() -> None:
     """Create a CLI test runner"""
     return CliRunner()
 
@@ -32,7 +33,7 @@ class TestConvertCommand:
     @patch("builtins.open", new_callable=mock_open, read_data=b"fake_image_data")
     def test_convert_file_basic(
         self, mock_file, mock_validate_output, mock_validate_input, mock_client, runner
-    ):
+    ) -> None:
         """Test basic file conversion"""
         mock_validate_input.return_value = True
         mock_validate_output.return_value = True
@@ -50,7 +51,7 @@ class TestConvertCommand:
         mock_client_instance.convert.assert_called_once()
 
     @patch("app.cli.commands.convert.validate_input_file")
-    def test_convert_file_invalid_input(self, mock_validate, runner):
+    def test_convert_file_invalid_input(self, mock_validate, runner) -> None:
         """Test conversion with invalid input file"""
         mock_validate.return_value = False
 
@@ -63,7 +64,7 @@ class TestConvertCommand:
     @patch("app.cli.commands.convert.validate_output_path")
     def test_convert_file_dry_run(
         self, mock_validate_output, mock_validate_input, runner
-    ):
+    ) -> None:
         """Test dry run mode"""
         mock_validate_input.return_value = True
         mock_validate_output.return_value = True
@@ -79,7 +80,7 @@ class TestConvertCommand:
     @patch("sys.stdin")
     @patch("sys.stdout")
     @patch("app.cli.commands.convert.ImageConverterClient")
-    def test_convert_stdin(self, mock_client, mock_stdout, mock_stdin, runner):
+    def test_convert_stdin(self, mock_client, mock_stdout, mock_stdin, runner) -> None:
         """Test stdin conversion"""
         mock_stdin.isatty.return_value = False
         mock_stdin.buffer.read.return_value = b"input_data"
@@ -101,7 +102,7 @@ class TestBatchCommand:
 
     @patch("app.cli.commands.batch.glob")
     @patch("app.cli.commands.batch.validate_input_file")
-    def test_batch_find_files(self, mock_validate, mock_glob, runner):
+    def test_batch_find_files(self, mock_validate, mock_glob, runner) -> None:
         """Test batch file discovery"""
         mock_glob.return_value = ["file1.jpg", "file2.jpg", "file3.jpg"]
         mock_validate.return_value = True
@@ -116,7 +117,7 @@ class TestBatchCommand:
 
     @patch("app.cli.commands.batch.glob")
     @patch("app.cli.commands.batch.validate_input_file")
-    def test_batch_no_files_found(self, mock_validate, mock_glob, runner):
+    def test_batch_no_files_found(self, mock_validate, mock_glob, runner) -> None:
         """Test batch with no matching files"""
         mock_glob.return_value = []
 
@@ -126,7 +127,7 @@ class TestBatchCommand:
         assert "No valid image files found" in result.stdout
 
     @patch("app.cli.commands.batch.AsyncImageConverterClient")
-    def test_batch_status(self, mock_client_class, runner):
+    def test_batch_status(self, mock_client_class, runner) -> None:
         """Test batch status command"""
         mock_client = MagicMock()
         mock_status = Mock()
@@ -151,7 +152,7 @@ class TestBatchCommand:
 class TestOptimizeCommand:
     """Test optimize command"""
 
-    def test_optimize_auto(self, runner):
+    def test_optimize_auto(self, runner) -> None:
         """Test optimize auto command"""
         result = runner.invoke(optimize.app, ["auto", "test.jpg"])
 
@@ -162,7 +163,7 @@ class TestOptimizeCommand:
 class TestAnalyzeCommand:
     """Test analyze command"""
 
-    def test_analyze_info(self, runner):
+    def test_analyze_info(self, runner) -> None:
         """Test analyze info command"""
         result = runner.invoke(analyze.app, ["info", "test.jpg"])
 
@@ -173,7 +174,7 @@ class TestAnalyzeCommand:
 class TestFormatsCommand:
     """Test formats command"""
 
-    def test_formats_list(self, runner):
+    def test_formats_list(self, runner) -> None:
         """Test formats list command"""
         result = runner.invoke(formats.app, ["list"])
 
@@ -187,7 +188,7 @@ class TestFormatsCommand:
 class TestPresetsCommand:
     """Test presets command"""
 
-    def test_presets_list(self, runner):
+    def test_presets_list(self, runner) -> None:
         """Test presets list command"""
         result = runner.invoke(presets.app, ["list"])
 

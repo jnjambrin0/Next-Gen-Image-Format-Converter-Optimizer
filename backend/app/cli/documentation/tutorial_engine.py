@@ -6,22 +6,19 @@ Interactive tutorial system with progress tracking
 import asyncio
 import json
 import re
-import subprocess
 import sys
 import tempfile
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, Prompt
 from rich.syntax import Syntax
-from rich.table import Table
 
 
 class TutorialStepType(str, Enum):
@@ -68,7 +65,7 @@ class TutorialStep:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "TutorialStep":
+    def from_dict(cls, data: Dict[str, Any]) -> "TutorialStep":
         """Create from dictionary"""
         return cls(
             id=data["id"],
@@ -112,7 +109,7 @@ class TutorialProgress:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "TutorialProgress":
+    def from_dict(cls, data: Dict[str, Any]) -> "TutorialProgress":
         """Create from dictionary"""
         return cls(
             tutorial_id=data["tutorial_id"],
@@ -136,7 +133,7 @@ class TutorialProgress:
 class TutorialEngine:
     """Manages tutorial execution and progress"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.tutorials: Dict[str, List[TutorialStep]] = {}
         self.progress: Dict[str, TutorialProgress] = {}
@@ -147,7 +144,7 @@ class TutorialEngine:
         self._load_tutorials()
         self._load_progress()
 
-    def _load_tutorials(self):
+    def _load_tutorials(self) -> None:
         """Load tutorial content from embedded data"""
         # Tutorial content is embedded for offline operation
         self.tutorials = {
@@ -364,7 +361,7 @@ Ready to optimize like a pro?
             ],
         }
 
-    def _load_progress(self):
+    def _load_progress(self) -> None:
         """Load tutorial progress from disk with graceful error recovery"""
         if self.progress_file.exists():
             try:
@@ -407,7 +404,7 @@ Ready to optimize like a pro?
         else:
             self.progress = {}
 
-    def _save_progress(self):
+    def _save_progress(self) -> None:
         """Save tutorial progress to disk"""
         self.config_dir.mkdir(parents=True, exist_ok=True)
         with open(self.progress_file, "w") as f:
@@ -531,7 +528,7 @@ Ready to optimize like a pro?
 
         self._display_completion(progress)
 
-    def _display_progress(self, progress: TutorialProgress):
+    def _display_progress(self, progress: TutorialProgress) -> None:
         """Display tutorial progress bar"""
         percentage = progress.completion_percentage
         filled = int(percentage / 5)  # 20 character bar
@@ -919,7 +916,7 @@ Ready to optimize like a pro?
             # For tutorial mode, return simulated output as fallback
             return f"[dim]Simulated output for: {command}[/dim]\n[yellow]Note: Actual execution unavailable[/yellow]"
 
-    def _set_resource_limits(self):
+    def _set_resource_limits(self) -> None:
         """Set resource limits for sandboxed process (Unix only)"""
         try:
             import resource
@@ -939,7 +936,7 @@ Ready to optimize like a pro?
         except ImportError:
             pass  # resource module not available on Windows
 
-    def _create_sample_image(self, filepath: Path):
+    def _create_sample_image(self, filepath: Path) -> None:
         """Create a sample image for tutorial"""
         # Create a minimal valid PNG
         png_header = b"\x89PNG\r\n\x1a\n"
@@ -967,7 +964,7 @@ Ready to optimize like a pro?
 
         return True
 
-    def _display_completion(self, progress: TutorialProgress):
+    def _display_completion(self, progress: TutorialProgress) -> None:
         """Display tutorial completion message"""
         duration = progress.completed_at - progress.started_at
         minutes = int(duration / 60)
@@ -992,7 +989,7 @@ Great work! Ready for the next challenge?
         )
         self.console.print(panel)
 
-    def reset_progress(self, tutorial_id: Optional[str] = None):
+    def reset_progress(self, tutorial_id: Optional[str] = None) -> None:
         """Reset tutorial progress"""
         if tutorial_id:
             if tutorial_id in self.progress:

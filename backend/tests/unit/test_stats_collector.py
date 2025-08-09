@@ -1,4 +1,4 @@
-import asyncio
+from typing import Any
 from datetime import datetime, timedelta
 
 import pytest
@@ -9,7 +9,7 @@ from app.core.monitoring.stats import ConversionStats, StatsCollector
 class TestConversionStats:
     """Test ConversionStats data class."""
 
-    def test_success_rate_calculation(self):
+    def test_success_rate_calculation(self) -> None:
         """Test success rate calculation."""
         stats = ConversionStats()
         assert stats.success_rate == 0.0
@@ -22,7 +22,7 @@ class TestConversionStats:
         stats.total_conversions = 0
         assert stats.success_rate == 0.0
 
-    def test_processing_time_calculations(self):
+    def test_processing_time_calculations(self) -> None:
         """Test average and median processing time calculations."""
         stats = ConversionStats()
         assert stats.average_processing_time == 0.0
@@ -38,7 +38,7 @@ class TestConversionStats:
         assert stats.average_processing_time == 2.5
         assert stats.median_processing_time == 2.5
 
-    def test_to_dict_serialization(self):
+    def test_to_dict_serialization(self) -> None:
         """Test dictionary serialization."""
         stats = ConversionStats()
         stats.total_conversions = 10
@@ -59,7 +59,7 @@ class TestStatsCollector:
     """Test StatsCollector functionality."""
 
     @pytest.fixture
-    def collector(self):
+    def collector(self) -> None:
         """Create a stats collector instance."""
         return StatsCollector(persist_to_db=False)
 
@@ -101,7 +101,7 @@ class TestStatsCollector:
         assert stats["current_hour"]["error_types"]["timeout"] == 1
         assert stats["current_hour"]["size_distribution"]["huge"] == 1
 
-    def test_size_bucket_determination(self, collector):
+    def test_size_bucket_determination(self, collector) -> None:
         """Test size bucket categorization."""
         assert collector._get_size_bucket(50 * 1024) == "tiny"
         assert collector._get_size_bucket(500 * 1024) == "small"
@@ -183,7 +183,7 @@ class TestStatsCollector:
         assert recent_hourly_key in collector._hourly_stats
         assert recent_daily_key in collector._daily_stats
 
-    def test_hourly_stats_retrieval(self, collector):
+    def test_hourly_stats_retrieval(self, collector) -> None:
         """Test retrieval of hourly statistics."""
         # Add some hourly stats
         now = datetime.now()
@@ -201,7 +201,7 @@ class TestStatsCollector:
         assert hourly_stats[1]["stats"]["total_conversions"] == 9
         assert hourly_stats[2]["stats"]["total_conversions"] == 8
 
-    def test_daily_stats_retrieval(self, collector):
+    def test_daily_stats_retrieval(self, collector) -> None:
         """Test retrieval of daily statistics."""
         # Add some daily stats
         now = datetime.now()
@@ -223,7 +223,7 @@ class TestStatsCollectorWithPersistence:
     """Test StatsCollector with database persistence."""
 
     @pytest.fixture
-    def collector_with_db(self, tmp_path):
+    def collector_with_db(self, tmp_path) -> None:
         """Create a stats collector with database persistence."""
         db_path = tmp_path / "test_stats.db"
         return StatsCollector(persist_to_db=True, db_path=str(db_path))

@@ -1,4 +1,4 @@
-import asyncio
+from typing import Any
 from datetime import datetime, timedelta
 
 import pytest
@@ -10,7 +10,7 @@ class TestErrorReporter:
     """Test local-only error reporting functionality."""
 
     @pytest.fixture
-    def reporter(self):
+    def reporter(self) -> None:
         """Create an error reporter instance."""
         return ErrorReporter(db_path=":memory:")
 
@@ -210,7 +210,7 @@ class TestErrorReporter:
         """Test that stack traces are hashed for deduplication."""
 
         # Errors with same stack trace should have same ID
-        def cause_error():
+        def cause_error() -> None:
             raise ValueError("Test error from function")
 
         try:
@@ -247,7 +247,7 @@ class TestErrorReporter:
         assert len(details["sanitized_message"]) <= 200
         assert details["sanitized_message"].endswith("...")
 
-    def test_error_report_serialization(self):
+    def test_error_report_serialization(self) -> None:
         """Test ErrorReport serialization."""
         report = ErrorReport(
             error_id="test_error",

@@ -8,7 +8,7 @@ from PIL import Image
 
 # Try to import optional dependencies
 try:
-    from scipy import ndimage, signal
+    from scipy import signal
 
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -119,8 +119,7 @@ class ImagePreprocessor:
             patch_size: Size of each square patch
             stride: Stride between patches
 
-        Returns:
-            List of image patches as numpy arrays
+        Returns: List[Any] of image patches as numpy arrays
         """
         width, height = image.size
         patches = []
@@ -214,8 +213,7 @@ class ImagePreprocessor:
             n_colors: Number of dominant colors to extract
             sample_size: Number of pixels to sample
 
-        Returns:
-            List of hex color codes
+        Returns: List[Any] of hex color codes
         """
         try:
             from sklearn.cluster import KMeans

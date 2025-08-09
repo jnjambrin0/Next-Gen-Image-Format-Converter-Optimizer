@@ -16,7 +16,7 @@ logger = structlog.get_logger()
 class Jpeg2000Handler(BaseFormatHandler):
     """Handler for JPEG 2000 format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize JPEG 2000 handler."""
         super().__init__()
         self.supported_formats = ["jp2", "jpeg2000", "j2k", "jpf", "jpx", "jpm"]

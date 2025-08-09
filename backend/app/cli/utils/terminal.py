@@ -277,7 +277,7 @@ class TerminalDetector:
 
         return self._set_cached("supports_hyperlinks", False)
 
-    def get_environment_info(self) -> Dict[str, any]:
+    def get_environment_info(self) -> Dict[str, Any]:
         """Get comprehensive terminal environment information"""
         return {
             "capability_level": self.get_capability_level().value,

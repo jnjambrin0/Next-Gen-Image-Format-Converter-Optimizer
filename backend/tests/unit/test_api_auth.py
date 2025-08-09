@@ -1,17 +1,15 @@
 """Unit tests for API authentication and key management."""
 
+from typing import Any
 import hashlib
-import secrets
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from app.api.middleware.auth import OptionalAPIKeyAuth, RequiredAPIKeyAuth
 from app.core.security.rate_limiter import ApiRateLimiter, SecurityEventRateLimiter
-from app.models.database import ApiKey, ApiUsageStats, Base
+from app.models.database import ApiKey, ApiUsageStats
 from app.services.api_key_service import ApiKeyService
 
 
@@ -19,12 +17,12 @@ class TestApiKeyService:
     """Test cases for ApiKeyService."""
 
     @pytest.fixture
-    def service(self):
+    def service(self) -> None:
         """Create ApiKeyService with in-memory database."""
         service = ApiKeyService(db_path=":memory:")
         return service
 
-    def test_generate_api_key(self, service):
+    def test_generate_api_key(self, service) -> None:
         """Test API key generation."""
         key = service.generate_api_key()
 
@@ -41,7 +39,7 @@ class TestApiKeyService:
         except Exception:
             pytest.fail("Generated key is not valid URL-safe base64")
 
-    def test_hash_api_key(self, service):
+    def test_hash_api_key(self, service) -> None:
         """Test API key hashing."""
         key = "test_api_key_12345"
         hash1 = service.hash_api_key(key)
@@ -58,7 +56,7 @@ class TestApiKeyService:
         expected = hashlib.sha256(key.encode()).hexdigest()
         assert hash1 == expected
 
-    def test_create_api_key_basic(self, service):
+    def test_create_api_key_basic(self, service) -> None:
         """Test basic API key creation."""
         api_key, raw_key = service.create_api_key(name="Test Key")
 
@@ -73,7 +71,7 @@ class TestApiKeyService:
         assert api_key.created_at is not None
         assert api_key.id is not None
 
-    def test_create_api_key_with_options(self, service):
+    def test_create_api_key_with_options(self, service) -> None:
         """Test API key creation with all options."""
         api_key, raw_key = service.create_api_key(
             name="Advanced Key",
@@ -98,7 +96,7 @@ class TestApiKeyService:
         permissions = json.loads(api_key.permissions)
         assert permissions == {"convert": True, "batch": False}
 
-    def test_verify_api_key_valid(self, service):
+    def test_verify_api_key_valid(self, service) -> None:
         """Test verification of valid API key."""
         _, raw_key = service.create_api_key(name="Valid Key")
 
@@ -108,7 +106,7 @@ class TestApiKeyService:
         assert api_key.name == "Valid Key"
         assert api_key.last_used_at is not None
 
-    def test_verify_api_key_invalid(self, service):
+    def test_verify_api_key_invalid(self, service) -> None:
         """Test verification of invalid API key."""
         # Non-existent key
         result = service.verify_api_key("invalid_key_12345")
@@ -122,7 +120,7 @@ class TestApiKeyService:
         result = service.verify_api_key(None)
         assert result is None
 
-    def test_verify_api_key_expired(self, service):
+    def test_verify_api_key_expired(self, service) -> None:
         """Test verification of expired API key."""
         api_key, raw_key = service.create_api_key(name="Expired Key", expires_days=1)
 
@@ -136,7 +134,7 @@ class TestApiKeyService:
         result = service.verify_api_key(raw_key)
         assert result is None
 
-    def test_verify_api_key_inactive(self, service):
+    def test_verify_api_key_inactive(self, service) -> None:
         """Test verification of inactive API key."""
         api_key, raw_key = service.create_api_key(name="Inactive Key")
 
@@ -147,7 +145,7 @@ class TestApiKeyService:
         result = service.verify_api_key(raw_key)
         assert result is None
 
-    def test_list_api_keys(self, service):
+    def test_list_api_keys(self, service) -> None:
         """Test listing API keys."""
         # Create test keys
         service.create_api_key(name="Key 1")
@@ -169,7 +167,7 @@ class TestApiKeyService:
         # Check ordering (newest first)
         assert all_keys[0].created_at >= all_keys[1].created_at
 
-    def test_get_api_key_by_id(self, service):
+    def test_get_api_key_by_id(self, service) -> None:
         """Test getting API key by ID."""
         api_key, _ = service.create_api_key(name="Find Me")
 
@@ -183,7 +181,7 @@ class TestApiKeyService:
         not_found = service.get_api_key_by_id("non-existent-id")
         assert not_found is None
 
-    def test_revoke_api_key(self, service):
+    def test_revoke_api_key(self, service) -> None:
         """Test API key revocation."""
         api_key, raw_key = service.create_api_key(name="To Revoke")
 
@@ -206,7 +204,7 @@ class TestApiKeyService:
         success = service.revoke_api_key("non-existent-id")
         assert success is False
 
-    def test_update_api_key(self, service):
+    def test_update_api_key(self, service) -> None:
         """Test API key updates."""
         api_key, _ = service.create_api_key(name="Original Name")
 
@@ -229,7 +227,7 @@ class TestApiKeyService:
         result = service.update_api_key("non-existent-id", name="New")
         assert result is None
 
-    def test_cleanup_expired_keys(self, service):
+    def test_cleanup_expired_keys(self, service) -> None:
         """Test cleanup of expired API keys."""
         # Create keys with different expiry
         api_key1, _ = service.create_api_key(name="Active Key")
@@ -258,7 +256,7 @@ class TestApiKeyService:
         key1_updated = service.get_api_key_by_id(api_key1.id)
         assert key1_updated.is_active is True
 
-    def test_get_rate_limit_for_key(self, service):
+    def test_get_rate_limit_for_key(self, service) -> None:
         """Test rate limit retrieval for API keys."""
         # Key without override
         api_key1, _ = service.create_api_key(name="Default Rate")
@@ -272,7 +270,7 @@ class TestApiKeyService:
         limit2 = service.get_rate_limit_for_key(api_key2)
         assert limit2 == 120
 
-    def test_record_usage(self, service):
+    def test_record_usage(self, service) -> None:
         """Test API usage recording."""
         api_key, _ = service.create_api_key(name="Usage Test")
 
@@ -314,7 +312,7 @@ class TestApiKeyService:
             unauth_stat = next(s for s in stats if s.api_key_id is None)
             assert unauth_stat.endpoint == "/api/health"
 
-    def test_get_usage_stats(self, service):
+    def test_get_usage_stats(self, service) -> None:
         """Test usage statistics retrieval."""
         api_key, _ = service.create_api_key(name="Stats Test")
 
@@ -345,7 +343,7 @@ class TestOptionalAPIKeyAuth:
     """Test cases for OptionalAPIKeyAuth dependency."""
 
     @pytest.fixture
-    def mock_request(self):
+    def mock_request(self) -> None:
         """Create mock FastAPI request."""
         request = Mock()
         request.url.path = "/api/convert"
@@ -356,34 +354,34 @@ class TestOptionalAPIKeyAuth:
         return request
 
     @pytest.fixture
-    def auth_dependency(self):
+    def auth_dependency(self) -> None:
         """Create OptionalAPIKeyAuth instance."""
         return OptionalAPIKeyAuth(auto_error=False)
 
     @pytest.fixture
-    def mock_api_key_service(self):
+    def mock_api_key_service(self) -> None:
         """Mock API key service."""
         with patch("app.api.middleware.auth.api_key_service") as mock:
             yield mock
 
-    def test_no_api_key_provided(self, auth_dependency, mock_request):
+    def test_no_api_key_provided(self, auth_dependency, mock_request) -> None:
         """Test when no API key is provided."""
         result = pytest.asyncio.run(auth_dependency(mock_request))
         assert result is None
 
-    def test_bypass_health_endpoint(self, auth_dependency, mock_request):
+    def test_bypass_health_endpoint(self, auth_dependency, mock_request) -> None:
         """Test bypassing authentication for health endpoints."""
         mock_request.url.path = "/api/health"
         result = pytest.asyncio.run(auth_dependency(mock_request))
         assert result is None
 
-    def test_bypass_docs_endpoint(self, auth_dependency, mock_request):
+    def test_bypass_docs_endpoint(self, auth_dependency, mock_request) -> None:
         """Test bypassing authentication for docs endpoints."""
         mock_request.url.path = "/api/docs"
         result = pytest.asyncio.run(auth_dependency(mock_request))
         assert result is None
 
-    def test_whitelist_localhost(self, auth_dependency, mock_request):
+    def test_whitelist_localhost(self, auth_dependency, mock_request) -> None:
         """Test whitelisting localhost requests."""
         mock_request.client.host = "127.0.0.1"
         result = pytest.asyncio.run(auth_dependency(mock_request))
@@ -462,12 +460,12 @@ class TestRequiredAPIKeyAuth:
     """Test cases for RequiredAPIKeyAuth dependency."""
 
     @pytest.fixture
-    def auth_dependency(self):
+    def auth_dependency(self) -> None:
         """Create RequiredAPIKeyAuth instance."""
         return RequiredAPIKeyAuth()
 
     @pytest.fixture
-    def mock_request(self):
+    def mock_request(self) -> None:
         """Create mock FastAPI request."""
         request = Mock()
         request.url.path = "/api/convert"
@@ -493,11 +491,11 @@ class TestApiRateLimiter:
     """Test cases for API rate limiter."""
 
     @pytest.fixture
-    def rate_limiter(self):
+    def rate_limiter(self) -> None:
         """Create ApiRateLimiter instance."""
         return ApiRateLimiter()
 
-    def test_default_limiter(self, rate_limiter):
+    def test_default_limiter(self, rate_limiter) -> None:
         """Test default rate limiter for unauthenticated requests."""
         limiter = rate_limiter.get_limiter_for_key(None)
         assert isinstance(limiter, SecurityEventRateLimiter)
@@ -506,7 +504,7 @@ class TestApiRateLimiter:
         limiter2 = rate_limiter.get_limiter_for_key(None)
         assert limiter is limiter2
 
-    def test_api_key_limiter_default(self, rate_limiter):
+    def test_api_key_limiter_default(self, rate_limiter) -> None:
         """Test rate limiter for API key with default limits."""
         limiter = rate_limiter.get_limiter_for_key("test_key_123")
         assert isinstance(limiter, SecurityEventRateLimiter)
@@ -519,7 +517,7 @@ class TestApiRateLimiter:
         limiter3 = rate_limiter.get_limiter_for_key("test_key_123")
         assert limiter is limiter3
 
-    def test_api_key_limiter_custom(self, rate_limiter):
+    def test_api_key_limiter_custom(self, rate_limiter) -> None:
         """Test rate limiter for API key with custom limits."""
         limiter = rate_limiter.get_limiter_for_key("custom_key", custom_limit=120)
 
@@ -528,7 +526,7 @@ class TestApiRateLimiter:
         assert allowed is True
         assert headers["X-RateLimit-Limit"] == "120"
 
-    def test_rate_limit_enforcement(self, rate_limiter):
+    def test_rate_limit_enforcement(self, rate_limiter) -> None:
         """Test rate limit enforcement."""
         # Use a very low limit for testing
         api_key_id = "test_limit_key"
@@ -547,7 +545,7 @@ class TestApiRateLimiter:
         # This test is inherently flaky due to time-based rate limiting
         # In practice, we'd need to mock time or use a test-specific implementation
 
-    def test_rate_limit_headers(self, rate_limiter):
+    def test_rate_limit_headers(self, rate_limiter) -> None:
         """Test rate limit headers format."""
         allowed, headers = rate_limiter.check_rate_limit("header_test_key")
 
@@ -563,7 +561,7 @@ class TestApiRateLimiter:
         assert headers["X-RateLimit-Reset"].isdigit()
         assert headers["X-RateLimit-Window"] == "60"
 
-    def test_get_stats(self, rate_limiter):
+    def test_get_stats(self, rate_limiter) -> None:
         """Test rate limiter statistics."""
         # Test default limiter stats
         stats = rate_limiter.get_stats()
@@ -581,7 +579,7 @@ class TestApiRateLimiter:
         assert stats["enabled"] is True
         assert stats["violations_count"] == 0
 
-    def test_cleanup_unused_limiters(self, rate_limiter):
+    def test_cleanup_unused_limiters(self, rate_limiter) -> None:
         """Test cleanup of unused rate limiters."""
         # Create several limiters
         rate_limiter.get_limiter_for_key("key1")

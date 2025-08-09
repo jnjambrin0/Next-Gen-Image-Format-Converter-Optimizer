@@ -7,20 +7,17 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
-from rich.table import Table
-from rich.tree import Tree
 
 # Optional import for search
 try:
-    from whoosh import fields, index, qparser
+    from whoosh import fields, qparser
     from whoosh.filedb.filestore import RamStorage
-    from whoosh.highlight import UppercaseFormatter
 
     WHOOSH_AVAILABLE = True
 except ImportError:
@@ -54,7 +51,7 @@ class DocSection:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "DocSection":
+    def from_dict(cls, data: Dict[str, Any]) -> "DocSection":
         """Create from dictionary"""
         return cls(
             id=data["id"],
@@ -81,7 +78,7 @@ class Bookmark:
 class DocumentationBrowser:
     """Browse documentation with search and navigation"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.sections: Dict[str, DocSection] = {}
         self.bookmarks: List[Bookmark] = []
@@ -94,7 +91,7 @@ class DocumentationBrowser:
         self._init_search_index()
         self._load_bookmarks()
 
-    def _load_documentation(self):
+    def _load_documentation(self) -> None:
         """Load documentation sections"""
         # Documentation is embedded for offline operation
         docs = [
@@ -408,7 +405,7 @@ img batch *.png -f webp --dry-run
         for section in docs:
             self.sections[section.id] = section
 
-    def _init_search_index(self):
+    def _init_search_index(self) -> None:
         """Initialize search index"""
         if not WHOOSH_AVAILABLE:
             return
@@ -438,7 +435,7 @@ img batch *.png -f webp --dry-run
             )
         writer.commit()
 
-    def _load_bookmarks(self):
+    def _load_bookmarks(self) -> None:
         """Load saved bookmarks"""
         bookmark_file = self.config_dir / "bookmarks.json"
         if bookmark_file.exists():
@@ -457,7 +454,7 @@ img batch *.png -f webp --dry-run
             except Exception:
                 self.bookmarks = []
 
-    def _save_bookmarks(self):
+    def _save_bookmarks(self) -> None:
         """Save bookmarks to disk"""
         self.config_dir.mkdir(parents=True, exist_ok=True)
         bookmark_file = self.config_dir / "bookmarks.json"
@@ -477,7 +474,7 @@ img batch *.png -f webp --dry-run
         with open(bookmark_file, "w") as f:
             json.dump(data, f, indent=2)
 
-    def browse(self, start_section: str = "root"):
+    def browse(self, start_section: str = "root") -> None:
         """Start interactive documentation browser"""
         self.current_section = start_section
 
@@ -521,7 +518,7 @@ img batch *.png -f webp --dry-run
                 if 0 <= index < len(section.children):
                     self.current_section = section.children[index]
 
-    def display_section(self, section: DocSection):
+    def display_section(self, section: DocSection) -> None:
         """Display a documentation section"""
         # Clear screen for better readability
         self.console.clear()
@@ -566,7 +563,7 @@ img batch *.png -f webp --dry-run
 
         return " > ".join(parts)
 
-    def _show_navigation(self, section: DocSection):
+    def _show_navigation(self, section: DocSection) -> None:
         """Show navigation options"""
         self.console.print("\n" + "─" * 50)
 
@@ -600,7 +597,7 @@ img batch *.png -f webp --dry-run
 
         return shortcuts.get(action, action)
 
-    def go_back(self):
+    def go_back(self) -> None:
         """Navigate back in history"""
         if len(self.history) > 1:
             self.history.pop()  # Remove current
@@ -657,7 +654,7 @@ img batch *.png -f webp --dry-run
         results.sort(key=lambda x: x[0], reverse=True)
         return [s for _, s in results[:10]]
 
-    def search_interactive(self):
+    def search_interactive(self) -> None:
         """Interactive search"""
         query = Prompt.ask("\n[cyan]Search for[/cyan]")
 
@@ -686,7 +683,7 @@ img batch *.png -f webp --dry-run
             if 0 <= index < len(results):
                 self.current_section = results[index].id
 
-    def add_bookmark(self, section: DocSection):
+    def add_bookmark(self, section: DocSection) -> None:
         """Add bookmark for current section"""
         notes = Prompt.ask("Add notes (optional)", default="")
 
@@ -702,7 +699,7 @@ img batch *.png -f webp --dry-run
 
         self.console.print(f"[green]✓[/green] Bookmarked: {section.title}")
 
-    def show_bookmarks(self):
+    def show_bookmarks(self) -> None:
         """Display bookmarks"""
         if not self.bookmarks:
             self.console.print("[yellow]No bookmarks yet[/yellow]")

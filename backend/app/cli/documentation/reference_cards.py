@@ -9,18 +9,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.table import Table
 
 # Optional import for PDF generation
 try:
     from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    from reportlab.lib.pagesizes import A4, letter
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
     from reportlab.platypus import (
-        PageBreak,
         Paragraph,
         SimpleDocTemplate,
         Spacer,
@@ -38,7 +36,7 @@ except ImportError:
 class ReferenceCardGenerator:
     """Generates quick reference cards in various formats"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.output_dir = Path.home() / ".image-converter" / "reference"
         self.cards = self._load_reference_data()
@@ -473,7 +471,7 @@ class ReferenceCardGenerator:
             )
         return cards
 
-    def display_card(self, card_type: str = "basic"):
+    def display_card(self, card_type: str = "basic") -> None:
         """Display reference card in console"""
         if card_type not in self.cards:
             self.console.print(f"[red]Unknown card type:[/red] {card_type}")

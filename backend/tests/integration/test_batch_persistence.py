@@ -1,14 +1,13 @@
 """Integration tests for batch job persistence and history service."""
 
+from typing import Any
 import asyncio
 import os
 import tempfile
 from datetime import datetime, timedelta
-from typing import Any, Dict
 
 import pytest
 
-from app.core.batch.models import BatchJobStatus, BatchResult
 from app.services.batch_history_service import BatchHistoryService
 
 

@@ -4,11 +4,9 @@ Provides streaming operations for files > 100MB to minimize memory usage.
 """
 
 import io
-import logging
 import os
 import tempfile
-from pathlib import Path
-from typing import Any, BinaryIO, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 try:
     import pyvips
@@ -39,7 +37,7 @@ class VipsOperations:
     Falls back to PIL for smaller files or when vips is unavailable.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize vips operations handler."""
         self.vips_available = VIPS_AVAILABLE
         self._memory_process = psutil.Process()
@@ -165,7 +163,7 @@ class VipsOperations:
             input_path: Path to input image
             output_format: Output format (webp, avif, jpeg, etc.)
             quality: Quality for lossy formats (1-100)
-            resize: Optional (width, height) tuple for resizing
+            resize: Optional[Any] (width, height) tuple for resizing
             **kwargs: Additional format-specific options
 
         Returns:
@@ -307,7 +305,7 @@ class VipsOperations:
             input_path: Path to input image
             output_format: Output format
             quality: Quality setting
-            resize: Optional resize dimensions
+            resize: Optional[Any] resize dimensions
             **kwargs: Additional options
 
         Returns:

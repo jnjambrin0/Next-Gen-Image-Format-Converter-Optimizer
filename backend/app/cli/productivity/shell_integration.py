@@ -4,11 +4,10 @@ Generate and manage shell completion scripts for various shells
 """
 
 import os
-import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 
 class ShellIntegrator:
@@ -193,7 +192,7 @@ _img_completion() {
         'batch:Batch convert multiple images'
         'optimize:Optimize image for specific use case'
         'analyze:Analyze image properties'
-        'formats:List supported formats'
+        'formats: List[Any] supported formats'
         'presets:Manage optimization presets'
         'profile:Manage configuration profiles'
         'watch:Watch directory for changes'

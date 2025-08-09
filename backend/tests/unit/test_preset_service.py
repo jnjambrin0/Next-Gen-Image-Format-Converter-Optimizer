@@ -1,6 +1,6 @@
 """Unit tests for preset service."""
 
-import json
+from typing import Any
 import os
 import tempfile
 from datetime import datetime
@@ -30,7 +30,7 @@ async def preset_service():
 
 
 @pytest.fixture
-def sample_preset_data():
+def sample_preset_data() -> None:
     """Sample preset creation data."""
     return PresetCreate(
         name="Test Preset",

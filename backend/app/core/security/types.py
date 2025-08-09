@@ -2,7 +2,6 @@
 Type definitions for security module.
 """
 
-from enum import Enum
 from typing import Any, Dict, List, Optional, TypedDict
 
 

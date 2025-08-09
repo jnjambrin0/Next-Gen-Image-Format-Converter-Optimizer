@@ -14,11 +14,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.table import Table
 
 # Optional import for full-text search
 try:
-    from whoosh import fields, index, qparser
+    from whoosh import qparser
     from whoosh.analysis import StemmingAnalyzer
     from whoosh.filedb.filestore import RamStorage
 
@@ -71,7 +70,7 @@ class Question:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "Question":
+    def from_dict(cls, data: Dict[str, Any]) -> "Question":
         """Create from dictionary"""
         return cls(
             id=data.get("id"),
@@ -98,7 +97,7 @@ class Question:
 class KnowledgeBase:
     """Q&A Knowledge Base with search capabilities"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.db_path = Path.home() / ".image-converter" / "knowledge.db"
         self._search_index = None  # Lazy loaded
@@ -108,7 +107,7 @@ class KnowledgeBase:
         # Defer search index initialization for lazy loading
         self._populate_default_qa()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database"""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -152,14 +151,14 @@ class KnowledgeBase:
         conn.close()
 
     @property
-    def search_index(self):
+    def search_index(self) -> None:
         """Lazy-load search index on first access"""
         if not self._index_initialized:
             self._init_search_index()
             self._index_initialized = True
         return self._search_index
 
-    def _init_search_index(self):
+    def _init_search_index(self) -> None:
         """Initialize full-text search index (called lazily)"""
         if not WHOOSH_AVAILABLE:
             self._search_index = None
@@ -193,7 +192,7 @@ class KnowledgeBase:
             self.console.print("[yellow]Full-text search will be unavailable[/yellow]")
             self._search_index = None
 
-    def _populate_default_qa(self):
+    def _populate_default_qa(self) -> None:
         """Populate with default Q&A entries"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -440,7 +439,7 @@ img convert large.tiff -f jpeg --stream
 
         return question_id
 
-    def _index_question(self, question_id: int, question: Question):
+    def _index_question(self, question_id: int, question: Question) -> None:
         """Add question to search index"""
         if not self.search_index:
             return
@@ -456,7 +455,7 @@ img convert large.tiff -f jpeg --stream
         )
         writer.commit()
 
-    def _reindex_all(self):
+    def _reindex_all(self) -> None:
         """Reindex all questions"""
         if not self.search_index:
             return
@@ -489,8 +488,7 @@ img convert large.tiff -f jpeg --stream
             query: Search query
             limit: Maximum results
 
-        Returns:
-            List of matching questions
+        Returns: List[Any] of matching questions
         """
         if self.search_index and WHOOSH_AVAILABLE:
             # Use Whoosh for full-text search
@@ -614,7 +612,7 @@ img convert large.tiff -f jpeg --stream
             updated_at=datetime.fromisoformat(row[9]) if row[9] else None,
         )
 
-    def vote(self, question_id: int, upvote: bool = True):
+    def vote(self, question_id: int, upvote: bool = True) -> None:
         """Vote on a question"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -639,7 +637,7 @@ img convert large.tiff -f jpeg --stream
         conn.commit()
         conn.close()
 
-    def increment_views(self, question_id: int):
+    def increment_views(self, question_id: int) -> None:
         """Increment view count"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -655,7 +653,7 @@ img convert large.tiff -f jpeg --stream
         conn.commit()
         conn.close()
 
-    def display_question(self, question: Question):
+    def display_question(self, question: Question) -> None:
         """Display a question with formatting"""
         # Increment views
         if question.id:
@@ -715,7 +713,7 @@ img convert large.tiff -f jpeg --stream
             ],
         }
 
-    def export_knowledge(self, filepath: Path):
+    def export_knowledge(self, filepath: Path) -> None:
         """Export knowledge base to JSON"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()

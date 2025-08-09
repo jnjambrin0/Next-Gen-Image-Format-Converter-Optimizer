@@ -1,13 +1,12 @@
 """
+from typing import Any
 Unit tests for command history
 """
 
-import json
 import tempfile
 from collections import deque
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -18,7 +17,7 @@ class TestHistoryManager:
     """Test history manager"""
 
     @pytest.fixture
-    def temp_history_dir(self):
+    def temp_history_dir(self) -> None:
         """Create temporary history directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
             history_dir = Path(tmpdir) / "history"
@@ -26,14 +25,14 @@ class TestHistoryManager:
             yield history_dir
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Mock configuration"""
         config = Mock()
         config.history_enabled = True
         config.history_size = 100
         return config
 
-    def test_history_manager_init(self, temp_history_dir, mock_config):
+    def test_history_manager_init(self, temp_history_dir, mock_config) -> None:
         """Test history manager initialization"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -50,7 +49,7 @@ class TestHistoryManager:
                 assert isinstance(manager.undo_stack, deque)
                 assert isinstance(manager.redo_stack, deque)
 
-    def test_add_command_success(self, temp_history_dir, mock_config):
+    def test_add_command_success(self, temp_history_dir, mock_config) -> None:
         """Test adding a successful command to history"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -70,7 +69,7 @@ class TestHistoryManager:
                 assert len(manager.undo_stack) == 1
                 assert manager.undo_stack[0]["command"] == "convert test.jpg -f webp"
 
-    def test_add_command_failure(self, temp_history_dir, mock_config):
+    def test_add_command_failure(self, temp_history_dir, mock_config) -> None:
         """Test adding a failed command to history"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -87,7 +86,7 @@ class TestHistoryManager:
                 # Should NOT be added to undo stack
                 assert len(manager.undo_stack) == 0
 
-    def test_add_command_disabled(self, temp_history_dir, mock_config):
+    def test_add_command_disabled(self, temp_history_dir, mock_config) -> None:
         """Test adding command when history is disabled"""
         mock_config.history_enabled = False
 
@@ -103,7 +102,7 @@ class TestHistoryManager:
                 # Should not add to history
                 assert len(manager.history) == 0
 
-    def test_get_history(self, temp_history_dir, mock_config):
+    def test_get_history(self, temp_history_dir, mock_config) -> None:
         """Test getting command history"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -123,7 +122,7 @@ class TestHistoryManager:
                 assert recent[0]["command"] == "command 5"
                 assert recent[-1]["command"] == "command 14"
 
-    def test_undo(self, temp_history_dir, mock_config):
+    def test_undo(self, temp_history_dir, mock_config) -> None:
         """Test undo functionality"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -143,7 +142,7 @@ class TestHistoryManager:
                 assert len(manager.undo_stack) == 1
                 assert len(manager.redo_stack) == 1
 
-    def test_undo_empty(self, temp_history_dir, mock_config):
+    def test_undo_empty(self, temp_history_dir, mock_config) -> None:
         """Test undo with empty stack"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -156,7 +155,7 @@ class TestHistoryManager:
 
                 assert undone is None
 
-    def test_redo(self, temp_history_dir, mock_config):
+    def test_redo(self, temp_history_dir, mock_config) -> None:
         """Test redo functionality"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -176,7 +175,7 @@ class TestHistoryManager:
                 assert len(manager.undo_stack) == 1
                 assert len(manager.redo_stack) == 0
 
-    def test_clear_history(self, temp_history_dir, mock_config):
+    def test_clear_history(self, temp_history_dir, mock_config) -> None:
         """Test clearing history"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:
@@ -196,7 +195,7 @@ class TestHistoryManager:
                 assert len(manager.undo_stack) == 0
                 assert len(manager.redo_stack) == 0
 
-    def test_history_size_limit(self, temp_history_dir, mock_config):
+    def test_history_size_limit(self, temp_history_dir, mock_config) -> None:
         """Test history size limit"""
         mock_config.history_size = 5
 
@@ -218,7 +217,7 @@ class TestHistoryManager:
                 saved_history = manager._load_history()
                 assert len(saved_history) <= 5
 
-    def test_new_command_clears_redo(self, temp_history_dir, mock_config):
+    def test_new_command_clears_redo(self, temp_history_dir, mock_config) -> None:
         """Test that new command clears redo stack"""
         with patch("app.cli.utils.history.get_history_dir") as mock_get_dir:
             with patch("app.cli.utils.history.get_config") as mock_get_config:

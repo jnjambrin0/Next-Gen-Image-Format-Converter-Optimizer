@@ -3,11 +3,10 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from app.core.exceptions import SecurityError, ValidationError
-from app.models.database import ApiKey
+from app.core.exceptions import ValidationError
 from app.services.api_key_service import api_key_service
 from app.utils.logging import get_logger
 
@@ -171,8 +170,7 @@ async def list_api_keys(
         include_inactive: Whether to include inactive keys
         http_request: HTTP request for logging
 
-    Returns:
-        List of API key information
+    Returns: List[Any] of API key information
     """
     try:
         api_keys = api_key_service.list_api_keys(include_inactive=include_inactive)

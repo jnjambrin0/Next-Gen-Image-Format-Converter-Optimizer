@@ -1,9 +1,7 @@
 """
+from typing import Any
 Unit tests for simplified security error handling.
 """
-
-import asyncio
-from unittest.mock import patch
 
 import pytest
 
@@ -20,7 +18,7 @@ from app.core.security.errors import (
 class TestSecurityError:
     """Test base SecurityError class."""
 
-    def test_basic_security_error(self):
+    def test_basic_security_error(self) -> None:
         """Test creating basic security error."""
         error = SecurityError(
             category="network",
@@ -31,7 +29,7 @@ class TestSecurityError:
         assert error.details == {"key": "value"}
         assert str(error) == "Network access violation"
 
-    def test_error_with_custom_message(self):
+    def test_error_with_custom_message(self) -> None:
         """Test security error with custom message."""
         error = SecurityError(
             category="sandbox",
@@ -43,7 +41,7 @@ class TestSecurityError:
         assert str(error) == "Custom sandbox violation"
         assert error.details["pid"] == 1234
 
-    def test_error_categories(self):
+    def test_error_categories(self) -> None:
         """Test all error categories."""
         categories = ["network", "sandbox", "rate_limit", "verification", "file"]
 
@@ -56,7 +54,7 @@ class TestSecurityError:
 class TestErrorFactories:
     """Test error factory functions."""
 
-    def test_create_network_error(self):
+    def test_create_network_error(self) -> None:
         """Test creating network error."""
         error = create_network_error(
             reason="dns_blocked",
@@ -70,7 +68,7 @@ class TestErrorFactories:
         assert error.details["target"] == "example.com"
         assert error.details["port"] == 443
 
-    def test_create_sandbox_error(self):
+    def test_create_sandbox_error(self) -> None:
         """Test creating sandbox error."""
         error = create_sandbox_error(
             reason="timeout",
@@ -84,7 +82,7 @@ class TestErrorFactories:
         assert error.details["timeout"] == 30
         assert error.details["pid"] == 1234
 
-    def test_create_rate_limit_error(self):
+    def test_create_rate_limit_error(self) -> None:
         """Test creating rate limit error."""
         error = create_rate_limit_error(
             limit=100,
@@ -98,7 +96,7 @@ class TestErrorFactories:
         assert error.details["window"] == "minute"
         assert error.details["retry_after"] == 60
 
-    def test_create_verification_error(self):
+    def test_create_verification_error(self) -> None:
         """Test creating verification error."""
         error = create_verification_error(
             check="network_isolation",
@@ -112,7 +110,7 @@ class TestErrorFactories:
         assert error.details["expected"] == True
         assert error.details["actual"] == False
 
-    def test_create_file_error(self):
+    def test_create_file_error(self) -> None:
         """Test creating file error."""
         error = create_file_error(
             operation="read",
@@ -128,7 +126,7 @@ class TestErrorFactories:
 class TestErrorHandling:
     """Test error handling patterns."""
 
-    def test_error_context_details(self):
+    def test_error_context_details(self) -> None:
         """Test that error details don't contain PII."""
         # Should not include actual filenames
         error = create_file_error(
@@ -140,7 +138,7 @@ class TestErrorHandling:
         assert "path" not in error.details
         assert "filename" not in error.details
 
-    def test_error_message_privacy(self):
+    def test_error_message_privacy(self) -> None:
         """Test that error messages are privacy-aware."""
         error = create_network_error(
             reason="connection_refused",

@@ -4,7 +4,7 @@ Detects actual image format regardless of file extension
 """
 
 from io import BytesIO
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import structlog
 from PIL import Image
@@ -17,7 +17,7 @@ logger = structlog.get_logger()
 class FormatDetectionService:
     """Service for detecting image formats from file content."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize format detection service."""
         # Map of MIME types to our internal format names
         self._mime_to_format = {

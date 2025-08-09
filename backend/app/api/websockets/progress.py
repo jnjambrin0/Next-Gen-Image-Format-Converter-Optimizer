@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from typing import Any, Dict, Optional, Set, Tuple
 
-from fastapi import Query, WebSocket, WebSocketDisconnect, WebSocketException, status
+from fastapi import Query, WebSocket, WebSocketDisconnect, status
 from fastapi.routing import APIRouter
 
 from app.config import settings
@@ -20,7 +20,7 @@ router = APIRouter()
 class ConnectionManager:
     """Manages WebSocket connections for batch progress updates."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the connection manager."""
         # Map job_id to set of active connections
         self._connections: Dict[str, Set[WebSocket]] = {}
@@ -356,7 +356,7 @@ async def websocket_endpoint(
     Args:
         websocket: WebSocket connection
         job_id: Batch job ID to subscribe to
-        token: Optional authentication token
+        token: Optional[Any] authentication token
     """
     # Validate job_id format
     if not await _validate_job_id(websocket, job_id):

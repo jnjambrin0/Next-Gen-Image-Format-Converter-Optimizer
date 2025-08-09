@@ -1,26 +1,26 @@
 """Test that all fixtures work correctly."""
 
+from typing import Any
 import json
 from pathlib import Path
 
-import pytest
 from PIL import Image
 
 
-def test_test_images_dir_exists(test_images_dir):
+def test_test_images_dir_exists(test_images_dir) -> None:
     """Test that test images directory exists."""
     assert test_images_dir.exists()
     assert test_images_dir.is_dir()
     assert (test_images_dir / "sample_photo.jpg").exists()
 
 
-def test_sample_image_path_exists(sample_image_path):
+def test_sample_image_path_exists(sample_image_path) -> None:
     """Test sample image path fixture."""
     assert sample_image_path.exists()
     assert sample_image_path.suffix == ".jpg"
 
 
-def test_sample_image_bytes(sample_image_bytes):
+def test_sample_image_bytes(sample_image_bytes) -> None:
     """Test sample image bytes fixture."""
     assert len(sample_image_bytes) > 0
     # Verify it's a valid image
@@ -30,7 +30,7 @@ def test_sample_image_bytes(sample_image_bytes):
     assert img.format == "JPEG"
 
 
-def test_all_test_images(all_test_images):
+def test_all_test_images(all_test_images) -> None:
     """Test all test images fixture."""
     assert len(all_test_images) > 0
     assert "sample_photo" in all_test_images
@@ -42,7 +42,7 @@ def test_all_test_images(all_test_images):
         assert info["path"].exists(), f"{name} image not found at {info['path']}"
 
 
-def test_temp_dir_fixture(temp_dir):
+def test_temp_dir_fixture(temp_dir) -> None:
     """Test temporary directory fixture."""
     assert temp_dir.exists()
     assert temp_dir.is_dir()
@@ -53,14 +53,14 @@ def test_temp_dir_fixture(temp_dir):
     assert test_file.exists()
 
 
-def test_mock_conversion_request(mock_conversion_request):
+def test_mock_conversion_request(mock_conversion_request) -> None:
     """Test mock conversion request fixture."""
     assert "output_format" in mock_conversion_request
     assert "quality" in mock_conversion_request
     assert mock_conversion_request["quality"] == 85
 
 
-def test_conversion_presets(conversion_presets):
+def test_conversion_presets(conversion_presets) -> None:
     """Test conversion presets fixture."""
     assert len(conversion_presets) > 0
     assert "web_optimized" in conversion_presets
@@ -70,7 +70,7 @@ def test_conversion_presets(conversion_presets):
     assert "output_format" in web_preset
 
 
-def test_image_generator(image_generator):
+def test_image_generator(image_generator) -> None:
     """Test image generator fixture."""
     # Generate a test image
     img_data = image_generator(width=200, height=150, format="PNG")
@@ -84,7 +84,7 @@ def test_image_generator(image_generator):
     assert img.format == "PNG"
 
 
-def test_expected_api_responses(expected_api_responses):
+def test_expected_api_responses(expected_api_responses) -> None:
     """Test expected API responses fixture."""
     assert "conversion_success" in expected_api_responses
     assert "conversion_error" in expected_api_responses
@@ -94,7 +94,7 @@ def test_expected_api_responses(expected_api_responses):
     assert "download_url" in success
 
 
-def test_json_data_files():
+def test_json_data_files() -> None:
     """Test that JSON data files are valid."""
     data_dir = Path(__file__).parent / "fixtures" / "data"
 
@@ -115,7 +115,7 @@ def test_json_data_files():
             assert data is not None
 
 
-def test_generated_images_are_valid(test_images_dir):
+def test_generated_images_are_valid(test_images_dir) -> None:
     """Test all generated test images are valid."""
     image_files = [
         "sample_photo.jpg",

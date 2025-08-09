@@ -1,12 +1,11 @@
 """Format detection and analysis API endpoints."""
 
+from typing import Any
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 import structlog
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.api.utils.validation import (
@@ -21,7 +20,6 @@ from app.core.constants import (
     SUPPORTED_INPUT_FORMATS,
     SUPPORTED_OUTPUT_FORMATS,
 )
-from app.core.exceptions import SecurityError, ValidationError
 from app.models.responses import (
     ErrorResponse,
     FormatCompatibilityMatrix,

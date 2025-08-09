@@ -3,13 +3,11 @@
 import asyncio
 import json
 import os
-import uuid
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import (
     APIRouter,
-    Depends,
     File,
     Form,
     HTTPException,
@@ -17,24 +15,18 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.config import settings
 from app.core.batch.models import (
-    BatchCreateRequest,
     BatchCreateResponse,
-    BatchItem,
     BatchItemStatus,
-    BatchJob,
-    BatchJobStatus,
     BatchResult,
     BatchStatus,
     BatchStatusResponse,
 )
-from app.core.exceptions import ValidationError
-from app.models import ErrorResponse
 from app.services.batch_service import batch_service
 from app.utils.logging import get_logger
 
@@ -61,7 +53,7 @@ def validate_batch_request(
     """Validate batch request parameters.
 
     Args:
-        files: List of uploaded files
+        files: List[Any] of uploaded files
         output_format: Target conversion format
         request: FastAPI request object
 
@@ -182,11 +174,11 @@ async def create_batch_job(
 
     Args:
         request: FastAPI request object
-        files: List of image files to convert
+        files: List[Any] of image files to convert
         output_format: Target format for all conversions
-        quality: Optional quality setting (1-100)
-        optimization_mode: Optional optimization mode
-        preset_id: Optional preset to apply
+        quality: Optional[Any] quality setting (1-100)
+        optimization_mode: Optional[Any] optimization mode
+        preset_id: Optional[Any] preset to apply
         preserve_metadata: Whether to preserve metadata
 
     Returns:

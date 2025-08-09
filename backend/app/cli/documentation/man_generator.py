@@ -4,7 +4,6 @@ Generates man pages from command metadata
 """
 
 import os
-import re
 import subprocess
 import tempfile
 from datetime import datetime
@@ -17,7 +16,7 @@ from rich.console import Console
 class ManPageGenerator:
     """Generates man pages in troff/groff format"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.man_dir = Path.home() / ".image-converter" / "man"
         self.commands = self._load_command_metadata()

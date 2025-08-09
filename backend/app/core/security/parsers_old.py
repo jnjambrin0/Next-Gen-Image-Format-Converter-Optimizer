@@ -7,12 +7,11 @@ to extract connection information in a structured format.
 
 import re
 from datetime import datetime
-from typing import Dict, List, Optional, Protocol, Tuple
+from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 import structlog
 
 from app.core.constants import (
-    CONNECTION_PID_PARSE_START_INDEX,
     LOCALHOST_VARIANTS,
     MIN_CONNECTION_PARTS,
 )
@@ -34,7 +33,7 @@ class NetworkConnection:
         state: str,
         pid: Optional[int] = None,
         process_name: Optional[str] = None,
-    ):
+    ) -> None:
         self.protocol = protocol
         self.local_addr = local_addr
         self.local_port = local_port
@@ -360,8 +359,7 @@ def parse_connections(output: str, command: str = "ss") -> List[NetworkConnectio
         output: Command output to parse
         command: Command that generated output
 
-    Returns:
-        List of parsed connections
+    Returns: List[Any] of parsed connections
     """
     parser = get_connection_parser(command)
     return parser.parse(output)

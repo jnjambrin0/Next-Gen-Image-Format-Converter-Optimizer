@@ -18,28 +18,23 @@ class CLIPlugin(ABC):
         """
         Return plugin information
 
-        Returns:
-            Dict with keys: name, version, description, author
+        Returns: Dict[str, Any] with keys: name, version, description, author
         """
-        pass
 
     @abstractmethod
-    def register(self, app: typer.Typer):
+    def register(self, app: typer.Typer) -> None:
         """
         Register plugin commands with the CLI app
 
         Args:
             app: The main Typer application
         """
-        pass
 
-    def on_load(self):
+    def on_load(self) -> None:
         """Called when plugin is loaded (optional)"""
-        pass
 
-    def on_unload(self):
+    def on_unload(self) -> None:
         """Called when plugin is unloaded (optional)"""
-        pass
 
 
 # Example plugin template
@@ -55,7 +50,7 @@ from app.cli.plugins.interface import CLIPlugin
 class ExamplePlugin(CLIPlugin):
     """Example plugin implementation"""
     
-    def plugin_info(self):
+    def plugin_info(self) -> None:
         return {
             "name": "example",
             "version": "1.0.0",
@@ -63,7 +58,7 @@ class ExamplePlugin(CLIPlugin):
             "author": "Your Name"
         }
     
-    def register(self, app: typer.Typer):
+    def register(self, app: typer.Typer) -> None:
         """Register plugin commands"""
         
         @app.command()
@@ -77,7 +72,7 @@ class ExamplePlugin(CLIPlugin):
         example_group = typer.Typer()
         
         @example_group.command()
-        def subcommand():
+        def subcommand() -> None:
             """Example subcommand"""
             typer.echo("Subcommand executed")
         
@@ -88,15 +83,15 @@ class ExamplePlugin(CLIPlugin):
 plugin = ExamplePlugin()
 
 # Required: Export these functions
-def plugin_info():
+def plugin_info() -> None:
     return plugin.plugin_info()
 
-def register(app):
+def register(app) -> None:
     plugin.register(app)
 '''
 
 
-def create_plugin_template(path: Path):
+def create_plugin_template(path: Path) -> None:
     """Create a plugin template file"""
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:

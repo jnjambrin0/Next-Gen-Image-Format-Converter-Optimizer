@@ -1,13 +1,11 @@
 """Integration tests for recommendation API endpoints."""
 
-from unittest.mock import AsyncMock, patch
-
+from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models.conversion import (
-    ContentClassification,
     ContentType,
     InputFormat,
     OutputFormat,
@@ -19,12 +17,12 @@ class TestRecommendationAPI:
     """Test cases for recommendation API endpoints."""
 
     @pytest.fixture
-    def client(self):
+    def client(self) -> None:
         """Create test client."""
         return TestClient(app)
 
     @pytest.fixture
-    def sample_classification(self):
+    def sample_classification(self) -> None:
         """Create sample content classification."""
         return {
             "primary_type": ContentType.PHOTO.value,
@@ -34,7 +32,7 @@ class TestRecommendationAPI:
             "has_faces": True,
         }
 
-    def test_recommend_endpoint_basic(self, client, sample_classification):
+    def test_recommend_endpoint_basic(self, client, sample_classification) -> None:
         """Test basic recommendation endpoint."""
         response = client.post(
             "/api/intelligence/recommend",
@@ -56,7 +54,9 @@ class TestRecommendationAPI:
         assert data["use_case"] == UseCaseType.WEB.value
         assert "processing_time_ms" in data
 
-    def test_recommend_endpoint_with_priority(self, client, sample_classification):
+    def test_recommend_endpoint_with_priority(
+        self, client, sample_classification
+    ) -> None:
         """Test recommendation with priority."""
         response = client.post(
             "/api/intelligence/recommend",
@@ -83,7 +83,9 @@ class TestRecommendationAPI:
             or "smaller" in str(top_rec["reasons"]).lower()
         )
 
-    def test_recommend_endpoint_with_exclusions(self, client, sample_classification):
+    def test_recommend_endpoint_with_exclusions(
+        self, client, sample_classification
+    ) -> None:
         """Test recommendation with format exclusions."""
         response = client.post(
             "/api/intelligence/recommend",
@@ -103,7 +105,9 @@ class TestRecommendationAPI:
         assert OutputFormat.WEBP.value not in formats
         assert OutputFormat.AVIF.value not in formats
 
-    def test_recommend_endpoint_with_override(self, client, sample_classification):
+    def test_recommend_endpoint_with_override(
+        self, client, sample_classification
+    ) -> None:
         """Test recommendation with user override."""
         response = client.post(
             "/api/intelligence/recommend",
@@ -123,7 +127,7 @@ class TestRecommendationAPI:
         assert data["recommendations"][0]["format"] == OutputFormat.PNG.value
         assert data["recommendations"][0]["score"] == 1.0  # Max score for override
 
-    def test_recommend_endpoint_document_archive(self, client):
+    def test_recommend_endpoint_document_archive(self, client) -> None:
         """Test recommendation for document archival."""
         classification = {
             "primary_type": ContentType.DOCUMENT.value,
@@ -151,7 +155,7 @@ class TestRecommendationAPI:
         recommendations = data["recommendations"]
         assert len(recommendations) > 0
 
-    def test_recommend_endpoint_validation(self, client, sample_classification):
+    def test_recommend_endpoint_validation(self, client, sample_classification) -> None:
         """Test endpoint validation."""
         # Missing required field
         response = client.post(
@@ -177,7 +181,7 @@ class TestRecommendationAPI:
 
         assert response.status_code == 422
 
-    def test_preference_record_endpoint(self, client):
+    def test_preference_record_endpoint(self, client) -> None:
         """Test preference recording endpoint."""
         response = client.post(
             "/api/intelligence/preferences/record",
@@ -193,7 +197,7 @@ class TestRecommendationAPI:
         data = response.json()
         assert data["message"] == "Preference recorded successfully"
 
-    def test_preference_get_endpoint(self, client):
+    def test_preference_get_endpoint(self, client) -> None:
         """Test getting preferences endpoint."""
         # First record some preferences
         for _ in range(5):
@@ -215,7 +219,7 @@ class TestRecommendationAPI:
         assert data["content_type"] == ContentType.PHOTO.value
         assert "preferences" in data
 
-    def test_preference_reset_endpoint(self, client):
+    def test_preference_reset_endpoint(self, client) -> None:
         """Test preference reset endpoint."""
         # Record some preferences first
         client.post(
@@ -237,7 +241,7 @@ class TestRecommendationAPI:
         assert "count" in data
         assert "Reset" in data["message"]
 
-    def test_format_details_endpoint(self, client):
+    def test_format_details_endpoint(self, client) -> None:
         """Test format details endpoint."""
         response = client.get(
             f"/api/intelligence/formats/{OutputFormat.WEBP.value}/details",
@@ -254,7 +258,9 @@ class TestRecommendationAPI:
         assert "description" in data
         assert "best_for" in data
 
-    def test_recommendation_response_structure(self, client, sample_classification):
+    def test_recommendation_response_structure(
+        self, client, sample_classification
+    ) -> None:
         """Test complete recommendation response structure."""
         response = client.post(
             "/api/intelligence/recommend",
@@ -293,7 +299,7 @@ class TestRecommendationAPI:
             assert "metrics" in format_data
             assert "features" in format_data
 
-    def test_recommendation_performance(self, client, sample_classification):
+    def test_recommendation_performance(self, client, sample_classification) -> None:
         """Test recommendation performance requirement."""
         import time
 

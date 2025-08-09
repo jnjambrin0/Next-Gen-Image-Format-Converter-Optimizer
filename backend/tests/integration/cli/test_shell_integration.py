@@ -1,16 +1,13 @@
 """
+from typing import Any
 Comprehensive tests for platform-specific shell integration
 Tests bash, zsh, fish, and PowerShell completion and integration
 """
 
-import io
-import json
 import os
 import platform
 import shutil
 import subprocess
-import sys
-import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -30,10 +27,10 @@ class TestShellDetector:
     """Test shell detection functionality"""
 
     @pytest.fixture
-    def detector(self):
+    def detector(self) -> None:
         return ShellDetector()
 
-    def test_detect_from_environment(self, detector):
+    def test_detect_from_environment(self, detector) -> None:
         """Test detecting shell from environment variables"""
         # Test with SHELL variable
         with patch.dict(os.environ, {"SHELL": "/bin/bash"}):
@@ -45,7 +42,7 @@ class TestShellDetector:
         with patch.dict(os.environ, {"SHELL": "/usr/local/bin/fish"}):
             assert detector.detect() == ShellType.FISH
 
-    def test_detect_from_parent_process(self, detector):
+    def test_detect_from_parent_process(self, detector) -> None:
         """Test detecting shell from parent process"""
         with patch("psutil.Process") as mock_process:
             # Mock parent process
@@ -55,7 +52,7 @@ class TestShellDetector:
 
             assert detector.detect_from_parent() == ShellType.ZSH
 
-    def test_detect_on_windows(self, detector):
+    def test_detect_on_windows(self, detector) -> None:
         """Test shell detection on Windows"""
         with patch("platform.system", return_value="Windows"):
             with patch.dict(os.environ, {"COMSPEC": "C:\\Windows\\System32\\cmd.exe"}):
@@ -66,7 +63,7 @@ class TestShellDetector:
             ):
                 assert detector.detect_powershell() == ShellType.POWERSHELL
 
-    def test_detect_fallback(self, detector):
+    def test_detect_fallback(self, detector) -> None:
         """Test fallback when shell cannot be detected"""
         with patch.dict(os.environ, {}, clear=True):
             with patch("platform.system", return_value="Linux"):
@@ -77,7 +74,7 @@ class TestShellDetector:
                 # Should fallback to cmd on Windows
                 assert detector.detect() == ShellType.CMD
 
-    def test_is_available(self, detector):
+    def test_is_available(self, detector) -> None:
         """Test checking if shell is available"""
         with patch("shutil.which") as mock_which:
             mock_which.return_value = "/bin/bash"
@@ -91,10 +88,10 @@ class TestCompletionScript:
     """Test completion script generation"""
 
     @pytest.fixture
-    def generator(self):
+    def generator(self) -> None:
         return CompletionScript()
 
-    def test_generate_bash_completion(self, generator):
+    def test_generate_bash_completion(self, generator) -> None:
         """Test Bash completion script generation"""
         script = generator.generate(ShellType.BASH, "img")
 
@@ -104,7 +101,7 @@ class TestCompletionScript:
         assert "complete" in script
         assert "img" in script
 
-    def test_generate_zsh_completion(self, generator):
+    def test_generate_zsh_completion(self, generator) -> None:
         """Test Zsh completion script generation"""
         script = generator.generate(ShellType.ZSH, "img")
 
@@ -113,7 +110,7 @@ class TestCompletionScript:
         assert "compadd" in script or "_arguments" in script
         assert "completion" in script.lower()
 
-    def test_generate_fish_completion(self, generator):
+    def test_generate_fish_completion(self, generator) -> None:
         """Test Fish completion script generation"""
         script = generator.generate(ShellType.FISH, "img")
 
@@ -122,7 +119,7 @@ class TestCompletionScript:
         assert "--description" in script or "-d" in script
         assert "function" in script or "complete" in script
 
-    def test_generate_powershell_completion(self, generator):
+    def test_generate_powershell_completion(self, generator) -> None:
         """Test PowerShell completion script generation"""
         script = generator.generate(ShellType.POWERSHELL, "img")
 
@@ -132,7 +129,7 @@ class TestCompletionScript:
         assert "[CompletionResult]" in script or "CompletionResult" in script
         assert "img" in script
 
-    def test_command_suggestions(self, generator):
+    def test_command_suggestions(self, generator) -> None:
         """Test command suggestion generation"""
         commands = ["convert", "batch", "optimize", "watch", "profile"]
 
@@ -141,7 +138,7 @@ class TestCompletionScript:
         for cmd in commands:
             assert cmd in bash_script
 
-    def test_option_completion(self, generator):
+    def test_option_completion(self, generator) -> None:
         """Test option/flag completion"""
         options = ["--format", "--quality", "--output", "--dry-run", "--verbose"]
 
@@ -150,7 +147,7 @@ class TestCompletionScript:
         for opt in options:
             assert opt in script
 
-    def test_dynamic_completion(self, generator):
+    def test_dynamic_completion(self, generator) -> None:
         """Test dynamic completion for file patterns"""
         # Test file extension completion
         script = generator.generate_file_completion(
@@ -160,7 +157,7 @@ class TestCompletionScript:
         assert "*.jpg" in script or ".jpg" in script
         assert "*.png" in script or ".png" in script
 
-    def test_context_aware_completion(self, generator):
+    def test_context_aware_completion(self, generator) -> None:
         """Test context-aware completions"""
         # Generate completion that changes based on previous args
         script = generator.generate_contextual(
@@ -181,10 +178,10 @@ class TestShellHelper:
     """Test shell helper functions"""
 
     @pytest.fixture
-    def helper(self):
+    def helper(self) -> None:
         return ShellHelper()
 
-    def test_generate_alias_functions(self, helper):
+    def test_generate_alias_functions(self, helper) -> None:
         """Test alias function generation"""
         aliases = {"ic": "img convert", "ib": "img batch", "iw": "img watch"}
 
@@ -198,7 +195,7 @@ class TestShellHelper:
         assert "function ic" in fish_aliases
         assert "img convert $argv" in fish_aliases
 
-    def test_generate_helper_functions(self, helper):
+    def test_generate_helper_functions(self, helper) -> None:
         """Test helper function generation"""
         # Batch conversion helper
         batch_helper = helper.generate_function(
@@ -213,7 +210,7 @@ class TestShellHelper:
         )
         assert "img convert" in batch_helper
 
-    def test_path_setup(self, helper):
+    def test_path_setup(self, helper) -> None:
         """Test PATH setup for shell"""
         install_dir = "/usr/local/bin"
 
@@ -227,7 +224,7 @@ class TestShellHelper:
         assert "set -gx PATH" in fish_path or "set PATH" in fish_path
         assert install_dir in fish_path
 
-    def test_initialization_script(self, helper):
+    def test_initialization_script(self, helper) -> None:
         """Test shell initialization script"""
         init_script = helper.generate_init_script(
             ShellType.ZSH, program="img", config_dir="~/.image-converter"
@@ -244,10 +241,10 @@ class TestFunctionLibrary:
     """Test shell function library"""
 
     @pytest.fixture
-    def library(self):
+    def library(self) -> None:
         return FunctionLibrary()
 
-    def test_conversion_functions(self, library):
+    def test_conversion_functions(self, library) -> None:
         """Test conversion helper functions"""
         functions = library.get_conversion_functions(ShellType.BASH)
 
@@ -261,7 +258,7 @@ class TestFunctionLibrary:
         assert "img convert" in webp_func
         assert "-f webp" in webp_func or "--format webp" in webp_func
 
-    def test_batch_functions(self, library):
+    def test_batch_functions(self, library) -> None:
         """Test batch processing functions"""
         functions = library.get_batch_functions(ShellType.ZSH)
 
@@ -272,7 +269,7 @@ class TestFunctionLibrary:
         batch_func = functions["img_batch_convert"]
         assert "img batch" in batch_func
 
-    def test_utility_functions(self, library):
+    def test_utility_functions(self, library) -> None:
         """Test utility functions"""
         functions = library.get_utility_functions(ShellType.FISH)
 
@@ -280,7 +277,7 @@ class TestFunctionLibrary:
         assert "img_check_format" in functions
         assert "img_compare_sizes" in functions
 
-    def test_profile_functions(self, library):
+    def test_profile_functions(self, library) -> None:
         """Test profile management functions"""
         functions = library.get_profile_functions(ShellType.BASH)
 
@@ -293,11 +290,11 @@ class TestShellIntegrator:
     """Test ShellIntegrator main class"""
 
     @pytest.fixture
-    def integrator(self):
+    def integrator(self) -> None:
         return ShellIntegrator()
 
     @pytest.fixture
-    def temp_home(self, tmp_path):
+    def temp_home(self, tmp_path) -> None:
         """Create temporary home directory structure"""
         home = tmp_path / "home"
         home.mkdir()
@@ -311,7 +308,7 @@ class TestShellIntegrator:
 
         return home
 
-    def test_install_bash_completion(self, integrator, temp_home):
+    def test_install_bash_completion(self, integrator, temp_home) -> None:
         """Test installing Bash completion"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             success = integrator.install(ShellType.BASH, program="img", force=False)
@@ -328,7 +325,7 @@ class TestShellIntegrator:
             content = bashrc.read_text()
             assert "img" in content or "completion" in content
 
-    def test_install_zsh_completion(self, integrator, temp_home):
+    def test_install_zsh_completion(self, integrator, temp_home) -> None:
         """Test installing Zsh completion"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             # Create Zsh completion directory
@@ -344,7 +341,7 @@ class TestShellIntegrator:
                 temp_home / ".zsh" / "functions" / "_img"
             ).exists()
 
-    def test_install_fish_completion(self, integrator, temp_home):
+    def test_install_fish_completion(self, integrator, temp_home) -> None:
         """Test installing Fish completion"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             fish_dir = temp_home / ".config" / "fish"
@@ -356,7 +353,7 @@ class TestShellIntegrator:
             assert success is True
             assert (comp_dir / "img.fish").exists()
 
-    def test_install_powershell_completion(self, integrator, temp_home):
+    def test_install_powershell_completion(self, integrator, temp_home) -> None:
         """Test installing PowerShell completion"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             with patch("platform.system", return_value="Windows"):
@@ -371,7 +368,7 @@ class TestShellIntegrator:
                     content = profile.read_text()
                     assert "img" in content or "ArgumentCompleter" in content
 
-    def test_install_with_existing(self, integrator, temp_home):
+    def test_install_with_existing(self, integrator, temp_home) -> None:
         """Test installing with existing completion"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             # Install once
@@ -385,7 +382,7 @@ class TestShellIntegrator:
                 calls = [str(c) for c in mock_print.call_args_list]
                 assert any("already" in str(c).lower() for c in calls)
 
-    def test_uninstall_completion(self, integrator, temp_home):
+    def test_uninstall_completion(self, integrator, temp_home) -> None:
         """Test uninstalling completion"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             # Install first
@@ -399,7 +396,7 @@ class TestShellIntegrator:
             comp_dir = temp_home / ".bash_completion.d"
             assert not (comp_dir / "img").exists()
 
-    def test_auto_detect_and_install(self, integrator, temp_home):
+    def test_auto_detect_and_install(self, integrator, temp_home) -> None:
         """Test auto-detection and installation"""
         with patch.dict(os.environ, {"HOME": str(temp_home), "SHELL": "/bin/bash"}):
             success = integrator.auto_install("img")
@@ -409,7 +406,7 @@ class TestShellIntegrator:
             comp_dir = temp_home / ".bash_completion.d"
             assert comp_dir.exists()
 
-    def test_install_all_available(self, integrator, temp_home):
+    def test_install_all_available(self, integrator, temp_home) -> None:
         """Test installing for all available shells"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             with patch("shutil.which") as mock_which:
@@ -422,7 +419,7 @@ class TestShellIntegrator:
                 assert len(results) > 0
                 assert any(r["success"] for r in results)
 
-    def test_verify_installation(self, integrator, temp_home):
+    def test_verify_installation(self, integrator, temp_home) -> None:
         """Test verifying installation"""
         with patch.dict(os.environ, {"HOME": str(temp_home)}):
             # Not installed yet
@@ -439,11 +436,11 @@ class TestPlatformSpecific:
     """Platform-specific integration tests"""
 
     @pytest.fixture
-    def integrator(self):
+    def integrator(self) -> None:
         return ShellIntegrator()
 
     @pytest.mark.skipif(platform.system() != "Linux", reason="Linux-specific test")
-    def test_linux_integration(self, integrator, tmp_path):
+    def test_linux_integration(self, integrator, tmp_path) -> None:
         """Test Linux-specific shell integration"""
         with patch.dict(os.environ, {"HOME": str(tmp_path)}):
             # Test common Linux shells
@@ -453,7 +450,7 @@ class TestPlatformSpecific:
                     assert success is True
 
     @pytest.mark.skipif(platform.system() != "Darwin", reason="macOS-specific test")
-    def test_macos_integration(self, integrator, tmp_path):
+    def test_macos_integration(self, integrator, tmp_path) -> None:
         """Test macOS-specific shell integration"""
         with patch.dict(os.environ, {"HOME": str(tmp_path)}):
             # macOS defaults to zsh since Catalina
@@ -468,7 +465,7 @@ class TestPlatformSpecific:
                 pass
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-specific test")
-    def test_windows_integration(self, integrator, tmp_path):
+    def test_windows_integration(self, integrator, tmp_path) -> None:
         """Test Windows-specific shell integration"""
         with patch.dict(os.environ, {"USERPROFILE": str(tmp_path)}):
             # Test PowerShell
@@ -483,7 +480,7 @@ class TestPlatformSpecific:
                 content = profile.read_text()
                 assert "Register-ArgumentCompleter" in content
 
-    def test_wsl_integration(self, integrator, tmp_path):
+    def test_wsl_integration(self, integrator, tmp_path) -> None:
         """Test WSL (Windows Subsystem for Linux) integration"""
         with patch.dict(
             os.environ, {"HOME": str(tmp_path), "WSL_DISTRO_NAME": "Ubuntu"}
@@ -492,7 +489,7 @@ class TestPlatformSpecific:
             success = integrator.install(ShellType.BASH, "img")
             assert success is True
 
-    def test_termux_integration(self, integrator, tmp_path):
+    def test_termux_integration(self, integrator, tmp_path) -> None:
         """Test Termux (Android) integration"""
         with patch.dict(
             os.environ,
@@ -511,10 +508,10 @@ class TestShellIntegrationSecurity:
     """Security tests for shell integration"""
 
     @pytest.fixture
-    def integrator(self):
+    def integrator(self) -> None:
         return ShellIntegrator()
 
-    def test_no_code_injection(self, integrator):
+    def test_no_code_injection(self, integrator) -> None:
         """Test prevention of code injection in completion scripts"""
         # Try injecting malicious code
         malicious_inputs = [
@@ -536,7 +533,7 @@ class TestShellIntegrationSecurity:
             assert "curl evil" not in script
             assert "$(evil_command)" not in script
 
-    def test_safe_path_handling(self, integrator, tmp_path):
+    def test_safe_path_handling(self, integrator, tmp_path) -> None:
         """Test safe handling of paths with special characters"""
         # Create paths with special characters
         special_paths = [
@@ -559,7 +556,7 @@ class TestShellIntegrationSecurity:
                 except Exception as e:
                     pytest.fail(f"Failed to handle special path: {e}")
 
-    def test_permission_checks(self, integrator, tmp_path):
+    def test_permission_checks(self, integrator, tmp_path) -> None:
         """Test permission checking before file operations"""
         restricted_dir = tmp_path / "restricted"
         restricted_dir.mkdir()
@@ -576,7 +573,7 @@ class TestShellIntegrationSecurity:
             # Restore permissions for cleanup
             os.chmod(restricted_dir, 0o755)
 
-    def test_no_arbitrary_file_write(self, integrator):
+    def test_no_arbitrary_file_write(self, integrator) -> None:
         """Test prevention of arbitrary file writes"""
         # Try to write to system locations
         dangerous_paths = [
@@ -604,7 +601,7 @@ class TestShellIntegrationE2E:
     """End-to-end shell integration tests"""
 
     @pytest.fixture
-    def full_setup(self, tmp_path):
+    def full_setup(self, tmp_path) -> None:
         """Full integration setup"""
         # Create mock CLI structure
         cli_dir = tmp_path / "cli"
@@ -625,7 +622,7 @@ class TestShellIntegrationE2E:
 
         return cli_dir, env
 
-    def test_complete_installation_workflow(self, full_setup):
+    def test_complete_installation_workflow(self, full_setup) -> None:
         """Test complete installation workflow"""
         cli_dir, env = full_setup
 
@@ -649,7 +646,7 @@ class TestShellIntegrationE2E:
             assert len(functions) > 0
 
     @pytest.mark.skipif(not shutil.which("bash"), reason="Bash not available")
-    def test_bash_completion_interactive(self, full_setup):
+    def test_bash_completion_interactive(self, full_setup) -> None:
         """Test Bash completion interactively"""
         cli_dir, env = full_setup
 
@@ -686,7 +683,7 @@ echo "${{COMPREPLY[@]}}"
         # Should suggest 'convert'
         assert "convert" in result.stdout
 
-    def test_multi_shell_compatibility(self, full_setup):
+    def test_multi_shell_compatibility(self, full_setup) -> None:
         """Test compatibility across multiple shells"""
         cli_dir, env = full_setup
 
@@ -703,7 +700,7 @@ echo "${{COMPREPLY[@]}}"
         # At least one should succeed
         assert any(results.values())
 
-    def test_upgrade_scenario(self, full_setup):
+    def test_upgrade_scenario(self, full_setup) -> None:
         """Test upgrading existing installation"""
         cli_dir, env = full_setup
 

@@ -7,7 +7,7 @@ import structlog
 from PIL import Image
 
 from app.core.conversion.formats.base import BaseFormatHandler
-from app.core.exceptions import BmpDecodingError, ConversionFailedError
+from app.core.exceptions import BmpDecodingError
 from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
@@ -16,7 +16,7 @@ logger = structlog.get_logger()
 class BmpHandler(BaseFormatHandler):
     """Handler for BMP format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize BMP handler."""
         super().__init__()
         self.supported_formats = ["bmp", "dib"]

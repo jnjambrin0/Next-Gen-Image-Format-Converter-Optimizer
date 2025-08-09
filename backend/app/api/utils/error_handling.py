@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 
 import structlog
 from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse
 
 from app.models.responses import ErrorResponse
 
@@ -23,7 +22,7 @@ class APIError(HTTPException):
         message: str,
         correlation_id: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         self.error_code = error_code
         self.error_message = message
         self.correlation_id = correlation_id or str(uuid.uuid4())
@@ -247,7 +246,7 @@ def log_api_error(
     status_code: int,
     details: Optional[Dict[str, Any]] = None,
     endpoint: Optional[str] = None,
-):
+) -> None:
     """Log API error in a consistent format."""
     log_data = {
         "error_code": error_code,
@@ -303,7 +302,7 @@ def generate_error_code(
 class EndpointErrorHandler:
     """Helper class for handling errors within endpoint functions."""
 
-    def __init__(self, service_area: str, endpoint_name: str):
+    def __init__(self, service_area: str, endpoint_name: str) -> None:
         self.service_area = service_area
         self.endpoint_name = endpoint_name
 

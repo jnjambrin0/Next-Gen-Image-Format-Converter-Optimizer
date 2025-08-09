@@ -3,7 +3,6 @@
 import asyncio
 import os
 import sys
-import tempfile
 import time
 from datetime import datetime, timezone
 from io import BytesIO
@@ -12,7 +11,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Type
 import structlog
 
 from app.config import settings
-from app.core.constants import CANONICAL_FORMATS, FORMAT_ALIASES
+from app.core.constants import FORMAT_ALIASES
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.conversion.image_processor import ImageProcessor
 from app.core.exceptions import (
@@ -20,18 +19,16 @@ from app.core.exceptions import (
     ConversionFailedError,
     InvalidImageError,
     UnsupportedFormatError,
-    ValidationError,
 )
 from app.core.monitoring import metrics_collector, stats_collector
 from app.core.security.engine import SecurityEngine
-from app.core.security.memory import SecureMemoryManager, secure_memory_context
+from app.core.security.memory import SecureMemoryManager
 from app.models.conversion import (
     ConversionRequest,
     ConversionResult,
     ConversionSettings,
     ConversionStatus,
     InputFormat,
-    OutputFormat,
 )
 
 logger = structlog.get_logger()
@@ -43,7 +40,7 @@ class ConversionManager:
     # Default timeout for conversion operations (in seconds)
     DEFAULT_CONVERSION_TIMEOUT = 30.0
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize conversion manager."""
         self.format_handlers: Dict[str, Type[BaseFormatHandler]] = {}
         self.image_processor = ImageProcessor()
@@ -73,7 +70,6 @@ class ConversionManager:
         from app.core.conversion.formats.bmp_handler import BmpHandler
         from app.core.conversion.formats.gif_handler import GifHandler
         from app.core.conversion.formats.heif_handler import HeifHandler
-        from app.core.conversion.formats.jpeg2000_handler import Jpeg2000Handler
         from app.core.conversion.formats.jpeg_handler import JPEGHandler
         from app.core.conversion.formats.jpeg_optimized_handler import (
             JPEGOptimizedHandler,
@@ -767,7 +763,7 @@ class ConversionManager:
             input_data: Input image data as bytes
             input_format: Input format name
             request: Conversion request with output format and settings
-            timeout: Optional timeout in seconds (defaults to DEFAULT_CONVERSION_TIMEOUT)
+            timeout: Optional[Any] timeout in seconds (defaults to DEFAULT_CONVERSION_TIMEOUT)
 
         Returns:
             Tuple of (ConversionResult, output_bytes or None if failed)

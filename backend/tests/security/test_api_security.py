@@ -1,17 +1,15 @@
 """Security tests for API authentication and rate limiting."""
 
+from typing import Any
 import hashlib
 import secrets
 import time
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.core.security.rate_limiter import api_rate_limiter
 from app.main import app
 from app.models.database import Base
 from app.services.api_key_service import api_key_service
@@ -21,7 +19,7 @@ class TestAuthenticationSecurity:
     """Security tests for authentication system."""
 
     @pytest.fixture(scope="function")
-    def client(self):
+    def client(self) -> None:
         """Create test client with clean database."""
         engine = create_engine("sqlite:///:memory:")
         Base.metadata.create_all(engine)
@@ -33,14 +31,14 @@ class TestAuthenticationSecurity:
             yield client
 
     @pytest.fixture
-    def sample_api_key(self, client):
+    def sample_api_key(self, client) -> None:
         """Create a sample API key for testing."""
         api_key_record, raw_key = api_key_service.create_api_key(
             name="Security Test Key", rate_limit_override=50
         )
         return api_key_record, raw_key
 
-    def test_api_key_generation_entropy(self):
+    def test_api_key_generation_entropy(self) -> None:
         """Test that API keys have sufficient entropy."""
         keys = set()
 
@@ -59,7 +57,7 @@ class TestAuthenticationSecurity:
             )
             assert set(key).issubset(valid_chars), "Invalid characters in API key"
 
-    def test_api_key_hashing_security(self):
+    def test_api_key_hashing_security(self) -> None:
         """Test that API key hashing is secure."""
         key = "test_api_key_12345"
         hash1 = api_key_service.hash_api_key(key)
@@ -83,7 +81,7 @@ class TestAuthenticationSecurity:
         similar_hash = api_key_service.hash_api_key(similar_key)
         assert hash1 != similar_hash
 
-    def test_api_key_storage_security(self, client):
+    def test_api_key_storage_security(self, client) -> None:
         """Test that API keys are stored securely."""
         api_key_record, raw_key = api_key_service.create_api_key(name="Storage Test")
 
@@ -99,7 +97,7 @@ class TestAuthenticationSecurity:
             expected_hash = hashlib.sha256(raw_key.encode()).hexdigest()
             assert stored_key.key_hash == expected_hash
 
-    def test_timing_attack_resistance(self, client, sample_api_key):
+    def test_timing_attack_resistance(self, client, sample_api_key) -> None:
         """Test resistance to timing attacks on API key verification."""
         _, valid_key = sample_api_key
         invalid_key = "invalid_key_" + secrets.token_urlsafe(20)
@@ -130,7 +128,7 @@ class TestAuthenticationSecurity:
             time_ratio < 2.0
         ), f"Potential timing attack vector: {time_ratio:.2f}x difference"
 
-    def test_sql_injection_resistance(self, client):
+    def test_sql_injection_resistance(self, client) -> None:
         """Test resistance to SQL injection in API key operations."""
         # Try SQL injection in various inputs
         malicious_inputs = [
@@ -157,7 +155,7 @@ class TestAuthenticationSecurity:
             # Should work (unauthenticated) but not cause errors
             assert response.status_code == 200
 
-    def test_xss_protection(self, client):
+    def test_xss_protection(self, client) -> None:
         """Test XSS protection in API responses."""
         # Try XSS payloads in API key name
         xss_payloads = [
@@ -180,7 +178,7 @@ class TestAuthenticationSecurity:
                     assert "javascript:" not in returned_name.lower()
                     assert "onerror=" not in returned_name.lower()
 
-    def test_rate_limit_bypass_attempts(self, client, sample_api_key):
+    def test_rate_limit_bypass_attempts(self, client, sample_api_key) -> None:
         """Test various rate limit bypass attempts."""
         _, raw_key = sample_api_key
 
@@ -201,7 +199,7 @@ class TestAuthenticationSecurity:
             # Should use the API key's custom limit (50)
             assert response.headers["X-RateLimit-Limit"] == "50"
 
-    def test_authentication_header_injection(self, client):
+    def test_authentication_header_injection(self, client) -> None:
         """Test header injection attacks in authentication."""
         # Try various header injection payloads
         injection_payloads = [
@@ -227,7 +225,7 @@ class TestAuthenticationSecurity:
                 # Server should handle gracefully, not crash
                 assert "Internal Server Error" not in str(e)
 
-    def test_api_key_enumeration_protection(self, client):
+    def test_api_key_enumeration_protection(self, client) -> None:
         """Test protection against API key enumeration."""
         # Try to enumerate API keys
         potential_keys = [
@@ -263,7 +261,7 @@ class TestAuthenticationSecurity:
                     time_ratio < 3.0
                 ), f"Potential enumeration via timing: {time_ratio:.2f}x"
 
-    def test_concurrent_authentication_safety(self, client, sample_api_key):
+    def test_concurrent_authentication_safety(self, client, sample_api_key) -> None:
         """Test thread safety of authentication under concurrent load."""
         import queue
         import threading
@@ -271,7 +269,7 @@ class TestAuthenticationSecurity:
         _, raw_key = sample_api_key
         results = queue.Queue()
 
-        def make_request():
+        def make_request() -> None:
             try:
                 headers = {"Authorization": f"Bearer {raw_key}"}
                 response = client.get("/api/health", headers=headers)
@@ -306,7 +304,7 @@ class TestAuthenticationSecurity:
         # Most requests should succeed
         assert success_count >= 8, f"Too many concurrent failures: {error_count}"
 
-    def test_api_key_lifecycle_security(self, client):
+    def test_api_key_lifecycle_security(self, client) -> None:
         """Test security throughout API key lifecycle."""
         # Create key
         response = client.post("/api/auth/api-keys", json={"name": "Lifecycle Test"})
@@ -339,7 +337,7 @@ class TestAuthenticationSecurity:
         # But should use default rate limit
         assert response.headers["X-RateLimit-Limit"] == "60"
 
-    def test_privilege_escalation_protection(self, client, sample_api_key):
+    def test_privilege_escalation_protection(self, client, sample_api_key) -> None:
         """Test protection against privilege escalation."""
         api_key_record, raw_key = sample_api_key
 
@@ -362,7 +360,7 @@ class TestAuthenticationSecurity:
             # Should return 404 (not found) - these endpoints don't exist
             assert response.status_code == 404
 
-    def test_information_disclosure_protection(self, client):
+    def test_information_disclosure_protection(self, client) -> None:
         """Test protection against information disclosure."""
         # Try to get information through error messages
         disclosure_attempts = [
@@ -396,7 +394,7 @@ class TestAuthenticationSecurity:
                         pattern not in error_text
                     ), f"Potential information disclosure: {pattern}"
 
-    def test_rate_limiter_security(self, client):
+    def test_rate_limiter_security(self, client) -> None:
         """Test rate limiter security features."""
         # Test that rate limiter prevents abuse
         start_time = time.time()
@@ -433,7 +431,7 @@ class TestAuthenticationSecurity:
                 assert "VAL429" in data["error_code"]
                 assert "retry_after" in data
 
-    def test_memory_safety(self, client):
+    def test_memory_safety(self, client) -> None:
         """Test memory safety in authentication operations."""
         # Test with various input sizes to check for buffer overflows
         test_sizes = [0, 1, 100, 1000, 10000, 100000]
@@ -459,7 +457,7 @@ class TestAuthenticationSecurity:
                 assert "Internal Server Error" not in str(e)
                 assert "Memory" not in str(e)
 
-    def test_cryptographic_security(self):
+    def test_cryptographic_security(self) -> None:
         """Test cryptographic aspects of the system."""
         # Test that we're using secure random for API key generation
         keys = []

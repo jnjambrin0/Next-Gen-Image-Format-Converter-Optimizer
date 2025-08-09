@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+from typing import Any
 Sandboxed image conversion script.
 
 This script runs in a restricted subprocess to perform pure format conversion
@@ -50,17 +51,17 @@ UDP_BLOCKED_MSG = "UDP sockets are disabled in sandboxed environment"
 class BlockedSocket(_original_socket):
     """Socket class that blocks all operations."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         raise OSError(NETWORK_BLOCKED_MSG)
 
 
 # Override all DNS and socket functions
-def _blocked_socket(*args, **kwargs):
+def _blocked_socket(*args, **kwargs) -> None:
     """Block all socket creation."""
     raise OSError(NETWORK_BLOCKED_MSG)
 
 
-def _blocked_dns(*args, **kwargs):
+def _blocked_dns(*args, **kwargs) -> None:
     """Block all DNS resolution."""
     raise socket.gaierror(DNS_BLOCKED_MSG)
 
@@ -97,7 +98,7 @@ except ImportError:
 try:
     import requests
 
-    def _blocked_request(*args, **kwargs):
+    def _blocked_request(*args, **kwargs) -> None:
         raise OSError(NETWORK_BLOCKED_MSG)
 
     requests.get = _blocked_request
@@ -138,14 +139,14 @@ P2P_MODULES = [
 
 # Create a custom import hook to block P2P modules
 class P2PBlocker:
-    def find_module(self, fullname, path=None):
+    def find_module(self, fullname, path=None) -> None:
         # Block exact matches and submodules
         for blocked in P2P_MODULES:
             if fullname == blocked or fullname.startswith(blocked + "."):
                 return self
         return None
 
-    def load_module(self, fullname):
+    def load_module(self, fullname) -> None:
         raise ImportError(
             f"P2P/WebRTC module '{fullname}' is blocked in sandboxed environment"
         )
@@ -163,7 +164,7 @@ try:
 
     _original_new_event_loop = asyncio.new_event_loop
 
-    def _blocked_event_loop():
+    def _blocked_event_loop() -> None:
         # Allow event loop but monitor for P2P usage
         loop = _original_new_event_loop()
         # Could add additional restrictions here
@@ -177,7 +178,7 @@ except ImportError:
 _original_socket_call = _original_socket
 
 
-def _restricted_socket(family=-1, type=-1, proto=-1, fileno=None):
+def _restricted_socket(family=-1, type=-1, proto=-1, fileno=None) -> None:
     """Restrict socket creation - block UDP which is commonly used for P2P."""
     # Block UDP sockets
     if type == socket.SOCK_DGRAM:
@@ -222,7 +223,7 @@ ALLOWED_OUTPUT_FORMATS = SUPPORTED_OUTPUT_FORMATS
 MAX_INPUT_SIZE = MAX_FILE_SIZE
 
 
-def write_error(error_code, message):
+def write_error(error_code, message) -> None:
     """Write error to stderr in JSON format for parent process."""
     error_data = {
         "error_code": error_code,
@@ -233,7 +234,7 @@ def write_error(error_code, message):
     sys.stderr.flush()
 
 
-def validate_format(format_str, allowed_formats):
+def validate_format(format_str, allowed_formats) -> None:
     """Validate format string against whitelist."""
     format_lower = format_str.lower().strip()
     if format_lower not in allowed_formats:
@@ -243,7 +244,7 @@ def validate_format(format_str, allowed_formats):
     return format_lower
 
 
-def validate_quality(quality_str):
+def validate_quality(quality_str) -> None:
     """Validate quality parameter."""
     try:
         quality = int(quality_str)
@@ -279,15 +280,14 @@ ALLOWED_ADVANCED_PARAMS = {
 }
 
 
-def validate_advanced_params(params, output_format):
+def validate_advanced_params(params, output_format) -> None:
     """Validate and sanitize advanced parameters for a given format.
 
     Args:
-        params: Dict of advanced parameters
+        params: Dict[str, Any] of advanced parameters
         output_format: Target output format
 
-    Returns:
-        Dict of validated parameters safe to use
+    Returns: Dict[str, Any] of validated parameters safe to use
     """
     if not params or not isinstance(params, dict):
         return {}
@@ -345,7 +345,7 @@ def validate_advanced_params(params, output_format):
     return validated
 
 
-def check_file_system_writes():
+def check_file_system_writes() -> None:
     """Check for unexpected file writes during conversion."""
     import tempfile
 
@@ -372,7 +372,7 @@ def check_file_system_writes():
     return initial_file_counts
 
 
-def verify_no_file_writes(initial_counts):
+def verify_no_file_writes(initial_counts) -> None:
     """Verify no unexpected files were created."""
     import tempfile
 
@@ -403,7 +403,7 @@ def verify_no_file_writes(initial_counts):
     return True
 
 
-def main():
+def main() -> None:
     """Main conversion function with security hardening."""
     try:
         # Check initial file system state

@@ -2,7 +2,6 @@
 
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from app.utils.logging import get_logger
@@ -150,7 +149,7 @@ class ConversionMetrics:
 class MetricsCollector:
     """Collects and aggregates conversion metrics."""
 
-    def __init__(self, max_history: int = 1000):
+    def __init__(self, max_history: int = 1000) -> None:
         """
         Initialize metrics collector.
 

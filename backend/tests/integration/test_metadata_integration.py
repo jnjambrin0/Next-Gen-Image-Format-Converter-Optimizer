@@ -1,15 +1,13 @@
 """Integration tests for metadata stripping in the conversion pipeline."""
 
-import asyncio
+from typing import Any
 import io
-from pathlib import Path
 
 import piexif
 import pytest
 from PIL import Image
 
 from app.core.conversion.manager import ConversionManager
-from app.core.security.engine import SecurityEngine
 from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
@@ -17,12 +15,12 @@ class TestMetadataIntegration:
     """Test metadata handling in the full conversion pipeline."""
 
     @pytest.fixture
-    def conversion_manager(self):
+    def conversion_manager(self) -> None:
         """Create conversion manager instance."""
         return ConversionManager()
 
     @pytest.fixture
-    def jpeg_with_metadata(self):
+    def jpeg_with_metadata(self) -> None:
         """Create JPEG with comprehensive metadata."""
         img = Image.new("RGB", (200, 200), color="blue")
 

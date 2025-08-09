@@ -1,11 +1,7 @@
+from typing import Any
 import logging
 import os
-import tempfile
-import time
 from datetime import datetime, timedelta
-from pathlib import Path
-
-import pytest
 
 from app.utils.logging import cleanup_old_logs, setup_logging
 
@@ -13,7 +9,7 @@ from app.utils.logging import cleanup_old_logs, setup_logging
 class TestLogRotation:
     """Test log rotation and cleanup functionality."""
 
-    def test_rotating_file_handler_setup(self, tmp_path):
+    def test_rotating_file_handler_setup(self, tmp_path) -> None:
         """Test that rotating file handler is properly configured."""
         log_dir = tmp_path / "logs"
         log_file = log_dir / "app.log"
@@ -45,7 +41,7 @@ class TestLogRotation:
             handler.close()
             logger.removeHandler(handler)
 
-    def test_log_rotation_on_size(self, tmp_path):
+    def test_log_rotation_on_size(self, tmp_path) -> None:
         """Test that logs rotate when size limit is reached."""
         log_dir = tmp_path / "logs"
 
@@ -81,7 +77,7 @@ class TestLogRotation:
             handler.close()
             logger.removeHandler(handler)
 
-    def test_paranoia_mode_disables_file_logging(self, tmp_path):
+    def test_paranoia_mode_disables_file_logging(self, tmp_path) -> None:
         """Test that paranoia mode (logging_enabled=False) prevents file logging."""
         log_dir = tmp_path / "logs"
 
@@ -111,7 +107,7 @@ class TestLogRotation:
         ]
         assert len(file_handlers) == 0, "No file handlers should exist in paranoia mode"
 
-    def test_retention_with_mixed_files(self, tmp_path):
+    def test_retention_with_mixed_files(self, tmp_path) -> None:
         """Test that cleanup only removes old log files, not other files."""
         log_dir = tmp_path / "logs"
         log_dir.mkdir()
@@ -153,7 +149,7 @@ class TestLogRotation:
         # Non-log files should remain
         assert "old_data.txt" in remaining_files
 
-    def test_json_logging_format(self, tmp_path):
+    def test_json_logging_format(self, tmp_path) -> None:
         """Test that JSON logging produces valid JSON."""
         import json
 

@@ -1,9 +1,8 @@
 """API routes for preset management with enhanced search and versioning."""
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from fastapi.responses import JSONResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.core.exceptions import SecurityError, ValidationError
@@ -447,7 +446,7 @@ async def search_presets_advanced(
     
     **Validation Rules:**
     - Name: 3-50 characters, alphanumeric and spaces
-    - Description: Optional, max 200 characters
+    - Description: Optional[Any], max 200 characters
     - Quality: 1-100 for lossy formats, ignored for lossless
     - Format: Must be supported output format
     - Optimization mode: size, quality, balanced, or lossless
@@ -548,7 +547,7 @@ async def create_preset(preset_data: PresetCreate, request: Request) -> PresetRe
     **Parameters:**
     - **preset_id**: UUID of preset to update
     - **update_data**: Fields to update (partial update supported)
-    - **version_note**: Optional change description
+    - **version_note**: Optional[Any] change description
     
     **Returns:**
     - Updated preset with new version information
@@ -780,7 +779,7 @@ async def get_preset_versions(
     **Parameters:**
     - **preset_id**: UUID of preset
     - **version**: Version identifier to restore to
-    - **restore_note**: Optional note about the restoration
+    - **restore_note**: Optional[Any] note about the restoration
     
     **Returns:**
     - Updated preset with restored content as new version

@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
@@ -32,8 +32,7 @@ class TextDetector:
         Args:
             image: PIL Image to process
 
-        Returns:
-            List of BoundingBox objects for text regions
+        Returns: List[Any] of BoundingBox objects for text regions
         """
         start_time = time.time()
 
@@ -387,8 +386,7 @@ class TextDetector:
     ) -> List[Tuple[int, int, int, int, float]]:
         """Extract text regions from binary map.
 
-        Returns:
-            List of (x, y, width, height, confidence) tuples
+        Returns: List[Any] of (x, y, width, height, confidence) tuples
         """
         # Simple connected component analysis
         regions = []

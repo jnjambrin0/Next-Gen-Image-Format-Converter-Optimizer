@@ -1,5 +1,6 @@
 """Unit tests for format analyzer."""
 
+from typing import Any
 import pytest
 
 from app.core.intelligence.format_analyzer import FormatAnalyzer, FormatCompatibility
@@ -10,11 +11,11 @@ class TestFormatAnalyzer:
     """Test cases for FormatAnalyzer."""
 
     @pytest.fixture
-    def analyzer(self):
+    def analyzer(self) -> None:
         """Create format analyzer instance."""
         return FormatAnalyzer()
 
-    def test_format_compatibility_jpeg_to_webp(self, analyzer):
+    def test_format_compatibility_jpeg_to_webp(self, analyzer) -> None:
         """Test JPEG to WebP compatibility analysis."""
         compatibility = analyzer.analyze_format_compatibility(
             InputFormat.JPEG, OutputFormat.WEBP
@@ -27,7 +28,7 @@ class TestFormatAnalyzer:
         assert compatibility.feature_preservation["transparency"] is False
         assert len(compatibility.conversion_notes) > 0
 
-    def test_format_compatibility_png_to_jpeg(self, analyzer):
+    def test_format_compatibility_png_to_jpeg(self, analyzer) -> None:
         """Test PNG to JPEG compatibility (lossy conversion)."""
         compatibility = analyzer.analyze_format_compatibility(
             InputFormat.PNG, OutputFormat.JPEG
@@ -38,7 +39,7 @@ class TestFormatAnalyzer:
         assert compatibility.feature_preservation["transparency"] is False
         assert "Transparency will be lost" in str(compatibility.conversion_notes)
 
-    def test_format_compatibility_same_format(self, analyzer):
+    def test_format_compatibility_same_format(self, analyzer) -> None:
         """Test same format compatibility."""
         compatibility = analyzer.analyze_format_compatibility(
             InputFormat.PNG, OutputFormat.PNG
@@ -48,7 +49,7 @@ class TestFormatAnalyzer:
         assert compatibility.quality_retention == 1.0
         assert all(compatibility.feature_preservation.values())
 
-    def test_format_compatibility_unknown_combination(self, analyzer):
+    def test_format_compatibility_unknown_combination(self, analyzer) -> None:
         """Test compatibility for unknown format combination."""
         compatibility = analyzer.analyze_format_compatibility(
             InputFormat.BMP, OutputFormat.AVIF
@@ -59,7 +60,7 @@ class TestFormatAnalyzer:
         assert 0.5 <= compatibility.quality_retention <= 1.0
         assert isinstance(compatibility.feature_preservation, dict)
 
-    def test_quality_prediction_lossless(self, analyzer):
+    def test_quality_prediction_lossless(self, analyzer) -> None:
         """Test quality prediction for lossless formats."""
         # PNG is always lossless
         quality = analyzer.predict_quality_score(
@@ -67,7 +68,7 @@ class TestFormatAnalyzer:
         )
         assert quality == 1.0
 
-    def test_quality_prediction_modern_formats(self, analyzer):
+    def test_quality_prediction_modern_formats(self, analyzer) -> None:
         """Test quality prediction for modern formats."""
         # AVIF with high quality setting
         quality = analyzer.predict_quality_score(
@@ -81,7 +82,7 @@ class TestFormatAnalyzer:
         )
         assert 0.7 < quality < 0.9
 
-    def test_quality_prediction_content_specific(self, analyzer):
+    def test_quality_prediction_content_specific(self, analyzer) -> None:
         """Test content-specific quality adjustments."""
         # JPEG for documents (poor choice)
         doc_quality = analyzer.predict_quality_score(
@@ -95,7 +96,7 @@ class TestFormatAnalyzer:
 
         assert doc_quality < photo_quality
 
-    def test_compression_ratio_estimation(self, analyzer):
+    def test_compression_ratio_estimation(self, analyzer) -> None:
         """Test compression ratio estimation."""
         # PNG to JPEG for photos (high compression)
         ratio = analyzer.estimate_compression_ratio(
@@ -109,7 +110,7 @@ class TestFormatAnalyzer:
         )
         assert ratio == 1.0
 
-    def test_compression_ratio_content_aware(self, analyzer):
+    def test_compression_ratio_content_aware(self, analyzer) -> None:
         """Test content-aware compression ratios."""
         # PNG for documents (efficient)
         doc_ratio = analyzer.estimate_compression_ratio(
@@ -123,7 +124,7 @@ class TestFormatAnalyzer:
 
         assert doc_ratio < photo_ratio  # PNG better for documents
 
-    def test_format_features_comprehensive(self, analyzer):
+    def test_format_features_comprehensive(self, analyzer) -> None:
         """Test comprehensive format feature detection."""
         # PNG features
         png_features = analyzer.get_format_features(OutputFormat.PNG)
@@ -144,7 +145,7 @@ class TestFormatAnalyzer:
         assert avif_features["animation"] is True
         assert avif_features["transparency"] is True
 
-    def test_format_features_aliases(self, analyzer):
+    def test_format_features_aliases(self, analyzer) -> None:
         """Test format feature detection with aliases."""
         # JPEG aliases
         jpg_features = analyzer.get_format_features(OutputFormat.JPG)
@@ -156,7 +157,7 @@ class TestFormatAnalyzer:
         png_features = analyzer.get_format_features(OutputFormat.PNG)
         assert png_opt_features == png_features
 
-    def test_comparison_metrics_creation(self, analyzer):
+    def test_comparison_metrics_creation(self, analyzer) -> None:
         """Test creation of comparison metrics."""
         formats = [OutputFormat.WEBP, OutputFormat.AVIF, OutputFormat.JPEG]
         metrics = analyzer.create_comparison_metrics(
@@ -176,7 +177,7 @@ class TestFormatAnalyzer:
             assert metric.display_value
             assert isinstance(metric.is_better_higher, bool)
 
-    def test_comparison_metrics_values(self, analyzer):
+    def test_comparison_metrics_values(self, analyzer) -> None:
         """Test comparison metric values."""
         formats = [OutputFormat.PNG, OutputFormat.JPEG]
         metrics = analyzer.create_comparison_metrics(
@@ -199,7 +200,7 @@ class TestFormatAnalyzer:
         jpeg_kb = int(jpeg_size.display_value.split()[0])
         assert jpeg_kb < png_kb
 
-    def test_speed_label_conversion(self, analyzer):
+    def test_speed_label_conversion(self, analyzer) -> None:
         """Test speed score to label conversion."""
         assert analyzer._speed_label(0.95) == "Very Fast"
         assert analyzer._speed_label(0.8) == "Fast"
@@ -207,7 +208,7 @@ class TestFormatAnalyzer:
         assert analyzer._speed_label(0.4) == "Slow"
         assert analyzer._speed_label(0.2) == "Very Slow"
 
-    def test_compatibility_matrix_initialization(self, analyzer):
+    def test_compatibility_matrix_initialization(self, analyzer) -> None:
         """Test that compatibility matrix is properly initialized."""
         # Check some key conversions exist
         assert ("jpeg", "webp") in analyzer.COMPATIBILITY_MATRIX
@@ -215,7 +216,7 @@ class TestFormatAnalyzer:
         assert ("webp", "avif") in analyzer.COMPATIBILITY_MATRIX
         assert ("heif", "jpeg") in analyzer.COMPATIBILITY_MATRIX
 
-    def test_feature_preservation_logic(self, analyzer):
+    def test_feature_preservation_logic(self, analyzer) -> None:
         """Test feature preservation in conversions."""
         # PNG to JPEG loses transparency
         compat = analyzer.analyze_format_compatibility(
@@ -229,7 +230,7 @@ class TestFormatAnalyzer:
         )
         assert compat.feature_preservation["transparency"] is True
 
-    def test_quality_factors(self, analyzer):
+    def test_quality_factors(self, analyzer) -> None:
         """Test quality factor constants."""
         assert analyzer.QUALITY_FACTORS["compression_type"]["lossless"] == 1.0
         assert analyzer.QUALITY_FACTORS["compression_type"]["lossy_high"] < 1.0

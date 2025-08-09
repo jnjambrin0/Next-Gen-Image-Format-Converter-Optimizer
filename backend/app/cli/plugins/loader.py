@@ -16,13 +16,13 @@ from app.cli.config import get_plugins_dir
 class PluginLoader:
     """Loads and manages CLI plugins"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.plugins_dir = get_plugins_dir()
         self.loaded_plugins: Dict[str, Any] = {}
         self.plugin_registry: Dict[str, Dict] = {}
         self._load_registry()
 
-    def _load_registry(self):
+    def _load_registry(self) -> None:
         """Load plugin registry"""
         registry_file = self.plugins_dir / "registry.json"
         if registry_file.exists():
@@ -34,7 +34,7 @@ class PluginLoader:
         else:
             self.plugin_registry = {}
 
-    def _save_registry(self):
+    def _save_registry(self) -> None:
         """Save plugin registry"""
         registry_file = self.plugins_dir / "registry.json"
         with open(registry_file, "w") as f:
@@ -98,7 +98,7 @@ class PluginLoader:
 
         return None
 
-    def load_all_plugins(self, app: typer.Typer):
+    def load_all_plugins(self, app: typer.Typer) -> None:
         """Load all enabled plugins"""
         plugins = self.discover_plugins()
 
@@ -150,7 +150,7 @@ class PluginLoader:
 _plugin_loader = PluginLoader()
 
 
-def load_plugins(app: typer.Typer):
+def load_plugins(app: typer.Typer) -> None:
     """Load all enabled plugins into the app"""
     _plugin_loader.load_all_plugins(app)
 

@@ -1,8 +1,9 @@
 """
+from typing import Any
 Unit tests for Help Context Analyzer
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import typer
@@ -13,7 +14,7 @@ from app.cli.documentation.help_context import HelpContext, HelpContextAnalyzer
 class TestHelpContext:
     """Test HelpContext dataclass"""
 
-    def test_help_context_creation(self):
+    def test_help_context_creation(self) -> None:
         """Test creating help context"""
         context = HelpContext(
             command_chain=["convert"],
@@ -31,7 +32,7 @@ class TestHelpContext:
         assert len(context.relevant_examples) == 1
         assert len(context.related_topics) == 2
 
-    def test_help_context_to_dict(self):
+    def test_help_context_to_dict(self) -> None:
         """Test converting context to dictionary"""
         context = HelpContext(command_chain=["batch"], current_params={"workers": 4})
 
@@ -45,25 +46,25 @@ class TestHelpContextAnalyzer:
     """Test HelpContextAnalyzer"""
 
     @pytest.fixture
-    def analyzer(self):
+    def analyzer(self) -> None:
         """Create analyzer instance"""
         return HelpContextAnalyzer()
 
-    def test_analyzer_initialization(self, analyzer):
+    def test_analyzer_initialization(self, analyzer) -> None:
         """Test analyzer initialization"""
         assert analyzer.fuzzy_searcher is not None
         assert len(analyzer.help_topics) > 0
         assert "convert" in analyzer.help_topics
         assert "batch" in analyzer.help_topics
 
-    def test_resolve_alias(self, analyzer):
+    def test_resolve_alias(self, analyzer) -> None:
         """Test command alias resolution"""
         assert analyzer._resolve_alias("c") == "convert"
         assert analyzer._resolve_alias("b") == "batch"
         assert analyzer._resolve_alias("o") == "optimize"
         assert analyzer._resolve_alias("unknown") == "unknown"
 
-    def test_get_command_suggestions(self, analyzer):
+    def test_get_command_suggestions(self, analyzer) -> None:
         """Test command suggestions"""
         # Test partial match
         suggestions = analyzer._get_command_suggestions("conv")
@@ -75,7 +76,7 @@ class TestHelpContextAnalyzer:
         assert len(suggestions) > 0
         assert any("batch" in s for s in suggestions)
 
-    def test_search_help(self, analyzer):
+    def test_search_help(self, analyzer) -> None:
         """Test help search functionality"""
         # Search for "convert"
         results = analyzer.search_help("convert")
@@ -90,7 +91,7 @@ class TestHelpContextAnalyzer:
         results3 = analyzer.search_help("CONV001")
         assert len(results3) > 0
 
-    def test_get_context_with_command(self, analyzer):
+    def test_get_context_with_command(self, analyzer) -> None:
         """Test getting context with command"""
         # Create mock Typer context
         ctx = Mock(spec=typer.Context)
@@ -105,7 +106,7 @@ class TestHelpContextAnalyzer:
         assert len(context.relevant_examples) > 0
         assert len(context.related_topics) > 0
 
-    def test_get_context_with_error(self, analyzer):
+    def test_get_context_with_error(self, analyzer) -> None:
         """Test getting context with error state"""
         # Create error string with error code
         error = "CONV001: File not found error"
@@ -122,7 +123,7 @@ class TestHelpContextAnalyzer:
         assert len(context.suggestions) > 0
         assert any("not found" in s.lower() for s in context.suggestions)
 
-    def test_get_context_caching(self, analyzer):
+    def test_get_context_caching(self, analyzer) -> None:
         """Test context caching"""
         ctx = Mock(spec=typer.Context)
         ctx.command_path = "img convert"
@@ -138,7 +139,7 @@ class TestHelpContextAnalyzer:
         assert context1.command_chain == context2.command_chain
         assert context1.current_params == context2.current_params
 
-    def test_clear_cache(self, analyzer):
+    def test_clear_cache(self, analyzer) -> None:
         """Test cache clearing"""
         ctx = Mock(spec=typer.Context)
         ctx.command_path = "img convert"
@@ -154,7 +155,7 @@ class TestHelpContextAnalyzer:
         assert len(analyzer._help_cache) == 0
 
     @patch("app.cli.documentation.help_context.Console")
-    def test_display_context_help(self, mock_console, analyzer):
+    def test_display_context_help(self, mock_console, analyzer) -> None:
         """Test displaying context help"""
         console = Mock()
         analyzer.console = console
@@ -170,7 +171,7 @@ class TestHelpContextAnalyzer:
         console.print.assert_called()
 
     @patch("app.cli.documentation.help_context.Console")
-    def test_display_general_help(self, mock_console, analyzer):
+    def test_display_general_help(self, mock_console, analyzer) -> None:
         """Test displaying general help"""
         console = Mock()
         analyzer.console = console
@@ -180,7 +181,7 @@ class TestHelpContextAnalyzer:
         analyzer.display_context_help(context)
         console.print.assert_called()
 
-    def test_help_topics_completeness(self, analyzer):
+    def test_help_topics_completeness(self, analyzer) -> None:
         """Test that help topics are complete"""
         required_commands = [
             "convert",

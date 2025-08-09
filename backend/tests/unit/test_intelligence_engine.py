@@ -1,8 +1,9 @@
 """Unit tests for the Intelligence Engine module."""
 
+from typing import Any
 import asyncio
 import io
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
@@ -16,7 +17,7 @@ class TestIntelligenceEngine:
     """Test suite for IntelligenceEngine class."""
 
     @pytest.fixture
-    def intelligence_engine(self):
+    def intelligence_engine(self) -> None:
         """Create an IntelligenceEngine instance for testing."""
         # Create engine in fallback mode (no models)
         engine = IntelligenceEngine(
@@ -25,7 +26,7 @@ class TestIntelligenceEngine:
         return engine
 
     @pytest.fixture
-    def sample_image_bytes(self):
+    def sample_image_bytes(self) -> None:
         """Create sample image bytes for testing."""
         # Create a simple test image
         image = Image.new("RGB", (100, 100), color="red")
@@ -124,7 +125,7 @@ class TestIntelligenceEngine:
         assert result.primary_type == ContentType.PHOTO
         assert result.confidence == 0.5  # Default timeout confidence
 
-    def test_recommend_settings_photo(self, intelligence_engine):
+    def test_recommend_settings_photo(self, intelligence_engine) -> None:
         """Test optimization recommendations for photos."""
         settings = intelligence_engine.recommend_settings(ContentType.PHOTO, "webp")
 
@@ -135,7 +136,7 @@ class TestIntelligenceEngine:
         assert settings["method"] == 6  # Maximum compression
         assert settings["sns"] == 50  # Spatial noise shaping
 
-    def test_recommend_settings_screenshot(self, intelligence_engine):
+    def test_recommend_settings_screenshot(self, intelligence_engine) -> None:
         """Test optimization recommendations for screenshots."""
         settings = intelligence_engine.recommend_settings(ContentType.SCREENSHOT, "png")
 
@@ -146,7 +147,7 @@ class TestIntelligenceEngine:
         assert settings["compress_level"] == 6  # Balance speed/size
         assert settings["optimize"] is True
 
-    def test_recommend_settings_document(self, intelligence_engine):
+    def test_recommend_settings_document(self, intelligence_engine) -> None:
         """Test optimization recommendations for documents."""
         settings = intelligence_engine.recommend_settings(ContentType.DOCUMENT, "jpeg")
 
@@ -157,7 +158,7 @@ class TestIntelligenceEngine:
         assert settings["optimize"] is True
         assert settings["dpi"] == (300, 300)  # High DPI for documents
 
-    def test_calculate_complexity(self, intelligence_engine):
+    def test_calculate_complexity(self, intelligence_engine) -> None:
         """Test image complexity calculation."""
         # Simple image (solid color)
         simple_image = Image.new("RGB", (100, 100), color="red")
@@ -172,7 +173,7 @@ class TestIntelligenceEngine:
         assert 0 <= complex_complexity <= 1.0
         assert complex_complexity > simple_complexity
 
-    def test_softmax(self, intelligence_engine):
+    def test_softmax(self, intelligence_engine) -> None:
         """Test softmax function."""
         logits = np.array([2.0, 1.0, 0.1])
         probs = intelligence_engine._softmax(logits)
@@ -181,7 +182,7 @@ class TestIntelligenceEngine:
         assert all(0 <= p <= 1.0 for p in probs)
         assert probs[0] > probs[1] > probs[2]
 
-    def test_clear_cache(self, intelligence_engine, sample_image_bytes):
+    def test_clear_cache(self, intelligence_engine, sample_image_bytes) -> None:
         """Test cache clearing functionality."""
         # Add to cache
         asyncio.run(intelligence_engine.classify_content(sample_image_bytes))
@@ -252,7 +253,7 @@ class TestIntelligenceEngine:
         result = await intelligence_engine.classify_content(buffer.getvalue())
         assert isinstance(result, ContentClassification)
 
-    def test_cache_lru_eviction(self, intelligence_engine):
+    def test_cache_lru_eviction(self, intelligence_engine) -> None:
         """Test LRU cache eviction when cache is full."""
         # Manually set cache items to test eviction
         for i in range(150):  # More than MAX_CACHE_SIZE (100)
@@ -330,7 +331,7 @@ class TestIntelligenceEngine:
         assert isinstance(result, ContentClassification)
         assert result.primary_type in [ContentType.SCREENSHOT, ContentType.PHOTO]
 
-    def test_recommend_settings_unknown_format(self, intelligence_engine):
+    def test_recommend_settings_unknown_format(self, intelligence_engine) -> None:
         """Test recommendations for unknown format."""
         settings = intelligence_engine.recommend_settings(
             ContentType.PHOTO, "unknown_format"

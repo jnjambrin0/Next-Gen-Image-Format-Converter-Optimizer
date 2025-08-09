@@ -2,7 +2,6 @@
 
 import asyncio
 import time
-from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.constants import SUPPORTED_OUTPUT_FORMATS
@@ -226,11 +225,11 @@ class RecommendationEngine:
         },
     }
 
-    def __init__(self, preference_callback=None):
+    def __init__(self, preference_callback=None) -> None:
         """Initialize recommendation engine.
 
         Args:
-            preference_callback: Optional callback to get user preferences
+            preference_callback: Optional[Any] callback to get user preferences
         """
         self.preference_callback = preference_callback
         self._format_cache = {}
@@ -253,8 +252,7 @@ class RecommendationEngine:
             request: Recommendation request with content classification
             max_recommendations: Maximum number of recommendations to return
 
-        Returns:
-            List of format recommendations sorted by score
+        Returns: List[Any] of format recommendations sorted by score
         """
         # CRITICAL: Input validation (CLAUDE.md security requirements)
         from app.core.security.errors_simplified import create_file_error

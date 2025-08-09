@@ -1,5 +1,6 @@
 """Performance tests for optimization features."""
 
+from typing import Any
 import asyncio
 import io
 import time
@@ -20,7 +21,7 @@ class TestOptimizationPerformance:
     """Performance tests for optimization components."""
 
     @pytest.fixture
-    def large_image(self):
+    def large_image(self) -> None:
         """Create a large test image (10MP)."""
         # 10 megapixel image (3650x2740)
         img = Image.new("RGB", (3650, 2740), color="blue")
@@ -35,7 +36,7 @@ class TestOptimizationPerformance:
         return buffer.getvalue()
 
     @pytest.fixture
-    def typical_image(self):
+    def typical_image(self) -> None:
         """Create a typical size test image (2MP)."""
         # 2 megapixel image (1600x1200)
         img = Image.new("RGB", (1600, 1200), color="green")

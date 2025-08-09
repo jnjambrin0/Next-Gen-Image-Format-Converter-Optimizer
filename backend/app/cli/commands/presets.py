@@ -1,4 +1,5 @@
 """
+from typing import Any
 Presets Command
 Manage conversion presets
 """
@@ -12,7 +13,7 @@ console = Console()
 
 
 @app.command(name="list")
-def presets_list():
+def presets_list() -> None:
     """
     List available presets
 
@@ -43,7 +44,7 @@ def presets_create(
     name: str,
     format: str,
     quality: int = 85,
-):
+) -> None:
     """
     Create a new preset
 
@@ -58,7 +59,7 @@ def presets_create(
 @app.command(name="delete")
 def presets_delete(
     name: str,
-):
+) -> None:
     """
     Delete a preset
 
@@ -69,6 +70,5 @@ def presets_delete(
 
 
 @app.callback()
-def presets_callback():
+def presets_callback() -> None:
     """Manage conversion presets"""
-    pass

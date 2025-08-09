@@ -274,7 +274,7 @@ class ThemeManager:
         ),
     }
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Optional[Path] = None) -> None:
         """Initialize theme manager"""
         self.config_dir = config_dir or Path.home() / ".image-converter"
         self.themes_dir = self.config_dir / "themes"
@@ -286,7 +286,7 @@ class ThemeManager:
         # Load custom themes
         self._load_custom_themes()
 
-    def _load_custom_themes(self):
+    def _load_custom_themes(self) -> None:
         """Load custom themes from configuration directory"""
         for theme_file in self.themes_dir.glob("*.json"):
             try:

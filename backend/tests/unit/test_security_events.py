@@ -1,4 +1,4 @@
-import asyncio
+from typing import Any
 from datetime import datetime, timedelta
 
 import pytest
@@ -11,7 +11,7 @@ class TestSecurityEventTracker:
     """Test security event tracking functionality."""
 
     @pytest.fixture
-    def tracker(self):
+    def tracker(self) -> None:
         """Create a security event tracker instance."""
         return SecurityEventTracker(db_path=":memory:")
 
@@ -212,7 +212,7 @@ class TestSecurityEventTracker:
             assert details["safe_field"] == "this_is_ok"
             assert details["violation_type"] == "unauthorized_access"
 
-    def test_event_summary_model(self):
+    def test_event_summary_model(self) -> None:
         """Test SecurityEventSummary model."""
         from app.models.security_event import SecurityEventSummary
 

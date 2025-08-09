@@ -1,6 +1,5 @@
 """JPEG XL format handler."""
 
-from io import BytesIO
 from typing import Any, BinaryIO, Dict
 
 import structlog
@@ -23,7 +22,7 @@ logger = structlog.get_logger()
 class JxlHandler(BaseFormatHandler):
     """Handler for JPEG XL format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize JPEG XL handler."""
         super().__init__()
         self.supported_formats = ["jxl", "jpegxl", "jpeg_xl"]

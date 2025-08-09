@@ -1,28 +1,24 @@
 """
+from typing import Any
 Unit tests for Terminal UI components
 """
 
-import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from textual.pilot import Pilot
 
 from app.cli.ui.tui import (
-    ConversionProgress,
     ConversionSettings,
-    FileBrowser,
     ImageConverterTUI,
     QualityValidator,
-    ResultsTable,
 )
 
 
 class TestQualityValidator:
     """Test quality input validator"""
 
-    def test_valid_quality(self):
+    def test_valid_quality(self) -> None:
         """Test valid quality values"""
         validator = QualityValidator()
 
@@ -32,7 +28,7 @@ class TestQualityValidator:
         assert validator.validate("100").is_valid
         assert validator.validate("85").is_valid
 
-    def test_invalid_quality(self):
+    def test_invalid_quality(self) -> None:
         """Test invalid quality values"""
         validator = QualityValidator()
 
@@ -44,7 +40,7 @@ class TestQualityValidator:
         assert not validator.validate("").is_valid
         assert not validator.validate("50.5").is_valid
 
-    def test_error_messages(self):
+    def test_error_messages(self) -> None:
         """Test validator error messages"""
         validator = QualityValidator()
 
@@ -71,7 +67,7 @@ class TestConversionSettings:
             settings.compose()
             mock_compose.assert_called_once()
 
-    def test_default_values(self):
+    def test_default_values(self) -> None:
         """Test default settings values"""
         settings = ConversionSettings()
 
@@ -85,7 +81,7 @@ class TestImageConverterTUI:
     """Test main TUI application"""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Mock configuration"""
         with patch("app.cli.ui.tui.get_config") as mock:
             config = Mock()
@@ -97,7 +93,7 @@ class TestImageConverterTUI:
             yield config
 
     @pytest.fixture
-    def mock_sdk(self):
+    def mock_sdk(self) -> None:
         """Mock SDK availability"""
         with patch("app.cli.ui.tui.SDK_AVAILABLE", True):
             with patch("app.cli.ui.tui.ImageConverterClient") as mock_client:
@@ -109,7 +105,7 @@ class TestImageConverterTUI:
                             "format": mock_format,
                         }
 
-    def test_app_creation(self, mock_config):
+    def test_app_creation(self, mock_config) -> None:
         """Test TUI app creation"""
         app = ImageConverterTUI()
 

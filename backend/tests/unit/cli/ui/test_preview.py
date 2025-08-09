@@ -1,10 +1,10 @@
 """
+from typing import Any
 Unit tests for image preview generation
 """
 
-import io
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from PIL import Image
@@ -21,12 +21,12 @@ class TestImagePreview:
     """Test ImagePreview class"""
 
     @pytest.fixture
-    def mock_console(self):
+    def mock_console(self) -> None:
         """Mock Rich console"""
         return Mock()
 
     @pytest.fixture
-    def mock_detector(self):
+    def mock_detector(self) -> None:
         """Mock terminal detector"""
         with patch("app.cli.ui.preview.get_terminal_detector") as mock:
             detector = Mock()
@@ -37,26 +37,26 @@ class TestImagePreview:
             yield detector
 
     @pytest.fixture
-    def mock_image(self):
+    def mock_image(self) -> None:
         """Create a mock image"""
         img = Image.new("RGB", (100, 100), color="red")
         return img
 
     @pytest.fixture
-    def temp_image_file(self, tmp_path, mock_image):
+    def temp_image_file(self, tmp_path, mock_image) -> None:
         """Create a temporary image file"""
         img_path = tmp_path / "test_image.jpg"
         mock_image.save(img_path)
         return img_path
 
-    def test_preview_init(self, mock_console, mock_detector):
+    def test_preview_init(self, mock_console, mock_detector) -> None:
         """Test preview generator initialization"""
         preview = ImagePreview(console=mock_console)
 
         assert preview.console == mock_console
         assert preview.detector is not None
 
-    def test_preview_modes(self, mock_console, mock_detector):
+    def test_preview_modes(self, mock_console, mock_detector) -> None:
         """Test all preview modes are available"""
         preview = ImagePreview(console=mock_console)
 
@@ -67,7 +67,7 @@ class TestImagePreview:
         assert PreviewMode.BLOCKS
         assert PreviewMode.GRADIENT
 
-    def test_generate_preview_file_not_found(self, mock_console, mock_detector):
+    def test_generate_preview_file_not_found(self, mock_console, mock_detector) -> None:
         """Test preview generation with non-existent file"""
         preview = ImagePreview(console=mock_console)
 
@@ -76,7 +76,7 @@ class TestImagePreview:
 
     def test_generate_preview_file_too_large(
         self, mock_console, mock_detector, tmp_path
-    ):
+    ) -> None:
         """Test preview generation with oversized file"""
         preview = ImagePreview(console=mock_console)
 
@@ -90,7 +90,9 @@ class TestImagePreview:
             result = preview.generate_preview(large_file)
             assert "File too large for preview" in result
 
-    def test_generate_preview_ascii(self, mock_console, mock_detector, temp_image_file):
+    def test_generate_preview_ascii(
+        self, mock_console, mock_detector, temp_image_file
+    ) -> None:
         """Test ASCII preview generation"""
         preview = ImagePreview(console=mock_console)
 
@@ -110,7 +112,7 @@ class TestImagePreview:
 
     def test_generate_preview_blocks(
         self, mock_console, mock_detector, temp_image_file
-    ):
+    ) -> None:
         """Test block character preview generation"""
         preview = ImagePreview(console=mock_console)
 
@@ -128,7 +130,7 @@ class TestImagePreview:
 
     def test_generate_preview_with_info(
         self, mock_console, mock_detector, temp_image_file
-    ):
+    ) -> None:
         """Test preview with image info"""
         preview = ImagePreview(console=mock_console)
 
@@ -143,7 +145,7 @@ class TestImagePreview:
 
     def test_generate_preview_invalid_image(
         self, mock_console, mock_detector, tmp_path
-    ):
+    ) -> None:
         """Test preview with corrupted image"""
         preview = ImagePreview(console=mock_console)
 
@@ -156,7 +158,7 @@ class TestImagePreview:
 
     def test_generate_preview_dimension_limits(
         self, mock_console, mock_detector, tmp_path
-    ):
+    ) -> None:
         """Test preview with oversized dimensions"""
         preview = ImagePreview(console=mock_console)
 
@@ -173,7 +175,7 @@ class TestImagePreview:
             result = preview.generate_preview(img_path)
             assert "dimensions too large" in result
 
-    def test_resize_image(self, mock_console, mock_detector, mock_image):
+    def test_resize_image(self, mock_console, mock_detector, mock_image) -> None:
         """Test image resizing logic"""
         preview = ImagePreview(console=mock_console)
 
@@ -183,7 +185,7 @@ class TestImagePreview:
         assert resized.width <= 50
         assert resized.height <= 25
 
-    def test_generate_ansi_with_transparency(self, mock_console, mock_detector):
+    def test_generate_ansi_with_transparency(self, mock_console, mock_detector) -> None:
         """Test ANSI generation with RGBA image"""
         preview = ImagePreview(console=mock_console)
 
@@ -197,7 +199,7 @@ class TestImagePreview:
 
             assert isinstance(result, str)
 
-    def test_generate_braille(self, mock_console, mock_detector, mock_image):
+    def test_generate_braille(self, mock_console, mock_detector, mock_image) -> None:
         """Test Braille pattern generation"""
         preview = ImagePreview(console=mock_console)
 
@@ -210,7 +212,9 @@ class TestImagePreview:
         # Should contain Braille characters
         assert any(ord(c) >= 0x2800 and ord(c) <= 0x28FF for c in result if c != "\n")
 
-    def test_create_side_by_side(self, mock_console, mock_detector, temp_image_file):
+    def test_create_side_by_side(
+        self, mock_console, mock_detector, temp_image_file
+    ) -> None:
         """Test side-by-side preview creation"""
         preview = ImagePreview(console=mock_console)
 
@@ -226,7 +230,9 @@ class TestImagePreview:
             # Result should combine previews
             assert isinstance(result, str)
 
-    def test_create_thumbnail_grid(self, mock_console, mock_detector, temp_image_file):
+    def test_create_thumbnail_grid(
+        self, mock_console, mock_detector, temp_image_file
+    ) -> None:
         """Test thumbnail grid creation"""
         preview = ImagePreview(console=mock_console)
 
@@ -240,7 +246,7 @@ class TestImagePreview:
             assert mock_gen.call_count == 2
             assert isinstance(result, str)
 
-    def test_memory_cleanup(self, mock_console, mock_detector, temp_image_file):
+    def test_memory_cleanup(self, mock_console, mock_detector, temp_image_file) -> None:
         """Test memory cleanup after preview generation"""
         preview = ImagePreview(console=mock_console)
 
@@ -265,7 +271,7 @@ class TestImagePreview:
 class TestPreviewHelpers:
     """Test preview helper functions"""
 
-    def test_create_ascii_preview(self, tmp_path):
+    def test_create_ascii_preview(self, tmp_path) -> None:
         """Test convenience function for ASCII preview"""
         img_path = tmp_path / "test.jpg"
         img = Image.new("RGB", (10, 10), "blue")
@@ -277,7 +283,7 @@ class TestPreviewHelpers:
         assert len(result) > 0
 
     @patch("app.cli.ui.preview.Console")
-    def test_show_image_comparison(self, mock_console_class, tmp_path):
+    def test_show_image_comparison(self, mock_console_class, tmp_path) -> None:
         """Test image comparison display"""
         mock_console = Mock()
         mock_console_class.return_value = mock_console
@@ -302,7 +308,7 @@ class TestPreviewHelpers:
 class TestPreviewErrorHandling:
     """Test error handling in preview generation"""
 
-    def test_fallback_to_ascii_on_error(self, tmp_path):
+    def test_fallback_to_ascii_on_error(self, tmp_path) -> None:
         """Test fallback to ASCII when preferred mode fails"""
         preview = ImagePreview()
 
@@ -322,7 +328,7 @@ class TestPreviewErrorHandling:
 
                 assert result == "ascii_fallback"
 
-    def test_memory_error_handling(self, tmp_path):
+    def test_memory_error_handling(self, tmp_path) -> None:
         """Test handling of memory errors"""
         preview = ImagePreview()
 
@@ -335,7 +341,7 @@ class TestPreviewErrorHandling:
             result = preview.generate_preview(img_path)
             assert "Insufficient memory" in result
 
-    def test_mode_conversion_error(self, tmp_path):
+    def test_mode_conversion_error(self, tmp_path) -> None:
         """Test handling of image mode conversion errors"""
         preview = ImagePreview()
 

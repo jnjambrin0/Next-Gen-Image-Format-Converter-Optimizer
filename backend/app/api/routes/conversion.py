@@ -3,25 +3,23 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
-from fastapi.responses import StreamingResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.api.utils.validation import secure_memory_clear, validate_content_type
 from app.config import settings
 from app.core.constants import FORMAT_TO_CONTENT_TYPE
 from app.core.exceptions import (
-    ConversionError,
     ConversionFailedError,
     InvalidImageError,
     UnsupportedFormatError,
 )
-from app.models.conversion import ConversionSettings, OptimizationSettings, OutputFormat
+from app.models.conversion import ConversionSettings, OutputFormat
 from app.models.requests import ConversionApiRequest
-from app.models.responses import ConversionApiResponse, ErrorResponse
+from app.models.responses import ErrorResponse
 from app.services.conversion_service import conversion_service
 
 logger = structlog.get_logger()

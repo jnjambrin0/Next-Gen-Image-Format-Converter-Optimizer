@@ -107,9 +107,8 @@ class EncodingOptions:
         [99, 99, 99, 99, 99, 99, 99, 99],
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize encoding options."""
-        pass
 
     def validate_options(
         self,

@@ -1,5 +1,6 @@
 """Unit tests for the OptimizationEngine."""
 
+from typing import Any
 import asyncio
 import io
 from unittest.mock import AsyncMock, MagicMock
@@ -10,7 +11,6 @@ from PIL import Image
 from app.core.optimization.optimization_engine import (
     OptimizationEngine,
     OptimizationMode,
-    OptimizationPass,
     OptimizationResult,
 )
 from app.core.security.errors_simplified import SecurityError
@@ -20,7 +20,7 @@ class TestOptimizationEngine:
     """Test cases for OptimizationEngine."""
 
     @pytest.fixture
-    def mock_quality_analyzer(self):
+    def mock_quality_analyzer(self) -> None:
         """Create a mock quality analyzer."""
         analyzer = MagicMock()
         analyzer.calculate_metrics = AsyncMock(
@@ -29,7 +29,7 @@ class TestOptimizationEngine:
         return analyzer
 
     @pytest.fixture
-    def engine(self, mock_quality_analyzer):
+    def engine(self, mock_quality_analyzer) -> None:
         """Create an OptimizationEngine instance."""
         return OptimizationEngine(
             quality_analyzer=mock_quality_analyzer,
@@ -38,7 +38,7 @@ class TestOptimizationEngine:
         )
 
     @pytest.fixture
-    def test_image(self):
+    def test_image(self) -> None:
         """Create a test image."""
         img = Image.new("RGB", (100, 100), color="red")
         buffer = io.BytesIO()
@@ -46,7 +46,7 @@ class TestOptimizationEngine:
         return buffer.getvalue()
 
     @pytest.fixture
-    def mock_conversion_func(self):
+    def mock_conversion_func(self) -> None:
         """Create a mock conversion function."""
 
         async def conversion_func(image_data, output_format, quality=85, **kwargs):

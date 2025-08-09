@@ -1,8 +1,8 @@
 """Unit tests for the AlphaOptimizer."""
 
+from typing import Any
 import io
 
-import numpy as np
 import pytest
 from PIL import Image
 
@@ -14,12 +14,12 @@ class TestAlphaOptimizer:
     """Test cases for AlphaOptimizer."""
 
     @pytest.fixture
-    def optimizer(self):
+    def optimizer(self) -> None:
         """Create an AlphaOptimizer instance."""
         return AlphaOptimizer()
 
     @pytest.fixture
-    def test_image_rgba(self):
+    def test_image_rgba(self) -> None:
         """Create a test RGBA image with alpha channel."""
         img = Image.new("RGBA", (100, 100))
         pixels = img.load()
@@ -37,7 +37,7 @@ class TestAlphaOptimizer:
         return buffer.getvalue()
 
     @pytest.fixture
-    def test_image_rgb(self):
+    def test_image_rgb(self) -> None:
         """Create a test RGB image without alpha."""
         img = Image.new("RGB", (100, 100), color="red")
         buffer = io.BytesIO()
@@ -45,7 +45,7 @@ class TestAlphaOptimizer:
         return buffer.getvalue()
 
     @pytest.fixture
-    def test_image_binary_alpha(self):
+    def test_image_binary_alpha(self) -> None:
         """Create image with binary alpha (fully transparent or opaque)."""
         img = Image.new("RGBA", (100, 100))
         pixels = img.load()

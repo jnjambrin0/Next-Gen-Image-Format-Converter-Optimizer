@@ -1,5 +1,6 @@
 """Unit tests for the RegionOptimizer."""
 
+from typing import Any
 import io
 from unittest.mock import AsyncMock, MagicMock
 
@@ -15,7 +16,7 @@ class TestRegionOptimizer:
     """Test cases for RegionOptimizer."""
 
     @pytest.fixture
-    def mock_intelligence_engine(self):
+    def mock_intelligence_engine(self) -> None:
         """Create a mock intelligence engine."""
         engine = MagicMock()
 
@@ -36,7 +37,7 @@ class TestRegionOptimizer:
         return engine
 
     @pytest.fixture
-    def optimizer(self, mock_intelligence_engine):
+    def optimizer(self, mock_intelligence_engine) -> None:
         """Create a RegionOptimizer instance."""
         return RegionOptimizer(
             intelligence_engine=mock_intelligence_engine,
@@ -49,7 +50,7 @@ class TestRegionOptimizer:
         )
 
     @pytest.fixture
-    def test_image(self):
+    def test_image(self) -> None:
         """Create a test image."""
         img = Image.new("RGB", (200, 200), color="white")
         # Add some colored regions
@@ -68,7 +69,7 @@ class TestRegionOptimizer:
         return buffer.getvalue()
 
     @pytest.fixture
-    def mock_conversion_func(self):
+    def mock_conversion_func(self) -> None:
         """Create a mock conversion function."""
 
         async def conversion_func(image_data, output_format, quality=85, **kwargs):
@@ -128,7 +129,7 @@ class TestRegionOptimizer:
         # Should return without region optimization
         assert result == small_data
 
-    def test_merge_overlapping_regions(self, optimizer):
+    def test_merge_overlapping_regions(self, optimizer) -> None:
         """Test merging of overlapping regions."""
         regions = [
             Region(RegionType.FACE, (10, 10, 50, 50), 0.9, 1.0),
@@ -145,7 +146,7 @@ class TestRegionOptimizer:
         assert merged[0].type == RegionType.FACE
         assert merged[1].type == RegionType.BACKGROUND
 
-    def test_calculate_overlap(self, optimizer):
+    def test_calculate_overlap(self, optimizer) -> None:
         """Test overlap calculation."""
         # No overlap
         overlap = optimizer._calculate_overlap((0, 0, 10, 10), (20, 20, 30, 30))
@@ -159,7 +160,7 @@ class TestRegionOptimizer:
         overlap = optimizer._calculate_overlap((0, 0, 10, 10), (5, 5, 15, 15))
         assert 0 < overlap < 1
 
-    def test_create_quality_map(self, optimizer):
+    def test_create_quality_map(self, optimizer) -> None:
         """Test quality map creation."""
         regions = [
             Region(RegionType.FACE, (10, 10, 30, 30), 0.9, 1.0),
@@ -202,7 +203,7 @@ class TestRegionOptimizer:
         # Should return without region optimization
         assert result == test_image
 
-    def test_visualize_regions(self, optimizer):
+    def test_visualize_regions(self, optimizer) -> None:
         """Test region visualization."""
         # Create test image
         img = Image.new("RGB", (100, 100), color="white")

@@ -4,7 +4,7 @@ Interactive tutorial launcher and manager
 """
 
 import asyncio
-from typing import Annotated, Optional
+from typing import Any, Annotated, Optional
 
 import typer
 from rich.console import Console
@@ -103,7 +103,7 @@ def tutorial_command(
         _interactive_tutorial_selection()
 
 
-def _show_tutorial_list(show_progress: bool = False):
+def _show_tutorial_list(show_progress: bool = False) -> None:
     """Display list of available tutorials"""
     tutorials = tutorial_engine.list_tutorials()
 
@@ -170,7 +170,7 @@ def _show_tutorial_list(show_progress: bool = False):
             )
 
 
-def _interactive_tutorial_selection():
+def _interactive_tutorial_selection() -> None:
     """Interactive tutorial selection menu"""
     tutorials = tutorial_engine.list_tutorials()
 
@@ -246,7 +246,7 @@ Each tutorial includes:
     asyncio.run(tutorial_engine.run_tutorial(tutorial_id, resume=resume))
 
 
-def _reset_progress(target: str):
+def _reset_progress(target: str) -> None:
     """Reset tutorial progress"""
     if target.lower() == "all":
         if Confirm.ask("[red]Reset ALL tutorial progress?[/red]", default=False):

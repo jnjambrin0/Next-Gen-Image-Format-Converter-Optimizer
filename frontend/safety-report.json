@@ -1,0 +1,3302 @@
+
+
++===========================================================================================================================================================================================+
+
+
+DEPRECATED: this command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.
+
+
+We highly encourage switching to the new `scan` command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.
+
+
++===========================================================================================================================================================================================+
+
+
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/safety/safety.py:1853: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+{
+    "report_meta": {
+        "scan_target": "environment",
+        "scanned": [
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip",
+            "__editable__.image_converter_sdk-1.0.0.finder.__path_hook__",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload",
+            "/Library/Frameworks/Python.framework/Versions/3.11/bin"
+        ],
+        "scanned_full_path": [
+            "/Library/Frameworks/Python.framework/Versions/3.11/bin",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages",
+            "__editable__.image_converter_sdk-1.0.0.finder.__path_hook__",
+            "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+        ],
+        "target_languages": [
+            "python"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "audit_and_monitor": false,
+        "api_key": false,
+        "account": "",
+        "local_database_path": null,
+        "safety_version": "3.6.0",
+        "timestamp": "2025-08-09 18:55:50",
+        "packages_found": 194,
+        "vulnerabilities_found": 4,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+        "telemetry": {
+            "safety_options": {
+                "json": {
+                    "--json": 1
+                }
+            },
+            "safety_version": "3.6.0",
+            "safety_source": "cli",
+            "os_type": "Darwin",
+            "os_release": "24.6.0",
+            "os_description": "macOS-15.6-arm64-arm-64bit",
+            "python_version": "3.11.9",
+            "safety_command": "check"
+        },
+        "git": {
+            "branch": "main",
+            "tag": "",
+            "commit": "54bc0fbc16e3596deac8c3e0020e3a5349dcec3f",
+            "dirty": "False",
+            "origin": "https://github.com/jnjambrin0/Next-Gen-Image-Format-Converter-Optimizer.git"
+        },
+        "project": null,
+        "json_version": "1.1",
+        "remediations_attempted": 0,
+        "remediations_completed": 0,
+        "remediation_mode": "NON_INTERACTIVE"
+    },
+    "scanned_packages": {
+        "deprecated": {
+            "name": "deprecated",
+            "version": "1.2.18",
+            "requirements": [
+                {
+                    "raw": "deprecated==1.2.18",
+                    "extras": [],
+                    "marker": null,
+                    "name": "deprecated",
+                    "specifier": "==1.2.18",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "markupsafe": {
+            "name": "markupsafe",
+            "version": "3.0.2",
+            "requirements": [
+                {
+                    "raw": "markupsafe==3.0.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "markupsafe",
+                    "specifier": "==3.0.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pyyaml": {
+            "name": "pyyaml",
+            "version": "6.0.2",
+            "requirements": [
+                {
+                    "raw": "pyyaml==6.0.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyyaml",
+                    "specifier": "==6.0.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "aiofiles": {
+            "name": "aiofiles",
+            "version": "24.1.0",
+            "requirements": [
+                {
+                    "raw": "aiofiles==24.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "aiofiles",
+                    "specifier": "==24.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "aiohappyeyeballs": {
+            "name": "aiohappyeyeballs",
+            "version": "2.6.1",
+            "requirements": [
+                {
+                    "raw": "aiohappyeyeballs==2.6.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "aiohappyeyeballs",
+                    "specifier": "==2.6.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "aiohttp": {
+            "name": "aiohttp",
+            "version": "3.12.15",
+            "requirements": [
+                {
+                    "raw": "aiohttp==3.12.15",
+                    "extras": [],
+                    "marker": null,
+                    "name": "aiohttp",
+                    "specifier": "==3.12.15",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "aiosignal": {
+            "name": "aiosignal",
+            "version": "1.4.0",
+            "requirements": [
+                {
+                    "raw": "aiosignal==1.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "aiosignal",
+                    "specifier": "==1.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "aiosqlite": {
+            "name": "aiosqlite",
+            "version": "0.21.0",
+            "requirements": [
+                {
+                    "raw": "aiosqlite==0.21.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "aiosqlite",
+                    "specifier": "==0.21.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "annotated-types": {
+            "name": "annotated-types",
+            "version": "0.7.0",
+            "requirements": [
+                {
+                    "raw": "annotated-types==0.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "annotated-types",
+                    "specifier": "==0.7.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "anyio": {
+            "name": "anyio",
+            "version": "4.9.0",
+            "requirements": [
+                {
+                    "raw": "anyio==4.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "anyio",
+                    "specifier": "==4.9.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "asttokens": {
+            "name": "asttokens",
+            "version": "3.0.0",
+            "requirements": [
+                {
+                    "raw": "asttokens==3.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "asttokens",
+                    "specifier": "==3.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "attrs": {
+            "name": "attrs",
+            "version": "25.3.0",
+            "requirements": [
+                {
+                    "raw": "attrs==25.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "attrs",
+                    "specifier": "==25.3.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "authlib": {
+            "name": "authlib",
+            "version": "1.6.1",
+            "requirements": [
+                {
+                    "raw": "authlib==1.6.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "authlib",
+                    "specifier": "==1.6.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "autoflake": {
+            "name": "autoflake",
+            "version": "2.3.1",
+            "requirements": [
+                {
+                    "raw": "autoflake==2.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "autoflake",
+                    "specifier": "==2.3.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "babel": {
+            "name": "babel",
+            "version": "2.17.0",
+            "requirements": [
+                {
+                    "raw": "babel==2.17.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "babel",
+                    "specifier": "==2.17.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "backports.tarfile": {
+            "name": "backports.tarfile",
+            "version": "1.2.0",
+            "requirements": [
+                {
+                    "raw": "backports.tarfile==1.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "backports.tarfile",
+                    "specifier": "==1.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "backrefs": {
+            "name": "backrefs",
+            "version": "5.9",
+            "requirements": [
+                {
+                    "raw": "backrefs==5.9",
+                    "extras": [],
+                    "marker": null,
+                    "name": "backrefs",
+                    "specifier": "==5.9",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "bandit": {
+            "name": "bandit",
+            "version": "1.8.6",
+            "requirements": [
+                {
+                    "raw": "bandit==1.8.6",
+                    "extras": [],
+                    "marker": null,
+                    "name": "bandit",
+                    "specifier": "==1.8.6",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "bcrypt": {
+            "name": "bcrypt",
+            "version": "4.3.0",
+            "requirements": [
+                {
+                    "raw": "bcrypt==4.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "bcrypt",
+                    "specifier": "==4.3.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "black": {
+            "name": "black",
+            "version": "25.1.0",
+            "requirements": [
+                {
+                    "raw": "black==25.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "black",
+                    "specifier": "==25.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "bleach": {
+            "name": "bleach",
+            "version": "6.2.0",
+            "requirements": [
+                {
+                    "raw": "bleach==6.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "bleach",
+                    "specifier": "==6.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "certifi": {
+            "name": "certifi",
+            "version": "2025.7.14",
+            "requirements": [
+                {
+                    "raw": "certifi==2025.7.14",
+                    "extras": [],
+                    "marker": null,
+                    "name": "certifi",
+                    "specifier": "==2025.7.14",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "cffi": {
+            "name": "cffi",
+            "version": "1.17.1",
+            "requirements": [
+                {
+                    "raw": "cffi==1.17.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "cffi",
+                    "specifier": "==1.17.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "cfgv": {
+            "name": "cfgv",
+            "version": "3.4.0",
+            "requirements": [
+                {
+                    "raw": "cfgv==3.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "cfgv",
+                    "specifier": "==3.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "charset-normalizer": {
+            "name": "charset-normalizer",
+            "version": "3.4.2",
+            "requirements": [
+                {
+                    "raw": "charset-normalizer==3.4.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "charset-normalizer",
+                    "specifier": "==3.4.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "click": {
+            "name": "click",
+            "version": "8.2.2",
+            "requirements": [
+                {
+                    "raw": "click==8.2.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "click",
+                    "specifier": "==8.2.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "colorama": {
+            "name": "colorama",
+            "version": "0.4.6",
+            "requirements": [
+                {
+                    "raw": "colorama==0.4.6",
+                    "extras": [],
+                    "marker": null,
+                    "name": "colorama",
+                    "specifier": "==0.4.6",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "coloredlogs": {
+            "name": "coloredlogs",
+            "version": "15.0.1",
+            "requirements": [
+                {
+                    "raw": "coloredlogs==15.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "coloredlogs",
+                    "specifier": "==15.0.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "coverage": {
+            "name": "coverage",
+            "version": "7.10.2",
+            "requirements": [
+                {
+                    "raw": "coverage==7.10.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "coverage",
+                    "specifier": "==7.10.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "cryptography": {
+            "name": "cryptography",
+            "version": "45.0.5",
+            "requirements": [
+                {
+                    "raw": "cryptography==45.0.5",
+                    "extras": [],
+                    "marker": null,
+                    "name": "cryptography",
+                    "specifier": "==45.0.5",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "decorator": {
+            "name": "decorator",
+            "version": "5.2.1",
+            "requirements": [
+                {
+                    "raw": "decorator==5.2.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "decorator",
+                    "specifier": "==5.2.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "distlib": {
+            "name": "distlib",
+            "version": "0.4.0",
+            "requirements": [
+                {
+                    "raw": "distlib==0.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "distlib",
+                    "specifier": "==0.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "distro": {
+            "name": "distro",
+            "version": "1.9.0",
+            "requirements": [
+                {
+                    "raw": "distro==1.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "distro",
+                    "specifier": "==1.9.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "dparse": {
+            "name": "dparse",
+            "version": "0.6.4",
+            "requirements": [
+                {
+                    "raw": "dparse==0.6.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "dparse",
+                    "specifier": "==0.6.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ecdsa": {
+            "name": "ecdsa",
+            "version": "0.19.1",
+            "requirements": [
+                {
+                    "raw": "ecdsa==0.19.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ecdsa",
+                    "specifier": "==0.19.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "executing": {
+            "name": "executing",
+            "version": "2.2.0",
+            "requirements": [
+                {
+                    "raw": "executing==2.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "executing",
+                    "specifier": "==2.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "fastapi": {
+            "name": "fastapi",
+            "version": "0.116.1",
+            "requirements": [
+                {
+                    "raw": "fastapi==0.116.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "fastapi",
+                    "specifier": "==0.116.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "filelock": {
+            "name": "filelock",
+            "version": "3.16.1",
+            "requirements": [
+                {
+                    "raw": "filelock==3.16.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "filelock",
+                    "specifier": "==3.16.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "flake8": {
+            "name": "flake8",
+            "version": "7.3.0",
+            "requirements": [
+                {
+                    "raw": "flake8==7.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "flake8",
+                    "specifier": "==7.3.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "flatbuffers": {
+            "name": "flatbuffers",
+            "version": "25.2.10",
+            "requirements": [
+                {
+                    "raw": "flatbuffers==25.2.10",
+                    "extras": [],
+                    "marker": null,
+                    "name": "flatbuffers",
+                    "specifier": "==25.2.10",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "frozenlist": {
+            "name": "frozenlist",
+            "version": "1.7.0",
+            "requirements": [
+                {
+                    "raw": "frozenlist==1.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "frozenlist",
+                    "specifier": "==1.7.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ghp-import": {
+            "name": "ghp-import",
+            "version": "2.1.0",
+            "requirements": [
+                {
+                    "raw": "ghp-import==2.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ghp-import",
+                    "specifier": "==2.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "greenlet": {
+            "name": "greenlet",
+            "version": "3.2.4",
+            "requirements": [
+                {
+                    "raw": "greenlet==3.2.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "greenlet",
+                    "specifier": "==3.2.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "h11": {
+            "name": "h11",
+            "version": "0.16.0",
+            "requirements": [
+                {
+                    "raw": "h11==0.16.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "h11",
+                    "specifier": "==0.16.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "httpcore": {
+            "name": "httpcore",
+            "version": "1.0.9",
+            "requirements": [
+                {
+                    "raw": "httpcore==1.0.9",
+                    "extras": [],
+                    "marker": null,
+                    "name": "httpcore",
+                    "specifier": "==1.0.9",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "httptools": {
+            "name": "httptools",
+            "version": "0.6.4",
+            "requirements": [
+                {
+                    "raw": "httptools==0.6.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "httptools",
+                    "specifier": "==0.6.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "httpx": {
+            "name": "httpx",
+            "version": "0.28.1",
+            "requirements": [
+                {
+                    "raw": "httpx==0.28.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "httpx",
+                    "specifier": "==0.28.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "humanfriendly": {
+            "name": "humanfriendly",
+            "version": "10.0",
+            "requirements": [
+                {
+                    "raw": "humanfriendly==10.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "humanfriendly",
+                    "specifier": "==10.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "identify": {
+            "name": "identify",
+            "version": "2.6.12",
+            "requirements": [
+                {
+                    "raw": "identify==2.6.12",
+                    "extras": [],
+                    "marker": null,
+                    "name": "identify",
+                    "specifier": "==2.6.12",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "idna": {
+            "name": "idna",
+            "version": "3.10",
+            "requirements": [
+                {
+                    "raw": "idna==3.10",
+                    "extras": [],
+                    "marker": null,
+                    "name": "idna",
+                    "specifier": "==3.10",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "image-converter-sdk": {
+            "name": "image-converter-sdk",
+            "version": "1.0.0",
+            "requirements": [
+                {
+                    "raw": "image-converter-sdk==1.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "image-converter-sdk",
+                    "specifier": "==1.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "imageio": {
+            "name": "imageio",
+            "version": "2.37.0",
+            "requirements": [
+                {
+                    "raw": "imageio==2.37.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "imageio",
+                    "specifier": "==2.37.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "importlib-metadata": {
+            "name": "importlib-metadata",
+            "version": "8.7.0",
+            "requirements": [
+                {
+                    "raw": "importlib-metadata==8.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "importlib-metadata",
+                    "specifier": "==8.7.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "iniconfig": {
+            "name": "iniconfig",
+            "version": "2.1.0",
+            "requirements": [
+                {
+                    "raw": "iniconfig==2.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "iniconfig",
+                    "specifier": "==2.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ipython": {
+            "name": "ipython",
+            "version": "9.4.0",
+            "requirements": [
+                {
+                    "raw": "ipython==9.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ipython",
+                    "specifier": "==9.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ipython-pygments-lexers": {
+            "name": "ipython-pygments-lexers",
+            "version": "1.1.1",
+            "requirements": [
+                {
+                    "raw": "ipython-pygments-lexers==1.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ipython-pygments-lexers",
+                    "specifier": "==1.1.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "isort": {
+            "name": "isort",
+            "version": "6.0.1",
+            "requirements": [
+                {
+                    "raw": "isort==6.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "isort",
+                    "specifier": "==6.0.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "jaraco.classes": {
+            "name": "jaraco.classes",
+            "version": "3.4.0",
+            "requirements": [
+                {
+                    "raw": "jaraco.classes==3.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.classes",
+                    "specifier": "==3.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "jaraco.context": {
+            "name": "jaraco.context",
+            "version": "6.0.1",
+            "requirements": [
+                {
+                    "raw": "jaraco.context==6.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.context",
+                    "specifier": "==6.0.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "jaraco-functools": {
+            "name": "jaraco-functools",
+            "version": "4.2.1",
+            "requirements": [
+                {
+                    "raw": "jaraco-functools==4.2.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco-functools",
+                    "specifier": "==4.2.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "jedi": {
+            "name": "jedi",
+            "version": "0.19.2",
+            "requirements": [
+                {
+                    "raw": "jedi==0.19.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jedi",
+                    "specifier": "==0.19.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "jinja2": {
+            "name": "jinja2",
+            "version": "3.1.6",
+            "requirements": [
+                {
+                    "raw": "jinja2==3.1.6",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jinja2",
+                    "specifier": "==3.1.6",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "jiter": {
+            "name": "jiter",
+            "version": "0.10.0",
+            "requirements": [
+                {
+                    "raw": "jiter==0.10.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jiter",
+                    "specifier": "==0.10.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "joblib": {
+            "name": "joblib",
+            "version": "1.5.1",
+            "requirements": [
+                {
+                    "raw": "joblib==1.5.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "joblib",
+                    "specifier": "==1.5.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "keyring": {
+            "name": "keyring",
+            "version": "25.6.0",
+            "requirements": [
+                {
+                    "raw": "keyring==25.6.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "keyring",
+                    "specifier": "==25.6.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "lazy-loader": {
+            "name": "lazy-loader",
+            "version": "0.4",
+            "requirements": [
+                {
+                    "raw": "lazy-loader==0.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "lazy-loader",
+                    "specifier": "==0.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "limits": {
+            "name": "limits",
+            "version": "5.4.0",
+            "requirements": [
+                {
+                    "raw": "limits==5.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "limits",
+                    "specifier": "==5.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "linkify-it-py": {
+            "name": "linkify-it-py",
+            "version": "2.0.3",
+            "requirements": [
+                {
+                    "raw": "linkify-it-py==2.0.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "linkify-it-py",
+                    "specifier": "==2.0.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "markdown": {
+            "name": "markdown",
+            "version": "3.8.2",
+            "requirements": [
+                {
+                    "raw": "markdown==3.8.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "markdown",
+                    "specifier": "==3.8.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "markdown-it-py": {
+            "name": "markdown-it-py",
+            "version": "3.0.0",
+            "requirements": [
+                {
+                    "raw": "markdown-it-py==3.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "markdown-it-py",
+                    "specifier": "==3.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "marshmallow": {
+            "name": "marshmallow",
+            "version": "4.0.0",
+            "requirements": [
+                {
+                    "raw": "marshmallow==4.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "marshmallow",
+                    "specifier": "==4.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "matplotlib-inline": {
+            "name": "matplotlib-inline",
+            "version": "0.1.7",
+            "requirements": [
+                {
+                    "raw": "matplotlib-inline==0.1.7",
+                    "extras": [],
+                    "marker": null,
+                    "name": "matplotlib-inline",
+                    "specifier": "==0.1.7",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mccabe": {
+            "name": "mccabe",
+            "version": "0.7.0",
+            "requirements": [
+                {
+                    "raw": "mccabe==0.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mccabe",
+                    "specifier": "==0.7.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mdit-py-plugins": {
+            "name": "mdit-py-plugins",
+            "version": "0.4.2",
+            "requirements": [
+                {
+                    "raw": "mdit-py-plugins==0.4.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mdit-py-plugins",
+                    "specifier": "==0.4.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mdurl": {
+            "name": "mdurl",
+            "version": "0.1.2",
+            "requirements": [
+                {
+                    "raw": "mdurl==0.1.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mdurl",
+                    "specifier": "==0.1.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mergedeep": {
+            "name": "mergedeep",
+            "version": "1.3.4",
+            "requirements": [
+                {
+                    "raw": "mergedeep==1.3.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mergedeep",
+                    "specifier": "==1.3.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mkdocs": {
+            "name": "mkdocs",
+            "version": "1.6.1",
+            "requirements": [
+                {
+                    "raw": "mkdocs==1.6.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mkdocs",
+                    "specifier": "==1.6.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mkdocs-get-deps": {
+            "name": "mkdocs-get-deps",
+            "version": "0.2.0",
+            "requirements": [
+                {
+                    "raw": "mkdocs-get-deps==0.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mkdocs-get-deps",
+                    "specifier": "==0.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mkdocs-material": {
+            "name": "mkdocs-material",
+            "version": "9.6.16",
+            "requirements": [
+                {
+                    "raw": "mkdocs-material==9.6.16",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mkdocs-material",
+                    "specifier": "==9.6.16",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mkdocs-material-extensions": {
+            "name": "mkdocs-material-extensions",
+            "version": "1.3.1",
+            "requirements": [
+                {
+                    "raw": "mkdocs-material-extensions==1.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mkdocs-material-extensions",
+                    "specifier": "==1.3.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "more-itertools": {
+            "name": "more-itertools",
+            "version": "10.7.0",
+            "requirements": [
+                {
+                    "raw": "more-itertools==10.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "more-itertools",
+                    "specifier": "==10.7.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mpmath": {
+            "name": "mpmath",
+            "version": "1.3.0",
+            "requirements": [
+                {
+                    "raw": "mpmath==1.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mpmath",
+                    "specifier": "==1.3.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "multidict": {
+            "name": "multidict",
+            "version": "6.6.3",
+            "requirements": [
+                {
+                    "raw": "multidict==6.6.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "multidict",
+                    "specifier": "==6.6.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mypy": {
+            "name": "mypy",
+            "version": "1.17.1",
+            "requirements": [
+                {
+                    "raw": "mypy==1.17.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mypy",
+                    "specifier": "==1.17.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "mypy-extensions": {
+            "name": "mypy-extensions",
+            "version": "1.1.0",
+            "requirements": [
+                {
+                    "raw": "mypy-extensions==1.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mypy-extensions",
+                    "specifier": "==1.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "networkx": {
+            "name": "networkx",
+            "version": "3.5",
+            "requirements": [
+                {
+                    "raw": "networkx==3.5",
+                    "extras": [],
+                    "marker": null,
+                    "name": "networkx",
+                    "specifier": "==3.5",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "nltk": {
+            "name": "nltk",
+            "version": "3.9.1",
+            "requirements": [
+                {
+                    "raw": "nltk==3.9.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "nltk",
+                    "specifier": "==3.9.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "nodeenv": {
+            "name": "nodeenv",
+            "version": "1.9.1",
+            "requirements": [
+                {
+                    "raw": "nodeenv==1.9.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "nodeenv",
+                    "specifier": "==1.9.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "numpy": {
+            "name": "numpy",
+            "version": "2.3.2",
+            "requirements": [
+                {
+                    "raw": "numpy==2.3.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "numpy",
+                    "specifier": "==2.3.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "onnxruntime": {
+            "name": "onnxruntime",
+            "version": "1.22.1",
+            "requirements": [
+                {
+                    "raw": "onnxruntime==1.22.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "onnxruntime",
+                    "specifier": "==1.22.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "openai": {
+            "name": "openai",
+            "version": "1.98.0",
+            "requirements": [
+                {
+                    "raw": "openai==1.98.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "openai",
+                    "specifier": "==1.98.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "packaging": {
+            "name": "packaging",
+            "version": "25.0",
+            "requirements": [
+                {
+                    "raw": "packaging==25.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "packaging",
+                    "specifier": "==25.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "paginate": {
+            "name": "paginate",
+            "version": "0.5.7",
+            "requirements": [
+                {
+                    "raw": "paginate==0.5.7",
+                    "extras": [],
+                    "marker": null,
+                    "name": "paginate",
+                    "specifier": "==0.5.7",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "parso": {
+            "name": "parso",
+            "version": "0.8.4",
+            "requirements": [
+                {
+                    "raw": "parso==0.8.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "parso",
+                    "specifier": "==0.8.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "passlib": {
+            "name": "passlib",
+            "version": "1.7.4",
+            "requirements": [
+                {
+                    "raw": "passlib==1.7.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "passlib",
+                    "specifier": "==1.7.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pathspec": {
+            "name": "pathspec",
+            "version": "0.12.1",
+            "requirements": [
+                {
+                    "raw": "pathspec==0.12.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pathspec",
+                    "specifier": "==0.12.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pbr": {
+            "name": "pbr",
+            "version": "6.1.1",
+            "requirements": [
+                {
+                    "raw": "pbr==6.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pbr",
+                    "specifier": "==6.1.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pexpect": {
+            "name": "pexpect",
+            "version": "4.9.0",
+            "requirements": [
+                {
+                    "raw": "pexpect==4.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pexpect",
+                    "specifier": "==4.9.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "piexif": {
+            "name": "piexif",
+            "version": "1.1.3",
+            "requirements": [
+                {
+                    "raw": "piexif==1.1.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "piexif",
+                    "specifier": "==1.1.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pillow": {
+            "name": "pillow",
+            "version": "11.3.0",
+            "requirements": [
+                {
+                    "raw": "pillow==11.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pillow",
+                    "specifier": "==11.3.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pillow-avif-plugin": {
+            "name": "pillow-avif-plugin",
+            "version": "1.5.2",
+            "requirements": [
+                {
+                    "raw": "pillow-avif-plugin==1.5.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pillow-avif-plugin",
+                    "specifier": "==1.5.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pillow-heif": {
+            "name": "pillow-heif",
+            "version": "1.0.0",
+            "requirements": [
+                {
+                    "raw": "pillow-heif==1.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pillow-heif",
+                    "specifier": "==1.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pip": {
+            "name": "pip",
+            "version": "25.2",
+            "requirements": [
+                {
+                    "raw": "pip==25.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pip",
+                    "specifier": "==25.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "platformdirs": {
+            "name": "platformdirs",
+            "version": "4.3.8",
+            "requirements": [
+                {
+                    "raw": "platformdirs==4.3.8",
+                    "extras": [],
+                    "marker": null,
+                    "name": "platformdirs",
+                    "specifier": "==4.3.8",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "playwright": {
+            "name": "playwright",
+            "version": "1.54.0",
+            "requirements": [
+                {
+                    "raw": "playwright==1.54.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "playwright",
+                    "specifier": "==1.54.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pluggy": {
+            "name": "pluggy",
+            "version": "1.6.0",
+            "requirements": [
+                {
+                    "raw": "pluggy==1.6.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pluggy",
+                    "specifier": "==1.6.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pre-commit": {
+            "name": "pre-commit",
+            "version": "4.2.0",
+            "requirements": [
+                {
+                    "raw": "pre-commit==4.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pre-commit",
+                    "specifier": "==4.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "prompt-toolkit": {
+            "name": "prompt-toolkit",
+            "version": "3.0.51",
+            "requirements": [
+                {
+                    "raw": "prompt-toolkit==3.0.51",
+                    "extras": [],
+                    "marker": null,
+                    "name": "prompt-toolkit",
+                    "specifier": "==3.0.51",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "propcache": {
+            "name": "propcache",
+            "version": "0.3.2",
+            "requirements": [
+                {
+                    "raw": "propcache==0.3.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "propcache",
+                    "specifier": "==0.3.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "protobuf": {
+            "name": "protobuf",
+            "version": "6.31.1",
+            "requirements": [
+                {
+                    "raw": "protobuf==6.31.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "protobuf",
+                    "specifier": "==6.31.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "psutil": {
+            "name": "psutil",
+            "version": "6.1.1",
+            "requirements": [
+                {
+                    "raw": "psutil==6.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "psutil",
+                    "specifier": "==6.1.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ptyprocess": {
+            "name": "ptyprocess",
+            "version": "0.7.0",
+            "requirements": [
+                {
+                    "raw": "ptyprocess==0.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ptyprocess",
+                    "specifier": "==0.7.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pure-eval": {
+            "name": "pure-eval",
+            "version": "0.2.3",
+            "requirements": [
+                {
+                    "raw": "pure-eval==0.2.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pure-eval",
+                    "specifier": "==0.2.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pyasn1": {
+            "name": "pyasn1",
+            "version": "0.4.8",
+            "requirements": [
+                {
+                    "raw": "pyasn1==0.4.8",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyasn1",
+                    "specifier": "==0.4.8",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pycodestyle": {
+            "name": "pycodestyle",
+            "version": "2.14.0",
+            "requirements": [
+                {
+                    "raw": "pycodestyle==2.14.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pycodestyle",
+                    "specifier": "==2.14.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pycparser": {
+            "name": "pycparser",
+            "version": "2.22",
+            "requirements": [
+                {
+                    "raw": "pycparser==2.22",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pycparser",
+                    "specifier": "==2.22",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pydantic": {
+            "name": "pydantic",
+            "version": "2.9.2",
+            "requirements": [
+                {
+                    "raw": "pydantic==2.9.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pydantic",
+                    "specifier": "==2.9.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pydantic-core": {
+            "name": "pydantic-core",
+            "version": "2.23.4",
+            "requirements": [
+                {
+                    "raw": "pydantic-core==2.23.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pydantic-core",
+                    "specifier": "==2.23.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pydantic-settings": {
+            "name": "pydantic-settings",
+            "version": "2.10.0",
+            "requirements": [
+                {
+                    "raw": "pydantic-settings==2.10.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pydantic-settings",
+                    "specifier": "==2.10.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pyee": {
+            "name": "pyee",
+            "version": "13.0.0",
+            "requirements": [
+                {
+                    "raw": "pyee==13.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyee",
+                    "specifier": "==13.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pyflakes": {
+            "name": "pyflakes",
+            "version": "3.4.0",
+            "requirements": [
+                {
+                    "raw": "pyflakes==3.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyflakes",
+                    "specifier": "==3.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pygments": {
+            "name": "pygments",
+            "version": "2.19.2",
+            "requirements": [
+                {
+                    "raw": "pygments==2.19.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pygments",
+                    "specifier": "==2.19.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pymdown-extensions": {
+            "name": "pymdown-extensions",
+            "version": "10.16.1",
+            "requirements": [
+                {
+                    "raw": "pymdown-extensions==10.16.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pymdown-extensions",
+                    "specifier": "==10.16.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pytest": {
+            "name": "pytest",
+            "version": "8.4.1",
+            "requirements": [
+                {
+                    "raw": "pytest==8.4.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest",
+                    "specifier": "==8.4.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pytest-asyncio": {
+            "name": "pytest-asyncio",
+            "version": "1.1.0",
+            "requirements": [
+                {
+                    "raw": "pytest-asyncio==1.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest-asyncio",
+                    "specifier": "==1.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pytest-cov": {
+            "name": "pytest-cov",
+            "version": "6.2.1",
+            "requirements": [
+                {
+                    "raw": "pytest-cov==6.2.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest-cov",
+                    "specifier": "==6.2.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pytest-mock": {
+            "name": "pytest-mock",
+            "version": "3.14.0",
+            "requirements": [
+                {
+                    "raw": "pytest-mock==3.14.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest-mock",
+                    "specifier": "==3.14.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pytest-timeout": {
+            "name": "pytest-timeout",
+            "version": "2.4.0",
+            "requirements": [
+                {
+                    "raw": "pytest-timeout==2.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest-timeout",
+                    "specifier": "==2.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "python-dateutil": {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "requirements": [
+                {
+                    "raw": "python-dateutil==2.9.0.post0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-dateutil",
+                    "specifier": "==2.9.0.post0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "python-dotenv": {
+            "name": "python-dotenv",
+            "version": "1.1.1",
+            "requirements": [
+                {
+                    "raw": "python-dotenv==1.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-dotenv",
+                    "specifier": "==1.1.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "python-jose": {
+            "name": "python-jose",
+            "version": "3.4.0",
+            "requirements": [
+                {
+                    "raw": "python-jose==3.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-jose",
+                    "specifier": "==3.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "python-magic": {
+            "name": "python-magic",
+            "version": "0.4.27",
+            "requirements": [
+                {
+                    "raw": "python-magic==0.4.27",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-magic",
+                    "specifier": "==0.4.27",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "python-multipart": {
+            "name": "python-multipart",
+            "version": "0.0.20",
+            "requirements": [
+                {
+                    "raw": "python-multipart==0.0.20",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-multipart",
+                    "specifier": "==0.0.20",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "pyyaml-env-tag": {
+            "name": "pyyaml-env-tag",
+            "version": "1.1",
+            "requirements": [
+                {
+                    "raw": "pyyaml-env-tag==1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyyaml-env-tag",
+                    "specifier": "==1.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "rapidfuzz": {
+            "name": "rapidfuzz",
+            "version": "3.13.0",
+            "requirements": [
+                {
+                    "raw": "rapidfuzz==3.13.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "rapidfuzz",
+                    "specifier": "==3.13.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "redis": {
+            "name": "redis",
+            "version": "6.2.0",
+            "requirements": [
+                {
+                    "raw": "redis==6.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "redis",
+                    "specifier": "==6.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "regex": {
+            "name": "regex",
+            "version": "2025.7.34",
+            "requirements": [
+                {
+                    "raw": "regex==2025.7.34",
+                    "extras": [],
+                    "marker": null,
+                    "name": "regex",
+                    "specifier": "==2025.7.34",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "requests": {
+            "name": "requests",
+            "version": "2.32.4",
+            "requirements": [
+                {
+                    "raw": "requests==2.32.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "requests",
+                    "specifier": "==2.32.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "rich": {
+            "name": "rich",
+            "version": "14.1.0",
+            "requirements": [
+                {
+                    "raw": "rich==14.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "rich",
+                    "specifier": "==14.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "rsa": {
+            "name": "rsa",
+            "version": "4.9.1",
+            "requirements": [
+                {
+                    "raw": "rsa==4.9.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "rsa",
+                    "specifier": "==4.9.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ruamel.yaml": {
+            "name": "ruamel.yaml",
+            "version": "0.18.14",
+            "requirements": [
+                {
+                    "raw": "ruamel.yaml==0.18.14",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ruamel.yaml",
+                    "specifier": "==0.18.14",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "ruamel.yaml.clib": {
+            "name": "ruamel.yaml.clib",
+            "version": "0.2.12",
+            "requirements": [
+                {
+                    "raw": "ruamel.yaml.clib==0.2.12",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ruamel.yaml.clib",
+                    "specifier": "==0.2.12",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "safety": {
+            "name": "safety",
+            "version": "3.6.0",
+            "requirements": [
+                {
+                    "raw": "safety==3.6.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "safety",
+                    "specifier": "==3.6.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "safety-schemas": {
+            "name": "safety-schemas",
+            "version": "0.0.14",
+            "requirements": [
+                {
+                    "raw": "safety-schemas==0.0.14",
+                    "extras": [],
+                    "marker": null,
+                    "name": "safety-schemas",
+                    "specifier": "==0.0.14",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "scikit-image": {
+            "name": "scikit-image",
+            "version": "0.24.0",
+            "requirements": [
+                {
+                    "raw": "scikit-image==0.24.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "scikit-image",
+                    "specifier": "==0.24.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "scipy": {
+            "name": "scipy",
+            "version": "1.16.1",
+            "requirements": [
+                {
+                    "raw": "scipy==1.16.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "scipy",
+                    "specifier": "==1.16.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "setuptools": {
+            "name": "setuptools",
+            "version": "80.9.0",
+            "requirements": [
+                {
+                    "raw": "setuptools==80.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "setuptools",
+                    "specifier": "==80.9.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "shellingham": {
+            "name": "shellingham",
+            "version": "1.5.4",
+            "requirements": [
+                {
+                    "raw": "shellingham==1.5.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "shellingham",
+                    "specifier": "==1.5.4",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "six": {
+            "name": "six",
+            "version": "1.17.0",
+            "requirements": [
+                {
+                    "raw": "six==1.17.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "six",
+                    "specifier": "==1.17.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "slowapi": {
+            "name": "slowapi",
+            "version": "0.1.9",
+            "requirements": [
+                {
+                    "raw": "slowapi==0.1.9",
+                    "extras": [],
+                    "marker": null,
+                    "name": "slowapi",
+                    "specifier": "==0.1.9",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "sniffio": {
+            "name": "sniffio",
+            "version": "1.3.1",
+            "requirements": [
+                {
+                    "raw": "sniffio==1.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "sniffio",
+                    "specifier": "==1.3.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "sqlalchemy": {
+            "name": "sqlalchemy",
+            "version": "2.0.42",
+            "requirements": [
+                {
+                    "raw": "sqlalchemy==2.0.42",
+                    "extras": [],
+                    "marker": null,
+                    "name": "sqlalchemy",
+                    "specifier": "==2.0.42",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "sse-starlette": {
+            "name": "sse-starlette",
+            "version": "3.0.2",
+            "requirements": [
+                {
+                    "raw": "sse-starlette==3.0.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "sse-starlette",
+                    "specifier": "==3.0.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "stack-data": {
+            "name": "stack-data",
+            "version": "0.6.3",
+            "requirements": [
+                {
+                    "raw": "stack-data==0.6.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "stack-data",
+                    "specifier": "==0.6.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "starlette": {
+            "name": "starlette",
+            "version": "0.47.2",
+            "requirements": [
+                {
+                    "raw": "starlette==0.47.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "starlette",
+                    "specifier": "==0.47.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "stevedore": {
+            "name": "stevedore",
+            "version": "5.4.1",
+            "requirements": [
+                {
+                    "raw": "stevedore==5.4.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "stevedore",
+                    "specifier": "==5.4.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "structlog": {
+            "name": "structlog",
+            "version": "25.4.0",
+            "requirements": [
+                {
+                    "raw": "structlog==25.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "structlog",
+                    "specifier": "==25.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "sympy": {
+            "name": "sympy",
+            "version": "1.14.0",
+            "requirements": [
+                {
+                    "raw": "sympy==1.14.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "sympy",
+                    "specifier": "==1.14.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "tenacity": {
+            "name": "tenacity",
+            "version": "9.1.2",
+            "requirements": [
+                {
+                    "raw": "tenacity==9.1.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tenacity",
+                    "specifier": "==9.1.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "textual": {
+            "name": "textual",
+            "version": "5.2.0",
+            "requirements": [
+                {
+                    "raw": "textual==5.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "textual",
+                    "specifier": "==5.2.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "tifffile": {
+            "name": "tifffile",
+            "version": "2025.6.11",
+            "requirements": [
+                {
+                    "raw": "tifffile==2025.6.11",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tifffile",
+                    "specifier": "==2025.6.11",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "tiktoken": {
+            "name": "tiktoken",
+            "version": "0.9.0",
+            "requirements": [
+                {
+                    "raw": "tiktoken==0.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tiktoken",
+                    "specifier": "==0.9.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "tomlkit": {
+            "name": "tomlkit",
+            "version": "0.13.3",
+            "requirements": [
+                {
+                    "raw": "tomlkit==0.13.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tomlkit",
+                    "specifier": "==0.13.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "tqdm": {
+            "name": "tqdm",
+            "version": "4.67.1",
+            "requirements": [
+                {
+                    "raw": "tqdm==4.67.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tqdm",
+                    "specifier": "==4.67.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "traitlets": {
+            "name": "traitlets",
+            "version": "5.14.3",
+            "requirements": [
+                {
+                    "raw": "traitlets==5.14.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "traitlets",
+                    "specifier": "==5.14.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "typer": {
+            "name": "typer",
+            "version": "0.16.0",
+            "requirements": [
+                {
+                    "raw": "typer==0.16.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typer",
+                    "specifier": "==0.16.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "types-pillow": {
+            "name": "types-pillow",
+            "version": "10.2.0.20240822",
+            "requirements": [
+                {
+                    "raw": "types-pillow==10.2.0.20240822",
+                    "extras": [],
+                    "marker": null,
+                    "name": "types-pillow",
+                    "specifier": "==10.2.0.20240822",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "types-aiofiles": {
+            "name": "types-aiofiles",
+            "version": "24.1.0.20250801",
+            "requirements": [
+                {
+                    "raw": "types-aiofiles==24.1.0.20250801",
+                    "extras": [],
+                    "marker": null,
+                    "name": "types-aiofiles",
+                    "specifier": "==24.1.0.20250801",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "types-passlib": {
+            "name": "types-passlib",
+            "version": "1.7.7.20250602",
+            "requirements": [
+                {
+                    "raw": "types-passlib==1.7.7.20250602",
+                    "extras": [],
+                    "marker": null,
+                    "name": "types-passlib",
+                    "specifier": "==1.7.7.20250602",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "types-requests": {
+            "name": "types-requests",
+            "version": "2.32.4.20250611",
+            "requirements": [
+                {
+                    "raw": "types-requests==2.32.4.20250611",
+                    "extras": [],
+                    "marker": null,
+                    "name": "types-requests",
+                    "specifier": "==2.32.4.20250611",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "typing-extensions": {
+            "name": "typing-extensions",
+            "version": "4.14.1",
+            "requirements": [
+                {
+                    "raw": "typing-extensions==4.14.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typing-extensions",
+                    "specifier": "==4.14.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "typing-inspection": {
+            "name": "typing-inspection",
+            "version": "0.4.1",
+            "requirements": [
+                {
+                    "raw": "typing-inspection==0.4.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typing-inspection",
+                    "specifier": "==0.4.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "uc-micro-py": {
+            "name": "uc-micro-py",
+            "version": "1.0.3",
+            "requirements": [
+                {
+                    "raw": "uc-micro-py==1.0.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "uc-micro-py",
+                    "specifier": "==1.0.3",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "urllib3": {
+            "name": "urllib3",
+            "version": "2.5.0",
+            "requirements": [
+                {
+                    "raw": "urllib3==2.5.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "urllib3",
+                    "specifier": "==2.5.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "uvicorn": {
+            "name": "uvicorn",
+            "version": "0.35.0",
+            "requirements": [
+                {
+                    "raw": "uvicorn==0.35.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "uvicorn",
+                    "specifier": "==0.35.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "uvloop": {
+            "name": "uvloop",
+            "version": "0.21.0",
+            "requirements": [
+                {
+                    "raw": "uvloop==0.21.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "uvloop",
+                    "specifier": "==0.21.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "virtualenv": {
+            "name": "virtualenv",
+            "version": "20.33.1",
+            "requirements": [
+                {
+                    "raw": "virtualenv==20.33.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "virtualenv",
+                    "specifier": "==20.33.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "watchdog": {
+            "name": "watchdog",
+            "version": "6.0.0",
+            "requirements": [
+                {
+                    "raw": "watchdog==6.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "watchdog",
+                    "specifier": "==6.0.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "watchfiles": {
+            "name": "watchfiles",
+            "version": "1.1.0",
+            "requirements": [
+                {
+                    "raw": "watchfiles==1.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "watchfiles",
+                    "specifier": "==1.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "wcwidth": {
+            "name": "wcwidth",
+            "version": "0.2.13",
+            "requirements": [
+                {
+                    "raw": "wcwidth==0.2.13",
+                    "extras": [],
+                    "marker": null,
+                    "name": "wcwidth",
+                    "specifier": "==0.2.13",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "webencodings": {
+            "name": "webencodings",
+            "version": "0.5.1",
+            "requirements": [
+                {
+                    "raw": "webencodings==0.5.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "webencodings",
+                    "specifier": "==0.5.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "websocket-client": {
+            "name": "websocket-client",
+            "version": "1.8.0",
+            "requirements": [
+                {
+                    "raw": "websocket-client==1.8.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "websocket-client",
+                    "specifier": "==1.8.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "websockets": {
+            "name": "websockets",
+            "version": "15.0.1",
+            "requirements": [
+                {
+                    "raw": "websockets==15.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "websockets",
+                    "specifier": "==15.0.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "wrapt": {
+            "name": "wrapt",
+            "version": "1.17.2",
+            "requirements": [
+                {
+                    "raw": "wrapt==1.17.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "wrapt",
+                    "specifier": "==1.17.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "yarl": {
+            "name": "yarl",
+            "version": "1.20.1",
+            "requirements": [
+                {
+                    "raw": "yarl==1.20.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "yarl",
+                    "specifier": "==1.20.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "zipp": {
+            "name": "zipp",
+            "version": "3.23.0",
+            "requirements": [
+                {
+                    "raw": "zipp==3.23.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "zipp",
+                    "specifier": "==3.23.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ]
+        },
+        "autocommand": {
+            "name": "autocommand",
+            "version": "2.2.2",
+            "requirements": [
+                {
+                    "raw": "autocommand==2.2.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "autocommand",
+                    "specifier": "==2.2.2",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "inflect": {
+            "name": "inflect",
+            "version": "7.3.1",
+            "requirements": [
+                {
+                    "raw": "inflect==7.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "inflect",
+                    "specifier": "==7.3.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "jaraco.collections": {
+            "name": "jaraco.collections",
+            "version": "5.1.0",
+            "requirements": [
+                {
+                    "raw": "jaraco.collections==5.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.collections",
+                    "specifier": "==5.1.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "jaraco.functools": {
+            "name": "jaraco.functools",
+            "version": "4.0.1",
+            "requirements": [
+                {
+                    "raw": "jaraco.functools==4.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.functools",
+                    "specifier": "==4.0.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "jaraco.text": {
+            "name": "jaraco.text",
+            "version": "3.12.1",
+            "requirements": [
+                {
+                    "raw": "jaraco.text==3.12.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.text",
+                    "specifier": "==3.12.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "tomli": {
+            "name": "tomli",
+            "version": "2.0.1",
+            "requirements": [
+                {
+                    "raw": "tomli==2.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tomli",
+                    "specifier": "==2.0.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "typeguard": {
+            "name": "typeguard",
+            "version": "4.3.0",
+            "requirements": [
+                {
+                    "raw": "typeguard==4.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typeguard",
+                    "specifier": "==4.3.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        },
+        "wheel": {
+            "name": "wheel",
+            "version": "0.45.1",
+            "requirements": [
+                {
+                    "raw": "wheel==0.45.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "wheel",
+                    "specifier": "==0.45.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/setuptools/_vendor"
+                }
+            ]
+        }
+    },
+    "affected_packages": {
+        "python-jose": {
+            "name": "python-jose",
+            "version": "3.4.0",
+            "requirements": [
+                {
+                    "raw": "python-jose==3.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-jose",
+                    "specifier": "==3.4.0",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ],
+            "found": null,
+            "insecure_versions": [
+                "0.1.0",
+                "0.1.1",
+                "0.1.2",
+                "0.1.3",
+                "0.1.4",
+                "0.1.5",
+                "0.1.6",
+                "0.1.7",
+                "0.1.8",
+                "0.2.0",
+                "0.3.0",
+                "0.4.0",
+                "0.5.0",
+                "0.5.1",
+                "0.5.2",
+                "0.5.3",
+                "0.5.4",
+                "0.5.5",
+                "0.5.6",
+                "0.6.1",
+                "0.6.2",
+                "0.7.0",
+                "1.0.0",
+                "1.1.0",
+                "1.2.0",
+                "1.3.0",
+                "1.3.1",
+                "1.3.2",
+                "1.4.0",
+                "2.0.0",
+                "2.0.1",
+                "2.0.2",
+                "3.0.0",
+                "3.0.1",
+                "3.1.0",
+                "3.2.0",
+                "3.3.0",
+                "3.4.0",
+                "3.5.0"
+            ],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": "",
+            "latest_version": "3.5.0",
+            "more_info_url": "https://data.safetycli.com/p/pypi/python-jose/97c/"
+        },
+        "ecdsa": {
+            "name": "ecdsa",
+            "version": "0.19.1",
+            "requirements": [
+                {
+                    "raw": "ecdsa==0.19.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ecdsa",
+                    "specifier": "==0.19.1",
+                    "url": null,
+                    "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                }
+            ],
+            "found": null,
+            "insecure_versions": [
+                "0.10",
+                "0.11",
+                "0.12",
+                "0.13",
+                "0.13.1",
+                "0.13.2",
+                "0.13.3",
+                "0.14",
+                "0.14.1",
+                "0.15",
+                "0.16.0",
+                "0.16.1",
+                "0.17.0",
+                "0.18.0",
+                "0.18.0b1",
+                "0.18.0b2",
+                "0.19.0",
+                "0.19.1",
+                "0.6",
+                "0.7",
+                "0.8",
+                "0.9"
+            ],
+            "secure_versions": [],
+            "latest_version_without_known_vulnerabilities": "",
+            "latest_version": "0.19.1",
+            "more_info_url": "https://data.safetycli.com/p/pypi/ecdsa/97c/"
+        }
+    },
+    "announcements": [],
+    "vulnerabilities": [
+        {
+            "vulnerability_id": "70716",
+            "package_name": "python-jose",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": [
+                ">=0"
+            ],
+            "all_vulnerable_specs": [
+                ">=0"
+            ],
+            "analyzed_version": "3.4.0",
+            "analyzed_requirement": {
+                "raw": "python-jose==3.4.0",
+                "extras": [],
+                "marker": null,
+                "name": "python-jose",
+                "specifier": "==3.4.0",
+                "url": null,
+                "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+            },
+            "advisory": "Affected versions of Python-jose allow attackers to cause a denial of service (resource consumption) during a decode via a crafted JSON Web Encryption (JWE) token with a high compression ratio, aka a \"JWT bomb.\" This is similar to CVE-2024-21319.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-33664",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/70716/97c"
+        },
+        {
+            "vulnerability_id": "70715",
+            "package_name": "python-jose",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": [
+                ">=0"
+            ],
+            "all_vulnerable_specs": [
+                ">=0"
+            ],
+            "analyzed_version": "3.4.0",
+            "analyzed_requirement": {
+                "raw": "python-jose==3.4.0",
+                "extras": [],
+                "marker": null,
+                "name": "python-jose",
+                "specifier": "==3.4.0",
+                "url": null,
+                "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+            },
+            "advisory": "Affected versions of Python-jose have a algorithm confusion vulnerability with OpenSSH ECDSA keys and other key formats. This is similar to CVE-2022-29217.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-33663",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/70715/97c"
+        },
+        {
+            "vulnerability_id": "64459",
+            "package_name": "ecdsa",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": [
+                ">=0"
+            ],
+            "all_vulnerable_specs": [
+                ">=0"
+            ],
+            "analyzed_version": "0.19.1",
+            "analyzed_requirement": {
+                "raw": "ecdsa==0.19.1",
+                "extras": [],
+                "marker": null,
+                "name": "ecdsa",
+                "specifier": "==0.19.1",
+                "url": null,
+                "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+            },
+            "advisory": "The python-ecdsa library, which implements ECDSA cryptography in Python, is vulnerable to the Minerva attack (CVE-2024-23342). This vulnerability arises because scalar multiplication is not performed in constant time, affecting ECDSA signatures, key generation, and ECDH operations. ECDSA signature verification remains unaffected. The project maintainers have stated that there is no plan to release a fix for this vulnerability, citing their security policy:\r\n\"As stated in the security policy, side-channel vulnerabilities are outside the scope of the project. This is not due to a lack of interest in side-channel secure implementations but rather because the main goal of the project is to be pure Python. Implementing side-channel-free code in pure Python is impossible. Therefore, we do not plan to release a fix for this vulnerability.\"\r\nNOTE: The specs we include in this advisory differ from the publicly available on other sources. That's because research by Safety CLI Cybersecurity Team confirms that there is no plan to address this vulnerability.",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": "CVE-2024-23342",
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/64459/97c"
+        },
+        {
+            "vulnerability_id": "64396",
+            "package_name": "ecdsa",
+            "ignored": {},
+            "ignored_reason": null,
+            "ignored_expires": null,
+            "vulnerable_spec": [
+                ">=0"
+            ],
+            "all_vulnerable_specs": [
+                ">=0"
+            ],
+            "analyzed_version": "0.19.1",
+            "analyzed_requirement": {
+                "raw": "ecdsa==0.19.1",
+                "extras": [],
+                "marker": null,
+                "name": "ecdsa",
+                "specifier": "==0.19.1",
+                "url": null,
+                "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+            },
+            "advisory": "Ecdsa does not protects against side-channel attacks. This is because Python does not provide side-channel secure primitives (with the exception of hmac.compare_digest()), making side-channel secure programming impossible. For a sophisticated attacker observing just one operation with a private key will be sufficient to completely reconstruct the private key.\r\nhttps://pypi.org/project/ecdsa/#Security",
+            "is_transitive": false,
+            "published_date": null,
+            "fixed_versions": [],
+            "closest_versions_without_known_vulnerabilities": [],
+            "resources": [],
+            "CVE": null,
+            "severity": null,
+            "affected_versions": [],
+            "more_info_url": "https://data.safetycli.com/v/64396/97c"
+        }
+    ],
+    "ignored_vulnerabilities": [],
+    "remediations": {
+        "python-jose": {
+            "requirements": {
+                "==3.4.0": {
+                    "vulnerabilities_found": 2,
+                    "version": "3.4.0",
+                    "requirement": {
+                        "raw": "python-jose==3.4.0",
+                        "extras": [],
+                        "marker": null,
+                        "name": "python-jose",
+                        "specifier": "==3.4.0",
+                        "url": null,
+                        "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                    },
+                    "more_info_url": "https://data.safetycli.com/p/pypi/python-jose/97c/"
+                }
+            },
+            "current_version": null,
+            "vulnerabilities_found": null,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": null
+        },
+        "ecdsa": {
+            "requirements": {
+                "==0.19.1": {
+                    "vulnerabilities_found": 2,
+                    "version": "0.19.1",
+                    "requirement": {
+                        "raw": "ecdsa==0.19.1",
+                        "extras": [],
+                        "marker": null,
+                        "name": "ecdsa",
+                        "specifier": "==0.19.1",
+                        "url": null,
+                        "found": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages"
+                    },
+                    "more_info_url": "https://data.safetycli.com/p/pypi/ecdsa/97c/"
+                }
+            },
+            "current_version": null,
+            "vulnerabilities_found": null,
+            "recommended_version": null,
+            "other_recommended_versions": [],
+            "more_info_url": null
+        }
+    },
+    "remediations_results": {
+        "vulnerabilities_fixed": [],
+        "remediations_applied": {},
+        "remediations_skipped": {}
+    }
+}
+
+
++===========================================================================================================================================================================================+
+
+
+DEPRECATED: this command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.
+
+
+We highly encourage switching to the new `scan` command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.
+
+
++===========================================================================================================================================================================================+
+
+

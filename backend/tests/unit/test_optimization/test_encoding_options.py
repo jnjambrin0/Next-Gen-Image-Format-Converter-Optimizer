@@ -1,5 +1,6 @@
 """Unit tests for encoding options."""
 
+from typing import Any
 import pytest
 
 from app.core.optimization.encoding_options import (
@@ -14,11 +15,11 @@ class TestEncodingOptions:
     """Test cases for EncodingOptions."""
 
     @pytest.fixture
-    def encoding_options(self):
+    def encoding_options(self) -> None:
         """Create an EncodingOptions instance."""
         return EncodingOptions()
 
-    def test_validate_options_jpeg(self, encoding_options):
+    def test_validate_options_jpeg(self, encoding_options) -> None:
         """Test JPEG encoding options validation."""
         options = encoding_options.validate_options(
             "jpeg",
@@ -35,7 +36,7 @@ class TestEncodingOptions:
         assert "lossless" not in options
         assert "alpha_quality" not in options
 
-    def test_validate_options_webp(self, encoding_options):
+    def test_validate_options_webp(self, encoding_options) -> None:
         """Test WebP encoding options validation."""
         options = encoding_options.validate_options(
             "webp",
@@ -48,7 +49,7 @@ class TestEncodingOptions:
         assert options["lossless"] is True
         assert options["alpha_quality"] == 90
 
-    def test_validate_options_png(self, encoding_options):
+    def test_validate_options_png(self, encoding_options) -> None:
         """Test PNG encoding options validation."""
         options = encoding_options.validate_options(
             "png",
@@ -62,13 +63,13 @@ class TestEncodingOptions:
         # Should not include unsupported options
         assert "chroma_subsampling" not in options
 
-    def test_validate_options_unsupported_format(self, encoding_options):
+    def test_validate_options_unsupported_format(self, encoding_options) -> None:
         """Test validation with unsupported format."""
         with pytest.raises(SecurityError) as exc_info:
             encoding_options.validate_options("bmp")
         assert exc_info.value  # Just verify SecurityError was raised
 
-    def test_validate_custom_quantization(self, encoding_options):
+    def test_validate_custom_quantization(self, encoding_options) -> None:
         """Test custom quantization table validation."""
         # Valid quantization table
         valid_table = QuantizationTable(
@@ -92,7 +93,7 @@ class TestEncodingOptions:
             encoding_options.validate_options("jpeg", custom_quantization=invalid_table)
         assert exc_info.value  # Just verify SecurityError was raised
 
-    def test_validate_alpha_quality_range(self, encoding_options):
+    def test_validate_alpha_quality_range(self, encoding_options) -> None:
         """Test alpha quality validation."""
         # Valid range
         options = encoding_options.validate_options("webp", alpha_quality=50)
@@ -103,7 +104,7 @@ class TestEncodingOptions:
             encoding_options.validate_options("webp", alpha_quality=150)  # Out of range
         assert exc_info.value  # Just verify SecurityError was raised
 
-    def test_get_pillow_save_params_jpeg(self, encoding_options):
+    def test_get_pillow_save_params_jpeg(self, encoding_options) -> None:
         """Test Pillow save parameters for JPEG."""
         options = {"progressive": True, "chroma_subsampling": ChromaSubsampling.YUV420}
 
@@ -113,7 +114,7 @@ class TestEncodingOptions:
         assert params["progressive"] is True
         assert params["subsampling"] == 2  # 4:2:0
 
-    def test_get_pillow_save_params_png(self, encoding_options):
+    def test_get_pillow_save_params_png(self, encoding_options) -> None:
         """Test Pillow save parameters for PNG."""
         options = {"progressive": True, "lossless": True}
 
@@ -122,7 +123,7 @@ class TestEncodingOptions:
         assert params["progressive"] is True
         assert params["compress_level"] == 9  # Max compression for lossless
 
-    def test_get_pillow_save_params_webp(self, encoding_options):
+    def test_get_pillow_save_params_webp(self, encoding_options) -> None:
         """Test Pillow save parameters for WebP."""
         options = {"lossless": True, "alpha_quality": 80}
 
@@ -132,7 +133,7 @@ class TestEncodingOptions:
         assert params["alpha_quality"] == 80
         assert "quality" not in params  # Quality not used in lossless mode
 
-    def test_scale_quantization_table(self, encoding_options):
+    def test_scale_quantization_table(self, encoding_options) -> None:
         """Test quantization table scaling."""
         base_table = [
             [16, 11, 10, 16, 24, 40, 51, 61],
@@ -158,7 +159,7 @@ class TestEncodingOptions:
             encoding_options.scale_quantization_table(base_table, 150)
         assert exc_info.value  # Just verify SecurityError was raised
 
-    def test_get_format_capabilities(self, encoding_options):
+    def test_get_format_capabilities(self, encoding_options) -> None:
         """Test getting format capabilities."""
         jpeg_caps = encoding_options.get_format_capabilities("jpeg")
         assert jpeg_caps["chroma_subsampling"] is True
@@ -173,14 +174,14 @@ class TestEncodingOptions:
         unknown_caps = encoding_options.get_format_capabilities("unknown")
         assert unknown_caps == {}
 
-    def test_chroma_subsampling_enum(self):
+    def test_chroma_subsampling_enum(self) -> None:
         """Test ChromaSubsampling enum values."""
         assert ChromaSubsampling.YUV444.value == "444"
         assert ChromaSubsampling.YUV422.value == "422"
         assert ChromaSubsampling.YUV420.value == "420"
         assert ChromaSubsampling.AUTO.value == "auto"
 
-    def test_quantization_table_validation(self):
+    def test_quantization_table_validation(self) -> None:
         """Test QuantizationTable validation method."""
         # Valid table
         valid_table = QuantizationTable(

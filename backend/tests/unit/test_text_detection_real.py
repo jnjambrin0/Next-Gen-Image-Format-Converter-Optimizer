@@ -1,6 +1,6 @@
 """Unit tests for text detection with real images."""
 
-import os
+from typing import Any
 from pathlib import Path
 
 import pytest
@@ -14,17 +14,17 @@ class TestTextDetectorWithRealImages:
     """Test suite for TextDetector with real test images."""
 
     @pytest.fixture
-    def text_detector(self):
+    def text_detector(self) -> None:
         """Create a TextDetector instance for testing."""
         return TextDetector(model_session=None)  # Will use heuristics
 
     @pytest.fixture
-    def fixtures_path(self):
+    def fixtures_path(self) -> None:
         """Get path to test fixtures."""
         return Path(__file__).parent.parent / "fixtures" / "intelligence"
 
     @pytest.fixture
-    def document_image(self, fixtures_path):
+    def document_image(self, fixtures_path) -> None:
         """Load real document image."""
         img_path = fixtures_path / "text" / "document.JPG"
         if img_path.exists():
@@ -32,7 +32,7 @@ class TestTextDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def code_image(self, fixtures_path):
+    def code_image(self, fixtures_path) -> None:
         """Load code screenshot image."""
         img_path = fixtures_path / "text" / "text-code.JPG"
         if img_path.exists():
@@ -40,7 +40,7 @@ class TestTextDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def mixed_portrait_text(self, fixtures_path):
+    def mixed_portrait_text(self, fixtures_path) -> None:
         """Load portrait with text image."""
         img_path = fixtures_path / "edge_cases" / "portrait-with-text.png"
         if img_path.exists():
@@ -48,7 +48,7 @@ class TestTextDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def group_mixed_text(self, fixtures_path):
+    def group_mixed_text(self, fixtures_path) -> None:
         """Load group photo with text."""
         img_path = fixtures_path / "edge_cases" / "group-mixed-text.JPG"
         if img_path.exists():
@@ -56,14 +56,14 @@ class TestTextDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def random_no_text(self, fixtures_path):
+    def random_no_text(self, fixtures_path) -> None:
         """Load random image without text."""
         img_path = fixtures_path / "random" / "plant-with-dog-and-light.JPG"
         if img_path.exists():
             return Image.open(img_path)
         pytest.skip(f"Test image not found: {img_path}")
 
-    def test_detect_document_text(self, text_detector, document_image):
+    def test_detect_document_text(self, text_detector, document_image) -> None:
         """Test text detection on real document image."""
         regions = text_detector.detect(document_image)
 
@@ -84,7 +84,7 @@ class TestTextDetectorWithRealImages:
             assert region.height > 0
             assert 0 <= region.confidence <= 1.0
 
-    def test_detect_code_text(self, text_detector, code_image):
+    def test_detect_code_text(self, text_detector, code_image) -> None:
         """Test text detection on code screenshot."""
         regions = text_detector.detect(code_image)
 
@@ -104,7 +104,9 @@ class TestTextDetectorWithRealImages:
         )
         assert similar_height_count > len(heights) * 0.6
 
-    def test_detect_mixed_portrait_text(self, text_detector, mixed_portrait_text):
+    def test_detect_mixed_portrait_text(
+        self, text_detector, mixed_portrait_text
+    ) -> None:
         """Test text detection on portrait with text overlay."""
         regions = text_detector.detect(mixed_portrait_text)
 
@@ -118,7 +120,7 @@ class TestTextDetectorWithRealImages:
                 assert 0 <= region.x < mixed_portrait_text.width
                 assert 0 <= region.y < mixed_portrait_text.height
 
-    def test_detect_group_mixed_text(self, text_detector, group_mixed_text):
+    def test_detect_group_mixed_text(self, text_detector, group_mixed_text) -> None:
         """Test text detection on group photo with text."""
         regions = text_detector.detect(group_mixed_text)
 
@@ -128,7 +130,7 @@ class TestTextDetectorWithRealImages:
         for region in regions:
             assert region.confidence > 0.2  # Lower threshold for mixed content
 
-    def test_no_text_detection(self, text_detector, random_no_text):
+    def test_no_text_detection(self, text_detector, random_no_text) -> None:
         """Test that no text is detected in non-text image."""
         regions = text_detector.detect(random_no_text)
 
@@ -140,7 +142,7 @@ class TestTextDetectorWithRealImages:
         for region in regions:
             assert region.confidence < 0.6
 
-    def test_text_density_calculation(self, text_detector, document_image):
+    def test_text_density_calculation(self, text_detector, document_image) -> None:
         """Test text density calculation on real document."""
         regions = text_detector.detect(document_image)
 
@@ -150,7 +152,7 @@ class TestTextDetectorWithRealImages:
         assert 0 <= density <= 1.0
         assert density > 0.3, "Document should have significant text density"
 
-    def test_performance_on_real_images(self, text_detector, fixtures_path):
+    def test_performance_on_real_images(self, text_detector, fixtures_path) -> None:
         """Test detection performance on all text images."""
         text_dir = fixtures_path / "text"
 
@@ -178,7 +180,7 @@ class TestTextDetectorWithRealImages:
             avg_time = sum(processing_times) / len(processing_times)
             assert avg_time < 1.0, "Average processing time should be under 1 second"
 
-    def test_merge_behavior_on_real_text(self, text_detector, document_image):
+    def test_merge_behavior_on_real_text(self, text_detector, document_image) -> None:
         """Test region merging on real document."""
         # Get initial regions
         regions = text_detector.detect(document_image)
@@ -207,7 +209,7 @@ class TestTextDetectorWithRealImages:
                 # Overlap should be minimal
                 assert overlap_area < min(r1_area, r2_area) * 0.2
 
-    def test_confidence_scores_correlation(self, text_detector, fixtures_path):
+    def test_confidence_scores_correlation(self, text_detector, fixtures_path) -> None:
         """Test that confidence scores correlate with text clarity."""
         # Load different images
         clear_text = fixtures_path / "text" / "document.JPG"

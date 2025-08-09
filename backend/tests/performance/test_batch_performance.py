@@ -3,11 +3,7 @@
 import asyncio
 import gc
 import io
-import os
-import tempfile
 import time
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 import psutil
@@ -25,7 +21,7 @@ logger = get_logger(__name__)
 class MemoryMonitor:
     """Monitor memory usage during batch processing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.process = psutil.Process()
         self.baseline_memory = self.get_memory_usage()
         self.peak_memory = self.baseline_memory
@@ -81,17 +77,17 @@ class MemoryMonitor:
 class PerformanceMetrics:
     """Collect performance metrics for batch processing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = None
         self.end_time = None
         self.file_metrics: List[Dict[str, Any]] = []
         self.worker_metrics: Dict[int, float] = {}
 
-    def start(self):
+    def start(self) -> None:
         """Start timing."""
         self.start_time = time.time()
 
-    def end(self):
+    def end(self) -> None:
         """End timing."""
         self.end_time = time.time()
 
@@ -101,7 +97,7 @@ class PerformanceMetrics:
         processing_time: float,
         success: bool,
         output_size: int = 0,
-    ):
+    ) -> None:
         """Add metrics for a processed file."""
         self.file_metrics.append(
             {
@@ -177,7 +173,7 @@ def create_test_image(
 class MockUploadFile:
     """Mock UploadFile for testing."""
 
-    def __init__(self, filename: str, content: bytes):
+    def __init__(self, filename: str, content: bytes) -> None:
         self.filename = filename
         self.content = content
 
@@ -189,7 +185,7 @@ class TestBatchPerformance:
     """Performance tests for batch processing."""
 
     @pytest.fixture
-    def setup_batch_service(self):
+    def setup_batch_service(self) -> None:
         """Ensure batch service is properly initialized."""
         # The batch service should already be initialized in main.py
         # but we ensure conversion service is set

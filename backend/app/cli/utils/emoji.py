@@ -3,9 +3,8 @@ Emoji Mappings and Management
 Contextual emoji for better visual scanning
 """
 
-import os
 from enum import Enum
-from typing import Dict, Optional
+from typing import Any, Optional
 
 from app.cli.config import get_config
 from app.cli.utils.terminal import should_use_emoji
@@ -237,7 +236,7 @@ def get_emoji(key: str, fallback: Optional[str] = None) -> str:
 
     Args:
         key: Emoji key from EMOJI_MAP
-        fallback: Optional custom fallback text
+        fallback: Optional[Any] custom fallback text
 
     Returns:
         Emoji character or fallback text

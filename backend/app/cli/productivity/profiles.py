@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from app.cli.config import CLIConfig, get_config, get_config_dir
+from app.cli.config import CLIConfig, get_config_dir
 
 
 @dataclass
@@ -25,7 +25,7 @@ class Profile:
     updated_at: str = None
     is_builtin: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.settings is None:
             self.settings = {}
         if self.overrides is None:
@@ -40,7 +40,7 @@ class Profile:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "Profile":
+    def from_dict(cls, data: Dict[str, Any]) -> "Profile":
         """Create from dictionary"""
         return cls(**data)
 
@@ -177,7 +177,7 @@ class ProfileManager:
         ),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize profile manager"""
         self.profiles_dir = get_config_dir() / "profiles"
         self.profiles_dir.mkdir(parents=True, exist_ok=True)
@@ -204,7 +204,7 @@ class ProfileManager:
 
         return profiles
 
-    def _save_user_profile(self, profile: Profile):
+    def _save_user_profile(self, profile: Profile) -> None:
         """Save user profile to disk"""
         profile_file = self.profiles_dir / f"{profile.name}.json"
         profile.updated_at = datetime.now().isoformat()
@@ -236,8 +236,7 @@ class ProfileManager:
         Args:
             include_builtin: Whether to include built-in profiles
 
-        Returns:
-            List of profiles
+        Returns: List[Any] of profiles
         """
         profiles = []
 
@@ -266,7 +265,7 @@ class ProfileManager:
             name: Profile name
             description: Profile description
             settings: Profile settings
-            parent: Optional parent profile name
+            parent: Optional[Any] parent profile name
             overrides: Command-specific overrides
 
         Returns:
@@ -462,7 +461,7 @@ class ProfileManager:
 
         Args:
             input_file: Input file path
-            rename: Optional new name for imported profile
+            rename: Optional[Any] new name for imported profile
 
         Returns:
             Imported profile or None
@@ -505,7 +504,7 @@ class ProfileManager:
         Args:
             source_name: Source profile name
             new_name: New profile name
-            new_description: Optional new description
+            new_description: Optional[Any] new description
 
         Returns:
             Cloned profile

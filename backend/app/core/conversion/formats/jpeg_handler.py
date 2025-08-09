@@ -19,7 +19,7 @@ logger = structlog.get_logger()
 class JPEGHandler(BaseFormatHandler):
     """Handler for JPEG format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize JPEG handler."""
         super().__init__()
         self.supported_formats = ["jpeg", "jpg", "jpe", "jfif"]

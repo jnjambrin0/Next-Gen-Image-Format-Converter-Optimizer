@@ -1,5 +1,6 @@
 """Real-world integration tests for Intelligence Engine.
 
+from typing import Any
 These tests validate the engine's behavior under realistic conditions including:
 - Various image formats and edge cases
 - Concurrent processing scenarios
@@ -12,12 +13,9 @@ import asyncio
 import gc
 import io
 import os
-import resource
 import tempfile
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import psutil
@@ -26,7 +24,7 @@ from PIL import Image
 
 from app.core.intelligence.engine import IntelligenceEngine
 from app.core.security.errors_simplified import SecurityError
-from app.models.conversion import BoundingBox, ContentClassification, ContentType
+from app.models.conversion import ContentClassification
 from app.services.intelligence_service import intelligence_service
 
 
@@ -34,7 +32,7 @@ class TestIntelligenceEngineRealWorld:
     """Comprehensive real-world tests for the Intelligence Engine."""
 
     @pytest.fixture
-    def engine(self):
+    def engine(self) -> None:
         """Create a fresh engine instance for each test."""
         engine = IntelligenceEngine(
             models_dir="./test_models", fallback_mode=True, enable_caching=True
@@ -44,7 +42,7 @@ class TestIntelligenceEngineRealWorld:
         engine.clear_cache()
 
     @pytest.fixture
-    def sample_images(self):
+    def sample_images(self) -> None:
         """Generate various test images representing real-world scenarios."""
         images = {}
 

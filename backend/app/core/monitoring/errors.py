@@ -2,23 +2,21 @@
 Local-only error reporting system for privacy-focused monitoring.
 """
 
-import asyncio
 import hashlib
 import json
 import os
 import sqlite3
 import traceback
-from collections import Counter, defaultdict
+from collections import Counter
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from threading import Lock
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from app.core.constants import (
     DB_CHECK_SAME_THREAD,
     DEFAULT_MONITORING_HOURS,
-    ERROR_EVENT_TABLE_NAME,
     ERROR_MESSAGE_MAX_LENGTH,
     ERROR_RETENTION_DAYS,
     ERROR_SIGNATURE_HASH_LENGTH,
@@ -65,7 +63,7 @@ class ErrorReporter:
     Stores errors in SQLite with no PII.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """
         Initialize the error reporter.
 
@@ -79,7 +77,7 @@ class ErrorReporter:
 
         self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for error storage."""
         if self.db_path != ":memory:":
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -115,7 +113,7 @@ class ErrorReporter:
             )
 
     @contextmanager
-    def _get_db(self):
+    def _get_db(self) -> None:
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
@@ -229,7 +227,7 @@ class ErrorReporter:
 
         Args:
             error: The exception to record
-            context: Optional context (will be sanitized)
+            context: Optional[Any] context (will be sanitized)
 
         Returns:
             Error ID for reference

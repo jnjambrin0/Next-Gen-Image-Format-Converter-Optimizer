@@ -3,11 +3,9 @@ Chain Command
 Command chaining and piping support
 """
 
-import asyncio
-import io
 import sys
 from pathlib import Path
-from typing import Annotated, List, Optional
+from typing import Any, Annotated, List, Optional
 
 import typer
 from rich.console import Console
@@ -16,7 +14,6 @@ from app.cli.config import get_config
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
-from app.cli.utils.errors import handle_api_error
 
 setup_sdk_path()
 from image_converter.client import ImageConverterClient
@@ -176,6 +173,5 @@ def pipe(
 
 
 @app.callback()
-def chain_callback():
+def chain_callback() -> None:
     """Command chaining and piping"""
-    pass

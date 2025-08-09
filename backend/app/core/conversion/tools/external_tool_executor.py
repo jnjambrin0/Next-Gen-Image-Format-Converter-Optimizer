@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -44,7 +44,7 @@ class ExternalToolExecutor:
         tool_name: str,
         tool_variants: Optional[List[str]] = None,
         custom_env: Optional[Dict[str, str]] = None,
-    ):
+    ) -> None:
         """
         Initialize external tool executor.
 
@@ -134,7 +134,7 @@ class ExternalToolExecutor:
 
         Args:
             args: Command line arguments for the tool
-            input_data: Optional input data to pipe to stdin
+            input_data: Optional[Any] input data to pipe to stdin
             timeout: Execution timeout in seconds
             cwd: Working directory (default: /tmp)
             nice_value: Process nice value for priority
@@ -225,7 +225,7 @@ class ExternalToolExecutor:
 
         Args:
             args: Command line arguments for the tool
-            input_data: Optional input data to pipe to stdin
+            input_data: Optional[Any] input data to pipe to stdin
             timeout: Execution timeout in seconds
             cwd: Working directory (default: /tmp)
             nice_value: Process nice value for priority
