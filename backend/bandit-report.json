@@ -1,17 +1,17 @@
 {
   "errors": [],
-  "generated_at": "2025-08-10T10:18:12Z",
+  "generated_at": "2025-08-10T14:44:58Z",
   "metrics": {
     "_totals": {
-      "CONFIDENCE.HIGH": 51,
+      "CONFIDENCE.HIGH": 53,
       "CONFIDENCE.LOW": 2,
-      "CONFIDENCE.MEDIUM": 16,
+      "CONFIDENCE.MEDIUM": 13,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 50,
-      "SEVERITY.MEDIUM": 19,
+      "SEVERITY.LOW": 53,
+      "SEVERITY.MEDIUM": 15,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 42950,
+      "loc": 43548,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -90,6 +90,19 @@
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 78,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "app/api/middleware/rate_limit.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 59,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -661,7 +674,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 72,
+      "loc": 73,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -723,10 +736,10 @@
       "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 2,
-      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.LOW": 3,
+      "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 784,
+      "loc": 785,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -778,7 +791,7 @@
       "SEVERITY.LOW": 3,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 565,
+      "loc": 618,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1019,13 +1032,13 @@
     "app/config.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 2,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
       "SEVERITY.LOW": 0,
-      "SEVERITY.MEDIUM": 2,
+      "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 276,
+      "loc": 279,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1103,7 +1116,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 323,
+      "loc": 324,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1402,7 +1415,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 140,
+      "loc": 146,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1805,7 +1818,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 114,
+      "loc": 156,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1835,6 +1848,19 @@
       "nosec": 0,
       "skipped_tests": 0
     },
+    "app/core/security/filename_sanitizer.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 85,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
     "app/core/security/memory.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
@@ -1845,6 +1871,19 @@
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 290,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "app/core/security/memory_manager.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 39,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1883,7 +1922,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 129,
+      "loc": 152,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1927,15 +1966,15 @@
       "skipped_tests": 0
     },
     "app/core/security/parsers.py": {
-      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.HIGH": 2,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 0,
-      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 86,
+      "loc": 74,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1974,7 +2013,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 214,
+      "loc": 215,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -2053,6 +2092,19 @@
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 83,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "app/models/intelligence.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 126,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -2208,7 +2260,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 409,
+      "loc": 426,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -2221,7 +2273,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 166,
+      "loc": 226,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -2274,6 +2326,19 @@
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 314,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "app/services/recovery_service.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 93,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -2601,23 +2666,23 @@
       "test_name": "blacklist"
     },
     {
-      "code": "423         rough_string = ET.tostring(root, encoding=\"unicode\")\n424         reparsed = minidom.parseString(rough_string)\n425         return reparsed.toprettyxml(indent=\"  \", newl=\"\\n\").strip()\n",
-      "col_offset": 19,
-      "end_col_offset": 52,
+      "code": "424         # Use a safer approach without minidom to avoid XML vulnerabilities\n425         from xml.etree.ElementTree import indent as et_indent\n426 \n",
+      "col_offset": 8,
+      "end_col_offset": 61,
       "filename": "app/cli/productivity/formatters.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 20,
         "link": "https://cwe.mitre.org/data/definitions/20.html"
       },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Using xml.dom.minidom.parseString to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.dom.minidom.parseString with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called",
-      "line_number": 424,
+      "issue_severity": "LOW",
+      "issue_text": "Using indent to parse untrusted XML data is known to be vulnerable to XML attacks. Replace indent with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.",
+      "line_number": 425,
       "line_range": [
-        424
+        425
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_calls.html#b313-b320-xml-bad-minidom",
-      "test_id": "B318",
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_imports.html#b405-import-xml-etree",
+      "test_id": "B405",
       "test_name": "blacklist"
     },
     {
@@ -2735,7 +2800,7 @@
       "test_name": "hardcoded_tmp_directory"
     },
     {
-      "code": "9 from typing import Optional, Dict\n10 import subprocess\n11 import shlex\n",
+      "code": "10 from enum import Enum\n11 import subprocess\n12 import shlex\n",
       "col_offset": 0,
       "end_col_offset": 17,
       "filename": "app/cli/productivity/shell_integration.py",
@@ -2746,16 +2811,16 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Consider possible security implications associated with the subprocess module.",
-      "line_number": 10,
+      "line_number": 11,
       "line_range": [
-        10
+        11
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_imports.html#b404-import-subprocess",
       "test_id": "B404",
       "test_name": "blacklist"
     },
     {
-      "code": "37             try:\n38                 result = subprocess.run(\n39                     [\"powershell\", \"-Command\", \"$PSVersionTable.PSVersion\"],\n40                     capture_output=True,\n41                     text=True,\n42                     timeout=2,\n43                 )\n44                 if result.returncode == 0:\n",
+      "code": "48             try:\n49                 result = subprocess.run(\n50                     [\"powershell\", \"-Command\", \"$PSVersionTable.PSVersion\"],\n51                     capture_output=True,\n52                     text=True,\n53                     timeout=2,\n54                 )\n55                 if result.returncode == 0:\n",
       "col_offset": 25,
       "end_col_offset": 17,
       "filename": "app/cli/productivity/shell_integration.py",
@@ -2766,21 +2831,21 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Starting a process with a partial executable path",
-      "line_number": 38,
+      "line_number": 49,
       "line_range": [
-        38,
-        39,
-        40,
-        41,
-        42,
-        43
+        49,
+        50,
+        51,
+        52,
+        53,
+        54
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b607_start_process_with_partial_path.html",
       "test_id": "B607",
       "test_name": "start_process_with_partial_path"
     },
     {
-      "code": "37             try:\n38                 result = subprocess.run(\n39                     [\"powershell\", \"-Command\", \"$PSVersionTable.PSVersion\"],\n40                     capture_output=True,\n41                     text=True,\n42                     timeout=2,\n43                 )\n44                 if result.returncode == 0:\n",
+      "code": "48             try:\n49                 result = subprocess.run(\n50                     [\"powershell\", \"-Command\", \"$PSVersionTable.PSVersion\"],\n51                     capture_output=True,\n52                     text=True,\n53                     timeout=2,\n54                 )\n55                 if result.returncode == 0:\n",
       "col_offset": 25,
       "end_col_offset": 17,
       "filename": "app/cli/productivity/shell_integration.py",
@@ -2791,14 +2856,14 @@
       },
       "issue_severity": "LOW",
       "issue_text": "subprocess call - check for execution of untrusted input.",
-      "line_number": 38,
+      "line_number": 49,
       "line_range": [
-        38,
-        39,
-        40,
-        41,
-        42,
-        43
+        49,
+        50,
+        51,
+        52,
+        53,
+        54
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b603_subprocess_without_shell_equals_true.html",
       "test_id": "B603",
@@ -2888,46 +2953,6 @@
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",
       "test_name": "try_except_pass"
-    },
-    {
-      "code": "39     # API Configuration\n40     api_host: str = Field(default=\"0.0.0.0\", description=\"API host to bind to\")\n41     api_port: int = Field(default=8000, description=\"API port (per architecture spec)\")\n",
-      "col_offset": 34,
-      "end_col_offset": 43,
-      "filename": "app/config.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 605,
-        "link": "https://cwe.mitre.org/data/definitions/605.html"
-      },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Possible binding to all interfaces.",
-      "line_number": 40,
-      "line_range": [
-        40
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
-      "test_id": "B104",
-      "test_name": "hardcoded_bind_all_interfaces"
-    },
-    {
-      "code": "86     temp_dir: str = Field(\n87         default=\"/tmp/image-converter\", description=\"Temporary directory\"\n88     )\n",
-      "col_offset": 16,
-      "end_col_offset": 38,
-      "filename": "app/config.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 377,
-        "link": "https://cwe.mitre.org/data/definitions/377.html"
-      },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Probable insecure usage of temp file/directory.",
-      "line_number": 87,
-      "line_range": [
-        87
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b108_hardcoded_tmp_directory.html",
-      "test_id": "B108",
-      "test_name": "hardcoded_tmp_directory"
     },
     {
       "code": "3 \n4 import subprocess\n5 import sys\n",
@@ -3568,36 +3593,44 @@
       "test_name": "subprocess_without_shell_equals_true"
     },
     {
-      "code": "23     \":8000\",\n24     \"0.0.0.0\",\n25     \":::\",\n26 ]\n27 \n28 \n29 def validate_no_network_activity(output: str) -> bool:\n30     \"\"\"\n31     Validate that command output shows no network activity.\n32 \n33     Args:\n34         output: Command output to validate\n35 \n36     Returns:\n37         True if no network activity detected, False otherwise\n",
-      "col_offset": 4,
-      "end_col_offset": 13,
+      "code": "69     try:\n70         import subprocess\n71         import platform\n",
+      "col_offset": 8,
+      "end_col_offset": 25,
       "filename": "app/core/security/parsers.py",
-      "issue_confidence": "MEDIUM",
+      "issue_confidence": "HIGH",
       "issue_cwe": {
-        "id": 605,
-        "link": "https://cwe.mitre.org/data/definitions/605.html"
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
       },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Possible binding to all interfaces.",
-      "line_number": 24,
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 70,
       "line_range": [
-        14,
-        15,
-        16,
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        24,
-        25,
-        26
+        70
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
-      "test_id": "B104",
-      "test_name": "hardcoded_bind_all_interfaces"
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "81         # Run command to check network connections\n82         result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)\n83 \n",
+      "col_offset": 17,
+      "end_col_offset": 79,
+      "filename": "app/core/security/parsers.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 82,
+      "line_range": [
+        82
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
     },
     {
       "code": "23     \":8000\",\n24     \"0.0.0.0\",\n25     \":::\",\n26 ]\n27 \n28 \n29 def validate_no_network_activity(output: str) -> bool:\n30     \"\"\"\n31     Validate that command output shows no network activity.\n32 \n33     Args:\n34         output: Command output to validate\n35 \n36     Returns:\n37         True if no network activity detected, False otherwise\n",

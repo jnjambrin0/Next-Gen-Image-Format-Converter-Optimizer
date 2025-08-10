@@ -309,12 +309,13 @@ class Settings(BaseSettings):
 
     def __init__(self, **values):
         super().__init__(**values)
-        
+
         # Generate secure temp directory if not specified
         if self.temp_dir is None:
             import tempfile
+
             self.temp_dir = tempfile.mkdtemp(prefix="imgconv-")
-        
+
         # Ensure list fields are lists after initialization
         for field in [
             "cors_origins",

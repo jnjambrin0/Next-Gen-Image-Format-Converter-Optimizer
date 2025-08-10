@@ -423,6 +423,7 @@ class OutputFormatter:
         rough_string = ET.tostring(root, encoding="unicode")
         # Use a safer approach without minidom to avoid XML vulnerabilities
         from xml.etree.ElementTree import indent as et_indent
+
         et_indent(root, space="  ")
         return ET.tostring(root, encoding="unicode").strip()
 

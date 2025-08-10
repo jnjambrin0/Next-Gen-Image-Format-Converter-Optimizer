@@ -186,5 +186,5 @@ def create_network_monitor(
     return NetworkMonitor(
         security_tracker=security_tracker,
         check_interval=check_interval,
-        enabled=enabled
+        enabled=enabled,
     )
