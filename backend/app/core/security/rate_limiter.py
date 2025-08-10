@@ -3,7 +3,7 @@ Token bucket rate limiter for security events and API requests.
 """
 
 import time
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 from threading import Lock
 
 from app.core.security.types import RateLimitConfig
@@ -104,7 +104,7 @@ class SecurityEventRateLimiter:
         self.last_violation_time = None
         self.lock = Lock()
 
-    def should_allow_event(self, event_type: str = None) -> bool:
+    def should_allow_event(self, event_type: Optional[str] = None) -> bool:
         """
         Check if event should be allowed based on rate limits.
 
@@ -136,7 +136,7 @@ class SecurityEventRateLimiter:
 
         return allowed
 
-    def get_stats(self) -> Dict[str, any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get rate limiter statistics."""
         with self.lock:
             return {

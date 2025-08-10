@@ -52,9 +52,9 @@ class RecoveryService:
                 {
                     "success": True,
                     "method": "pil_recovery",
-                    "data_recovered_percent": len(recovered_data)
-                    / len(corrupted_data)
-                    * 100,
+                    "data_recovered_percent": int(
+                        len(recovered_data) / len(corrupted_data) * 100
+                    ),
                 }
             )
 
@@ -73,9 +73,9 @@ class RecoveryService:
                         {
                             "success": True,
                             "method": "partial_recovery",
-                            "data_recovered_percent": len(partial_data)
-                            / len(corrupted_data)
-                            * 100,
+                            "data_recovered_percent": int(
+                                len(partial_data) / len(corrupted_data) * 100
+                            ),
                         }
                     )
                     return partial_data, recovery_info

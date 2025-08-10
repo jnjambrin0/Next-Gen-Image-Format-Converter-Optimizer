@@ -1,7 +1,7 @@
 """Data models for advanced optimization features."""
 
 from typing import Optional, Dict, Any, List, Literal
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from uuid import UUID
 
@@ -56,10 +56,11 @@ class OptimizationRequest(BaseModel):
         default=85, ge=1, le=100, description="Base quality setting"
     )
 
-    @validator("max_quality")
-    def validate_quality_range(cls, v, values):
+    @field_validator("max_quality")
+    @classmethod
+    def validate_quality_range(cls, v, info):
         """Ensure max_quality >= min_quality."""
-        if "min_quality" in values and v < values["min_quality"]:
+        if info.data.get("min_quality") and v < info.data["min_quality"]:
             raise ValueError("max_quality must be >= min_quality")
         return v
 

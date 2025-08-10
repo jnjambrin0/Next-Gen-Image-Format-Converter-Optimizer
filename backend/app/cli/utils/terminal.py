@@ -123,6 +123,9 @@ class TerminalDetector:
 
     def _check_windows_color_support(self) -> bool:
         """Check Windows color support"""
+        if sys.platform != "win32":
+            return False
+
         try:
             import ctypes
             import ctypes.wintypes

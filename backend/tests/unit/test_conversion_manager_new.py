@@ -25,6 +25,7 @@ from app.core.exceptions import (
     InvalidImageError,
     UnsupportedFormatError,
     ConversionFailedError,
+    SecurityError,
 )
 
 
@@ -192,7 +193,7 @@ class TestConversionManager:
         request = ConversionRequest(output_format=OutputFormat.WEBP)
 
         # Act & Assert
-        with pytest.raises(ConversionFailedError, match="Failed to load image"):
+        with pytest.raises(InvalidImageError, match="Image validation failed"):
             await conversion_manager.convert_image(corrupted_data, "jpeg", request)
 
     @pytest.mark.asyncio
