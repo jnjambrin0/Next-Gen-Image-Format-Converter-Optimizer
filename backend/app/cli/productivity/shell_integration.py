@@ -14,6 +14,7 @@ import shlex
 
 class ShellType(Enum):
     """Supported shell types."""
+
     BASH = "bash"
     ZSH = "zsh"
     FISH = "fish"
@@ -729,10 +730,10 @@ function imgwatch {
 
 class CompletionScript:
     """Shell completion script generation."""
-    
+
     def __init__(self, shell_type: ShellType):
         self.shell_type = shell_type
-        
+
     def generate(self) -> str:
         """Generate completion script for the shell."""
         if self.shell_type == ShellType.BASH:
@@ -748,7 +749,7 @@ class CompletionScript:
 
 class ShellHelper:
     """Helper functions for shell integration."""
-    
+
     @staticmethod
     def get_helper_functions(shell_type: ShellType) -> str:
         """Get helper functions for the shell."""
@@ -758,7 +759,7 @@ class ShellHelper:
 
 class ShellDetector:
     """Detect the current shell."""
-    
+
     @staticmethod
     def detect() -> ShellType:
         """Detect and return the current shell type."""
@@ -776,11 +777,11 @@ class ShellDetector:
 
 class FunctionLibrary:
     """Library of shell helper functions."""
-    
+
     def __init__(self, shell_type: ShellType):
         self.shell_type = shell_type
         self.functions = ShellIntegrator.generate_helper_functions()
-        
+
     def get_functions(self) -> str:
         """Get all helper functions for the shell."""
         return self.functions.get(self.shell_type.value, "")

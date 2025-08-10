@@ -10,6 +10,11 @@ import json
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
 import os
+from unittest.mock import MagicMock, AsyncMock, patch
+import sys
+
+# Note: Some tests may timeout due to service initialization
+# If this happens, consider mocking heavy services in individual test files
 
 
 @pytest.fixture

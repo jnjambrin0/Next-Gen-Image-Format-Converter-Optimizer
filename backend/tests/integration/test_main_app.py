@@ -45,8 +45,7 @@ class TestMainApp:
     def test_cors_middleware_configured(self, client):
         """Test CORS middleware is properly configured."""
         response = client.options(
-            "/api/health",
-            headers={"Origin": "http://localhost:3000"}
+            "/api/health", headers={"Origin": "http://localhost:3000"}
         )
         assert response.status_code == 200
         assert "access-control-allow-origin" in response.headers
@@ -56,7 +55,7 @@ class TestMainApp:
         # Legacy endpoint
         response = client.get("/api/health")
         assert response.status_code == 200
-        
+
         # Versioned endpoint
         response = client.get("/api/v1/health")
         assert response.status_code == 200
@@ -85,9 +84,9 @@ class TestMainApp:
     async def test_lifespan_startup(self):
         """Test lifespan startup events."""
         mock_app = MagicMock()
-        
-        with patch('app.main.stats_collector') as mock_stats:
-            with patch('app.main.security_tracker') as mock_security:
+
+        with patch("app.main.stats_collector") as mock_stats:
+            with patch("app.main.security_tracker") as mock_security:
                 async with lifespan(mock_app):
                     # Services should be initialized
                     assert mock_stats is not None
@@ -97,21 +96,17 @@ class TestMainApp:
         """Test request validation middleware."""
         # Send oversized payload
         large_data = b"x" * (100 * 1024 * 1024 + 1)  # > 100MB
-        
+
         response = client.post(
-            "/api/convert",
-            files={"file": ("large.jpg", large_data, "image/jpeg")}
+            "/api/convert", files={"file": ("large.jpg", large_data, "image/jpeg")}
         )
-        
+
         assert response.status_code == 413  # Payload too large
 
     def test_error_handler_formatting(self, client):
         """Test error response formatting."""
-        response = client.post(
-            "/api/convert",
-            json={}  # Missing required fields
-        )
-        
+        response = client.post("/api/convert", json={})  # Missing required fields
+
         assert response.status_code in [422, 400]
         data = response.json()
         assert "detail" in data or "error" in data
@@ -129,7 +124,7 @@ class TestMainApp:
         """Test monitoring endpoints are registered."""
         response = client.get("/api/monitoring/stats")
         assert response.status_code == 200
-        
+
         response = client.get("/api/monitoring/errors")
         assert response.status_code == 200
 
@@ -149,7 +144,7 @@ class TestMainApp:
     def test_websocket_endpoint_registered(self):
         """Test WebSocket endpoint is registered."""
         from fastapi.testclient import TestClient
-        
+
         with TestClient(app) as client:
             # WebSocket endpoint should exist
             routes = [route.path for route in app.routes]
@@ -199,7 +194,7 @@ class TestMainApp:
         # Swagger UI
         response = client.get("/docs")
         assert response.status_code == 200
-        
+
         # ReDoc
         response = client.get("/redoc")
         assert response.status_code == 200
@@ -208,25 +203,22 @@ class TestMainApp:
         """Test that services initialize in correct order."""
         # This would test that dependencies are injected properly
         # Mock the initialization to verify order
-        with patch('app.main.initialize_services') as mock_init:
+        with patch("app.main.initialize_services") as mock_init:
             # Would verify services initialize in dependency order
             pass
 
     def test_shutdown_cleanup(self):
         """Test that cleanup happens on shutdown."""
-        with patch('app.main.cleanup_services') as mock_cleanup:
+        with patch("app.main.cleanup_services") as mock_cleanup:
             # Would verify cleanup is called
             pass
 
     def test_exception_handler_chain(self, client):
         """Test exception handlers work correctly."""
         # Test validation error
-        response = client.post(
-            "/api/convert",
-            json={"output_format": "invalid"}
-        )
+        response = client.post("/api/convert", json={"output_format": "invalid"})
         assert response.status_code in [422, 400]
-        
+
         # Test security error (if applicable)
         # Would need to trigger a security exception
 

@@ -419,10 +419,12 @@ class OutputFormatter:
         else:
             root = dict_to_xml(root_name, data)
 
-        # Pretty print
+        # Pretty print - use ET's built-in formatting instead of minidom for security
         rough_string = ET.tostring(root, encoding="unicode")
-        reparsed = minidom.parseString(rough_string)
-        return reparsed.toprettyxml(indent="  ", newl="\n").strip()
+        # Use a safer approach without minidom to avoid XML vulnerabilities
+        from xml.etree.ElementTree import indent as et_indent
+        et_indent(root, space="  ")
+        return ET.tostring(root, encoding="unicode").strip()
 
     @staticmethod
     def format_plain(data: Any) -> str:

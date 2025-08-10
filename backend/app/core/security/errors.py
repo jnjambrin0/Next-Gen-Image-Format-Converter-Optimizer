@@ -16,6 +16,7 @@ logger = structlog.get_logger()
 
 class SecurityErrorCode(Enum):
     """Security error codes for compatibility."""
+
     NETWORK_BLOCKED = "NETWORK_BLOCKED"
     SANDBOX_VIOLATION = "SANDBOX_VIOLATION"
     RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
@@ -165,6 +166,7 @@ def handle_security_errors(func):
 # Compatibility classes for existing tests
 class NetworkSecurityError(SecurityError):
     """Network security error for compatibility."""
+
     def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
         super().__init__("network", message=message)
         self.code = code or SecurityErrorCode.NETWORK_BLOCKED
@@ -172,6 +174,7 @@ class NetworkSecurityError(SecurityError):
 
 class SandboxSecurityError(SecurityError):
     """Sandbox security error for compatibility."""
+
     def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
         super().__init__("sandbox", message=message)
         self.code = code or SecurityErrorCode.SANDBOX_VIOLATION
@@ -179,6 +182,7 @@ class SandboxSecurityError(SecurityError):
 
 class RateLimitError(SecurityError):
     """Rate limit error for compatibility."""
+
     def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
         super().__init__("rate_limit", message=message)
         self.code = code or SecurityErrorCode.RATE_LIMIT_EXCEEDED
@@ -186,6 +190,7 @@ class RateLimitError(SecurityError):
 
 class VerificationError(SecurityError):
     """Verification error for compatibility."""
+
     def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
         super().__init__("verification", message=message)
         self.code = code or SecurityErrorCode.VERIFICATION_FAILED
@@ -193,6 +198,7 @@ class VerificationError(SecurityError):
 
 class MemorySecurityError(SecurityError):
     """Memory security error for compatibility."""
+
     def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
         super().__init__("sandbox", {"reason": "memory_violation"}, message=message)
         self.code = code or SecurityErrorCode.MEMORY_VIOLATION

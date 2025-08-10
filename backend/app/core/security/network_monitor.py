@@ -20,6 +20,22 @@ from app.core.constants import DEFAULT_MONITORING_INTERVAL, CONNECTION_CHECK_TIM
 logger = structlog.get_logger()
 
 
+class NetworkConnection:
+    """Represents a network connection for monitoring."""
+
+    def __init__(self, protocol: str, local_addr: str, remote_addr: str, state: str):
+        self.protocol = protocol
+        self.local_addr = local_addr
+        self.remote_addr = remote_addr
+        self.state = state
+        self.timestamp = datetime.now()
+
+    def is_localhost(self) -> bool:
+        """Check if connection is to localhost."""
+        localhost_ips = ["127.0.0.1", "::1", "localhost"]
+        return any(ip in self.remote_addr for ip in localhost_ips)
+
+
 class NetworkMonitor:
     """
     Simplified network monitor that verifies network isolation.
@@ -159,3 +175,16 @@ class NetworkMonitor:
             "last_check": self._last_check.isoformat() if self._last_check else None,
             "violation_count": self._violation_count,
         }
+
+
+def create_network_monitor(
+    security_tracker: Optional[SecurityEventTracker] = None,
+    check_interval: float = DEFAULT_MONITORING_INTERVAL,
+    enabled: bool = True,
+) -> NetworkMonitor:
+    """Factory function to create a NetworkMonitor instance."""
+    return NetworkMonitor(
+        security_tracker=security_tracker,
+        check_interval=check_interval,
+        enabled=enabled
+    )

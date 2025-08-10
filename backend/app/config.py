@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Logging level")
 
     # API Configuration
-    api_host: str = Field(default="0.0.0.0", description="API host to bind to")
+    api_host: str = Field(default="127.0.0.1", description="API host to bind to")
     api_port: int = Field(default=8000, description="API port (per architecture spec)")
     api_workers: int = Field(default=1, description="Number of worker processes")
     api_prefix: str = Field(default="/api", description="API route prefix")
@@ -83,8 +83,8 @@ class Settings(BaseSettings):
         default="webp,avif,jpeg,png,heif,jxl,webp2,jp2",
         description="Allowed output image formats",
     )
-    temp_dir: str = Field(
-        default="/tmp/image-converter", description="Temporary directory"
+    temp_dir: Optional[str] = Field(
+        default=None, description="Temporary directory (auto-generated if None)"
     )
     cleanup_interval: int = Field(
         default=3600, description="Cleanup interval in seconds"
@@ -309,6 +309,12 @@ class Settings(BaseSettings):
 
     def __init__(self, **values):
         super().__init__(**values)
+        
+        # Generate secure temp directory if not specified
+        if self.temp_dir is None:
+            import tempfile
+            self.temp_dir = tempfile.mkdtemp(prefix="imgconv-")
+        
         # Ensure list fields are lists after initialization
         for field in [
             "cors_origins",

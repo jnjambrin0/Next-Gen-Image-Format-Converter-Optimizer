@@ -78,6 +78,20 @@ class ConversionResponse(BaseModel):
         }
 
 
+class ConversionResult(BaseModel):
+    """Result of an image conversion operation."""
+    
+    success: bool
+    output_format: str
+    file_size: int
+    original_size: int
+    compression_ratio: float
+    dimensions: Dict[str, int]
+    processing_time: float
+    metadata_stripped: bool = True
+    error: Optional[str] = None
+
+
 class BatchRequest(BaseModel):
     """Request model for batch conversion."""
     

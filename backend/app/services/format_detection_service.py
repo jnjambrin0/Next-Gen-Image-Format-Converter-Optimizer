@@ -228,21 +228,25 @@ class FormatDetectionService:
             "has_prepended_data": False,
             "is_suspicious": False,
         }
-        
+
         # Check for polyglot signatures
-        if b"GIF89a/*" in image_data or b"%PDF" in image_data and b"\xff\xd8" in image_data:
+        if (
+            b"GIF89a/*" in image_data
+            or b"%PDF" in image_data
+            and b"\xff\xd8" in image_data
+        ):
             result["is_polyglot"] = True
             result["is_suspicious"] = True
-            
+
         # Check for prepended data
         for signature in IMAGE_MAGIC_BYTES.values():
             if signature in image_data and not image_data.startswith(signature):
                 result["has_prepended_data"] = True
                 result["is_suspicious"] = True
                 break
-                
+
         return result
-        
+
     async def validate_format_integrity(
         self, image_data: bytes, detected_format: str
     ) -> dict:
@@ -252,12 +256,12 @@ class FormatDetectionService:
             "is_truncated": False,
             "is_valid": True,
         }
-        
+
         # Check for truncation (very basic)
         if len(image_data) < 100:  # Arbitrary small size
             result["is_truncated"] = True
             result["is_complete"] = False
-            
+
         # Try to open with PIL to validate
         try:
             img = Image.open(BytesIO(image_data))
@@ -265,33 +269,31 @@ class FormatDetectionService:
         except Exception:
             result["is_valid"] = False
             result["is_complete"] = False
-            
+
         return result
-        
-    async def get_format_details(
-        self, image_data: bytes, detected_format: str
-    ) -> dict:
+
+    async def get_format_details(self, image_data: bytes, detected_format: str) -> dict:
         """Get detailed format information (stub for tests)."""
         details = {
             "format": detected_format,
             "variant": "",
             "version": "",
         }
-        
+
         # Detect TIFF endianness
         if detected_format == "tiff":
             if image_data.startswith(b"II"):
                 details["variant"] = "little_endian"
             elif image_data.startswith(b"MM"):
                 details["variant"] = "big_endian"
-                
+
         # Detect JPEG type
         elif detected_format == "jpeg":
             if b"\xff\xe0" in image_data[:20]:
                 details["variant"] = "jfif"
             elif b"\xff\xe1" in image_data[:20]:
                 details["variant"] = "exif"
-                
+
         return details
 
 

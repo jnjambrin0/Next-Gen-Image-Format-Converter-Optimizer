@@ -21,7 +21,7 @@ def disable_sandboxing():
 @pytest.fixture(autouse=True)
 def mock_network_blocking():
     """Mock network blocking to allow tests."""
-    with patch('socket.socket') as mock_socket:
+    with patch("socket.socket") as mock_socket:
         # Allow socket creation for tests
         mock_socket.return_value = MagicMock()
         yield
@@ -30,10 +30,8 @@ def mock_network_blocking():
 @pytest.fixture(autouse=True)
 def mock_subprocess_sandbox():
     """Mock subprocess sandboxing."""
-    with patch('app.core.security.sandbox.subprocess') as mock_subprocess:
+    with patch("app.core.security.sandbox.subprocess") as mock_subprocess:
         mock_subprocess.run.return_value = MagicMock(
-            returncode=0,
-            stdout=b"fake_output",
-            stderr=b""
+            returncode=0, stdout=b"fake_output", stderr=b""
         )
         yield
