@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from PIL import Image
 
-from app.core.optimization.region_optimizer import Region, RegionOptimizer, RegionType
+from app.core.optimization.region_optimizer import (Region, RegionOptimizer,
+                                                    RegionType)
 from app.core.security.errors_simplified import SecurityError
 from app.models.conversion import BoundingBox, ContentClassification
 

@@ -7,16 +7,10 @@ import pytest
 from fastapi import HTTPException, UploadFile
 from fastapi.testclient import TestClient
 
-from app.api.routes.batch import (
-    validate_batch_request,
-)
+from app.api.routes.batch import validate_batch_request
 from app.config import settings
-from app.core.batch.models import (
-    BatchItem,
-    BatchItemStatus,
-    BatchJob,
-    BatchStatus,
-)
+from app.core.batch.models import (BatchItem, BatchItemStatus, BatchJob,
+                                   BatchStatus)
 from app.main import app
 
 

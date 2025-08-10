@@ -8,17 +8,10 @@ import pytest
 from fastapi import HTTPException, UploadFile
 
 from app.api.routes.conversion import convert_image
-from app.core.exceptions import (
-    ConversionFailedError,
-    InvalidImageError,
-    UnsupportedFormatError,
-)
-from app.models.conversion import (
-    ConversionResult,
-    ConversionStatus,
-    InputFormat,
-    OutputFormat,
-)
+from app.core.exceptions import (ConversionFailedError, InvalidImageError,
+                                 UnsupportedFormatError)
+from app.models.conversion import (ConversionResult, ConversionStatus,
+                                   InputFormat, OutputFormat)
 
 
 class TestConversionAPI:

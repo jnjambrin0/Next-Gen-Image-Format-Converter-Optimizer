@@ -6,13 +6,11 @@ import time
 from threading import Lock
 from typing import Any, Dict, Optional, Tuple
 
-from app.core.constants import (
-    RATE_LIMIT_BURST_SIZE,
-    RATE_LIMIT_EVENTS_PER_HOUR,
-    RATE_LIMIT_EVENTS_PER_MINUTE,
-    RATE_LIMIT_HOUR_BURST_DIVISOR,
-    RATE_LIMIT_TOKEN_REFILL_AMOUNT,
-)
+from app.core.constants import (RATE_LIMIT_BURST_SIZE,
+                                RATE_LIMIT_EVENTS_PER_HOUR,
+                                RATE_LIMIT_EVENTS_PER_MINUTE,
+                                RATE_LIMIT_HOUR_BURST_DIVISOR,
+                                RATE_LIMIT_TOKEN_REFILL_AMOUNT)
 from app.core.security.types import RateLimitConfig
 
 

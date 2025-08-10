@@ -4,7 +4,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.conversion import ConversionSettings, OptimizationSettings, OutputFormat
+from app.models.conversion import (ConversionSettings, OptimizationSettings,
+                                   OutputFormat)
 
 
 class ConversionApiRequest(BaseModel):

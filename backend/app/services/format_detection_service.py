@@ -9,7 +9,8 @@ from typing import Any, Optional, Tuple
 import structlog
 from PIL import Image
 
-from app.core.constants import FORMAT_ALIASES, HEIF_AVIF_BRANDS, IMAGE_MAGIC_BYTES
+from app.core.constants import (FORMAT_ALIASES, HEIF_AVIF_BRANDS,
+                                IMAGE_MAGIC_BYTES)
 
 logger = structlog.get_logger()
 

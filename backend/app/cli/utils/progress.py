@@ -9,21 +9,11 @@ from enum import Enum
 from typing import Any, List, Optional
 
 from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    DownloadColumn,
-    FileSizeColumn,
-    MofNCompleteColumn,
-    Progress,
-    ProgressColumn,
-    SpinnerColumn,
-    Task,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-    TotalFileSizeColumn,
-    TransferSpeedColumn,
-)
+from rich.progress import (BarColumn, DownloadColumn, FileSizeColumn,
+                           MofNCompleteColumn, Progress, ProgressColumn,
+                           SpinnerColumn, Task, TextColumn, TimeElapsedColumn,
+                           TimeRemainingColumn, TotalFileSizeColumn,
+                           TransferSpeedColumn)
 from rich.text import Text
 
 from app.cli.utils.terminal import get_terminal_detector, should_use_emoji

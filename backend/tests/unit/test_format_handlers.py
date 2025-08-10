@@ -15,15 +15,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from app.core.conversion.formats.avif_handler import AVIFHandler
 from app.core.conversion.formats.heif_handler import HeifHandler
 from app.core.conversion.formats.jpeg_handler import JPEGHandler
-from app.core.conversion.formats.jpeg_optimized_handler import JPEGOptimizedHandler
+from app.core.conversion.formats.jpeg_optimized_handler import \
+    JPEGOptimizedHandler
 from app.core.conversion.formats.jxl_handler import JxlHandler
 from app.core.conversion.formats.png_handler import PNGHandler
-from app.core.conversion.formats.png_optimized_handler import PNGOptimizedHandler
+from app.core.conversion.formats.png_optimized_handler import \
+    PNGOptimizedHandler
 from app.core.conversion.formats.webp_handler import WebPHandler
-from app.core.exceptions import (
-    ConversionFailedError,
-    UnsupportedFormatError,
-)
+from app.core.exceptions import ConversionFailedError, UnsupportedFormatError
 from app.models.conversion import ConversionSettings
 
 
@@ -1303,7 +1302,8 @@ class TestJpeg2000Handler:
     @pytest.fixture
     def jp2_handler(self) -> None:
         """Create JPEG 2000 handler instance."""
-        from app.core.conversion.formats.jpeg2000_handler import Jpeg2000Handler
+        from app.core.conversion.formats.jpeg2000_handler import \
+            Jpeg2000Handler
 
         return Jpeg2000Handler()
 

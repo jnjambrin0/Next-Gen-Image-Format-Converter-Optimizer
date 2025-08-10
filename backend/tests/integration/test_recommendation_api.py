@@ -6,11 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.models.conversion import (
-    ContentType,
-    InputFormat,
-    OutputFormat,
-)
+from app.models.conversion import ContentType, InputFormat, OutputFormat
 from app.models.recommendation import UseCaseType
 
 

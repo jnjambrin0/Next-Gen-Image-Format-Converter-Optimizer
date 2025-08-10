@@ -10,13 +10,8 @@ import psutil
 
 from app.api.websockets import send_job_status_update
 from app.config import settings
-from app.core.batch.models import (
-    BatchItem,
-    BatchItemStatus,
-    BatchJob,
-    BatchProgress,
-    BatchStatus,
-)
+from app.core.batch.models import (BatchItem, BatchItemStatus, BatchJob,
+                                   BatchProgress, BatchStatus)
 from app.core.constants import MAX_BATCH_WORKERS
 from app.models import ConversionApiRequest, ConversionSettings
 from app.utils.logging import get_logger
@@ -532,7 +527,8 @@ class BatchManager:
             # Import here to avoid circular dependency
             import asyncio
 
-            from app.services.batch_history_service import batch_history_service
+            from app.services.batch_history_service import \
+                batch_history_service
 
             # Schedule database update (fire and forget)
             asyncio.create_task(

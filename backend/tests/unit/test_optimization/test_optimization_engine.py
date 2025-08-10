@@ -8,11 +8,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from PIL import Image
 
-from app.core.optimization.optimization_engine import (
-    OptimizationEngine,
-    OptimizationMode,
-    OptimizationResult,
-)
+from app.core.optimization.optimization_engine import (OptimizationEngine,
+                                                       OptimizationMode,
+                                                       OptimizationResult)
 from app.core.security.errors_simplified import SecurityError
 
 

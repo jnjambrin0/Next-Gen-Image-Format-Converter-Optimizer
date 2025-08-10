@@ -17,11 +17,8 @@ from rich.table import Table
 
 from app.cli.ui.themes import get_theme_manager
 from app.cli.utils.emoji import get_emoji, should_use_emoji
-from app.core.monitoring.performance import (
-    BatchMetrics,
-    ConversionMetrics,
-    performance_profiler,
-)
+from app.core.monitoring.performance import (BatchMetrics, ConversionMetrics,
+                                             performance_profiler)
 
 # Initialize themed console
 theme_manager = get_theme_manager()

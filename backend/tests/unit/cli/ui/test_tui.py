@@ -8,11 +8,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from app.cli.ui.tui import (
-    ConversionSettings,
-    ImageConverterTUI,
-    QualityValidator,
-)
+from app.cli.ui.tui import (ConversionSettings, ImageConverterTUI,
+                            QualityValidator)
 
 
 class TestQualityValidator:

@@ -9,10 +9,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from app.core.batch.models import BatchJobStatus, BatchResult
-from app.core.constants import (
-    BATCH_JOB_RETENTION_DAYS,
-    DB_CHECK_SAME_THREAD,
-)
+from app.core.constants import BATCH_JOB_RETENTION_DAYS, DB_CHECK_SAME_THREAD
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

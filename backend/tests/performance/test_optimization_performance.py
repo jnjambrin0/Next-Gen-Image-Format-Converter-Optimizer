@@ -8,13 +8,9 @@ from typing import Any
 import pytest
 from PIL import Image
 
-from app.core.optimization import (
-    CompressionLevel,
-    LosslessCompressor,
-    OptimizationEngine,
-    OptimizationMode,
-    QualityAnalyzer,
-)
+from app.core.optimization import (CompressionLevel, LosslessCompressor,
+                                   OptimizationEngine, OptimizationMode,
+                                   QualityAnalyzer)
 
 
 class TestOptimizationPerformance:

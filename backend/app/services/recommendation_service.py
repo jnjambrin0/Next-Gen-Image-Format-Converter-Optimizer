@@ -9,18 +9,13 @@ from typing import Any, Dict, List, Optional
 from app.core.intelligence.format_analyzer import FormatAnalyzer
 from app.core.intelligence.recommendation_engine import RecommendationEngine
 from app.core.intelligence.user_preferences import UserPreferenceTracker
-from app.core.security.errors_simplified import (
-    create_file_error,
-    create_rate_limit_error,
-    create_verification_error,
-)
+from app.core.security.errors_simplified import (create_file_error,
+                                                 create_rate_limit_error,
+                                                 create_verification_error)
 from app.models.conversion import ContentType, OutputFormat
-from app.models.recommendation import (
-    FormatRecommendation,
-    RecommendationRequest,
-    RecommendationResponse,
-    UseCaseType,
-)
+from app.models.recommendation import (FormatRecommendation,
+                                       RecommendationRequest,
+                                       RecommendationResponse, UseCaseType)
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -165,7 +160,8 @@ class RecommendationService:
     ) -> FormatRecommendation:
         """Create recommendation for user override format."""
         # Get format characteristics
-        from app.core.intelligence.recommendation_engine import RecommendationEngine
+        from app.core.intelligence.recommendation_engine import \
+            RecommendationEngine
 
         characteristics = RecommendationEngine.FORMAT_CHARACTERISTICS.get(format_enum)
 
@@ -351,7 +347,8 @@ class RecommendationService:
         Returns:
             Dictionary of format details
         """
-        from app.core.intelligence.recommendation_engine import RecommendationEngine
+        from app.core.intelligence.recommendation_engine import \
+            RecommendationEngine
 
         characteristics = RecommendationEngine.FORMAT_CHARACTERISTICS.get(format_enum)
         features = self.format_analyzer.get_format_features(format_enum)

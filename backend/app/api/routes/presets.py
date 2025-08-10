@@ -7,15 +7,9 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.core.exceptions import SecurityError, ValidationError
 from app.models.responses import ErrorResponse
-from app.models.schemas import (
-    PresetBase,
-    PresetCreate,
-    PresetExport,
-    PresetImport,
-    PresetListResponse,
-    PresetResponse,
-    PresetUpdate,
-)
+from app.models.schemas import (PresetBase, PresetCreate, PresetExport,
+                                PresetImport, PresetListResponse,
+                                PresetResponse, PresetUpdate)
 from app.services.preset_service import preset_service
 from app.utils.logging import get_logger
 

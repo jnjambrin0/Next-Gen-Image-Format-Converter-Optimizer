@@ -3,17 +3,8 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-    UniqueConstraint,
-)
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Index, Integer,
+                        String, Text, UniqueConstraint)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 

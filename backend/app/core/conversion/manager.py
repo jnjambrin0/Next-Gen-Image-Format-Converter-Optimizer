@@ -14,22 +14,14 @@ from app.config import settings
 from app.core.constants import FORMAT_ALIASES
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.conversion.image_processor import ImageProcessor
-from app.core.exceptions import (
-    ConversionError,
-    ConversionFailedError,
-    InvalidImageError,
-    UnsupportedFormatError,
-)
+from app.core.exceptions import (ConversionError, ConversionFailedError,
+                                 InvalidImageError, UnsupportedFormatError)
 from app.core.monitoring import metrics_collector, stats_collector
 from app.core.security.engine import SecurityEngine
 from app.core.security.memory import SecureMemoryManager
-from app.models.conversion import (
-    ConversionRequest,
-    ConversionResult,
-    ConversionSettings,
-    ConversionStatus,
-    InputFormat,
-)
+from app.models.conversion import (ConversionRequest, ConversionResult,
+                                   ConversionSettings, ConversionStatus,
+                                   InputFormat)
 
 logger = structlog.get_logger()
 
@@ -71,14 +63,12 @@ class ConversionManager:
         from app.core.conversion.formats.gif_handler import GifHandler
         from app.core.conversion.formats.heif_handler import HeifHandler
         from app.core.conversion.formats.jpeg_handler import JPEGHandler
-        from app.core.conversion.formats.jpeg_optimized_handler import (
-            JPEGOptimizedHandler,
-        )
+        from app.core.conversion.formats.jpeg_optimized_handler import \
+            JPEGOptimizedHandler
         from app.core.conversion.formats.jxl_handler import JxlHandler
         from app.core.conversion.formats.png_handler import PNGHandler
-        from app.core.conversion.formats.png_optimized_handler import (
-            PNGOptimizedHandler,
-        )
+        from app.core.conversion.formats.png_optimized_handler import \
+            PNGOptimizedHandler
         from app.core.conversion.formats.tiff_handler import TiffHandler
         from app.core.conversion.formats.webp2_handler import WebP2Handler
         from app.core.conversion.formats.webp_handler import WebPHandler

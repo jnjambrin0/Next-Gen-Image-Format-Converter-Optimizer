@@ -12,14 +12,9 @@ from unittest.mock import patch
 
 import pytest
 
-from app.cli.productivity.macros import (
-    CommandValidator,
-    ExecutionPolicy,
-    Macro,
-    MacroManager,
-    MacroSandbox,
-    SignatureVerifier,
-)
+from app.cli.productivity.macros import (CommandValidator, ExecutionPolicy,
+                                         Macro, MacroManager, MacroSandbox,
+                                         SignatureVerifier)
 
 
 class TestCommandValidator:

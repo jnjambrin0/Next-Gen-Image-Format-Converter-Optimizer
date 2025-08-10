@@ -10,15 +10,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.exceptions import SecurityError, ValidationError
 from app.models.database import Base, UserPreset
-from app.models.schemas import (
-    PresetBase,
-    PresetCreate,
-    PresetExport,
-    PresetImport,
-    PresetResponse,
-    PresetSettings,
-    PresetUpdate,
-)
+from app.models.schemas import (PresetBase, PresetCreate, PresetExport,
+                                PresetImport, PresetResponse, PresetSettings,
+                                PresetUpdate)
 
 
 class PresetService:

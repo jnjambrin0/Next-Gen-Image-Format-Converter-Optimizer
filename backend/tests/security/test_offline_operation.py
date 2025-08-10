@@ -240,11 +240,9 @@ class TestOfflineOperation:
     async def test_security_monitoring_offline(self):
         """Test security monitoring works offline."""
         from app.core.monitoring.security_events import SecurityEventTracker
-        from app.models.security_event import (
-            SecurityEvent,
-            SecurityEventType,
-            SecuritySeverity,
-        )
+        from app.models.security_event import (SecurityEvent,
+                                               SecurityEventType,
+                                               SecuritySeverity)
 
         with NetworkBlocker():
             tracker = SecurityEventTracker(db_path=":memory:")
@@ -263,10 +261,8 @@ class TestOfflineOperation:
 
     def test_network_verification_runs_offline(self) -> None:
         """Test network verification itself works offline."""
-        from app.core.security.network_verifier import (
-            NetworkStrictness,
-            NetworkVerifier,
-        )
+        from app.core.security.network_verifier import (NetworkStrictness,
+                                                        NetworkVerifier)
 
         with NetworkBlocker():
             # Network verifier should still be able to check isolation
@@ -308,10 +304,8 @@ class TestOfflineOperation:
     @pytest.mark.parametrize("strictness", ["standard", "strict", "paranoid"])
     def test_different_strictness_levels_offline(self, strictness) -> None:
         """Test different network verification strictness levels work offline."""
-        from app.core.security.network_verifier import (
-            NetworkStrictness,
-            NetworkVerifier,
-        )
+        from app.core.security.network_verifier import (NetworkStrictness,
+                                                        NetworkVerifier)
 
         with NetworkBlocker():
             strictness_enum = getattr(NetworkStrictness, strictness.upper())

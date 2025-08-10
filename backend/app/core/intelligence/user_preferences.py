@@ -8,10 +8,8 @@ from threading import Lock
 from typing import Any, Dict, List, Optional
 
 from app.core.constants import DB_CHECK_SAME_THREAD
-from app.core.security.errors_simplified import (
-    create_file_error,
-    create_rate_limit_error,
-)
+from app.core.security.errors_simplified import (create_file_error,
+                                                 create_rate_limit_error)
 from app.models.conversion import ContentType, OutputFormat
 from app.models.recommendation import UseCaseType, UserFormatPreference
 from app.utils.logging import get_logger
