@@ -1,10 +1,12 @@
 """Batch processing manager for handling multiple image conversions."""
 
 import asyncio
+import logging
 import multiprocessing
 import time
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from uuid import UUID
 
 import psutil
 
@@ -17,8 +19,9 @@ from app.core.batch.models import (
     BatchProgress,
     BatchStatus,
 )
-from app.core.constants import MAX_BATCH_WORKERS
-from app.models import ConversionApiRequest, ConversionSettings
+from app.core.constants import BATCH_CHUNK_SIZE, MAX_BATCH_WORKERS
+from app.core.exceptions import ValidationError
+from app.models import ConversionApiRequest, ConversionResult, ConversionSettings
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -34,7 +37,7 @@ class BatchWorkerTask:
         file_data: bytes,
         filename: str,
         conversion_request: ConversionApiRequest,
-    ) -> None:
+    ):
         self.job_id = job_id
         self.file_index = file_index
         self.file_data = file_data
@@ -46,7 +49,7 @@ class BatchWorkerTask:
 class BatchManager:
     """Manages batch processing operations with worker pool and queue management."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize the batch manager."""
         self.settings = settings
         self.logger = get_logger(__name__)
@@ -96,7 +99,7 @@ class BatchManager:
         worker_count = max(2, int(cpu_count * 0.8))
         return min(worker_count, MAX_BATCH_WORKERS)
 
-    def set_conversion_service(self, service) -> None:
+    def set_conversion_service(self, service):
         """Inject the conversion service dependency."""
         self.conversion_service = service
 
@@ -104,7 +107,7 @@ class BatchManager:
         """Get current memory usage in MB."""
         return self._memory_process.memory_info().rss / 1024 / 1024
 
-    def _init_job_metrics(self, job_id: str) -> None:
+    def _init_job_metrics(self, job_id: str):
         """Initialize performance metrics for a job."""
         self._job_metrics[job_id] = {
             "start_time": time.time(),
@@ -115,7 +118,7 @@ class BatchManager:
             "memory_samples": [],
         }
 
-    def _update_memory_metrics(self, job_id: str) -> None:
+    def _update_memory_metrics(self, job_id: str):
         """Update memory metrics for a job."""
         if job_id not in self._job_metrics:
             return
@@ -148,8 +151,8 @@ class BatchManager:
         Args:
             job_id: Unique job identifier
             batch_job: Batch job model
-            file_data_list: List[Any] of file data bytes
-            progress_callback: Optional[Any] callback for progress updates
+            file_data_list: List of file data bytes
+            progress_callback: Optional callback for progress updates
         """
         if not self.conversion_service:
             raise RuntimeError("Conversion service not initialized")
@@ -721,8 +724,8 @@ class BatchManager:
             job_id: Job ID
             file_index: Index of file to update
             status: New status (completed/failed)
-            processing_time: Optional[Any] processing time in seconds
-            error_message: Optional[Any] error message for failed items
+            processing_time: Optional processing time in seconds
+            error_message: Optional error message for failed items
         """
         job = self._jobs.get(job_id)
         if not job or file_index >= len(job.items):

@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Tuple
 from app.core.intelligence.engine import IntelligenceEngine
 from app.core.optimization import (
     AlphaOptimizer,
+    ChromaSubsampling,
     EncodingOptions,
     LosslessCompressor,
     OptimizationEngine,
@@ -22,6 +23,7 @@ from app.models.optimization import (
     OptimizationRequest,
     OptimizationResponse,
     QualityMetrics,
+    RegionInfo,
 )
 from app.utils.logging import get_logger
 
@@ -31,7 +33,7 @@ logger = get_logger(__name__)
 class OptimizationService:
     """Handles advanced optimization operations."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize the optimization service."""
         self.quality_analyzer = QualityAnalyzer(enable_caching=True)
         self.optimization_engine = OptimizationEngine(

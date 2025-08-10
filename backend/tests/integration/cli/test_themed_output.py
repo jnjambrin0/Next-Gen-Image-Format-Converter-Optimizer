@@ -1,9 +1,9 @@
 """
-from typing import Any
 Integration tests for themed CLI output
 """
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -18,15 +18,15 @@ import io
 from rich.console import Console
 
 from app.cli.ui.tables import ColumnType, SmartTable
-from app.cli.ui.themes import ThemeManager, get_theme_manager
+from app.cli.ui.themes import Theme, ThemeManager, get_theme_manager
 from app.cli.utils.emoji import format_with_emoji, get_emoji
-from app.cli.utils.terminal import get_terminal_detector
+from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
 
 
 class TestThemedOutput:
     """Test themed output integration"""
 
-    def test_theme_manager_console_creation(self) -> None:
+    def test_theme_manager_console_creation(self):
         """Test creating themed console"""
         manager = ThemeManager()
 
@@ -43,7 +43,7 @@ class TestThemedOutput:
             # Console objects are created successfully
             assert console is not None
 
-    def test_theme_application_to_output(self) -> None:
+    def test_theme_application_to_output(self):
         """Test that themes are applied to output"""
         manager = ThemeManager()
 
@@ -64,7 +64,7 @@ class TestThemedOutput:
         # Output should contain ANSI escape codes
         assert "\x1b[" in result or "[" in result
 
-    def test_smart_table_with_theme(self) -> None:
+    def test_smart_table_with_theme(self):
         """Test SmartTable with themed console"""
         manager = ThemeManager()
         console = manager.create_console("dark")
@@ -83,7 +83,7 @@ class TestThemedOutput:
         rendered = table.render()
         assert rendered is not None
 
-    def test_emoji_integration_with_themes(self) -> None:
+    def test_emoji_integration_with_themes(self):
         """Test emoji integration with themed output"""
         # Test with emoji enabled
         with patch.dict(os.environ, {}, clear=True):
@@ -100,7 +100,7 @@ class TestThemedOutput:
             # Should return text fallback
             assert emoji in ["✓", "[✓]", ""]
 
-    def test_terminal_capability_adaptation(self) -> None:
+    def test_terminal_capability_adaptation(self):
         """Test output adaptation based on terminal capabilities"""
         detector = get_terminal_detector()
 
@@ -121,7 +121,7 @@ class TestThemedOutput:
             result = adapt_output("🎨 Fancy text", "Plain text")
             assert result == "🎨 Fancy text"
 
-    def test_progress_bar_with_themes(self) -> None:
+    def test_progress_bar_with_themes(self):
         """Test progress bar rendering with themes"""
         from app.cli.utils.progress import InterruptableProgress, SpinnerStyle
 
@@ -142,7 +142,7 @@ class TestThemedOutput:
             # Progress should work without errors
             assert progress is not None
 
-    def test_format_with_emoji_integration(self) -> None:
+    def test_format_with_emoji_integration(self):
         """Test format_with_emoji with different scenarios"""
         # Test with emoji enabled
         with patch("app.cli.utils.terminal.should_use_emoji", return_value=True):
@@ -156,8 +156,9 @@ class TestThemedOutput:
             assert "Error occurred" in result
             # Should not have emoji characters
 
-    def test_theme_persistence(self) -> None:
+    def test_theme_persistence(self):
         """Test that theme settings persist across components"""
+        from app.cli.config import get_config
 
         # Mock config
         mock_config = MagicMock()
@@ -177,7 +178,7 @@ class TestThemedOutput:
     @pytest.mark.parametrize(
         "theme_name", ["dark", "light", "high_contrast", "colorblind_safe", "minimal"]
     )
-    def test_all_themes_render_correctly(self, theme_name) -> None:
+    def test_all_themes_render_correctly(self, theme_name):
         """Test that all themes render without errors"""
         manager = ThemeManager()
         console = manager.create_console(theme_name)
@@ -207,11 +208,12 @@ class TestThemedOutput:
         assert result  # Should have output
         assert theme_name.replace("_", " ").title() in result or "Testing" in result
 
-    def test_cli_command_with_theme(self) -> None:
+    def test_cli_command_with_theme(self):
         """Test actual CLI command execution with themes"""
         # This would test the actual command but requires the CLI to be installed
         # For now, we'll test the component integration
 
+        from app.cli.config import get_config
         from app.cli.ui.themes import get_theme_manager
 
         # Mock config with theme
@@ -233,7 +235,7 @@ class TestThemedOutput:
 class TestCachingIntegration:
     """Test caching functionality integration"""
 
-    def test_terminal_detection_caching(self) -> None:
+    def test_terminal_detection_caching(self):
         """Test that terminal detection uses caching"""
         from app.cli.utils.terminal import TerminalDetector
 
@@ -252,7 +254,7 @@ class TestCachingIntegration:
 
         assert result1 == result2
 
-    def test_cache_ttl_integration(self) -> None:
+    def test_cache_ttl_integration(self):
         """Test cache TTL in real scenario"""
         import time
 
@@ -280,7 +282,7 @@ class TestCachingIntegration:
 class TestRateLimitingIntegration:
     """Test rate limiting in TUI"""
 
-    def test_rate_limiter_functionality(self) -> None:
+    def test_rate_limiter_functionality(self):
         """Test RateLimiter class"""
         from app.cli.ui.tui import RateLimiter
 
@@ -298,7 +300,7 @@ class TestRateLimitingIntegration:
         time.sleep(0.11)
         assert limiter.should_allow("test") is True
 
-    def test_rate_limiter_wait(self) -> None:
+    def test_rate_limiter_wait(self):
         """Test rate limiter wait functionality"""
         import time
 
@@ -321,7 +323,7 @@ class TestRateLimitingIntegration:
 class TestPathSanitization:
     """Test path sanitization integration"""
 
-    def test_path_sanitizer_safe_paths(self) -> None:
+    def test_path_sanitizer_safe_paths(self):
         """Test PathSanitizer with safe paths"""
         from app.cli.ui.tui import PathSanitizer
 
@@ -333,7 +335,7 @@ class TestPathSanitization:
         # Home directory should be safe
         assert sanitizer.is_safe_path(Path.home()) is True
 
-    def test_path_sanitizer_unsafe_paths(self) -> None:
+    def test_path_sanitizer_unsafe_paths(self):
         """Test PathSanitizer with unsafe paths"""
         from app.cli.ui.tui import PathSanitizer
 
@@ -355,7 +357,7 @@ class TestPathSanitization:
             # The string itself would be rejected
             assert not any(pattern in path_str for pattern in ["..", "~", ";", "|"])
 
-    def test_filename_sanitization(self) -> None:
+    def test_filename_sanitization(self):
         """Test filename sanitization"""
         from app.cli.ui.tui import PathSanitizer
 

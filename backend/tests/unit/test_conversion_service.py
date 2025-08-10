@@ -1,7 +1,7 @@
 """Unit tests for conversion service layer."""
 
-from typing import Any
 import asyncio
+from typing import Tuple
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -22,12 +22,12 @@ class TestConversionService:
     """Test conversion service layer."""
 
     @pytest.fixture
-    def conversion_service(self) -> None:
+    def conversion_service(self):
         """Create conversion service instance."""
         return ConversionService()
 
     @pytest.fixture
-    def mock_conversion_result(self) -> None:
+    def mock_conversion_result(self):
         """Create mock conversion result."""
         return ConversionResult(
             id="test-id",
@@ -40,7 +40,7 @@ class TestConversionService:
         )
 
     @pytest.fixture
-    def conversion_request(self) -> None:
+    def conversion_request(self):
         """Create conversion API request."""
         return ConversionApiRequest(
             filename="test.jpg",
@@ -135,21 +135,21 @@ class TestConversionService:
     async def test_validate_image(self, conversion_service):
         """Test image validation with magic byte checking."""
         # Test with empty data
-        assert await conversion_service.validate_image(b"") is False
+        assert await conversion_service.validate_image(b"", "jpeg") is False
 
         # Since magic might not be installed, test the fallback
         # First test with fallback (no magic)
         with patch("app.services.conversion_service.HAS_MAGIC", False):
             # Test valid JPEG magic bytes
             jpeg_data = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"x" * 100
-            assert await conversion_service.validate_image(jpeg_data) is True
+            assert await conversion_service.validate_image(jpeg_data, "jpeg") is True
 
             # Test PNG magic bytes
             png_data = b"\x89PNG\r\n\x1a\n" + b"x" * 100
-            assert await conversion_service.validate_image(png_data) is True
+            assert await conversion_service.validate_image(png_data, "png") is True
 
-            # Test invalid data
-            assert await conversion_service.validate_image(b"invalid") is False
+            # Test mismatch
+            assert await conversion_service.validate_image(jpeg_data, "png") is False
 
         # If we can test with magic, do so (but make it optional)
         try:
@@ -161,31 +161,50 @@ class TestConversionService:
                 # Test valid JPEG
                 mock_magic.return_value = "image/jpeg"
                 assert (
-                    await conversion_service.validate_image(b"fake jpeg data") is True
+                    await conversion_service.validate_image(b"fake jpeg data", "jpeg")
+                    is True
+                )
+                assert (
+                    await conversion_service.validate_image(b"fake jpeg data", "jpg")
+                    is True
                 )
 
                 # Test valid PNG
                 mock_magic.return_value = "image/png"
-                assert await conversion_service.validate_image(b"fake png data") is True
+                assert (
+                    await conversion_service.validate_image(b"fake png data", "png")
+                    is True
+                )
+
+                # Test mismatch - expecting JPEG but got PNG
+                mock_magic.return_value = "image/png"
+                assert (
+                    await conversion_service.validate_image(b"fake png data", "jpeg")
+                    is False
+                )
 
                 # Test unknown MIME type
                 mock_magic.return_value = "application/octet-stream"
                 assert (
-                    await conversion_service.validate_image(b"unknown data") is True
+                    await conversion_service.validate_image(b"unknown data", "jpeg")
+                    is True
                 )  # Currently allows
 
                 # Test unsupported MIME type
                 mock_magic.return_value = "text/plain"
-                assert await conversion_service.validate_image(b"text data") is False
+                assert (
+                    await conversion_service.validate_image(b"text data", "jpeg")
+                    is False
+                )
 
                 # Test exception handling
                 mock_magic.side_effect = Exception("Magic error")
-                assert await conversion_service.validate_image(b"data") is False
+                assert await conversion_service.validate_image(b"data", "jpeg") is False
         except ImportError:
             # If magic is not installed, that's OK - we tested the fallback above
             pass
 
-    def test_get_supported_formats(self, conversion_service) -> None:
+    def test_get_supported_formats(self, conversion_service):
         """Test getting supported formats."""
         # Act
         formats = conversion_service.get_supported_formats()
@@ -295,28 +314,24 @@ class TestConversionService:
 
     @pytest.mark.asyncio
     async def test_convert_validates_image_content(
-        self, conversion_service, conversion_request, mock_conversion_result
+        self, conversion_service, conversion_request
     ):
         """Test that convert() validates image content before processing."""
         # Arrange
         image_data = b"fake image data"
 
-        # Mock the conversion_manager to raise an InvalidImageError
+        # Mock validate_image to return False
         with patch.object(
-            conversion_service.conversion_manager,
-            "convert_with_output",
-            new_callable=AsyncMock,
-        ) as mock_convert:
-            # Simulate validation failure inside conversion_manager
-            mock_convert.side_effect = InvalidImageError(
-                "File content does not match expected format"
-            )
+            conversion_service, "validate_image", new_callable=AsyncMock
+        ) as mock_validate:
+            mock_validate.return_value = False
 
             # Act & Assert
             with pytest.raises(InvalidImageError) as exc_info:
                 await conversion_service.convert(image_data, conversion_request)
 
             assert "File content does not match expected format" in str(exc_info.value)
+            mock_validate.assert_called_once_with(image_data, "jpeg")
 
     @pytest.mark.asyncio
     async def test_validate_image_fallback(self, conversion_service):
@@ -325,17 +340,21 @@ class TestConversionService:
         with patch("app.services.conversion_service.HAS_MAGIC", False):
             # Test valid JPEG magic bytes
             jpeg_data = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"rest of data"
-            assert await conversion_service.validate_image(jpeg_data) is True
+            assert await conversion_service.validate_image(jpeg_data, "jpeg") is True
+            assert await conversion_service.validate_image(jpeg_data, "jpg") is True
 
             # Test valid PNG magic bytes
             png_data = b"\x89PNG\r\n\x1a\n" + b"rest of data"
-            assert await conversion_service.validate_image(png_data) is True
+            assert await conversion_service.validate_image(png_data, "png") is True
 
-            # Test unknown data - should fail validation
+            # Test mismatch - JPEG magic bytes but expecting PNG
+            assert await conversion_service.validate_image(jpeg_data, "png") is False
+
+            # Test unknown data
             unknown_data = b"unknown file format"
             assert (
-                await conversion_service.validate_image(unknown_data) is False
-            )  # Invalid data should fail
+                await conversion_service.validate_image(unknown_data, "jpeg") is True
+            )  # Falls back to allow
 
     @pytest.mark.asyncio
     async def test_convert_timeout_exceeded(

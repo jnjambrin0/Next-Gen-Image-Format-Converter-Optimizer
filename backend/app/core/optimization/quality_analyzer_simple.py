@@ -1,6 +1,7 @@
 """Simplified quality analyzer without scikit-image dependency."""
 
-from typing import Any, Dict
+import asyncio
+from typing import Any, Dict, Optional
 
 from app.utils.logging import get_logger
 
@@ -10,9 +11,10 @@ logger = get_logger(__name__)
 class QualityAnalyzerSimple:
     """Simple quality analyzer that calculates file size reduction."""
 
-    def __init__(self, enable_caching: bool = True) -> None:
+    def __init__(self, enable_caching: bool = True):
         """Initialize the simple quality analyzer."""
         # No caching needed for simple calculations
+        pass
 
     async def calculate_metrics(
         self,

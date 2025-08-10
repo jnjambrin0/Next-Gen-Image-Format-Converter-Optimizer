@@ -1,5 +1,4 @@
 """
-from typing import Any
 Documentation Module for CLI
 Provides comprehensive help, tutorials, examples, and documentation browsing
 """

@@ -3,10 +3,11 @@
 import asyncio
 import hashlib
 import io
+import os
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
@@ -49,7 +50,7 @@ class IntelligenceEngine:
         fallback_mode: bool = False,
         enable_caching: bool = True,
         cascade_threshold: float = 0.9,
-    ) -> None:
+    ):
         """Initialize the Intelligence Engine.
 
         Args:

@@ -6,7 +6,7 @@ import os
 import resource
 import threading
 from contextlib import contextmanager
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import structlog
 
@@ -18,7 +18,7 @@ logger = structlog.get_logger()
 class MemoryError(SecurityError):
     """Exception raised for memory-related security violations."""
 
-    def __init__(self, message: str, **details) -> None:
+    def __init__(self, message: str, **details):
         super().__init__(
             category="sandbox",
             details={"reason": "memory_tracking", **details},
@@ -29,7 +29,7 @@ class MemoryError(SecurityError):
 class SecureMemoryManager:
     """Manages secure memory allocation and cleanup for image processing."""
 
-    def __init__(self, max_memory_mb: int = 512) -> None:
+    def __init__(self, max_memory_mb: int = 512):
         """
         Initialize secure memory manager.
 
@@ -42,11 +42,11 @@ class SecureMemoryManager:
         self._lock = threading.Lock()
         self._locked_pages: List[Tuple[int, int]] = []
 
-    def __enter__(self) -> None:
+    def __enter__(self):
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit - ensure cleanup."""
         self.cleanup_all()
 
@@ -292,7 +292,7 @@ class SecureMemoryManager:
 
 
 @contextmanager
-def secure_memory_context(max_memory_mb: int = 512, lock_memory: bool = True) -> None:
+def secure_memory_context(max_memory_mb: int = 512, lock_memory: bool = True):
     """
     Context manager for secure memory operations.
 

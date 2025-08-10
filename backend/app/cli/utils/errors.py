@@ -4,7 +4,7 @@ Smart error handling with suggestions
 """
 
 from difflib import get_close_matches
-from typing import Any, Optional
+from typing import List, Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -14,7 +14,7 @@ from rich.text import Text
 class ErrorHandler:
     """Handles errors with helpful suggestions"""
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.known_commands = [
             "convert",
             "batch",
@@ -55,7 +55,7 @@ class ErrorHandler:
         )
         return matches[0] if matches else None
 
-    def handle(self, error: Exception, console: Console) -> None:
+    def handle(self, error: Exception, console: Console):
         """Handle an error with helpful output"""
         error_type = type(error).__name__
         error_msg = str(error)
@@ -127,7 +127,7 @@ class ErrorHandler:
         )
 
 
-def handle_api_error(error: Exception, console: Console) -> None:
+def handle_api_error(error: Exception, console: Console):
     """Handle API-specific errors"""
     if hasattr(error, "response"):
         # HTTP error with response

@@ -24,7 +24,7 @@ except ImportError:
 class AVIFHandler(BaseFormatHandler):
     """Handler for AVIF format."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize AVIF handler."""
         super().__init__()
         self.supported_formats = ["avif"]

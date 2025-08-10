@@ -169,7 +169,8 @@ async def get_security_events(
         event_type: Filter by event type
         severity: Filter by severity level
 
-    Returns: List[Any] of security events matching criteria
+    Returns:
+        List of security events matching criteria
     """
     # Validate parameters
     if hours > 168:  # Max 7 days

@@ -1,5 +1,4 @@
 """
-from typing import Any
 Formats Command
 List and manage supported image formats
 """
@@ -13,7 +12,7 @@ console = Console()
 
 
 @app.command(name="list")
-def formats_list() -> None:
+def formats_list():
     """
     List all supported image formats
 
@@ -45,7 +44,7 @@ def formats_list() -> None:
 @app.command(name="info")
 def formats_info(
     format_name: str,
-) -> None:
+):
     """
     Show detailed information about a format
 
@@ -72,5 +71,6 @@ def formats_info(
 
 
 @app.callback()
-def formats_callback() -> None:
+def formats_callback():
     """Manage supported formats"""
+    pass

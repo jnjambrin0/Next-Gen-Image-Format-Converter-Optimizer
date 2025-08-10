@@ -1,9 +1,11 @@
 """
-from typing import Any
 Unit tests for internationalization
 """
 
-from unittest.mock import patch
+import locale
+from unittest.mock import Mock, patch
+
+import pytest
 
 from app.cli.utils.i18n import I18nManager
 
@@ -11,7 +13,7 @@ from app.cli.utils.i18n import I18nManager
 class TestI18nManager:
     """Test internationalization manager"""
 
-    def test_i18n_manager_init(self) -> None:
+    def test_i18n_manager_init(self):
         """Test i18n manager initialization"""
         with patch("app.cli.utils.i18n.locale.getdefaultlocale") as mock_locale:
             mock_locale.return_value = ("en_US", "UTF-8")
@@ -22,7 +24,7 @@ class TestI18nManager:
             assert manager.fallback_language == "en"
             assert len(manager.translations) > 0
 
-    def test_detect_system_language(self) -> None:
+    def test_detect_system_language(self):
         """Test system language detection"""
         manager = I18nManager()
 
@@ -52,7 +54,7 @@ class TestI18nManager:
             lang = manager._detect_system_language()
             assert lang == "en"
 
-    def test_set_language(self) -> None:
+    def test_set_language(self):
         """Test setting language"""
         manager = I18nManager()
 
@@ -67,7 +69,7 @@ class TestI18nManager:
         manager.set_language("invalid")
         assert manager.current_language == "en"
 
-    def test_get_translation(self) -> None:
+    def test_get_translation(self):
         """Test getting translations"""
         manager = I18nManager()
 
@@ -89,7 +91,7 @@ class TestI18nManager:
         assert manager.get("converting") == "Conversion"
         assert manager.get("error") == "Erreur"
 
-    def test_get_translation_with_formatting(self) -> None:
+    def test_get_translation_with_formatting(self):
         """Test getting translations with formatting"""
         manager = I18nManager()
 
@@ -100,7 +102,7 @@ class TestI18nManager:
         result = manager.get("test_format", filename="image.jpg")
         assert result == "Processing image.jpg"
 
-    def test_get_missing_translation(self) -> None:
+    def test_get_missing_translation(self):
         """Test getting missing translation returns key"""
         manager = I18nManager()
 
@@ -108,7 +110,7 @@ class TestI18nManager:
         result = manager.get("non_existent_key")
         assert result == "non_existent_key"
 
-    def test_fallback_to_english(self) -> None:
+    def test_fallback_to_english(self):
         """Test fallback to English for missing translations"""
         manager = I18nManager()
 
@@ -121,7 +123,7 @@ class TestI18nManager:
         # Should fallback to English
         assert result == "Conversion complete"
 
-    def test_get_available_languages(self) -> None:
+    def test_get_available_languages(self):
         """Test getting available languages"""
         manager = I18nManager()
 
@@ -140,7 +142,7 @@ class TestI18nManager:
         assert "ja" in languages
         assert languages["ja"] == "日本語"
 
-    def test_all_languages_have_basic_translations(self) -> None:
+    def test_all_languages_have_basic_translations(self):
         """Test that all languages have basic required translations"""
         manager = I18nManager()
 

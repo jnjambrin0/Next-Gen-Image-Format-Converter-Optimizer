@@ -1,17 +1,19 @@
 """Unit tests for format alias system."""
 
-from typing import Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from app.core.constants import CANONICAL_FORMATS, FORMAT_ALIASES
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import UnsupportedFormatError
 
 
 class MockHandler(BaseFormatHandler):
     """Mock format handler for testing."""
 
-    def __init__(self, format_name: str) -> None:
+    def __init__(self, format_name: str):
         super().__init__()
         self.format_name = format_name
         self.supported_formats = [format_name]
@@ -22,17 +24,17 @@ class MockHandler(BaseFormatHandler):
     def validate_image(self, image_data: bytes) -> bool:
         return True
 
-    def load_image(self, image_data: bytes) -> None:
+    def load_image(self, image_data: bytes):
         return Mock()
 
-    def save_image(self, image, output_buffer, settings) -> None:
+    def save_image(self, image, output_buffer, settings):
         output_buffer.write(b"mock output")
 
 
 class TestFormatAliases:
     """Test suite for format alias functionality."""
 
-    def test_format_aliases_defined(self) -> None:
+    def test_format_aliases_defined(self):
         """Test that format aliases are properly defined."""
         assert "jpg" in FORMAT_ALIASES
         assert FORMAT_ALIASES["jpg"] == "jpeg"
@@ -46,7 +48,7 @@ class TestFormatAliases:
         assert "tif" in FORMAT_ALIASES
         assert FORMAT_ALIASES["tif"] == "tiff"
 
-    def test_canonical_formats_defined(self) -> None:
+    def test_canonical_formats_defined(self):
         """Test that canonical formats are properly defined."""
         assert "jpeg" in CANONICAL_FORMATS
         assert "png" in CANONICAL_FORMATS
@@ -57,7 +59,7 @@ class TestFormatAliases:
         assert "jpg" not in CANONICAL_FORMATS
         assert "jpegxl" not in CANONICAL_FORMATS
 
-    def test_resolve_format_name(self) -> None:
+    def test_resolve_format_name(self):
         """Test format name resolution."""
         manager = ConversionManager()
 
@@ -73,7 +75,7 @@ class TestFormatAliases:
         # Test unknown formats pass through
         assert manager._resolve_format_name("unknown") == "unknown"
 
-    def test_register_handler_with_alias(self) -> None:
+    def test_register_handler_with_alias(self):
         """Test handler registration with aliases."""
         manager = ConversionManager()
         manager.format_handlers.clear()
@@ -89,7 +91,7 @@ class TestFormatAliases:
         assert "jpg" in manager.available_formats
         assert "jpeg" in manager.available_formats
 
-    def test_get_format_with_fallback_alias(self) -> None:
+    def test_get_format_with_fallback_alias(self):
         """Test format fallback with aliases."""
         manager = ConversionManager()
         manager.format_handlers.clear()
@@ -108,7 +110,7 @@ class TestFormatAliases:
         assert format_to_use == "jpeg"
         assert is_fallback is True
 
-    def test_format_fallback_chains(self) -> None:
+    def test_format_fallback_chains(self):
         """Test that fallback chains use canonical names."""
         manager = ConversionManager()
 
@@ -121,7 +123,7 @@ class TestFormatAliases:
         assert "jpegxl" not in manager.format_fallbacks
         assert "jpeg_optimized" not in manager.format_fallbacks
 
-    def test_is_format_available_with_alias(self) -> None:
+    def test_is_format_available_with_alias(self):
         """Test format availability check with aliases."""
         manager = ConversionManager()
         manager.format_handlers.clear()
@@ -137,7 +139,7 @@ class TestFormatAliases:
         assert manager.is_format_available("png_optimized") is True
         assert manager.is_format_available("png_opt") is True
 
-    def test_handler_initialization_consolidation(self) -> None:
+    def test_handler_initialization_consolidation(self):
         """Test that handler initialization is consolidated."""
         # This is more of an integration test
         manager = ConversionManager()
@@ -150,7 +152,7 @@ class TestFormatAliases:
         if "tiff" in manager.format_handlers and "tif" in manager.format_handlers:
             assert manager.format_handlers["tiff"] == manager.format_handlers["tif"]
 
-    def test_all_aliases_have_canonical(self) -> None:
+    def test_all_aliases_have_canonical(self):
         """Test that all aliases map to valid canonical formats."""
         for alias, canonical in FORMAT_ALIASES.items():
             # Skip if it's a special case (optimized variants)
@@ -160,7 +162,7 @@ class TestFormatAliases:
                 canonical in CANONICAL_FORMATS
             ), f"Alias {alias} maps to {canonical} which is not canonical"
 
-    def test_no_circular_aliases(self) -> None:
+    def test_no_circular_aliases(self):
         """Test that there are no circular alias definitions."""
         for alias, canonical in FORMAT_ALIASES.items():
             # Canonical should not itself be an alias
@@ -168,7 +170,7 @@ class TestFormatAliases:
                 canonical not in FORMAT_ALIASES
             ), f"Circular alias: {alias} -> {canonical}"
 
-    def test_format_case_insensitive(self) -> None:
+    def test_format_case_insensitive(self):
         """Test that format resolution is case-insensitive."""
         manager = ConversionManager()
 

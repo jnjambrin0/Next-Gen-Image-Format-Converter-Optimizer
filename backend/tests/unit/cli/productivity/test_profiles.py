@@ -1,13 +1,14 @@
 """
-from typing import Any
 Comprehensive tests for configuration profiles system
 Tests profile switching, inheritance, and all edge cases
 """
 
 import json
+import shutil
 import tempfile
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
@@ -18,7 +19,7 @@ from app.cli.productivity.profiles import Profile, ProfileManager
 class TestProfile:
     """Test Profile dataclass functionality"""
 
-    def test_profile_creation_with_defaults(self) -> None:
+    def test_profile_creation_with_defaults(self):
         """Test creating a profile with default values"""
         profile = Profile(name="test-profile", description="Test profile")
 
@@ -31,7 +32,7 @@ class TestProfile:
         assert profile.created_at is not None
         assert profile.updated_at is not None
 
-    def test_profile_with_settings(self) -> None:
+    def test_profile_with_settings(self):
         """Test profile with custom settings"""
         settings = {
             "default_output_format": "webp",
@@ -45,7 +46,7 @@ class TestProfile:
 
         assert profile.settings == settings
 
-    def test_profile_with_parent(self) -> None:
+    def test_profile_with_parent(self):
         """Test profile with parent inheritance"""
         profile = Profile(
             name="child",
@@ -57,7 +58,7 @@ class TestProfile:
         assert profile.parent == "web-optimized"
         assert profile.settings["default_quality"] == 95
 
-    def test_profile_to_dict_conversion(self) -> None:
+    def test_profile_to_dict_conversion(self):
         """Test converting profile to dictionary"""
         profile = Profile(
             name="test",
@@ -75,7 +76,7 @@ class TestProfile:
         assert "created_at" in data
         assert "updated_at" in data
 
-    def test_profile_from_dict_conversion(self) -> None:
+    def test_profile_from_dict_conversion(self):
         """Test creating profile from dictionary"""
         data = {
             "name": "imported",
@@ -94,7 +95,7 @@ class TestProfile:
         assert profile.parent == "base"
         assert not profile.is_builtin
 
-    def test_apply_to_config(self) -> None:
+    def test_apply_to_config(self):
         """Test applying profile settings to configuration"""
         config = CLIConfig()
         original_quality = config.default_quality
@@ -115,7 +116,7 @@ class TestProfile:
         assert modified_config.preserve_metadata is True
         assert modified_config.default_output_format == "png"
 
-    def test_get_effective_settings_without_parent(self) -> None:
+    def test_get_effective_settings_without_parent(self):
         """Test getting effective settings without parent"""
         profile = Profile(
             name="standalone",
@@ -127,7 +128,7 @@ class TestProfile:
 
         assert effective == {"quality": 85, "format": "webp"}
 
-    def test_get_effective_settings_with_parent(self) -> None:
+    def test_get_effective_settings_with_parent(self):
         """Test getting effective settings with parent inheritance"""
         parent = Profile(
             name="parent",
@@ -155,20 +156,20 @@ class TestProfileManager:
     """Test ProfileManager functionality"""
 
     @pytest.fixture
-    def temp_config_dir(self) -> None:
+    def temp_config_dir(self):
         """Create temporary config directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
     @pytest.fixture
-    def profile_manager(self, temp_config_dir) -> None:
+    def profile_manager(self, temp_config_dir):
         """Create ProfileManager with temp directory"""
         with patch("app.cli.productivity.profiles.get_config_dir") as mock_config:
             mock_config.return_value = temp_config_dir
             manager = ProfileManager()
             yield manager
 
-    def test_builtin_profiles_loaded(self, profile_manager) -> None:
+    def test_builtin_profiles_loaded(self, profile_manager):
         """Test that all built-in profiles are loaded"""
         builtin_names = [
             "web-optimized",
@@ -184,7 +185,7 @@ class TestProfileManager:
             assert profile.is_builtin is True
             assert profile.name == name
 
-    def test_create_user_profile(self, profile_manager, temp_config_dir) -> None:
+    def test_create_user_profile(self, profile_manager, temp_config_dir):
         """Test creating a new user profile"""
         settings = {"default_output_format": "avif", "default_quality": 92}
 
@@ -206,7 +207,7 @@ class TestProfileManager:
             assert data["name"] == "my-profile"
             assert data["settings"] == settings
 
-    def test_create_profile_with_parent(self, profile_manager) -> None:
+    def test_create_profile_with_parent(self, profile_manager):
         """Test creating profile with parent inheritance"""
         profile = profile_manager.create_profile(
             name="web-enhanced",
@@ -218,7 +219,7 @@ class TestProfileManager:
         assert profile.parent == "web-optimized"
         assert profile.settings["default_quality"] == 88
 
-    def test_create_duplicate_profile_fails(self, profile_manager) -> None:
+    def test_create_duplicate_profile_fails(self, profile_manager):
         """Test that creating duplicate profile fails"""
         profile_manager.create_profile(
             name="duplicate", description="First", settings={}
@@ -229,7 +230,7 @@ class TestProfileManager:
                 name="duplicate", description="Second", settings={}
             )
 
-    def test_create_profile_with_invalid_parent_fails(self, profile_manager) -> None:
+    def test_create_profile_with_invalid_parent_fails(self, profile_manager):
         """Test that invalid parent causes error"""
         with pytest.raises(ValueError, match="Parent profile .* not found"):
             profile_manager.create_profile(
@@ -239,7 +240,7 @@ class TestProfileManager:
                 parent="non-existent",
             )
 
-    def test_update_user_profile(self, profile_manager) -> None:
+    def test_update_user_profile(self, profile_manager):
         """Test updating an existing user profile"""
         # Create initial profile
         profile_manager.create_profile(
@@ -259,14 +260,14 @@ class TestProfileManager:
         assert updated.settings["quality"] == 90
         assert updated.settings["new_key"] == "new_value"
 
-    def test_cannot_update_builtin_profile(self, profile_manager) -> None:
+    def test_cannot_update_builtin_profile(self, profile_manager):
         """Test that built-in profiles cannot be updated"""
         with pytest.raises(ValueError, match="Cannot update built-in profile"):
             profile_manager.update_profile(
                 name="web-optimized", settings={"quality": 100}
             )
 
-    def test_delete_user_profile(self, profile_manager, temp_config_dir) -> None:
+    def test_delete_user_profile(self, profile_manager, temp_config_dir):
         """Test deleting a user profile"""
         # Create profile
         profile_manager.create_profile(
@@ -282,12 +283,12 @@ class TestProfileManager:
         assert not profile_file.exists()
         assert profile_manager.get_profile("deletable") is None
 
-    def test_cannot_delete_builtin_profile(self, profile_manager) -> None:
+    def test_cannot_delete_builtin_profile(self, profile_manager):
         """Test that built-in profiles cannot be deleted"""
         with pytest.raises(ValueError, match="Cannot delete built-in profile"):
             profile_manager.delete_profile("web-optimized")
 
-    def test_switch_profile(self, profile_manager) -> None:
+    def test_switch_profile(self, profile_manager):
         """Test switching between profiles"""
         # Initially no active profile
         assert profile_manager.get_active_profile() is None
@@ -303,12 +304,12 @@ class TestProfileManager:
         assert profile is None
         assert profile_manager.active_profile is None
 
-    def test_switch_to_nonexistent_profile_fails(self, profile_manager) -> None:
+    def test_switch_to_nonexistent_profile_fails(self, profile_manager):
         """Test switching to non-existent profile fails"""
         with pytest.raises(ValueError, match="Profile .* not found"):
             profile_manager.switch_profile("non-existent")
 
-    def test_apply_active_profile_to_config(self, profile_manager) -> None:
+    def test_apply_active_profile_to_config(self, profile_manager):
         """Test applying active profile to configuration"""
         config = CLIConfig()
         original_quality = config.default_quality
@@ -323,7 +324,7 @@ class TestProfileManager:
         assert result.default_quality == 85  # web-optimized setting
         assert result.preserve_metadata is False
 
-    def test_profile_inheritance_chain(self, profile_manager) -> None:
+    def test_profile_inheritance_chain(self, profile_manager):
         """Test complex inheritance chain"""
         # Create base profile
         base = profile_manager.create_profile(
@@ -364,7 +365,7 @@ class TestProfileManager:
         # Grandchild settings should be applied
         assert profile_manager.active_profile == "grandchild"
 
-    def test_list_profiles(self, profile_manager) -> None:
+    def test_list_profiles(self, profile_manager):
         """Test listing all profiles"""
         # Create some user profiles
         profile_manager.create_profile("user1", "User 1", {})
@@ -387,7 +388,7 @@ class TestProfileManager:
         assert "user2" in user_names
         assert "web-optimized" not in user_names
 
-    def test_export_profile(self, profile_manager, temp_config_dir) -> None:
+    def test_export_profile(self, profile_manager, temp_config_dir):
         """Test exporting a profile"""
         # Create profile
         profile_manager.create_profile(
@@ -406,7 +407,7 @@ class TestProfileManager:
             assert data["name"] == "exportable"
             assert data["settings"]["key"] == "value"
 
-    def test_import_profile(self, profile_manager, temp_config_dir) -> None:
+    def test_import_profile(self, profile_manager, temp_config_dir):
         """Test importing a profile"""
         # Create import file
         import_data = {
@@ -432,7 +433,7 @@ class TestProfileManager:
         loaded = profile_manager.get_profile("imported")
         assert loaded is not None
 
-    def test_import_profile_with_rename(self, profile_manager, temp_config_dir) -> None:
+    def test_import_profile_with_rename(self, profile_manager, temp_config_dir):
         """Test importing profile with rename"""
         import_data = {"name": "original", "description": "Original", "settings": {}}
 
@@ -449,7 +450,7 @@ class TestProfileManager:
 
     def test_import_duplicate_profile_autorenames(
         self, profile_manager, temp_config_dir
-    ) -> None:
+    ):
         """Test importing duplicate profile auto-renames"""
         # Create existing profile
         profile_manager.create_profile("existing", "Existing", {})
@@ -467,7 +468,7 @@ class TestProfileManager:
         assert profile.name.startswith("existing_")
         assert profile.name != "existing"
 
-    def test_clone_profile(self, profile_manager) -> None:
+    def test_clone_profile(self, profile_manager):
         """Test cloning a profile"""
         # Clone built-in profile
         cloned = profile_manager.clone_profile(
@@ -483,19 +484,19 @@ class TestProfileManager:
         )
         assert not cloned.is_builtin
 
-    def test_clone_nonexistent_profile_fails(self, profile_manager) -> None:
+    def test_clone_nonexistent_profile_fails(self, profile_manager):
         """Test cloning non-existent profile fails"""
         with pytest.raises(ValueError, match="Source profile .* not found"):
             profile_manager.clone_profile("non-existent", "new-name")
 
-    def test_clone_to_existing_name_fails(self, profile_manager) -> None:
+    def test_clone_to_existing_name_fails(self, profile_manager):
         """Test cloning to existing name fails"""
         profile_manager.create_profile("existing", "Existing", {})
 
         with pytest.raises(ValueError, match="Profile .* already exists"):
             profile_manager.clone_profile("web-optimized", "existing")
 
-    def test_profile_overrides(self, profile_manager) -> None:
+    def test_profile_overrides(self, profile_manager):
         """Test command-specific overrides"""
         profile = Profile(
             name="override-test",
@@ -511,7 +512,7 @@ class TestProfileManager:
         assert profile.overrides["convert"]["max_width"] == 1920
         assert profile.overrides["batch"]["workers"] == 8
 
-    def test_profile_persistence_across_instances(self, temp_config_dir) -> None:
+    def test_profile_persistence_across_instances(self, temp_config_dir):
         """Test profiles persist across ProfileManager instances"""
         with patch("app.cli.productivity.profiles.get_config_dir") as mock_config:
             mock_config.return_value = temp_config_dir
@@ -532,7 +533,7 @@ class TestProfileManager:
             assert profile.name == "persistent"
             assert profile.settings["key"] == "value"
 
-    def test_profile_file_permissions(self, profile_manager, temp_config_dir) -> None:
+    def test_profile_file_permissions(self, profile_manager, temp_config_dir):
         """Test that profile files have correct permissions"""
         import os
         import stat
@@ -553,7 +554,7 @@ class TestProfileManager:
         # Note: Permission checks may vary by OS and filesystem
         # This test documents the expected behavior
 
-    def test_empty_profile_directory(self, temp_config_dir) -> None:
+    def test_empty_profile_directory(self, temp_config_dir):
         """Test ProfileManager handles empty profile directory"""
         with patch("app.cli.productivity.profiles.get_config_dir") as mock_config:
             mock_config.return_value = temp_config_dir
@@ -567,7 +568,7 @@ class TestProfileManager:
             builtin_profiles = manager.list_profiles(include_builtin=True)
             assert len(builtin_profiles) == 5  # 5 built-in profiles
 
-    def test_corrupt_profile_file_ignored(self, temp_config_dir) -> None:
+    def test_corrupt_profile_file_ignored(self, temp_config_dir):
         """Test that corrupt profile files are ignored"""
         profiles_dir = temp_config_dir / "profiles"
         profiles_dir.mkdir(parents=True, exist_ok=True)
@@ -591,7 +592,7 @@ class TestProfileIntegration:
     """Integration tests for profile system"""
 
     @pytest.fixture
-    def full_setup(self, tmp_path) -> None:
+    def full_setup(self, tmp_path):
         """Set up full profile system with config"""
         config_dir = tmp_path / "config"
         config_dir.mkdir(parents=True, exist_ok=True)
@@ -604,7 +605,7 @@ class TestProfileIntegration:
 
             yield manager, config, config_dir
 
-    def test_profile_switching_workflow(self, full_setup) -> None:
+    def test_profile_switching_workflow(self, full_setup):
         """Test complete profile switching workflow"""
         manager, config, config_dir = full_setup
 
@@ -647,7 +648,7 @@ class TestProfileIntegration:
         # Should revert to original
         assert modified_config.default_quality == original_quality
 
-    def test_inheritance_with_real_configs(self, full_setup) -> None:
+    def test_inheritance_with_real_configs(self, full_setup):
         """Test inheritance with realistic configuration scenarios"""
         manager, config, _ = full_setup
 
@@ -696,7 +697,7 @@ class TestProfileIntegration:
         assert final_config.language == "es"  # From john-doe
         # Note: Current implementation only supports single-level inheritance
 
-    def test_profile_export_import_cycle(self, full_setup) -> None:
+    def test_profile_export_import_cycle(self, full_setup):
         """Test complete export/import cycle"""
         manager, _, config_dir = full_setup
 

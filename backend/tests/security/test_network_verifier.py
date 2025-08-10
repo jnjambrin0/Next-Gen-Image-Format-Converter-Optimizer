@@ -1,5 +1,4 @@
 """
-from typing import Any
 Tests for enhanced network isolation verification.
 """
 
@@ -89,7 +88,7 @@ class TestNetworkVerifier:
         not (command_available("ss") or command_available("netstat")),
         reason="Requires ss or netstat command",
     )
-    def test_localhost_binding_check_failure(self) -> None:
+    def test_localhost_binding_check_failure(self):
         """Test detection of non-localhost binding."""
         verifier = NetworkVerifier()
 
@@ -105,7 +104,7 @@ class TestNetworkVerifier:
             assert len(result["warnings"]) > 0
             assert "all interfaces" in result["warnings"][0]
 
-    def test_active_connections_check_failure(self) -> None:
+    def test_active_connections_check_failure(self):
         """Test detection of non-localhost connections."""
         verifier = NetworkVerifier()
 
@@ -144,7 +143,7 @@ class TestNetworkVerifier:
             assert result["passed"] is False
             assert len(result["warnings"]) > 0
 
-    def test_network_interfaces_check(self) -> None:
+    def test_network_interfaces_check(self):
         """Test network interface verification."""
         verifier = NetworkVerifier()
 
@@ -175,7 +174,7 @@ class TestNetworkVerifier:
                 "Non-loopback network interface" in w for w in result["warnings"]
             )
 
-    def test_get_status_summary(self) -> None:
+    def test_get_status_summary(self):
         """Test status summary generation."""
         verifier = NetworkVerifier(strictness=NetworkStrictness.STRICT)
 
@@ -241,7 +240,7 @@ class TestNetworkVerifier:
             assert status["isolated"] is True
             assert status["strictness"] == "standard"
 
-    def test_get_metrics(self) -> None:
+    def test_get_metrics(self):
         """Test metrics collection and retrieval."""
         verifier = NetworkVerifier(strictness=NetworkStrictness.STRICT)
 

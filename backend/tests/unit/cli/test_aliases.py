@@ -1,12 +1,11 @@
 """
-from typing import Any
 Unit tests for alias system
 """
 
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -17,7 +16,7 @@ class TestAliasManager:
     """Test alias manager"""
 
     @pytest.fixture
-    def temp_alias_file(self) -> None:
+    def temp_alias_file(self):
         """Create temporary alias file"""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             aliases = {"c": "convert", "b": "batch", "o": "optimize"}
@@ -27,7 +26,7 @@ class TestAliasManager:
         yield temp_path
         temp_path.unlink(missing_ok=True)
 
-    def test_alias_manager_init_no_file(self) -> None:
+    def test_alias_manager_init_no_file(self):
         """Test alias manager initialization without existing file"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = Path("/nonexistent/aliases.json")
@@ -40,7 +39,7 @@ class TestAliasManager:
             assert "b" in manager.aliases
             assert manager.aliases["b"] == "batch"
 
-    def test_alias_manager_init_with_file(self, temp_alias_file) -> None:
+    def test_alias_manager_init_with_file(self, temp_alias_file):
         """Test alias manager initialization with existing file"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = temp_alias_file
@@ -52,7 +51,7 @@ class TestAliasManager:
             assert "b" in manager.aliases
             assert manager.aliases["b"] == "batch"
 
-    def test_add_alias(self) -> None:
+    def test_add_alias(self):
         """Test adding a new alias"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             temp_file = Path("/tmp/test_aliases.json")
@@ -67,7 +66,7 @@ class TestAliasManager:
                 assert "test" in manager.aliases
                 assert manager.aliases["test"] == "test_command"
 
-    def test_remove_alias(self) -> None:
+    def test_remove_alias(self):
         """Test removing an alias"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = Path("/tmp/test_aliases.json")
@@ -82,7 +81,7 @@ class TestAliasManager:
                 assert "test" not in manager.aliases
                 assert "keep" in manager.aliases
 
-    def test_remove_nonexistent_alias(self) -> None:
+    def test_remove_nonexistent_alias(self):
         """Test removing a non-existent alias"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = Path("/tmp/test_aliases.json")
@@ -93,7 +92,7 @@ class TestAliasManager:
 
             assert result == False
 
-    def test_get_alias(self) -> None:
+    def test_get_alias(self):
         """Test getting an alias"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = Path("/tmp/test_aliases.json")
@@ -104,7 +103,7 @@ class TestAliasManager:
             assert manager.get_alias("test") == "test_command"
             assert manager.get_alias("nonexistent") is None
 
-    def test_list_aliases(self) -> None:
+    def test_list_aliases(self):
         """Test listing all aliases"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = Path("/tmp/test_aliases.json")
@@ -119,7 +118,7 @@ class TestAliasManager:
             aliases["c"] = "cmd_c"
             assert "c" not in manager.aliases
 
-    def test_save_aliases(self, tmp_path) -> None:
+    def test_save_aliases(self, tmp_path):
         """Test saving aliases to file"""
         alias_file = tmp_path / "aliases.json"
 
@@ -137,7 +136,7 @@ class TestAliasManager:
 
             assert saved_aliases == {"test": "test_command"}
 
-    def test_default_aliases(self) -> None:
+    def test_default_aliases(self):
         """Test default aliases are correct"""
         with patch("app.cli.utils.aliases.get_aliases_file") as mock_get_file:
             mock_get_file.return_value = Path("/nonexistent/aliases.json")

@@ -1,14 +1,15 @@
 """Test data generators for dynamic test data creation."""
 
 import io
+import json
 import random
 import string
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import piexif
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 
 class ImageGenerator:
@@ -58,7 +59,7 @@ class ImageGenerator:
         return output.getvalue()
 
     @staticmethod
-    def _draw_photo_content(draw: ImageDraw.Draw, width: int, height: int) -> None:
+    def _draw_photo_content(draw: ImageDraw.Draw, width: int, height: int):
         """Draw photo-like content."""
         # Create gradient background
         for y in range(height):
@@ -80,7 +81,7 @@ class ImageGenerator:
             draw.ellipse([(x - r, y - r), (x + r, y + r)], fill=color)
 
     @staticmethod
-    def _draw_screenshot_content(draw: ImageDraw.Draw, width: int, height: int) -> None:
+    def _draw_screenshot_content(draw: ImageDraw.Draw, width: int, height: int):
         """Draw screenshot-like content."""
         # Window chrome
         draw.rectangle([(0, 0), (width, 30)], fill=(60, 60, 60))
@@ -102,7 +103,7 @@ class ImageGenerator:
             draw.rectangle([(30, y + 10), (100, y + 30)], fill=(100, 150, 255))
 
     @staticmethod
-    def _draw_document_content(draw: ImageDraw.Draw, width: int, height: int) -> None:
+    def _draw_document_content(draw: ImageDraw.Draw, width: int, height: int):
         """Draw document-like content."""
         # White background
         draw.rectangle([(0, 0), (width, height)], fill=(255, 255, 255))
@@ -124,9 +125,7 @@ class ImageGenerator:
                 y += line_height
 
     @staticmethod
-    def _draw_illustration_content(
-        draw: ImageDraw.Draw, width: int, height: int
-    ) -> None:
+    def _draw_illustration_content(draw: ImageDraw.Draw, width: int, height: int):
         """Draw illustration-like content."""
         # Colorful abstract shapes
         for _ in range(10):

@@ -1,12 +1,11 @@
 """
-from typing import Any
 Unit tests for the autocomplete engine
 """
 
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
@@ -20,28 +19,28 @@ from app.cli.productivity.autocomplete import (
 class TestPrivacySanitizer:
     """Test privacy sanitization functionality"""
 
-    def test_sanitize_removes_unix_paths(self) -> None:
+    def test_sanitize_removes_unix_paths(self):
         """Test that Unix paths are removed"""
         command = "img convert /home/user/photos/vacation.jpg -f webp"
         sanitized = PrivacySanitizer.sanitize(command)
         assert "/home/user/photos/vacation.jpg" not in sanitized
         assert "<PATH>" in sanitized or "<FILE>" in sanitized
 
-    def test_sanitize_removes_windows_paths(self) -> None:
+    def test_sanitize_removes_windows_paths(self):
         """Test that Windows paths are removed"""
         command = "img convert C:\\Users\\John\\Documents\\photo.png -f avif"
         sanitized = PrivacySanitizer.sanitize(command)
         assert "C:\\Users\\John\\Documents\\photo.png" not in sanitized
         assert "<PATH>" in sanitized or "<FILE>" in sanitized
 
-    def test_sanitize_removes_relative_paths(self) -> None:
+    def test_sanitize_removes_relative_paths(self):
         """Test that relative paths are removed"""
         command = "img batch ./images/*.jpg --format webp"
         sanitized = PrivacySanitizer.sanitize(command)
         assert "./images/*.jpg" not in sanitized
         assert "<PATH>" in sanitized
 
-    def test_sanitize_removes_filenames(self) -> None:
+    def test_sanitize_removes_filenames(self):
         """Test that filenames are removed"""
         command = "img convert photo.jpg output.webp -q 85"
         sanitized = PrivacySanitizer.sanitize(command)
@@ -49,28 +48,28 @@ class TestPrivacySanitizer:
         assert "output.webp" not in sanitized
         assert "<FILE>" in sanitized
 
-    def test_sanitize_removes_email_addresses(self) -> None:
+    def test_sanitize_removes_email_addresses(self):
         """Test that email addresses are removed"""
         command = "img convert photo.jpg --author john.doe@example.com"
         sanitized = PrivacySanitizer.sanitize(command)
         assert "john.doe@example.com" not in sanitized
         assert "<EMAIL>" in sanitized
 
-    def test_sanitize_removes_ip_addresses(self) -> None:
+    def test_sanitize_removes_ip_addresses(self):
         """Test that IP addresses are removed"""
         command = "img convert --server 192.168.1.100 photo.jpg"
         sanitized = PrivacySanitizer.sanitize(command)
         assert "192.168.1.100" not in sanitized
         assert "<IP>" in sanitized
 
-    def test_sanitize_removes_urls(self) -> None:
+    def test_sanitize_removes_urls(self):
         """Test that URLs are removed"""
         command = "img convert https://example.com/image.jpg -f webp"
         sanitized = PrivacySanitizer.sanitize(command)
         assert "https://example.com/image.jpg" not in sanitized
         assert "<URL>" in sanitized
 
-    def test_sanitize_removes_quoted_strings(self) -> None:
+    def test_sanitize_removes_quoted_strings(self):
         """Test that quoted strings are removed"""
         command = 'img convert "My Personal Photo.jpg" -o "output file.webp"'
         sanitized = PrivacySanitizer.sanitize(command)
@@ -78,7 +77,7 @@ class TestPrivacySanitizer:
         assert "output file.webp" not in sanitized
         assert '"<STRING>"' in sanitized
 
-    def test_sanitize_preserves_command_structure(self) -> None:
+    def test_sanitize_preserves_command_structure(self):
         """Test that command structure is preserved"""
         command = "img convert photo.jpg -f webp -q 85 --preset web"
         sanitized = PrivacySanitizer.sanitize(command)
@@ -92,24 +91,24 @@ class TestCommandLearner:
     """Test command learning functionality"""
 
     @pytest.fixture
-    def temp_dir(self) -> None:
+    def temp_dir(self):
         """Create temporary directory for test data"""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
     @pytest.fixture
-    def learner(self, temp_dir) -> None:
+    def learner(self, temp_dir):
         """Create CommandLearner instance"""
         return CommandLearner(temp_dir)
 
-    def test_learner_creates_encryption_key(self, temp_dir) -> None:
+    def test_learner_creates_encryption_key(self, temp_dir):
         """Test that encryption key is created"""
         learner = CommandLearner(temp_dir)
         key_file = temp_dir / ".key"
         assert key_file.exists()
         assert key_file.stat().st_mode & 0o777 == 0o600
 
-    def test_learner_loads_existing_key(self, temp_dir) -> None:
+    def test_learner_loads_existing_key(self, temp_dir):
         """Test that existing key is loaded"""
         from cryptography.fernet import Fernet
 
@@ -124,7 +123,7 @@ class TestCommandLearner:
         # Both should load the same key
         assert learner1.encryption_key == learner2.encryption_key
 
-    def test_learn_updates_command_frequency(self, learner) -> None:
+    def test_learn_updates_command_frequency(self, learner):
         """Test that command frequency is updated"""
         learner.learn("img convert <FILE> -f webp")
         learner.learn("img convert <FILE> -f avif")
@@ -134,7 +133,7 @@ class TestCommandLearner:
         assert learner.patterns["commands"]["convert"] == 2
         assert learner.patterns["commands"]["batch"] == 1
 
-    def test_learn_tracks_parameters(self, learner) -> None:
+    def test_learn_tracks_parameters(self, learner):
         """Test that parameters are tracked"""
         learner.learn("img convert <FILE> -f webp -q 85")
         learner.learn("img convert <FILE> -f avif -q 90")
@@ -143,7 +142,7 @@ class TestCommandLearner:
         assert learner.patterns["parameters"][param_key]["-f"] == 2
         assert learner.patterns["parameters"][param_key]["-q"] == 2
 
-    def test_learn_tracks_sequences(self, learner) -> None:
+    def test_learn_tracks_sequences(self, learner):
         """Test that command sequences are tracked"""
         learner.learn("img convert <FILE>", previous_command="img")
         learner.learn("img batch <PATH>", previous_command="img")
@@ -151,7 +150,7 @@ class TestCommandLearner:
 
         assert learner.patterns["sequences"]["_sequences"]["img -> img"] == 3
 
-    def test_learn_tracks_context(self, learner) -> None:
+    def test_learn_tracks_context(self, learner):
         """Test that context patterns are tracked"""
         learner.learn("img convert <FILE>", context="photo_dir")
         learner.learn("img optimize <FILE>", context="photo_dir")
@@ -160,7 +159,7 @@ class TestCommandLearner:
         assert learner.patterns["contexts"]["photo_dir"]["img"] == 2
         assert learner.patterns["contexts"]["document_dir"]["img"] == 1
 
-    def test_get_suggestions_basic(self, learner) -> None:
+    def test_get_suggestions_basic(self, learner):
         """Test basic suggestion generation"""
         learner.learn("img convert <FILE>")
         learner.learn("img convert <FILE>")
@@ -173,7 +172,7 @@ class TestCommandLearner:
         suggestions = learner.get_suggestions("con", limit=3)
         assert any("convert" in s for s in suggestions)
 
-    def test_get_suggestions_with_context(self, learner) -> None:
+    def test_get_suggestions_with_context(self, learner):
         """Test context-aware suggestions"""
         learner.learn("img convert <FILE>", context="photo_dir")
         learner.learn("img convert <FILE>", context="photo_dir")
@@ -187,7 +186,7 @@ class TestCommandLearner:
         suggestions = learner.get_suggestions("img", context="photo_dir", limit=3)
         assert len(suggestions) > 0
 
-    def test_save_and_load_patterns(self, temp_dir) -> None:
+    def test_save_and_load_patterns(self, temp_dir):
         """Test that patterns are saved and loaded correctly"""
         learner1 = CommandLearner(temp_dir)
         learner1.learn("img convert <FILE>")
@@ -200,7 +199,7 @@ class TestCommandLearner:
         assert learner2.patterns["commands"]["convert"] == 1
         assert learner2.patterns["commands"]["batch"] == 1
 
-    def test_cleanup_old_data(self, learner) -> None:
+    def test_cleanup_old_data(self, learner):
         """Test that old data is cleaned up"""
         from datetime import datetime, timedelta
 
@@ -221,7 +220,7 @@ class TestAutocompleteEngine:
     """Test the main autocomplete engine"""
 
     @pytest.fixture
-    def engine(self) -> None:
+    def engine(self):
         """Create AutocompleteEngine instance"""
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch(
@@ -230,14 +229,14 @@ class TestAutocompleteEngine:
                 mock_config.return_value = Path(tmpdir)
                 yield AutocompleteEngine()
 
-    def test_engine_initializes_components(self, engine) -> None:
+    def test_engine_initializes_components(self, engine):
         """Test that engine initializes all components"""
         assert engine.sanitizer is not None
         assert engine.learner is not None
         assert engine.command_registry is not None
         assert engine.previous_command is None
 
-    def test_record_command_sanitizes_input(self, engine) -> None:
+    def test_record_command_sanitizes_input(self, engine):
         """Test that commands are sanitized before learning"""
         with patch.object(engine.learner, "learn") as mock_learn:
             engine.record_command("img convert /home/user/photo.jpg -f webp")
@@ -248,7 +247,7 @@ class TestAutocompleteEngine:
             assert "/home/user/photo.jpg" not in args[0]
             assert "<FILE>" in args[0] or "<PATH>" in args[0]
 
-    def test_get_suggestions_for_commands(self, engine) -> None:
+    def test_get_suggestions_for_commands(self, engine):
         """Test command suggestions"""
         suggestions = engine.get_suggestions("")
         assert len(suggestions) > 0
@@ -256,7 +255,7 @@ class TestAutocompleteEngine:
         assert any("batch" in s[0] for s in suggestions)
         assert any("optimize" in s[0] for s in suggestions)
 
-    def test_get_suggestions_for_partial_commands(self, engine) -> None:
+    def test_get_suggestions_for_partial_commands(self, engine):
         """Test partial command suggestions"""
         suggestions = engine.get_suggestions("con")
         assert any("convert" in s[0] for s in suggestions)
@@ -264,13 +263,13 @@ class TestAutocompleteEngine:
         suggestions = engine.get_suggestions("ba")
         assert any("batch" in s[0] for s in suggestions)
 
-    def test_get_suggestions_for_parameters(self, engine) -> None:
+    def test_get_suggestions_for_parameters(self, engine):
         """Test parameter suggestions"""
         suggestions = engine.get_suggestions("convert -")
         assert any("-f" in s[0] or "--format" in s[0] for s in suggestions)
         assert any("-q" in s[0] or "--quality" in s[0] for s in suggestions)
 
-    def test_get_suggestions_filters_used_parameters(self, engine) -> None:
+    def test_get_suggestions_filters_used_parameters(self, engine):
         """Test that used parameters are filtered"""
         suggestions = engine.get_suggestions("convert -f webp -")
 
@@ -279,7 +278,7 @@ class TestAutocompleteEngine:
         # But other parameters should be suggested
         assert any("-q" in s[0] or "--quality" in s[0] for s in suggestions)
 
-    def test_get_parameter_values(self, engine) -> None:
+    def test_get_parameter_values(self, engine):
         """Test parameter value suggestions"""
         values = engine.get_parameter_values("convert", "-f")
         assert "webp" in values
@@ -294,7 +293,7 @@ class TestAutocompleteEngine:
         assert "web" in values
         assert "print" in values
 
-    def test_export_learning_data(self, engine) -> None:
+    def test_export_learning_data(self, engine):
         """Test export of learning data"""
         engine.record_command("img convert photo.jpg -f webp")
         engine.record_command("img batch *.png -f avif")
@@ -321,7 +320,7 @@ class TestAutocompleteEngine:
         finally:
             export_path.unlink(missing_ok=True)
 
-    def test_import_learning_data(self, engine) -> None:
+    def test_import_learning_data(self, engine):
         """Test import of learning data"""
         import_data = {
             "commands": {"convert": 10, "batch": 5, "optimize": 3},
@@ -344,7 +343,7 @@ class TestAutocompleteEngine:
         finally:
             import_path.unlink(missing_ok=True)
 
-    def test_import_rejects_invalid_commands(self, engine) -> None:
+    def test_import_rejects_invalid_commands(self, engine):
         """Test that import rejects commands not in registry"""
         import_data = {
             "commands": {
@@ -371,7 +370,7 @@ class TestAutocompleteEngine:
         finally:
             import_path.unlink(missing_ok=True)
 
-    def test_command_registry_completeness(self, engine) -> None:
+    def test_command_registry_completeness(self, engine):
         """Test that command registry has all required commands"""
         required_commands = [
             "convert",

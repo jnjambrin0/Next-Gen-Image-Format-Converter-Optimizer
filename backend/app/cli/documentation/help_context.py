@@ -3,12 +3,17 @@ Help Context Analyzer
 Provides context-aware help based on current command state
 """
 
+import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
 import typer
+from rich.columns import Columns
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
@@ -48,7 +53,7 @@ class HelpContextAnalyzer:
 
     def __init__(
         self, console: Optional[Console] = None, cache_ttl: int = DEFAULT_CACHE_TTL
-    ) -> None:
+    ):
         self.console = console or Console()
         self.fuzzy_searcher = FuzzySearcher(threshold=60.0)
         self._help_cache: Dict[str, HelpContext] = {}
@@ -58,7 +63,7 @@ class HelpContextAnalyzer:
         self._cache_access_count: Dict[str, int] = {}  # Track access frequency
         self._load_help_database()
 
-    def _load_help_database(self) -> None:
+    def _load_help_database(self):
         """Load help content database"""
         # Help content is embedded for offline operation
         self.help_topics = {
@@ -302,7 +307,8 @@ class HelpContextAnalyzer:
         Args:
             query: Search query
 
-        Returns: List[Any] of matching help topics
+        Returns:
+            List of matching help topics
         """
         results = []
         query_lower = query.lower()
@@ -345,7 +351,7 @@ class HelpContextAnalyzer:
 
         return results[:10]  # Return top 10 results
 
-    def display_context_help(self, context: HelpContext, verbose: bool = False) -> None:
+    def display_context_help(self, context: HelpContext, verbose: bool = False):
         """
         Display context-aware help in the console
 
@@ -408,7 +414,7 @@ class HelpContextAnalyzer:
             # Command not found - show suggestions
             self._display_suggestions(context)
 
-    def _display_general_help(self) -> None:
+    def _display_general_help(self):
         """Display general help when no command is specified"""
         # Create command table
         table = Table(title="Available Commands", box=None, padding=(0, 2))
@@ -427,7 +433,7 @@ class HelpContextAnalyzer:
             "\n[yellow]Use 'img COMMAND --help' for detailed help[/yellow]"
         )
 
-    def _display_suggestions(self, context: HelpContext) -> None:
+    def _display_suggestions(self, context: HelpContext):
         """Display command suggestions"""
         if context.suggestions:
             self.console.print("[yellow]Did you mean:[/yellow]")
@@ -441,14 +447,14 @@ class HelpContextAnalyzer:
                 "[yellow]Use 'img --help' to see available commands[/yellow]"
             )
 
-    def clear_cache(self) -> None:
+    def clear_cache(self):
         """Clear help cache"""
         self._help_cache.clear()
         self._cache_timestamps.clear()
         self._cache_access_count.clear()
         self._last_cleanup = time.time()
 
-    def _maybe_cleanup_cache(self, force: bool = False) -> None:
+    def _maybe_cleanup_cache(self, force: bool = False):
         """Perform cache cleanup if needed"""
         current_time = time.time()
 
@@ -474,13 +480,13 @@ class HelpContextAnalyzer:
         if len(self._help_cache) > self.MAX_CACHE_SIZE:
             self._evict_lru_entries()
 
-    def _evict_cache_entry(self, key: str) -> None:
+    def _evict_cache_entry(self, key: str):
         """Evict a single cache entry"""
         self._help_cache.pop(key, None)
         self._cache_timestamps.pop(key, None)
         self._cache_access_count.pop(key, None)
 
-    def _evict_lru_entries(self) -> None:
+    def _evict_lru_entries(self):
         """Evict least recently used entries to maintain cache size"""
         if len(self._help_cache) <= self.MAX_CACHE_SIZE:
             return

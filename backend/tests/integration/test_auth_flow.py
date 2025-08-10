@@ -1,6 +1,6 @@
 """Integration tests for API authentication flow."""
 
-from typing import Any
+import json
 from datetime import datetime, timedelta
 
 import pytest
@@ -17,7 +17,7 @@ class TestAuthenticationFlow:
     """Test the complete authentication flow."""
 
     @pytest.fixture(scope="function")
-    def client(self) -> None:
+    def client(self):
         """Create test client with clean database."""
         # Use in-memory database for tests
         engine = create_engine("sqlite:///:memory:")
@@ -31,14 +31,14 @@ class TestAuthenticationFlow:
             yield client
 
     @pytest.fixture
-    def sample_api_key(self, client) -> None:
+    def sample_api_key(self, client):
         """Create a sample API key for testing."""
         api_key_record, raw_key = api_key_service.create_api_key(
             name="Test Integration Key", rate_limit_override=100
         )
         return api_key_record, raw_key
 
-    def test_create_api_key_endpoint(self, client) -> None:
+    def test_create_api_key_endpoint(self, client):
         """Test API key creation endpoint."""
         payload = {
             "name": "Integration Test Key",
@@ -67,7 +67,7 @@ class TestAuthenticationFlow:
         assert key_info["is_active"] is True
         assert key_info["expires_at"] is not None
 
-    def test_create_api_key_minimal(self, client) -> None:
+    def test_create_api_key_minimal(self, client):
         """Test API key creation with minimal data."""
         response = client.post("/api/auth/api-keys", json={})
 
@@ -81,7 +81,7 @@ class TestAuthenticationFlow:
         assert key_info["rate_limit_override"] is None
         assert key_info["expires_at"] is None
 
-    def test_create_api_key_validation_errors(self, client) -> None:
+    def test_create_api_key_validation_errors(self, client):
         """Test API key creation validation."""
         # Empty name should be rejected
         response = client.post("/api/auth/api-keys", json={"name": ""})
@@ -96,7 +96,7 @@ class TestAuthenticationFlow:
         response = client.post("/api/auth/api-keys", json={"expires_days": 400})
         assert response.status_code == 422  # FastAPI validation error
 
-    def test_list_api_keys_endpoint(self, client, sample_api_key) -> None:
+    def test_list_api_keys_endpoint(self, client, sample_api_key):
         """Test API key listing endpoint."""
         api_key_record, _ = sample_api_key
 
@@ -125,7 +125,7 @@ class TestAuthenticationFlow:
         key_names = [key["name"] for key in data]
         assert "To Revoke" in key_names
 
-    def test_get_api_key_endpoint(self, client, sample_api_key) -> None:
+    def test_get_api_key_endpoint(self, client, sample_api_key):
         """Test get specific API key endpoint."""
         api_key_record, _ = sample_api_key
 
@@ -143,7 +143,7 @@ class TestAuthenticationFlow:
         assert response.status_code == 404
         assert "AUTH404" in response.json()["detail"]["error_code"]
 
-    def test_update_api_key_endpoint(self, client, sample_api_key) -> None:
+    def test_update_api_key_endpoint(self, client, sample_api_key):
         """Test API key update endpoint."""
         api_key_record, _ = sample_api_key
 
@@ -175,7 +175,7 @@ class TestAuthenticationFlow:
         response = client.put("/api/auth/api-keys/non-existent", json={"name": "New"})
         assert response.status_code == 404
 
-    def test_revoke_api_key_endpoint(self, client, sample_api_key) -> None:
+    def test_revoke_api_key_endpoint(self, client, sample_api_key):
         """Test API key revocation endpoint."""
         api_key_record, raw_key = sample_api_key
 
@@ -195,7 +195,7 @@ class TestAuthenticationFlow:
         response = client.delete("/api/auth/api-keys/non-existent")
         assert response.status_code == 404
 
-    def test_get_api_key_usage_endpoint(self, client, sample_api_key) -> None:
+    def test_get_api_key_usage_endpoint(self, client, sample_api_key):
         """Test API key usage statistics endpoint."""
         api_key_record, _ = sample_api_key
 
@@ -242,7 +242,7 @@ class TestAuthenticationFlow:
         response = client.get("/api/auth/api-keys/non-existent/usage")
         assert response.status_code == 404
 
-    def test_get_overall_usage_endpoint(self, client, sample_api_key) -> None:
+    def test_get_overall_usage_endpoint(self, client, sample_api_key):
         """Test overall usage statistics endpoint."""
         api_key_record, _ = sample_api_key
 
@@ -274,7 +274,7 @@ class TestAuthenticationFlow:
         assert data["status_codes"] == {"200": 2}
         assert data["endpoints"] == {"/api/convert": 1, "/api/health": 1}
 
-    def test_cleanup_expired_endpoint(self, client) -> None:
+    def test_cleanup_expired_endpoint(self, client):
         """Test expired keys cleanup endpoint."""
         # Create keys with different expiry states
         active_key, _ = api_key_service.create_api_key(name="Active")
@@ -303,7 +303,7 @@ class TestAuthenticationFlow:
         active_updated = api_key_service.get_api_key_by_id(active_key.id)
         assert active_updated.is_active is True
 
-    def test_authentication_with_bearer_token(self, client, sample_api_key) -> None:
+    def test_authentication_with_bearer_token(self, client, sample_api_key):
         """Test API authentication using Bearer token."""
         _, raw_key = sample_api_key
 
@@ -319,7 +319,7 @@ class TestAuthenticationFlow:
         # Check custom rate limit is applied
         assert response.headers["X-RateLimit-Limit"] == "100"  # Custom limit
 
-    def test_authentication_with_x_api_key_header(self, client, sample_api_key) -> None:
+    def test_authentication_with_x_api_key_header(self, client, sample_api_key):
         """Test API authentication using X-API-Key header."""
         _, raw_key = sample_api_key
 
@@ -329,7 +329,7 @@ class TestAuthenticationFlow:
         assert response.status_code == 200
         assert response.headers["X-RateLimit-Limit"] == "100"
 
-    def test_authentication_with_invalid_key(self, client) -> None:
+    def test_authentication_with_invalid_key(self, client):
         """Test API authentication with invalid key."""
         headers = {"Authorization": "Bearer invalid_key_12345"}
         response = client.get("/api/health", headers=headers)
@@ -338,7 +338,7 @@ class TestAuthenticationFlow:
         assert response.status_code == 200
         assert response.headers["X-RateLimit-Limit"] == "60"  # Default limit
 
-    def test_unauthenticated_request(self, client) -> None:
+    def test_unauthenticated_request(self, client):
         """Test unauthenticated request."""
         response = client.get("/api/health")
 
@@ -346,7 +346,7 @@ class TestAuthenticationFlow:
         assert response.status_code == 200
         assert response.headers["X-RateLimit-Limit"] == "60"
 
-    def test_rate_limiting_with_api_key(self, client) -> None:
+    def test_rate_limiting_with_api_key(self, client):
         """Test rate limiting with API key."""
         # Create API key with very low limit for testing
         api_key_record, raw_key = api_key_service.create_api_key(
@@ -374,7 +374,7 @@ class TestAuthenticationFlow:
         # In practice, rate limiting with time buckets is hard to test reliably
         # A more robust test would mock the rate limiter or use a test-specific implementation
 
-    def test_cors_headers(self, client) -> None:
+    def test_cors_headers(self, client):
         """Test CORS headers are present."""
         response = client.get("/api/health")
 
@@ -382,7 +382,7 @@ class TestAuthenticationFlow:
         # Note: TestClient might not include all CORS headers
         assert response.status_code == 200
 
-    def test_security_headers(self, client) -> None:
+    def test_security_headers(self, client):
         """Test security headers are added."""
         response = client.get("/api/health")
 
@@ -395,7 +395,7 @@ class TestAuthenticationFlow:
         assert response.headers["X-Content-Type-Options"] == "nosniff"
         assert response.headers["X-Frame-Options"] == "DENY"
 
-    def test_correlation_id_header(self, client) -> None:
+    def test_correlation_id_header(self, client):
         """Test correlation ID is added to responses."""
         response = client.get("/api/health")
 
@@ -408,7 +408,7 @@ class TestAuthenticationFlow:
         response2 = client.get("/api/health", headers=headers)
         assert response2.headers["X-Correlation-ID"] == correlation_id
 
-    def test_api_endpoints_in_both_versions(self, client, sample_api_key) -> None:
+    def test_api_endpoints_in_both_versions(self, client, sample_api_key):
         """Test that auth endpoints work in both /api and /api/v1."""
         api_key_record, _ = sample_api_key
 
@@ -425,7 +425,7 @@ class TestAuthenticationFlow:
         data2 = client.get(f"/api/v1/auth/api-keys/{api_key_record.id}").json()
         assert data1 == data2
 
-    def test_error_response_format(self, client) -> None:
+    def test_error_response_format(self, client):
         """Test error response format consistency."""
         # Test 404 error
         response = client.get("/api/auth/api-keys/non-existent")
@@ -441,7 +441,7 @@ class TestAuthenticationFlow:
         response = client.post("/api/auth/api-keys", json={"rate_limit_override": -1})
         assert response.status_code == 422  # FastAPI validation error
 
-    def test_privacy_aware_logging(self, client, sample_api_key) -> None:
+    def test_privacy_aware_logging(self, client, sample_api_key):
         """Test that sensitive data is not logged."""
         _, raw_key = sample_api_key
 

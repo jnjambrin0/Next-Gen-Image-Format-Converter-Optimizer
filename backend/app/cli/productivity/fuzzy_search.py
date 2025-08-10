@@ -6,9 +6,10 @@ Provides intelligent fuzzy matching for command history search
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from rapidfuzz import fuzz, process
+from rapidfuzz.distance import Levenshtein
 
 
 @dataclass
@@ -30,7 +31,7 @@ class HistoryEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "HistoryEntry":
+    def from_dict(cls, data: Dict) -> "HistoryEntry":
         """Create from dictionary"""
         return cls(
             command=data["command"],
@@ -43,7 +44,7 @@ class HistoryEntry:
 class FuzzySearcher:
     """Fuzzy search engine for command history"""
 
-    def __init__(self, threshold: float = 60.0) -> None:
+    def __init__(self, threshold: float = 60.0):
         """
         Initialize fuzzy searcher
 
@@ -65,11 +66,12 @@ class FuzzySearcher:
 
         Args:
             query: Search query
-            history: List[Any] of history entries to search
+            history: List of history entries to search
             limit: Maximum number of results
             filter_success: Filter by success status (None = all)
 
-        Returns: List[Any] of (entry, score) tuples sorted by relevance
+        Returns:
+            List of (entry, score) tuples sorted by relevance
         """
         if not query or not history:
             return []
@@ -146,8 +148,8 @@ class FuzzySearcher:
 
         Args:
             query: Search query
-            history: List[Any] of history entries
-            time_range: Optional[Any] (start, end) datetime tuple
+            history: List of history entries
+            time_range: Optional (start, end) datetime tuple
             command_prefix: Filter by command prefix (e.g., "convert")
             limit: Maximum results
 
@@ -235,7 +237,8 @@ class FuzzySearcher:
             history: History entries
             top_n: Number of top commands to return
 
-        Returns: List[Any] of (command, count) tuples
+        Returns:
+            List of (command, count) tuples
         """
         from collections import Counter
 
@@ -292,7 +295,7 @@ class FuzzySearcher:
 class InteractiveHistoryBrowser:
     """Interactive history browser with arrow key navigation"""
 
-    def __init__(self, searcher: FuzzySearcher) -> None:
+    def __init__(self, searcher: FuzzySearcher):
         """
         Initialize interactive browser
 
@@ -312,7 +315,7 @@ class InteractiveHistoryBrowser:
         Args:
             query: Search query
             history: History to search
-            display_callback: Optional[Any] callback for custom display
+            display_callback: Optional callback for custom display
 
         Returns:
             Selected history entry or None
@@ -336,7 +339,7 @@ class InteractiveHistoryBrowser:
 
     def _default_display(
         self, results: List[Tuple[HistoryEntry, float]], selected_index: int
-    ) -> None:
+    ):
         """Default display implementation"""
         print("\nSearch Results:")
         print("-" * 60)
@@ -427,7 +430,8 @@ class HistoryExporter:
             input_file: Input file path
             validate: Whether to validate entries
 
-        Returns: List[Any] of history entries or None on error
+        Returns:
+            List of history entries or None on error
         """
         import json
 

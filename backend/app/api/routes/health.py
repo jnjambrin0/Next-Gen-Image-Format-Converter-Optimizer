@@ -11,7 +11,8 @@ async def health_check(request: Request) -> Dict[str, Any]:
     Health check endpoint to verify API is running.
     Includes network isolation status.
 
-    Returns: Dict[str, Any] with status information including network isolation
+    Returns:
+        Dict with status information including network isolation
     """
     response = {
         "status": "healthy",

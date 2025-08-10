@@ -1,21 +1,25 @@
 """Unit tests for batch processing API endpoints."""
 
-from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+import uuid
+from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi import HTTPException, UploadFile
 from fastapi.testclient import TestClient
 
 from app.api.routes.batch import (
+    router,
     validate_batch_request,
 )
 from app.config import settings
 from app.core.batch.models import (
+    BatchCreateResponse,
     BatchItem,
     BatchItemStatus,
     BatchJob,
     BatchStatus,
+    BatchStatusResponse,
 )
 from app.main import app
 
@@ -23,7 +27,7 @@ from app.main import app
 class TestBatchValidation:
     """Test batch request validation."""
 
-    def test_validate_batch_request_no_files(self) -> None:
+    def test_validate_batch_request_no_files(self):
         """Test validation fails with no files."""
         with pytest.raises(HTTPException) as exc_info:
             validate_batch_request([], "webp")
@@ -31,7 +35,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 400
         assert "No files provided" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_too_many_files(self) -> None:
+    def test_validate_batch_request_too_many_files(self):
         """Test validation fails with too many files."""
         files = [Mock(spec=UploadFile) for _ in range(settings.MAX_BATCH_SIZE + 1)]
 
@@ -41,7 +45,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 400
         assert f"Maximum {settings.MAX_BATCH_SIZE} files" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_invalid_format(self) -> None:
+    def test_validate_batch_request_invalid_format(self):
         """Test validation fails with invalid output format."""
         files = [Mock(spec=UploadFile)]
 
@@ -51,7 +55,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 400
         assert "Invalid output format" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_file_too_large(self) -> None:
+    def test_validate_batch_request_file_too_large(self):
         """Test validation fails with file too large."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.jpg"
@@ -63,7 +67,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 413
         assert "File too large" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_no_filename(self) -> None:
+    def test_validate_batch_request_no_filename(self):
         """Test validation fails with missing filename."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = None
@@ -75,7 +79,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 400
         assert "has no filename" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_invalid_extension(self) -> None:
+    def test_validate_batch_request_invalid_extension(self):
         """Test validation fails with invalid file extension."""
         mock_file = Mock(spec=UploadFile)
         mock_file.filename = "test.txt"
@@ -87,7 +91,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 400
         assert "Unsupported file type" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_total_size_exceeded(self) -> None:
+    def test_validate_batch_request_total_size_exceeded(self):
         """Test validation fails when total size exceeds limit."""
         # Create files that individually are OK but together exceed limit
         file_size = settings.max_file_size // 2
@@ -106,7 +110,7 @@ class TestBatchValidation:
         assert exc_info.value.status_code == 413
         assert "Total batch size exceeds" in str(exc_info.value.detail)
 
-    def test_validate_batch_request_success(self) -> None:
+    def test_validate_batch_request_success(self):
         """Test successful validation."""
         mock_file1 = Mock(spec=UploadFile)
         mock_file1.filename = "test1.jpg"
@@ -126,7 +130,7 @@ class TestBatchAPIEndpoints:
     """Test batch API endpoints using TestClient."""
 
     @pytest.fixture
-    def client(self) -> None:
+    def client(self):
         """Create test client."""
         return TestClient(app)
 

@@ -1,26 +1,5 @@
 """Constants and configuration values for the image converter."""
 
-from typing import Any, TypedDict
-
-
-# Type definitions for configuration dictionaries
-class BlockedMessages(TypedDict):
-    network: str
-    dns: str
-    udp: str
-    p2p: str
-
-
-class NetworkConfigType(TypedDict):
-    violation_threshold: int
-    termination_grace_period: int
-    monitoring_interval: int
-    monitoring_jitter: float
-    check_timeout: int
-    baseline_max_connections: int
-    blocked_messages: BlockedMessages
-
-
 # Security and Processing Limits
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_IMAGE_PIXELS = 178956970  # ~178MP (same as PIL default)
@@ -290,7 +269,7 @@ METRICS_ENABLED = True
 HEALTH_CHECK_TIMEOUT = 5.0
 
 # Network Security Configuration
-NETWORK_CONFIG: NetworkConfigType = {
+NETWORK_CONFIG = {
     "violation_threshold": 3,
     "termination_grace_period": 2,
     "monitoring_interval": 5,

@@ -13,7 +13,7 @@ from app.core.security.types import SecurityMetrics
 class SecurityMetricsCollector:
     """Collects metrics for security monitoring performance."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize metrics collector."""
         self._metrics: SecurityMetrics = {
             "verification_time_ms": 0.0,

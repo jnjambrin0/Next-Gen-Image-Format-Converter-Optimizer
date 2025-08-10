@@ -5,17 +5,20 @@ Advanced table generation with sorting, statistics, and export
 
 import csv
 import json
+from datetime import datetime
 from enum import Enum
 from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from rich import box
+from rich.align import Align
 from rich.console import Console
-from rich.table import Table
+from rich.table import Column, Table
 from rich.text import Text
 
 from app.cli.utils.emoji import (
+    get_emoji,
     get_format_emoji,
     get_quality_stars,
     get_status_emoji,
@@ -53,7 +56,7 @@ class SmartTable:
         console: Optional[Console] = None,
         show_statistics: bool = True,
         adaptive_width: bool = True,
-    ) -> None:
+    ):
         """Initialize smart table"""
         self.console = console or Console()
         self.title = title
@@ -104,7 +107,7 @@ class SmartTable:
         # Define sort key based on column type
         col_type = self.columns[column]["type"]
 
-        def get_sort_key(row) -> None:
+        def get_sort_key(row):
             value = row[column]
             if value is None:
                 return (1, 0)  # Nulls last

@@ -1,13 +1,13 @@
 """Service layer for image conversion operations."""
 
 import asyncio
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import structlog
 
 # Try to import magic, but make it optional
 try:
-    pass
+    import magic
 
     HAS_MAGIC = True
 except ImportError:
@@ -30,7 +30,7 @@ logger = structlog.get_logger()
 class ConversionService:
     """Service layer for handling image conversions."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize conversion service."""
         self.conversion_manager = ConversionManager()
         # Initialize stats_collector as None - will be set later to avoid circular import
@@ -49,7 +49,7 @@ class ConversionService:
             "image/heic": ["heif", "heic"],
         }
 
-    def set_preset_service(self, preset_service) -> None:
+    def set_preset_service(self, preset_service):
         """Set the preset service instance to avoid circular imports."""
         self.preset_service = preset_service
 
@@ -65,7 +65,7 @@ class ConversionService:
         Args:
             image_data: Raw image data as bytes
             request: API conversion request
-            timeout: Optional[Any] timeout for conversion
+            timeout: Optional timeout for conversion
 
         Returns:
             Tuple of (ConversionResult, output_bytes)

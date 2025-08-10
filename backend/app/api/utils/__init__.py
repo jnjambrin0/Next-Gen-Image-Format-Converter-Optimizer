@@ -1,6 +1,5 @@
 """API utility functions."""
 
-from typing import Any
 from .validation import (
     SemaphoreContextManager,
     create_error_response,

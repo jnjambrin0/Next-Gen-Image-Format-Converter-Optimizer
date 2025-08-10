@@ -1,5 +1,4 @@
 """
-from typing import Any
 Productivity features for the CLI
 Advanced features for power users including autocomplete, profiles, watch mode, and macros
 """

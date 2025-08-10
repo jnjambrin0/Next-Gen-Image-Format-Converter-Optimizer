@@ -1,6 +1,5 @@
 """Integration tests for optimization API endpoints."""
 
-from typing import Any
 import io
 
 import pytest
@@ -15,7 +14,7 @@ class TestOptimizationAPI:
     """Test cases for optimization API endpoints."""
 
     @pytest.fixture
-    def test_image(self) -> None:
+    def test_image(self):
         """Create a test image file."""
         img = Image.new("RGB", (200, 200), color="red")
         buffer = io.BytesIO()
@@ -24,7 +23,7 @@ class TestOptimizationAPI:
         return buffer
 
     @pytest.fixture
-    def test_image_with_alpha(self) -> None:
+    def test_image_with_alpha(self):
         """Create a test image with alpha channel."""
         img = Image.new("RGBA", (200, 200), color=(255, 0, 0, 128))
         buffer = io.BytesIO()

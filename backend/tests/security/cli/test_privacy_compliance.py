@@ -1,5 +1,4 @@
 """
-from typing import Any
 Security tests for privacy compliance in CLI productivity features
 """
 
@@ -7,7 +6,7 @@ import json
 import re
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,12 +21,12 @@ class TestPrivacyCompliance:
     """Test that no PII is stored in learning data"""
 
     @pytest.fixture
-    def temp_dir(self) -> None:
+    def temp_dir(self):
         """Create temporary directory for test data"""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
-    def test_no_filenames_in_stored_data(self, temp_dir) -> None:
+    def test_no_filenames_in_stored_data(self, temp_dir):
         """Test that filenames are never stored"""
         learner = CommandLearner(temp_dir)
 
@@ -68,7 +67,7 @@ class TestPrivacyCompliance:
         assert "Documents" not in data_str
         assert "Pictures" not in data_str
 
-    def test_no_paths_in_stored_data(self, temp_dir) -> None:
+    def test_no_paths_in_stored_data(self, temp_dir):
         """Test that file paths are never stored"""
         learner = CommandLearner(temp_dir)
 
@@ -103,7 +102,7 @@ class TestPrivacyCompliance:
             assert path not in data_str
             assert escaped_path not in data_str
 
-    def test_no_email_addresses_stored(self, temp_dir) -> None:
+    def test_no_email_addresses_stored(self, temp_dir):
         """Test that email addresses are never stored"""
         learner = CommandLearner(temp_dir)
 
@@ -128,7 +127,7 @@ class TestPrivacyCompliance:
             assert email not in data_str
             assert email.split("@")[0] not in data_str  # Check username part
 
-    def test_no_ip_addresses_stored(self, temp_dir) -> None:
+    def test_no_ip_addresses_stored(self, temp_dir):
         """Test that IP addresses are never stored"""
         learner = CommandLearner(temp_dir)
 
@@ -152,7 +151,7 @@ class TestPrivacyCompliance:
         for ip in ips:
             assert ip not in data_str
 
-    def test_no_urls_stored(self, temp_dir) -> None:
+    def test_no_urls_stored(self, temp_dir):
         """Test that URLs are never stored"""
         learner = CommandLearner(temp_dir)
 
@@ -184,7 +183,7 @@ class TestPrivacyCompliance:
             assert "private.server.com" not in data_str
             assert "files.company.org" not in data_str
 
-    def test_sanitizer_comprehensive_pii_removal(self) -> None:
+    def test_sanitizer_comprehensive_pii_removal(self):
         """Test comprehensive PII removal from complex commands"""
         complex_commands = [
             (
@@ -223,7 +222,7 @@ class TestPrivacyCompliance:
             assert "img" in sanitized
             assert "--" in sanitized or "-" in sanitized
 
-    def test_export_contains_no_pii(self, temp_dir) -> None:
+    def test_export_contains_no_pii(self, temp_dir):
         """Test that exported data contains no PII"""
         with patch("app.cli.productivity.autocomplete.get_config_dir") as mock_config:
             mock_config.return_value = temp_dir
@@ -263,7 +262,7 @@ class TestPrivacyCompliance:
             for item in forbidden:
                 assert item not in exported_str.lower()
 
-    def test_import_does_not_introduce_pii(self, temp_dir) -> None:
+    def test_import_does_not_introduce_pii(self, temp_dir):
         """Test that import process doesn't introduce PII"""
         with patch("app.cli.productivity.autocomplete.get_config_dir") as mock_config:
             mock_config.return_value = temp_dir
@@ -292,7 +291,7 @@ class TestPrivacyCompliance:
             assert "/etc/passwd" not in engine.learner.patterns["commands"]
             assert "user@example.com" not in engine.learner.patterns["commands"]
 
-    def test_file_permissions_are_restrictive(self, temp_dir) -> None:
+    def test_file_permissions_are_restrictive(self, temp_dir):
         """Test that all created files have restrictive permissions"""
         learner = CommandLearner(temp_dir)
         learner.learn("img convert <FILE> -f webp")
@@ -309,7 +308,7 @@ class TestPrivacyCompliance:
         # File should be readable by owner only
         assert patterns_file.stat().st_mode & 0o077 == 0
 
-    def test_encryption_is_always_enabled(self, temp_dir) -> None:
+    def test_encryption_is_always_enabled(self, temp_dir):
         """Test that learning data is always encrypted"""
         learner = CommandLearner(temp_dir)
         learner.learn("img convert <FILE> -f webp")
@@ -330,7 +329,7 @@ class TestPrivacyCompliance:
         data = json.loads(decrypted.decode())
         assert "commands" in data
 
-    def test_sanitizer_handles_edge_cases(self) -> None:
+    def test_sanitizer_handles_edge_cases(self):
         """Test sanitizer with edge cases"""
         edge_cases = [
             ("", ""),  # Empty command

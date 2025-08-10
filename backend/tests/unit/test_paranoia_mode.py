@@ -1,5 +1,4 @@
-from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,11 +11,11 @@ class TestParanoiaMode:
     """Test paranoia mode functionality."""
 
     @pytest.fixture
-    def client(self) -> None:
+    def client(self):
         """Create test client."""
         return TestClient(app)
 
-    def test_get_logging_config(self, client) -> None:
+    def test_get_logging_config(self, client):
         """Test retrieving current logging configuration."""
         response = client.get("/api/monitoring/logging/config")
 
@@ -36,9 +35,7 @@ class TestParanoiaMode:
 
     @patch("backend.app.api.routes.monitoring.settings")
     @patch("backend.app.api.routes.monitoring.setup_logging")
-    def test_enable_paranoia_mode(
-        self, mock_setup_logging, mock_settings, client
-    ) -> None:
+    def test_enable_paranoia_mode(self, mock_setup_logging, mock_settings, client):
         """Test enabling paranoia mode."""
         # Configure mock settings
         mock_settings.log_level = "INFO"
@@ -61,9 +58,7 @@ class TestParanoiaMode:
 
     @patch("backend.app.api.routes.monitoring.settings")
     @patch("backend.app.api.routes.monitoring.setup_logging")
-    def test_disable_paranoia_mode(
-        self, mock_setup_logging, mock_settings, client
-    ) -> None:
+    def test_disable_paranoia_mode(self, mock_setup_logging, mock_settings, client):
         """Test disabling paranoia mode."""
         # Configure mock settings
         mock_settings.log_level = "INFO"
@@ -84,7 +79,7 @@ class TestParanoiaMode:
             log_level="INFO", json_logs=True, enable_file_logging=True
         )
 
-    def test_paranoia_mode_in_memory_stats(self, client) -> None:
+    def test_paranoia_mode_in_memory_stats(self, client):
         """Test that stats collection works in paranoia mode (memory only)."""
         # Enable paranoia mode
         with patch("backend.app.api.routes.monitoring.settings") as mock_settings:
@@ -106,7 +101,7 @@ class TestParanoiaMode:
             )
 
     @patch("backend.app.api.routes.monitoring.logger")
-    def test_paranoia_mode_toggle_error_handling(self, mock_logger, client) -> None:
+    def test_paranoia_mode_toggle_error_handling(self, mock_logger, client):
         """Test error handling when toggling paranoia mode fails."""
         # Make setup_logging raise an exception
         with patch("backend.app.api.routes.monitoring.setup_logging") as mock_setup:
@@ -120,7 +115,7 @@ class TestParanoiaMode:
             # Verify error was logged
             mock_logger.error.assert_called_once()
 
-    def test_paranoia_mode_environment_variable(self) -> None:
+    def test_paranoia_mode_environment_variable(self):
         """Test that paranoia mode can be set via environment variable."""
         import os
 
@@ -140,7 +135,7 @@ class TestParanoiaMode:
             # Clean up
             del os.environ["IMAGE_CONVERTER_LOGGING_ENABLED"]
 
-    def test_paranoia_mode_security_events(self, client) -> None:
+    def test_paranoia_mode_security_events(self, client):
         """Test that critical security events are still tracked in paranoia mode."""
         with patch("backend.app.api.routes.monitoring.settings") as mock_settings:
             mock_settings.logging_enabled = False  # Paranoia mode

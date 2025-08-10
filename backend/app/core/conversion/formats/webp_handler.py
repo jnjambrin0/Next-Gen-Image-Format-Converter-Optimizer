@@ -16,7 +16,7 @@ logger = structlog.get_logger()
 class WebPHandler(BaseFormatHandler):
     """Handler for WebP format."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize WebP handler."""
         super().__init__()
         self.supported_formats = ["webp"]

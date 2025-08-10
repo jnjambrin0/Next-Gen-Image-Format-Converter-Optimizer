@@ -3,12 +3,14 @@ Directory Watcher for Watch Mode
 Monitor directories for changes and automatically process files
 """
 
+import asyncio
 import fnmatch
 import hashlib
+import os
 import threading
 import time
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from queue import Empty, Queue
@@ -56,7 +58,7 @@ class WatcherStats:
     current_cpu_percent: float = 0
     last_event_time: Optional[datetime] = None
 
-    def reset(self) -> None:
+    def reset(self):
         """Reset statistics"""
         self.__init__()
 
@@ -75,7 +77,7 @@ class FileEvent:
 class RateLimiter:
     """Rate limiter for events"""
 
-    def __init__(self, max_per_second: int) -> None:
+    def __init__(self, max_per_second: int):
         self.max_per_second = max_per_second
         self.events = []
         self.lock = threading.Lock()
@@ -92,7 +94,7 @@ class RateLimiter:
                 return True
             return False
 
-    def reset(self) -> None:
+    def reset(self):
         """Reset rate limiter"""
         with self.lock:
             self.events.clear()
@@ -101,12 +103,12 @@ class RateLimiter:
 class Debouncer:
     """Debounce rapid file changes"""
 
-    def __init__(self, delay_ms: int) -> None:
+    def __init__(self, delay_ms: int):
         self.delay_ms = delay_ms
         self.pending_events: Dict[str, threading.Timer] = {}
         self.lock = threading.Lock()
 
-    def debounce(self, key: str, callback: Callable, *args, **kwargs) -> None:
+    def debounce(self, key: str, callback: Callable, *args, **kwargs):
         """Debounce an event"""
         with self.lock:
             # Cancel existing timer for this key
@@ -122,14 +124,14 @@ class Debouncer:
             self.pending_events[key] = timer
             timer.start()
 
-    def _execute_callback(self, key: str, callback: Callable, args, kwargs) -> None:
+    def _execute_callback(self, key: str, callback: Callable, args, kwargs):
         """Execute callback after debounce delay"""
         with self.lock:
             if key in self.pending_events:
                 del self.pending_events[key]
         callback(*args, **kwargs)
 
-    def cancel_all(self) -> None:
+    def cancel_all(self):
         """Cancel all pending events"""
         with self.lock:
             for timer in self.pending_events.values():
@@ -147,7 +149,7 @@ class DirectoryWatcher:
         excludes: Optional[List[str]] = None,
         limits: Optional[ResourceLimits] = None,
         process_callback: Optional[Callable] = None,
-    ) -> None:
+    ):
         """
         Initialize directory watcher
 
@@ -217,7 +219,7 @@ class DirectoryWatcher:
         except (IOError, OSError):
             return None
 
-    def handle_file_event(self, event: FileSystemEvent) -> None:
+    def handle_file_event(self, event: FileSystemEvent):
         """Handle a file system event"""
         if self.status != WatcherStatus.WATCHING:
             return
@@ -238,7 +240,7 @@ class DirectoryWatcher:
             str(path), self._process_file_event, path, event.event_type
         )
 
-    def _process_file_event(self, path: Path, event_type: str) -> None:
+    def _process_file_event(self, path: Path, event_type: str):
         """Process a debounced file event"""
         if not path.exists() or not path.is_file():
             return
@@ -270,7 +272,7 @@ class DirectoryWatcher:
         except (OSError, Exception):
             self.stats.files_failed += 1
 
-    def start(self) -> None:
+    def start(self):
         """Start watching directory"""
         if self.status != WatcherStatus.IDLE:
             raise RuntimeError(f"Cannot start watcher in {self.status} state")
@@ -292,7 +294,7 @@ class DirectoryWatcher:
         # Start resource monitor
         self.resource_monitor.start(self._on_resource_exhaustion)
 
-    def _process_worker(self) -> None:
+    def _process_worker(self):
         """Worker thread for processing file events"""
         while not self.stop_event.is_set():
             # Check pause state
@@ -324,7 +326,7 @@ class DirectoryWatcher:
             except Exception:
                 self.stats.files_failed += 1
 
-    def _process_file(self, file_event: FileEvent) -> None:
+    def _process_file(self, file_event: FileEvent):
         """Process a single file"""
         if self.process_callback:
             try:
@@ -343,24 +345,24 @@ class DirectoryWatcher:
             except Exception:
                 self.stats.files_failed += 1
 
-    def _on_resource_exhaustion(self) -> None:
+    def _on_resource_exhaustion(self):
         """Handle resource exhaustion"""
         self.status = WatcherStatus.ERROR
         self.stop()
 
-    def pause(self) -> None:
+    def pause(self):
         """Pause processing"""
         if self.status == WatcherStatus.WATCHING:
             self.status = WatcherStatus.PAUSED
             self.pause_event.set()
 
-    def resume(self) -> None:
+    def resume(self):
         """Resume processing"""
         if self.status == WatcherStatus.PAUSED:
             self.status = WatcherStatus.WATCHING
             self.pause_event.clear()
 
-    def stop(self) -> None:
+    def stop(self):
         """Stop watching"""
         self.status = WatcherStatus.STOPPING
 
@@ -409,18 +411,18 @@ class DirectoryWatcher:
 class WatcherEventHandler(FileSystemEventHandler):
     """Handle file system events"""
 
-    def __init__(self, watcher: DirectoryWatcher) -> None:
+    def __init__(self, watcher: DirectoryWatcher):
         self.watcher = watcher
 
-    def on_created(self, event) -> None:
+    def on_created(self, event):
         if not event.is_directory:
             self.watcher.handle_file_event(event)
 
-    def on_modified(self, event) -> None:
+    def on_modified(self, event):
         if not event.is_directory:
             self.watcher.handle_file_event(event)
 
-    def on_moved(self, event) -> None:
+    def on_moved(self, event):
         if not event.is_directory:
             self.watcher.handle_file_event(event)
 
@@ -428,13 +430,13 @@ class WatcherEventHandler(FileSystemEventHandler):
 class ResourceMonitor:
     """Monitor system resources"""
 
-    def __init__(self, limits: ResourceLimits) -> None:
+    def __init__(self, limits: ResourceLimits):
         self.limits = limits
         self.monitoring = False
         self.monitor_thread = None
         self.exhaustion_callback = None
 
-    def start(self, exhaustion_callback: Callable) -> None:
+    def start(self, exhaustion_callback: Callable):
         """Start monitoring resources"""
         self.monitoring = True
         self.exhaustion_callback = exhaustion_callback
@@ -442,13 +444,13 @@ class ResourceMonitor:
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
 
-    def stop(self) -> None:
+    def stop(self):
         """Stop monitoring"""
         self.monitoring = False
         if self.monitor_thread:
             self.monitor_thread.join(timeout=2)
 
-    def _monitor_loop(self) -> None:
+    def _monitor_loop(self):
         """Monitor resource usage with auto-shutdown on exhaustion"""
         import psutil
 

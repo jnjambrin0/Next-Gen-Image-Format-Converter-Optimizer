@@ -1,7 +1,7 @@
 """Unit tests for conversion API route."""
 
-from typing import Any
 import asyncio
+import io
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -25,14 +25,14 @@ class TestConversionAPI:
     """Test conversion API endpoint."""
 
     @pytest.fixture
-    def mock_request(self) -> None:
+    def mock_request(self):
         """Create mock request with correlation ID."""
         request = Mock()
         request.state.correlation_id = "test-correlation-id"
         return request
 
     @pytest.fixture
-    def mock_file(self) -> None:
+    def mock_file(self):
         """Create mock upload file."""
         file = Mock(spec=UploadFile)
         file.filename = "test.jpg"
@@ -41,7 +41,7 @@ class TestConversionAPI:
         return file
 
     @pytest.fixture
-    def mock_conversion_result(self) -> None:
+    def mock_conversion_result(self):
         """Create mock conversion result."""
         return ConversionResult(
             id="test-id",

@@ -1,17 +1,18 @@
 """API routes for advanced optimization features."""
 
 import asyncio
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
 from app.core.optimization.encoding_options import ChromaSubsampling
 from app.core.security.errors_simplified import SecurityErrorHandler
 from app.models.optimization import (
     OptimizationMode,
+    OptimizationProgressUpdate,
     OptimizationRequest,
     OptimizationResponse,
 )

@@ -7,7 +7,7 @@ import json
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -150,7 +150,7 @@ class PerformanceMonitor:
     Tracks CPU, memory, and I/O metrics.
     """
 
-    def __init__(self, sample_interval: float = 0.5) -> None:
+    def __init__(self, sample_interval: float = 0.5):
         """
         Initialize performance monitor.
 
@@ -165,7 +165,7 @@ class PerformanceMonitor:
         self._start_memory = self._process.memory_info().rss
         self._peak_memory = self._start_memory
 
-    def start(self) -> None:
+    def start(self):
         """Start performance monitoring."""
         if self._monitoring:
             return
@@ -229,7 +229,7 @@ class PerformanceMonitor:
         logger.debug("Performance monitoring stopped", **stats)
         return stats
 
-    def _monitor_loop(self) -> None:
+    def _monitor_loop(self):
         """Background monitoring loop."""
         while self._monitoring:
             try:
@@ -281,7 +281,7 @@ class PerformanceProfiler:
     Used by CLI for --profile flag functionality.
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize profiler."""
         self._profiles: Dict[str, Any] = {}
         self._monitor = PerformanceMonitor()

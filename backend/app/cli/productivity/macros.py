@@ -10,6 +10,7 @@ import re
 import secrets
 import shlex
 import subprocess
+import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -49,7 +50,7 @@ class MacroCommand:
     security_level: MacroSecurity = MacroSecurity.SAFE
     warnings: List[str] = field(default_factory=list)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         # Sanitize command for storage
         if not self.sanitized_command:
             self.sanitized_command = PrivacySanitizer.sanitize(self.command)
@@ -71,7 +72,7 @@ class Macro:
     security_level: MacroSecurity = MacroSecurity.SAFE
     tags: List[str] = field(default_factory=list)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         if not self.created_at:
             self.created_at = datetime.now().isoformat()
         if not self.updated_at:
@@ -101,7 +102,7 @@ class Macro:
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Macro":
+    def from_dict(cls, data: Dict) -> "Macro":
         """Create from dictionary"""
         # Convert security level strings back to enums
         if "security_level" in data:
@@ -330,7 +331,7 @@ class CommandValidator:
 class SignatureVerifier:
     """Verify macro signatures for integrity"""
 
-    def __init__(self, secret_key: bytes) -> None:
+    def __init__(self, secret_key: bytes):
         """
         Initialize signature verifier
 
@@ -383,7 +384,7 @@ class SignatureVerifier:
 class MacroManager:
     """Manage macros with security and approval"""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize macro manager"""
         self.macros_dir = get_config_dir() / "macros"
         self.macros_dir.mkdir(parents=True, exist_ok=True)
@@ -445,7 +446,7 @@ class MacroManager:
 
         return macros
 
-    def _save_macro(self, macro: Macro) -> None:
+    def _save_macro(self, macro: Macro):
         """Save macro to disk"""
         # Update signature
         macro.signature = self._generate_signature(macro)
@@ -478,7 +479,7 @@ class MacroManager:
         expected = self._generate_signature(macro)
         return hmac.compare_digest(expected, macro.signature or "")
 
-    def start_recording(self, name: str, description: str) -> None:
+    def start_recording(self, name: str, description: str):
         """
         Start recording a new macro
 
@@ -497,13 +498,13 @@ class MacroManager:
         self.recording_description = description
         self.recorded_commands = []
 
-    def record_command(self, command: str, description: Optional[str] = None) -> None:
+    def record_command(self, command: str, description: Optional[str] = None):
         """
         Record a command
 
         Args:
             command: Command to record
-            description: Optional[Any] description
+            description: Optional description
         """
         if not self.recording:
             raise RuntimeError("Not currently recording")
@@ -570,7 +571,8 @@ class MacroManager:
             dry_run: If True, don't execute, just return commands
             force: Skip approval check
 
-        Returns: List[Any] of executed commands
+        Returns:
+            List of executed commands
         """
         if name not in self.macros:
             raise ValueError(f"Macro '{name}' not found")
@@ -670,9 +672,7 @@ class MacroManager:
 class MacroSandbox:
     """Sandbox for macro execution"""
 
-    def __init__(
-        self, policy: ExecutionPolicy = ExecutionPolicy.REQUIRE_APPROVAL
-    ) -> None:
+    def __init__(self, policy: ExecutionPolicy = ExecutionPolicy.REQUIRE_APPROVAL):
         """
         Initialize macro sandbox
 
@@ -866,7 +866,7 @@ class MacroSandbox:
 
         Args:
             input_file: Input file path
-            rename: Optional[Any] new name
+            rename: Optional new name
 
         Returns:
             Imported macro or None

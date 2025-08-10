@@ -58,7 +58,7 @@ class OptimizationRequest(BaseModel):
     )
 
     @validator("max_quality")
-    def validate_quality_range(cls, v, values) -> None:
+    def validate_quality_range(cls, v, values):
         """Ensure max_quality >= min_quality."""
         if "min_quality" in values and v < values["min_quality"]:
             raise ValueError("max_quality must be >= min_quality")

@@ -1,9 +1,11 @@
 """
-from typing import Any
 Unit tests for terminal capability detection
 """
 
-from unittest.mock import MagicMock, patch
+import os
+import sys
+import time
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -22,13 +24,13 @@ class TestTerminalDetector:
     """Test TerminalDetector class"""
 
     @pytest.fixture
-    def detector(self) -> None:
+    def detector(self):
         """Create a fresh detector instance"""
         detector = TerminalDetector()
         detector.clear_cache()  # Clear cache for testing
         return detector
 
-    def test_capability_levels(self, detector) -> None:
+    def test_capability_levels(self, detector):
         """Test capability level detection"""
         # Test enum values
         assert TerminalCapability.FULL == "full"
@@ -37,7 +39,7 @@ class TestTerminalDetector:
         assert TerminalCapability.CI == "ci"
 
     @patch.dict("os.environ", {"CI": "true"})
-    def test_is_ci_detection(self, detector) -> None:
+    def test_is_ci_detection(self, detector):
         """Test CI environment detection"""
         assert detector.is_ci() is True
 
@@ -46,34 +48,34 @@ class TestTerminalDetector:
         assert detector._cache["is_ci"] is True
 
     @patch.dict("os.environ", {}, clear=True)
-    def test_is_not_ci(self, detector) -> None:
+    def test_is_not_ci(self, detector):
         """Test non-CI environment"""
         assert detector.is_ci() is False
 
     @patch.dict("os.environ", {"GITHUB_ACTIONS": "true"})
-    def test_github_actions_ci(self, detector) -> None:
+    def test_github_actions_ci(self, detector):
         """Test GitHub Actions CI detection"""
         assert detector.is_ci() is True
 
     @patch.dict("os.environ", {"NO_COLOR": "1"})
-    def test_no_color_env(self, detector) -> None:
+    def test_no_color_env(self, detector):
         """Test NO_COLOR environment variable"""
         assert detector.supports_color() is False
 
     @patch.dict("os.environ", {"FORCE_COLOR": "1"})
-    def test_force_color_env(self, detector) -> None:
+    def test_force_color_env(self, detector):
         """Test FORCE_COLOR environment variable"""
         assert detector.supports_color() is True
 
     @patch("sys.stdout.isatty")
-    def test_not_tty(self, mock_isatty, detector) -> None:
+    def test_not_tty(self, mock_isatty, detector):
         """Test non-TTY stdout"""
         mock_isatty.return_value = False
         assert detector.supports_color() is False
 
     @patch.dict("os.environ", {"TERM": "dumb"})
     @patch("sys.stdout.isatty")
-    def test_dumb_terminal(self, mock_isatty, detector) -> None:
+    def test_dumb_terminal(self, mock_isatty, detector):
         """Test dumb terminal"""
         mock_isatty.return_value = True
         assert detector.supports_color() is False
@@ -81,45 +83,45 @@ class TestTerminalDetector:
     @patch.dict("os.environ", {"TERM": "xterm-256color"})
     @patch("sys.stdout.isatty")
     @patch("sys.platform", "linux")
-    def test_color_support_unix(self, mock_isatty, detector) -> None:
+    def test_color_support_unix(self, mock_isatty, detector):
         """Test color support on Unix"""
         mock_isatty.return_value = True
         assert detector.supports_color() is True
 
     @patch.dict("os.environ", {"LANG": "en_US.UTF-8"})
-    def test_unicode_support(self, detector) -> None:
+    def test_unicode_support(self, detector):
         """Test Unicode support detection"""
         result = detector.supports_unicode()
         # Should detect UTF in LANG
         assert result is True
 
     @patch.dict("os.environ", {"TERM_PROGRAM": "iTerm.app"})
-    def test_unicode_iterm(self, detector) -> None:
+    def test_unicode_iterm(self, detector):
         """Test Unicode in iTerm"""
         assert detector.supports_unicode() is True
 
     @patch.dict("os.environ", {"WT_SESSION": "12345"})
-    def test_unicode_windows_terminal(self, detector) -> None:
+    def test_unicode_windows_terminal(self, detector):
         """Test Unicode in Windows Terminal"""
         assert detector.supports_unicode() is True
 
     @patch.dict("os.environ", {"COLORTERM": "truecolor"})
-    def test_truecolor_support(self, detector) -> None:
+    def test_truecolor_support(self, detector):
         """Test true color support"""
         assert detector.supports_truecolor() is True
 
     @patch.dict("os.environ", {"COLORTERM": "24bit"})
-    def test_24bit_color(self, detector) -> None:
+    def test_24bit_color(self, detector):
         """Test 24-bit color support"""
         assert detector.supports_truecolor() is True
 
     @patch.dict("os.environ", {"TERM_PROGRAM": "vscode"})
-    def test_vscode_truecolor(self, detector) -> None:
+    def test_vscode_truecolor(self, detector):
         """Test VS Code true color"""
         assert detector.supports_truecolor() is True
 
     @patch("shutil.get_terminal_size")
-    def test_terminal_size(self, mock_size, detector) -> None:
+    def test_terminal_size(self, mock_size, detector):
         """Test terminal size detection"""
         mock_size.return_value = MagicMock(columns=120, lines=40)
 
@@ -131,7 +133,7 @@ class TestTerminalDetector:
         assert "terminal_size" in detector._cache
 
     @patch("shutil.get_terminal_size")
-    def test_terminal_size_fallback(self, mock_size, detector) -> None:
+    def test_terminal_size_fallback(self, mock_size, detector):
         """Test terminal size fallback"""
         mock_size.side_effect = Exception("No terminal")
 
@@ -140,7 +142,7 @@ class TestTerminalDetector:
         assert height == 24
 
     @patch("sys.stdout.isatty")
-    def test_is_interactive(self, mock_isatty, detector) -> None:
+    def test_is_interactive(self, mock_isatty, detector):
         """Test interactive terminal detection"""
         mock_isatty.return_value = True
 
@@ -149,33 +151,33 @@ class TestTerminalDetector:
 
     @patch("sys.stdout.isatty")
     @patch.dict("os.environ", {"CI": "true"})
-    def test_not_interactive_in_ci(self, mock_isatty, detector) -> None:
+    def test_not_interactive_in_ci(self, mock_isatty, detector):
         """Test non-interactive in CI"""
         mock_isatty.return_value = True
         assert detector.is_interactive() is False
 
     @patch.dict("os.environ", {"TERM_PROGRAM": "iTerm.app"})
-    def test_emoji_support_iterm(self, detector) -> None:
+    def test_emoji_support_iterm(self, detector):
         """Test emoji support in iTerm"""
         with patch.object(detector, "supports_unicode", return_value=True):
             assert detector.supports_emoji() is True
 
-    def test_emoji_requires_unicode(self, detector) -> None:
+    def test_emoji_requires_unicode(self, detector):
         """Test emoji requires Unicode"""
         with patch.object(detector, "supports_unicode", return_value=False):
             assert detector.supports_emoji() is False
 
     @patch.dict("os.environ", {"VTE_VERSION": "5002"})
-    def test_hyperlinks_vte(self, detector) -> None:
+    def test_hyperlinks_vte(self, detector):
         """Test hyperlink support in VTE terminals"""
         assert detector.supports_hyperlinks() is True
 
     @patch.dict("os.environ", {"TERM_PROGRAM": "iTerm.app"})
-    def test_hyperlinks_iterm(self, detector) -> None:
+    def test_hyperlinks_iterm(self, detector):
         """Test hyperlink support in iTerm"""
         assert detector.supports_hyperlinks() is True
 
-    def test_get_environment_info(self, detector) -> None:
+    def test_get_environment_info(self, detector):
         """Test getting environment info"""
         info = detector.get_environment_info()
 
@@ -191,17 +193,17 @@ class TestTerminalDetector:
         assert "term" in info
 
     @patch.dict("os.environ", {"CI": "true"})
-    def test_capability_level_ci(self, detector) -> None:
+    def test_capability_level_ci(self, detector):
         """Test CI capability level"""
         assert detector.get_capability_level() == TerminalCapability.CI
 
     @patch("sys.stdout.isatty")
-    def test_capability_level_minimal(self, mock_isatty, detector) -> None:
+    def test_capability_level_minimal(self, mock_isatty, detector):
         """Test minimal capability level"""
         mock_isatty.return_value = False
         assert detector.get_capability_level() == TerminalCapability.MINIMAL
 
-    def test_capability_level_standard(self, detector) -> None:
+    def test_capability_level_standard(self, detector):
         """Test standard capability level"""
         with patch.object(detector, "is_ci", return_value=False):
             with patch.object(detector, "supports_color", return_value=True):
@@ -214,7 +216,7 @@ class TestTerminalDetector:
                             == TerminalCapability.STANDARD
                         )
 
-    def test_capability_level_full(self, detector) -> None:
+    def test_capability_level_full(self, detector):
         """Test full capability level"""
         with patch.object(detector, "is_ci", return_value=False):
             with patch.object(detector, "supports_color", return_value=True):
@@ -226,7 +228,7 @@ class TestTerminalDetector:
                             detector.get_capability_level() == TerminalCapability.FULL
                         )
 
-    def test_cache_ttl(self, detector) -> None:
+    def test_cache_ttl(self, detector):
         """Test cache TTL expiration"""
         # Test that cache TTL is respected
         assert detector._CACHE_TTL == 300  # 5 minutes
@@ -250,7 +252,7 @@ class TestTerminalDetector:
             mock_time.return_value = start_time + 360
             assert detector._get_cached("ttl_test") is None
 
-    def test_cache_thread_safety(self, detector) -> None:
+    def test_cache_thread_safety(self, detector):
         """Test cache thread safety"""
         import random
         import threading
@@ -258,7 +260,7 @@ class TestTerminalDetector:
         results = []
         errors = []
 
-        def cache_operation() -> None:
+        def cache_operation():
             try:
                 for i in range(100):
                     key = f"key_{random.randint(1, 10)}"
@@ -288,7 +290,7 @@ class TestTerminalDetector:
         # Should have no errors
         assert len(errors) == 0
 
-    def test_clear_cache(self, detector) -> None:
+    def test_clear_cache(self, detector):
         """Test cache clearing"""
         # Add some cached values
         detector._set_cached("key1", "value1")
@@ -310,13 +312,13 @@ class TestTerminalDetector:
 class TestTerminalHelpers:
     """Test terminal helper functions"""
 
-    def test_get_terminal_detector_singleton(self) -> None:
+    def test_get_terminal_detector_singleton(self):
         """Test singleton detector"""
         det1 = get_terminal_detector()
         det2 = get_terminal_detector()
         assert det1 is det2
 
-    def test_adapt_output_minimal(self) -> None:
+    def test_adapt_output_minimal(self):
         """Test output adaptation for minimal terminals"""
         detector = get_terminal_detector()
 
@@ -329,7 +331,7 @@ class TestTerminalHelpers:
             result = adapt_output("fancy text")
             assert result == "fancy text"  # No fallback provided
 
-    def test_adapt_output_full(self) -> None:
+    def test_adapt_output_full(self):
         """Test output adaptation for full terminals"""
         detector = get_terminal_detector()
 
@@ -340,11 +342,11 @@ class TestTerminalHelpers:
             assert result == "fancy text"
 
     @patch.dict("os.environ", {"NO_EMOJI": "1"})
-    def test_should_use_emoji_disabled(self) -> None:
+    def test_should_use_emoji_disabled(self):
         """Test emoji disabled by environment"""
         assert should_use_emoji() is False
 
-    def test_should_use_emoji(self) -> None:
+    def test_should_use_emoji(self):
         """Test emoji usage detection"""
         detector = get_terminal_detector()
 
@@ -354,7 +356,7 @@ class TestTerminalHelpers:
                     result = should_use_emoji()
                     # Result depends on actual terminal
 
-    def test_should_use_color(self) -> None:
+    def test_should_use_color(self):
         """Test color usage detection"""
         detector = get_terminal_detector()
 
@@ -364,7 +366,7 @@ class TestTerminalHelpers:
         with patch.object(detector, "supports_color", return_value=False):
             assert should_use_color() is False
 
-    def test_get_safe_width(self) -> None:
+    def test_get_safe_width(self):
         """Test safe width calculation"""
         detector = get_terminal_detector()
 

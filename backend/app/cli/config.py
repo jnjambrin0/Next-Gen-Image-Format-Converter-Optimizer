@@ -5,7 +5,7 @@ Handles CLI-specific configuration with local storage
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -76,12 +76,12 @@ class CLIConfig(BaseModel):
 class ConfigManager:
     """Manages CLI configuration persistence"""
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.config_dir = Path.home() / ".image-converter"
         self.config_file = self.config_dir / "config.json"
         self._ensure_config_dir()
 
-    def _ensure_config_dir(self) -> None:
+    def _ensure_config_dir(self):
         """Ensure configuration directory exists"""
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -104,12 +104,12 @@ class ConfigManager:
                 return CLIConfig()
         return CLIConfig()
 
-    def save_config(self, config: CLIConfig) -> None:
+    def save_config(self, config: CLIConfig):
         """Save configuration to disk"""
         with open(self.config_file, "w") as f:
             json.dump(config.dict(), f, indent=2)
 
-    def reset_config(self) -> None:
+    def reset_config(self):
         """Reset configuration to defaults"""
         default_config = CLIConfig()
         self.save_config(default_config)
@@ -120,7 +120,7 @@ class ConfigManager:
         config = self.load_config()
         return getattr(config, key, None)
 
-    def set_config_value(self, key: str, value: Any) -> None:
+    def set_config_value(self, key: str, value: Any):
         """Set a specific configuration value"""
         config = self.load_config()
         if hasattr(config, key):
@@ -139,12 +139,12 @@ def get_config() -> CLIConfig:
     return _config_manager.load_config()
 
 
-def update_config(config: CLIConfig) -> None:
+def update_config(config: CLIConfig):
     """Update CLI configuration"""
     _config_manager.save_config(config)
 
 
-def reset_config() -> None:
+def reset_config():
     """Reset configuration to defaults"""
     return _config_manager.reset_config()
 

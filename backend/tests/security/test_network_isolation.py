@@ -1,10 +1,12 @@
 """
-from typing import Any
 Test suite to verify no external network connections are made.
 """
 
+import asyncio
+import logging
 import socket
-from unittest.mock import patch
+import unittest.mock as mock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -18,11 +20,11 @@ class TestNetworkIsolation:
     """Test that the application makes no external network connections."""
 
     @pytest.fixture(autouse=True)
-    def block_network(self, monkeypatch) -> None:
+    def block_network(self, monkeypatch):
         """Block all network connections during tests."""
         original_socket = socket.socket
 
-        def patched_socket(*args, **kwargs) -> None:
+        def patched_socket(*args, **kwargs):
             # Allow Unix domain sockets (for SQLite)
             if args and args[0] == socket.AF_UNIX:
                 return original_socket(*args, **kwargs)
@@ -31,7 +33,7 @@ class TestNetworkIsolation:
 
         monkeypatch.setattr(socket, "socket", patched_socket)
 
-    def test_logging_no_network(self) -> None:
+    def test_logging_no_network(self):
         """Test that logging doesn't make network connections."""
         logger = get_logger("test")
 
@@ -103,7 +105,7 @@ class TestNetworkIsolation:
             # Conversion failure is OK, network access is not
             pass
 
-    def test_dependency_telemetry_check(self) -> None:
+    def test_dependency_telemetry_check(self):
         """Document any dependencies that might have telemetry."""
         # List of common Python packages that may have telemetry
         packages_to_check = [
@@ -132,7 +134,7 @@ class TestNetworkIsolation:
             ), f"Missing telemetry check for {package}"
 
     @patch("socket.create_connection")
-    def test_startup_network_check(self, mock_connection) -> None:
+    def test_startup_network_check(self, mock_connection):
         """Test that startup doesn't make network connections."""
         mock_connection.side_effect = RuntimeError("Network blocked")
 
@@ -147,7 +149,7 @@ class TestNetworkIsolation:
         response = client.get("/api/health")
         assert response.status_code == 200
 
-    def test_ml_models_local_only(self) -> None:
+    def test_ml_models_local_only(self):
         """Verify ML models are loaded locally, not downloaded."""
         # Mock any potential model download attempts
         with patch("urllib.request.urlopen") as mock_urlopen:
@@ -159,6 +161,7 @@ class TestNetworkIsolation:
                 # Intelligence engine should load models from disk
                 # Note: We're not actually importing to avoid dependencies
                 # Just verifying the pattern
+                pass
 
     @pytest.mark.asyncio
     async def test_monitoring_endpoints_offline(self):
@@ -179,7 +182,7 @@ class TestNetworkIsolation:
             response = client.get(endpoint)
             assert response.status_code == 200, f"Endpoint {endpoint} failed offline"
 
-    def test_no_analytics_imports(self) -> None:
+    def test_no_analytics_imports(self):
         """Verify no analytics libraries are imported."""
         # List of common analytics/telemetry packages to check
         forbidden_imports = [
@@ -202,7 +205,7 @@ class TestNetworkIsolation:
                 module not in sys.modules
             ), f"Found forbidden analytics module: {module}"
 
-    def test_localhost_only_binding(self) -> None:
+    def test_localhost_only_binding(self):
         """Verify API only binds to localhost by default."""
         from app.config import settings
 

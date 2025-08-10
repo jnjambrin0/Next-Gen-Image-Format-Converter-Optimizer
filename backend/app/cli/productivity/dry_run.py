@@ -3,12 +3,15 @@ Dry-Run Mode Simulator
 Simulate conversion operations without actually executing them
 """
 
+import math
 import os
+import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from PIL import Image
 
@@ -73,7 +76,7 @@ class ConversionEstimate:
     estimated_memory_mb: float = 0.0
     estimated_cpu_percent: float = 0.0
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """Calculate derived values"""
         if self.input_size > 0 and self.compression_ratio == 0:
             self.compression_ratio = self.estimated_output_size / self.input_size
@@ -98,7 +101,7 @@ class BatchEstimate:
     parallel_workers: int = 1
     total_estimated_output_size: int = 0  # Alias for tests
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """Initialize aliases and calculated fields"""
         # Sync aliases
         if self.file_estimates and not self.conversions:
@@ -184,7 +187,7 @@ class DryRunSimulator:
         verbose: bool = False,
         estimate_resources: bool = False,
         validate_only: bool = False,
-    ) -> None:
+    ):
         """
         Initialize dry-run simulator
 
@@ -219,7 +222,7 @@ class DryRunSimulator:
         Args:
             input_path: Input file path
             output_format: Target format
-            output_path: Optional[Any] output path
+            output_path: Optional output path
             quality: Quality setting (1-100)
             preset: Optimization preset
             preserve_metadata: Whether to preserve metadata
@@ -356,7 +359,8 @@ class DryRunSimulator:
             workers: Number of workers
             **kwargs: Additional parameters
 
-        Returns: List[Any] of simulated operations
+        Returns:
+            List of simulated operations
         """
         import glob
 
@@ -872,7 +876,7 @@ class DryRunSimulator:
         size_factor = 0.3 + (quality_factor**1.5) * 0.7
         return int(base_size * size_factor)
 
-    def set_mode(self, mode: SimulationMode) -> None:
+    def set_mode(self, mode: SimulationMode):
         """Set simulation mode"""
         self.mode = mode
 
@@ -1028,6 +1032,6 @@ class DryRunSimulator:
 
         return operation
 
-    def reset(self) -> None:
+    def reset(self):
         """Reset all simulated operations"""
         self.operations.clear()

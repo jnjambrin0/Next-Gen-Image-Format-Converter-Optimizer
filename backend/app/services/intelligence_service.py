@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class IntelligenceService:
     """Service layer for intelligence engine operations."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize the intelligence service."""
         self.engine: Optional[IntelligenceEngine] = None
         self.stats_collector = None  # Will be injected at startup

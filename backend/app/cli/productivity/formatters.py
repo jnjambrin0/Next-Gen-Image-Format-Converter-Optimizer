@@ -6,7 +6,7 @@ Support JSON, CSV, YAML and other structured output formats
 import csv
 import io
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -97,7 +97,7 @@ class OutputFormatter:
     def format_json(data: Any, pretty: bool = True, indent: int = 2) -> str:
         """Format as JSON"""
 
-        def json_serializer(obj) -> None:
+        def json_serializer(obj):
             """Custom JSON serializer for non-serializable types"""
             if isinstance(obj, datetime):
                 return obj.isoformat()
@@ -121,7 +121,7 @@ class OutputFormatter:
     def format_json_jq(data: Any) -> str:
         """Format as jq-friendly JSON (one object per line for arrays)"""
 
-        def json_serializer(obj) -> None:
+        def json_serializer(obj):
             if isinstance(obj, datetime):
                 return obj.isoformat()
             elif isinstance(obj, Path):
@@ -214,7 +214,7 @@ class OutputFormatter:
     def format_yaml(data: Any) -> str:
         """Format as YAML"""
 
-        def yaml_representer(dumper, data) -> None:
+        def yaml_representer(dumper, data):
             """Custom YAML representer for non-serializable types"""
             if isinstance(data, datetime):
                 return dumper.represent_scalar(
@@ -370,7 +370,7 @@ class OutputFormatter:
         import xml.etree.ElementTree as ET
         from xml.dom import minidom
 
-        def dict_to_xml(tag, d) -> None:
+        def dict_to_xml(tag, d):
             """Convert dictionary to XML element"""
             elem = ET.Element(tag)
 
@@ -438,7 +438,7 @@ class OutputFormatter:
             return str(data)
 
     @staticmethod
-    def _flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = "_") -> Dict:
+    def _flatten_dict(d: Dict, parent_key: str = "", sep: str = "_") -> Dict:
         """Flatten nested dictionary"""
         items = []
         for k, v in d.items():
@@ -525,7 +525,7 @@ class OutputFormatter:
             return OutputFormatter.format(error_data, format)
 
     @staticmethod
-    def stream_format(data_generator, format: OutputFormat, output_buffer) -> None:
+    def stream_format(data_generator, format: OutputFormat, output_buffer):
         """Format streaming data"""
         # Collect all data first for JSON formatting
         all_data = list(data_generator)
@@ -676,7 +676,7 @@ class ProgressFormatter:
         return OutputFormatter.format(progress_data, format)
 
     @staticmethod
-    def format_progress_bar(progress: Dict[str, Any], width: int = 50) -> str:
+    def format_progress_bar(progress: Dict, width: int = 50) -> str:
         """Format a text progress bar"""
         percentage = progress.get("percentage", 0)
         filled = int(width * percentage / 100)
@@ -702,7 +702,7 @@ class ProgressFormatter:
             return f"{hours}h {minutes}m {secs}s"
 
     @staticmethod
-    def calculate_speed(progress: Dict[str, Any]) -> float:
+    def calculate_speed(progress: Dict) -> float:
         """Calculate processing speed in bytes/second"""
         bytes_processed = progress.get("bytes_processed", 0)
         elapsed_time = progress.get("elapsed_time", 1)

@@ -1,10 +1,10 @@
 """Format analysis for quality prediction and compatibility assessment."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app.models.conversion import ContentType, InputFormat, OutputFormat
-from app.models.recommendation import FormatComparisonMetric
+from app.models.recommendation import FormatCharacteristics, FormatComparisonMetric
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -46,11 +46,11 @@ class FormatAnalyzer:
         "bit_depth": {16: 1.0, 12: 0.9, 10: 0.85, 8: 0.8},
     }
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize format analyzer."""
         self._init_compatibility_matrix()
 
-    def _init_compatibility_matrix(self) -> None:
+    def _init_compatibility_matrix(self):
         """Initialize format compatibility matrix."""
         # JPEG to other formats
         self._add_compatibility(
@@ -191,7 +191,7 @@ class FormatAnalyzer:
         quality_retention: float,
         feature_preservation: Dict[str, bool],
         notes: List[str],
-    ) -> None:
+    ):
         """Add format compatibility entry."""
         key = (format_from.lower(), format_to.lower())
         self.COMPATIBILITY_MATRIX[key] = FormatCompatibility(
@@ -517,7 +517,7 @@ class FormatAnalyzer:
         """Create comparison metrics for multiple formats.
 
         Args:
-            formats: List[Any] of formats to compare
+            formats: List of formats to compare
             content_type: Type of content
             original_size_kb: Original file size
 

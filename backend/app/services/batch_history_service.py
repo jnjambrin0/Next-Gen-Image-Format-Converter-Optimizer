@@ -6,9 +6,10 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
-from app.core.batch.models import BatchJobStatus, BatchResult
+from app.core.batch.models import BatchJobStatus, BatchProgress, BatchResult
 from app.core.constants import (
     BATCH_JOB_RETENTION_DAYS,
     DB_CHECK_SAME_THREAD,
@@ -21,7 +22,7 @@ logger = get_logger(__name__)
 class BatchHistoryService:
     """Service for persisting and retrieving batch job history."""
 
-    def __init__(self, db_path: str = "./data/batch_history.db") -> None:
+    def __init__(self, db_path: str = "./data/batch_history.db"):
         """Initialize the batch history service.
 
         Args:
@@ -31,7 +32,7 @@ class BatchHistoryService:
         self._lock = asyncio.Lock()
         self._init_db()
 
-    def _init_db(self) -> None:
+    def _init_db(self):
         """Initialize database tables."""
         # Ensure data directory exists
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -103,7 +104,7 @@ class BatchHistoryService:
             )
 
     @contextmanager
-    def _get_db(self) -> None:
+    def _get_db(self):
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
@@ -408,7 +409,8 @@ class BatchHistoryService:
             user_ip: User IP address
             minutes: Time window in minutes
 
-        Returns: List[Any] of recent jobs
+        Returns:
+            List of recent jobs
         """
         cutoff_time = datetime.now() - timedelta(minutes=minutes)
 

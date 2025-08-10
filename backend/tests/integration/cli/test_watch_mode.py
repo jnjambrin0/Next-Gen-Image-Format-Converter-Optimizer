@@ -1,20 +1,25 @@
 """
-from typing import Any
 Comprehensive integration tests for watch mode
 Tests file monitoring, resource limits, and DoS prevention
 """
 
+import asyncio
+import os
+import shutil
 import tempfile
 import threading
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, call, patch
 
+import psutil
 import pytest
 
 from app.cli.productivity.watcher import (
     Debouncer,
     DirectoryWatcher,
+    FileEvent,
     RateLimiter,
     ResourceLimits,
     ResourceMonitor,
@@ -25,7 +30,7 @@ from app.cli.productivity.watcher import (
 class TestRateLimiter:
     """Test rate limiting functionality"""
 
-    def test_rate_limiter_allows_under_limit(self) -> None:
+    def test_rate_limiter_allows_under_limit(self):
         """Test that rate limiter allows events under limit"""
         limiter = RateLimiter(max_per_second=5)
 
@@ -33,7 +38,7 @@ class TestRateLimiter:
         for i in range(5):
             assert limiter.should_allow() is True
 
-    def test_rate_limiter_blocks_over_limit(self) -> None:
+    def test_rate_limiter_blocks_over_limit(self):
         """Test that rate limiter blocks events over limit"""
         limiter = RateLimiter(max_per_second=3)
 
@@ -44,7 +49,7 @@ class TestRateLimiter:
         # Should block 4th in same second
         assert limiter.should_allow() is False
 
-    def test_rate_limiter_resets_after_time(self) -> None:
+    def test_rate_limiter_resets_after_time(self):
         """Test that rate limiter resets after time window"""
         limiter = RateLimiter(max_per_second=2)
 
@@ -59,12 +64,12 @@ class TestRateLimiter:
         # Should allow again
         assert limiter.should_allow() is True
 
-    def test_rate_limiter_thread_safety(self) -> None:
+    def test_rate_limiter_thread_safety(self):
         """Test rate limiter is thread-safe"""
         limiter = RateLimiter(max_per_second=10)
         results = []
 
-        def worker() -> None:
+        def worker():
             for _ in range(5):
                 results.append(limiter.should_allow())
                 time.sleep(0.01)
@@ -84,12 +89,12 @@ class TestRateLimiter:
 class TestDebouncer:
     """Test debouncing functionality"""
 
-    def test_debouncer_delays_execution(self) -> None:
+    def test_debouncer_delays_execution(self):
         """Test that debouncer delays execution"""
         debouncer = Debouncer(delay_ms=100)
         called = threading.Event()
 
-        def callback() -> None:
+        def callback():
             called.set()
 
         debouncer.debounce("key1", callback)
@@ -102,12 +107,12 @@ class TestDebouncer:
         time.sleep(0.1)
         assert called.is_set()
 
-    def test_debouncer_cancels_previous(self) -> None:
+    def test_debouncer_cancels_previous(self):
         """Test that debouncer cancels previous calls"""
         debouncer = Debouncer(delay_ms=100)
         call_count = [0]
 
-        def callback(value) -> None:
+        def callback(value):
             call_count[0] = value
 
         # Rapid calls - only last should execute
@@ -123,12 +128,12 @@ class TestDebouncer:
         # Only last call should have executed
         assert call_count[0] == 3
 
-    def test_debouncer_multiple_keys(self) -> None:
+    def test_debouncer_multiple_keys(self):
         """Test debouncer handles multiple keys independently"""
         debouncer = Debouncer(delay_ms=50)
         results = {}
 
-        def callback(key, value) -> None:
+        def callback(key, value):
             results[key] = value
 
         # Different keys should not interfere
@@ -140,12 +145,12 @@ class TestDebouncer:
         assert results["key1"] == "value1"
         assert results["key2"] == "value2"
 
-    def test_debouncer_cancel_all(self) -> None:
+    def test_debouncer_cancel_all(self):
         """Test canceling all pending events"""
         debouncer = Debouncer(delay_ms=200)
         called = threading.Event()
 
-        def callback() -> None:
+        def callback():
             called.set()
 
         debouncer.debounce("key1", callback)
@@ -166,13 +171,13 @@ class TestDirectoryWatcher:
     """Test DirectoryWatcher functionality"""
 
     @pytest.fixture
-    def temp_watch_dir(self) -> None:
+    def temp_watch_dir(self):
         """Create temporary directory for watching"""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
     @pytest.fixture
-    def watcher(self, temp_watch_dir) -> None:
+    def watcher(self, temp_watch_dir):
         """Create watcher instance"""
         limits = ResourceLimits(
             max_files=10,
@@ -185,7 +190,7 @@ class TestDirectoryWatcher:
 
         processed_files = []
 
-        def process_callback(file_event) -> None:
+        def process_callback(file_event):
             processed_files.append(file_event)
             time.sleep(0.01)  # Simulate processing
 
@@ -204,7 +209,7 @@ class TestDirectoryWatcher:
         if watcher.status != WatcherStatus.STOPPED:
             watcher.stop()
 
-    def test_watcher_initialization(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_initialization(self, watcher, temp_watch_dir):
         """Test watcher initializes correctly"""
         assert watcher.directory == temp_watch_dir
         assert watcher.filters == ["*.txt", "*.jpg"]
@@ -212,7 +217,7 @@ class TestDirectoryWatcher:
         assert watcher.status == WatcherStatus.IDLE
         assert watcher.limits.max_files == 10
 
-    def test_should_process_file_filters(self, watcher, temp_watch_dir) -> None:
+    def test_should_process_file_filters(self, watcher, temp_watch_dir):
         """Test file filtering logic"""
         # Should process
         assert watcher.should_process_file(Path("test.txt")) is True
@@ -223,7 +228,7 @@ class TestDirectoryWatcher:
         assert watcher.should_process_file(Path("test.pdf")) is False
         assert watcher.should_process_file(Path("no_extension")) is False
 
-    def test_watcher_start_stop(self, watcher) -> None:
+    def test_watcher_start_stop(self, watcher):
         """Test starting and stopping watcher"""
         # Start watcher
         watcher.start()
@@ -236,7 +241,7 @@ class TestDirectoryWatcher:
         watcher.stop()
         assert watcher.status == WatcherStatus.STOPPED
 
-    def test_watcher_processes_new_files(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_processes_new_files(self, watcher, temp_watch_dir):
         """Test that watcher processes new files"""
         watcher.start()
         time.sleep(0.1)  # Let watcher initialize
@@ -255,7 +260,7 @@ class TestDirectoryWatcher:
         assert len(processed) > 0
         assert any(str(test_file) in str(e.path) for e in processed)
 
-    def test_watcher_debounces_rapid_changes(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_debounces_rapid_changes(self, watcher, temp_watch_dir):
         """Test that rapid changes are debounced"""
         watcher.start()
         time.sleep(0.1)
@@ -277,7 +282,7 @@ class TestDirectoryWatcher:
         rapid_events = [e for e in processed if "rapid.txt" in str(e.path)]
         assert len(rapid_events) == 1
 
-    def test_watcher_respects_rate_limit(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_respects_rate_limit(self, watcher, temp_watch_dir):
         """Test that watcher respects rate limits"""
         # Set very low rate limit
         watcher.rate_limiter = RateLimiter(max_per_second=2)
@@ -298,7 +303,7 @@ class TestDirectoryWatcher:
         # Exact count depends on timing, but should be less than 10
         assert len(watcher.processed_files_list) < 10
 
-    def test_watcher_queue_limit(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_queue_limit(self, watcher, temp_watch_dir):
         """Test that processing queue has size limit"""
         # Set very small queue
         watcher.processing_queue.maxsize = 3
@@ -317,12 +322,12 @@ class TestDirectoryWatcher:
         # Stats should show some files were skipped
         assert watcher.stats.files_skipped > 0
 
-    def test_watcher_concurrent_processing(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_concurrent_processing(self, watcher, temp_watch_dir):
         """Test concurrent file processing"""
         # Track processing times
         processing_times = []
 
-        def slow_process(file_event) -> None:
+        def slow_process(file_event):
             start = time.time()
             time.sleep(0.1)  # Simulate slow processing
             processing_times.append(time.time() - start)
@@ -345,7 +350,7 @@ class TestDirectoryWatcher:
         # 6 files * 0.1s = 0.6s sequential, but with concurrency should be ~0.2s
         assert len(processing_times) > 0
 
-    def test_watcher_pause_resume(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_pause_resume(self, watcher, temp_watch_dir):
         """Test pausing and resuming watcher"""
         watcher.start()
         time.sleep(0.1)
@@ -376,7 +381,7 @@ class TestDirectoryWatcher:
         # Resumed file should be processed
         assert any("resumed.txt" in str(e.path) for e in watcher.processed_files_list)
 
-    def test_watcher_status_tracking(self, watcher, temp_watch_dir) -> None:
+    def test_watcher_status_tracking(self, watcher, temp_watch_dir):
         """Test watcher status reporting"""
         watcher.start()
         time.sleep(0.1)
@@ -400,9 +405,7 @@ class TestDirectoryWatcher:
 
         watcher.stop()
 
-    def test_watcher_checksum_duplicate_detection(
-        self, watcher, temp_watch_dir
-    ) -> None:
+    def test_watcher_checksum_duplicate_detection(self, watcher, temp_watch_dir):
         """Test duplicate file detection via checksum"""
         watcher.start()
         time.sleep(0.1)
@@ -428,7 +431,7 @@ class TestDirectoryWatcher:
 class TestResourceMonitor:
     """Test resource monitoring and limits"""
 
-    def test_resource_monitor_initialization(self) -> None:
+    def test_resource_monitor_initialization(self):
         """Test resource monitor initializes correctly"""
         limits = ResourceLimits(max_memory_mb=512, max_cpu_percent=80)
 
@@ -437,14 +440,14 @@ class TestResourceMonitor:
         assert monitor.limits.max_cpu_percent == 80
         assert monitor.monitoring is False
 
-    def test_resource_monitor_start_stop(self) -> None:
+    def test_resource_monitor_start_stop(self):
         """Test starting and stopping resource monitor"""
         limits = ResourceLimits()
         monitor = ResourceMonitor(limits)
 
         called = threading.Event()
 
-        def callback() -> None:
+        def callback():
             called.set()
 
         monitor.start(callback)
@@ -455,7 +458,7 @@ class TestResourceMonitor:
         monitor.stop()
         assert monitor.monitoring is False
 
-    def test_resource_monitor_check_limits(self) -> None:
+    def test_resource_monitor_check_limits(self):
         """Test checking resource limits"""
         limits = ResourceLimits(max_memory_mb=10000)  # Very high limit
 
@@ -475,7 +478,7 @@ class TestDoSPrevention:
     """Test Denial of Service prevention mechanisms"""
 
     @pytest.fixture
-    def dos_watcher(self, tmp_path) -> None:
+    def dos_watcher(self, tmp_path):
         """Create watcher with strict DoS limits"""
         limits = ResourceLimits(
             max_files=5,  # Very low limit
@@ -499,7 +502,7 @@ class TestDoSPrevention:
         if watcher.status != WatcherStatus.STOPPED:
             watcher.stop()
 
-    def test_dos_file_bomb_prevention(self, dos_watcher, tmp_path) -> None:
+    def test_dos_file_bomb_prevention(self, dos_watcher, tmp_path):
         """Test prevention of file bomb attacks"""
         dos_watcher.start()
         time.sleep(0.1)
@@ -521,7 +524,7 @@ class TestDoSPrevention:
         # Should have processed only a few
         assert stats.files_processed < 10
 
-    def test_dos_large_file_prevention(self, dos_watcher, tmp_path) -> None:
+    def test_dos_large_file_prevention(self, dos_watcher, tmp_path):
         """Test handling of very large files"""
         dos_watcher.start()
         time.sleep(0.1)
@@ -539,7 +542,7 @@ class TestDoSPrevention:
         # Should handle large file without crashing
         assert dos_watcher.status == WatcherStatus.STOPPED
 
-    def test_dos_rapid_modification_prevention(self, dos_watcher, tmp_path) -> None:
+    def test_dos_rapid_modification_prevention(self, dos_watcher, tmp_path):
         """Test prevention of rapid modification attacks"""
         dos_watcher.start()
         time.sleep(0.1)
@@ -560,7 +563,7 @@ class TestDoSPrevention:
         # Debouncing should have limited to 1-2 events
         assert len(events) <= 2
 
-    def test_dos_memory_exhaustion_prevention(self, dos_watcher) -> None:
+    def test_dos_memory_exhaustion_prevention(self, dos_watcher):
         """Test prevention of memory exhaustion"""
         # Set very low memory limit
         dos_watcher.limits.max_memory_mb = 50
@@ -581,11 +584,11 @@ class TestDoSPrevention:
             # Should have skipped files due to resource limits
             assert dos_watcher.stats.files_skipped > 0
 
-    def test_dos_cpu_exhaustion_prevention(self, dos_watcher) -> None:
+    def test_dos_cpu_exhaustion_prevention(self, dos_watcher):
         """Test prevention of CPU exhaustion"""
 
         # Create CPU-intensive callback
-        def cpu_intensive(file_event) -> None:
+        def cpu_intensive(file_event):
             # Simulate CPU-intensive operation
             start = time.time()
             while time.time() - start < 0.1:
@@ -602,14 +605,14 @@ class TestDoSPrevention:
         # Should have limited processing
         assert dos_watcher.stats.files_processed < 10
 
-    def test_dos_concurrent_connection_limit(self, dos_watcher, tmp_path) -> None:
+    def test_dos_concurrent_connection_limit(self, dos_watcher, tmp_path):
         """Test limiting concurrent processing"""
         # Already set to max_concurrent=1 in fixture
 
         processing_count = [0]
         max_concurrent = [0]
 
-        def track_concurrent(file_event) -> None:
+        def track_concurrent(file_event):
             processing_count[0] += 1
             max_concurrent[0] = max(max_concurrent[0], processing_count[0])
             time.sleep(0.1)
@@ -630,11 +633,11 @@ class TestDoSPrevention:
         # Should never exceed max_concurrent limit
         assert max_concurrent[0] <= dos_watcher.limits.max_concurrent
 
-    def test_dos_automatic_shutdown(self, dos_watcher) -> None:
+    def test_dos_automatic_shutdown(self, dos_watcher):
         """Test automatic shutdown on resource exhaustion"""
         exhausted = threading.Event()
 
-        def on_exhaustion() -> None:
+        def on_exhaustion():
             exhausted.set()
             dos_watcher.stop()
 
@@ -646,7 +649,7 @@ class TestDoSPrevention:
             dos_watcher.resource_monitor, "_monitor_loop"
         ) as mock_monitor:
 
-            def simulate_exhaustion() -> None:
+            def simulate_exhaustion():
                 time.sleep(0.1)
                 on_exhaustion()
 
@@ -659,7 +662,7 @@ class TestDoSPrevention:
         assert exhausted.is_set()
         assert dos_watcher.status == WatcherStatus.STOPPED
 
-    def test_dos_path_traversal_prevention(self, dos_watcher, tmp_path) -> None:
+    def test_dos_path_traversal_prevention(self, dos_watcher, tmp_path):
         """Test prevention of path traversal attempts"""
         dos_watcher.start()
         time.sleep(0.1)
@@ -701,7 +704,7 @@ class TestWatchModeIntegration:
     """Full integration tests for watch mode"""
 
     @pytest.fixture
-    def integration_setup(self, tmp_path) -> None:
+    def integration_setup(self, tmp_path):
         """Set up full integration environment"""
         watch_dir = tmp_path / "watch"
         output_dir = tmp_path / "output"
@@ -710,7 +713,7 @@ class TestWatchModeIntegration:
 
         yield watch_dir, output_dir
 
-    def test_realistic_watch_scenario(self, integration_setup) -> None:
+    def test_realistic_watch_scenario(self, integration_setup):
         """Test realistic watch mode usage scenario"""
         watch_dir, output_dir = integration_setup
 
@@ -726,7 +729,7 @@ class TestWatchModeIntegration:
 
         processed = []
 
-        def mock_process(file_event) -> None:
+        def mock_process(file_event):
             # Simulate image conversion
             time.sleep(0.05)
             output_file = output_dir / f"{file_event.path.stem}_converted.webp"

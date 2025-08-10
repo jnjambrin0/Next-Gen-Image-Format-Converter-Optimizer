@@ -2,8 +2,9 @@
 Network isolation verification for privacy-focused operation.
 """
 
+import socket
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from app.utils.logging import get_logger
 

@@ -1,9 +1,12 @@
 """
-from typing import Any
 Unit tests for Tutorial Engine
 """
 
-from unittest.mock import patch
+import asyncio
+import json
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -18,7 +21,7 @@ from app.cli.documentation.tutorial_engine import (
 class TestTutorialStep:
     """Test TutorialStep dataclass"""
 
-    def test_tutorial_step_creation(self) -> None:
+    def test_tutorial_step_creation(self):
         """Test creating tutorial step"""
         step = TutorialStep(
             id="test_step",
@@ -33,7 +36,7 @@ class TestTutorialStep:
         assert step.title == "Test Step"
         assert len(step.hints) == 2
 
-    def test_tutorial_step_to_dict(self) -> None:
+    def test_tutorial_step_to_dict(self):
         """Test converting step to dictionary"""
         step = TutorialStep(
             id="quiz",
@@ -50,7 +53,7 @@ class TestTutorialStep:
         assert data["quiz_options"] == ["A", "B", "C"]
         assert data["quiz_answer"] == 1
 
-    def test_tutorial_step_from_dict(self) -> None:
+    def test_tutorial_step_from_dict(self):
         """Test creating step from dictionary"""
         data = {
             "id": "command",
@@ -70,7 +73,7 @@ class TestTutorialStep:
 class TestTutorialProgress:
     """Test TutorialProgress dataclass"""
 
-    def test_tutorial_progress_creation(self) -> None:
+    def test_tutorial_progress_creation(self):
         """Test creating tutorial progress"""
         progress = TutorialProgress(
             tutorial_id="basic",
@@ -84,7 +87,7 @@ class TestTutorialProgress:
         assert len(progress.completed_steps) == 2
         assert progress.total_steps == 5
 
-    def test_completion_percentage(self) -> None:
+    def test_completion_percentage(self):
         """Test completion percentage calculation"""
         progress = TutorialProgress(
             tutorial_id="test",
@@ -99,7 +102,7 @@ class TestTutorialProgress:
         progress.total_steps = 0
         assert progress.completion_percentage == 0.0
 
-    def test_progress_to_dict(self) -> None:
+    def test_progress_to_dict(self):
         """Test converting progress to dictionary"""
         progress = TutorialProgress(
             tutorial_id="test", current_step=1, achievements=["first_step"]
@@ -115,7 +118,7 @@ class TestTutorialEngine:
     """Test TutorialEngine"""
 
     @pytest.fixture
-    def engine(self, tmp_path) -> None:
+    def engine(self, tmp_path):
         """Create engine instance with temp directory"""
         with patch(
             "app.cli.documentation.tutorial_engine.Path.home", return_value=tmp_path
@@ -126,13 +129,13 @@ class TestTutorialEngine:
             engine.progress_file = engine.config_dir / "tutorial_progress.json"
             return engine
 
-    def test_engine_initialization(self, engine) -> None:
+    def test_engine_initialization(self, engine):
         """Test engine initialization"""
         assert len(engine.tutorials) > 0
         assert "basic_conversion" in engine.tutorials
         assert "batch_processing" in engine.tutorials
 
-    def test_list_tutorials(self, engine) -> None:
+    def test_list_tutorials(self, engine):
         """Test listing tutorials"""
         tutorials = engine.list_tutorials()
 
@@ -144,7 +147,7 @@ class TestTutorialEngine:
             assert "completed" in tutorial
             assert "status" in tutorial
 
-    def test_get_tutorial_title(self, engine) -> None:
+    def test_get_tutorial_title(self, engine):
         """Test getting tutorial title"""
         assert (
             engine._get_tutorial_title("basic_conversion") == "Basic Image Conversion"
@@ -152,7 +155,7 @@ class TestTutorialEngine:
         assert engine._get_tutorial_title("batch_processing") == "Batch Processing"
         assert engine._get_tutorial_title("unknown") == "Unknown"
 
-    def test_get_tutorial_status(self, engine) -> None:
+    def test_get_tutorial_status(self, engine):
         """Test getting tutorial status"""
         # Not started
         status = engine._get_tutorial_status("basic_conversion")
@@ -177,7 +180,7 @@ class TestTutorialEngine:
             await engine.run_tutorial("nonexistent")
             mock_print.assert_called_with("[red]Tutorial 'nonexistent' not found[/red]")
 
-    def test_save_and_load_progress(self, engine) -> None:
+    def test_save_and_load_progress(self, engine):
         """Test saving and loading progress"""
         # Add progress
         progress = TutorialProgress(
@@ -216,7 +219,7 @@ class TestTutorialEngine:
             result = await engine._execute_step(step, progress)
             assert result is True
 
-    def test_execute_quiz_step(self, engine) -> None:
+    def test_execute_quiz_step(self, engine):
         """Test executing quiz step"""
         step = TutorialStep(
             id="quiz",
@@ -246,7 +249,7 @@ class TestTutorialEngine:
                 result = engine._execute_quiz_step(step)
                 assert result is True  # Still continues
 
-    def test_create_sample_image(self, engine, tmp_path) -> None:
+    def test_create_sample_image(self, engine, tmp_path):
         """Test creating sample image"""
         filepath = tmp_path / "test.png"
         engine._create_sample_image(filepath)
@@ -256,7 +259,7 @@ class TestTutorialEngine:
         data = filepath.read_bytes()
         assert data[:8] == b"\x89PNG\r\n\x1a\n"
 
-    def test_validate_sandbox(self, engine, tmp_path) -> None:
+    def test_validate_sandbox(self, engine, tmp_path):
         """Test sandbox validation"""
         engine.sandbox_dir = tmp_path
 
@@ -276,7 +279,7 @@ class TestTutorialEngine:
         (tmp_path / "converted").mkdir()
         assert engine._validate_sandbox(validation) is True
 
-    def test_reset_progress(self, engine) -> None:
+    def test_reset_progress(self, engine):
         """Test resetting progress"""
         # Add some progress
         engine.progress["test"] = TutorialProgress(

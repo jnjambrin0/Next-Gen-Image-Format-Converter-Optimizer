@@ -1,6 +1,5 @@
 """Tests for API versioning functionality."""
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,7 +9,7 @@ from app.main import app
 
 
 @pytest.fixture
-def client() -> None:
+def client():
     """Create a test client for the FastAPI app."""
     return TestClient(app)
 
@@ -18,19 +17,19 @@ def client() -> None:
 class TestApiVersioning:
     """Test API versioning implementation."""
 
-    def test_legacy_health_endpoint_exists(self, client) -> None:
+    def test_legacy_health_endpoint_exists(self, client):
         """Test that legacy /api/health endpoint still works."""
         response = client.get("/api/health")
         assert response.status_code == 200
         assert "status" in response.json()
 
-    def test_v1_health_endpoint_exists(self, client) -> None:
+    def test_v1_health_endpoint_exists(self, client):
         """Test that new /api/v1/health endpoint works."""
         response = client.get("/api/v1/health")
         assert response.status_code == 200
         assert "status" in response.json()
 
-    def test_both_endpoints_return_same_data(self, client) -> None:
+    def test_both_endpoints_return_same_data(self, client):
         """Test that legacy and v1 endpoints return equivalent data."""
         legacy_response = client.get("/api/health")
         v1_response = client.get("/api/v1/health")
@@ -46,7 +45,7 @@ class TestApiVersioning:
         assert set(legacy_data.keys()) == set(v1_data.keys())
         assert legacy_data["status"] == v1_data["status"]
 
-    def test_openapi_includes_both_servers(self, client) -> None:
+    def test_openapi_includes_both_servers(self, client):
         """Test that OpenAPI spec includes both legacy and v1 servers."""
         response = client.get("/api/openapi.json")
         assert response.status_code == 200
@@ -67,7 +66,7 @@ class TestApiVersioning:
         assert legacy_server is not None
         assert "Legacy" in legacy_server["description"]
 
-    def test_accept_version_header_support(self, client) -> None:
+    def test_accept_version_header_support(self, client):
         """Test that Accept-Version header is properly handled."""
         # Test with v1 version header
         response = client.get("/api/v1/health", headers={"Accept-Version": "v1"})
@@ -79,7 +78,7 @@ class TestApiVersioning:
             response.status_code == 400
         )  # Should be rejected by validation middleware
 
-    def test_v1_endpoints_include_api_version_header(self, client) -> None:
+    def test_v1_endpoints_include_api_version_header(self, client):
         """Test that v1 endpoints include API version in response headers."""
         # Mock the conversion service to avoid dependencies
         with patch("app.api.routes.conversion.conversion_service") as mock_service:
@@ -110,7 +109,7 @@ class TestApiVersioning:
 class TestApiDocumentation:
     """Test API documentation enhancements."""
 
-    def test_openapi_spec_has_enhanced_info(self, client) -> None:
+    def test_openapi_spec_has_enhanced_info(self, client):
         """Test that OpenAPI spec includes enhanced information."""
         response = client.get("/api/openapi.json")
         assert response.status_code == 200
@@ -131,7 +130,7 @@ class TestApiDocumentation:
         assert "privacy" in description.lower()
         assert "sandboxed" in description.lower()
 
-    def test_openapi_spec_has_reusable_components(self, client) -> None:
+    def test_openapi_spec_has_reusable_components(self, client):
         """Test that OpenAPI spec includes reusable components."""
         response = client.get("/api/openapi.json")
         assert response.status_code == 200
@@ -155,7 +154,7 @@ class TestApiDocumentation:
         assert "CorrelationId" in parameters
         assert "AcceptVersion" in parameters
 
-    def test_openapi_spec_has_organized_tags(self, client) -> None:
+    def test_openapi_spec_has_organized_tags(self, client):
         """Test that OpenAPI spec includes organized tags."""
         response = client.get("/api/openapi.json")
         assert response.status_code == 200

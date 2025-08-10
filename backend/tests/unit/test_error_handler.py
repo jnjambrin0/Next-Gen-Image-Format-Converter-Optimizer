@@ -1,8 +1,9 @@
-from typing import Any
 import os
 import sys
+from unittest.mock import Mock, patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 # Add parent directory to path
@@ -15,6 +16,7 @@ from app.core.exceptions import (
     ProcessingTimeoutError,
     ResourceLimitError,
     SecurityError,
+    ValidationError,
 )
 from app.main import app
 
@@ -23,11 +25,11 @@ class TestErrorHandling:
     """Test error handling middleware and exception handlers."""
 
     @pytest.fixture
-    def client(self) -> None:
+    def client(self):
         """Create test client."""
         return TestClient(app)
 
-    def test_404_not_found(self, client) -> None:
+    def test_404_not_found(self, client):
         """Test 404 error handling."""
         response = client.get("/api/nonexistent")
 
@@ -167,7 +169,7 @@ class TestErrorHandling:
         assert response_data["error"]["type"] == "HTTPException"
         assert response_data["error"]["message"] == "Bad request"
 
-    def test_correlation_id_propagation(self, client) -> None:
+    def test_correlation_id_propagation(self, client):
         """Test correlation ID is consistent across error response."""
         response = client.get("/api/nonexistent")
 
@@ -178,7 +180,7 @@ class TestErrorHandling:
         assert body_correlation_id is not None
         assert header_correlation_id == body_correlation_id
 
-    def test_error_response_structure(self, client) -> None:
+    def test_error_response_structure(self, client):
         """Test error response has consistent structure."""
         response = client.get("/api/nonexistent")
 
@@ -197,7 +199,7 @@ class TestErrorHandling:
         if "details" in error:
             assert isinstance(error["details"], dict)
 
-    def test_validation_error_structure(self, client) -> None:
+    def test_validation_error_structure(self, client):
         """Test validation error response structure."""
         # Send malformed JSON
         response = client.post(

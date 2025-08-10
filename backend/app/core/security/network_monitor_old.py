@@ -7,7 +7,9 @@ import os
 import random
 import signal
 import subprocess
-from typing import Any, Dict, List, Optional, Set
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import structlog
 
@@ -21,9 +23,12 @@ from app.core.constants import (
 from app.core.monitoring.security_events import SecurityEventTracker
 from app.core.security.metrics import SecurityMetricsCollector
 from app.core.security.parsers import (
+    check_network_isolation,
+    get_active_connections_count,
     parse_connections,
+    validate_no_network_activity,
 )
-from app.core.security.types import ViolationStats
+from app.core.security.types import ConnectionInfo, ViolationStats
 from app.models.security_event import SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()
@@ -39,12 +44,12 @@ class NetworkMonitor:
         security_tracker: Optional[SecurityEventTracker] = None,
         check_interval: int = DEFAULT_MONITORING_INTERVAL,
         terminate_on_violation: bool = False,
-    ) -> None:
+    ):
         """
         Initialize network monitor.
 
         Args:
-            security_tracker: Optional[Any] security event tracker
+            security_tracker: Optional security event tracker
             check_interval: Seconds between connection checks
             terminate_on_violation: Whether to terminate violating processes
         """
@@ -340,7 +345,7 @@ async def create_network_monitor(
     Factory function to create and start a network monitor.
 
     Args:
-        security_tracker: Optional[Any] security event tracker
+        security_tracker: Optional security event tracker
         check_interval: Seconds between checks
         terminate_on_violation: Whether to terminate violating processes
 

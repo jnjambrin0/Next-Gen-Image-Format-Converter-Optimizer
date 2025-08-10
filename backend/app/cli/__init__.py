@@ -1,5 +1,4 @@
 """
-from typing import Any
 Image Converter CLI Package
 Professional CLI interface for image conversion and optimization
 """

@@ -1,6 +1,5 @@
 """Unit tests for metadata functionality without sandboxing."""
 
-from typing import Any
 import io
 
 import pytest
@@ -13,11 +12,11 @@ class TestMetadataUnit:
     """Unit tests for metadata stripping."""
 
     @pytest.fixture
-    def metadata_stripper(self) -> None:
+    def metadata_stripper(self):
         """Create metadata stripper instance."""
         return MetadataStripper()
 
-    def test_simple_jpeg_metadata_removal(self, metadata_stripper) -> None:
+    def test_simple_jpeg_metadata_removal(self, metadata_stripper):
         """Test basic JPEG metadata removal synchronously."""
         # Create a simple JPEG
         img = Image.new("RGB", (100, 100), color="red")
@@ -44,7 +43,7 @@ class TestMetadataUnit:
         assert isinstance(summary, dict)
         assert "metadata_removed" in summary
 
-    def test_metadata_detection(self, metadata_stripper) -> None:
+    def test_metadata_detection(self, metadata_stripper):
         """Test metadata detection functionality."""
         # Create image with no metadata
         img = Image.new("RGB", (50, 50), color="blue")
@@ -59,7 +58,7 @@ class TestMetadataUnit:
         assert info["has_exif"] is False
         assert info["has_gps"] is False
 
-    def test_supported_formats(self, metadata_stripper) -> None:
+    def test_supported_formats(self, metadata_stripper):
         """Test that all supported formats can be processed."""
         formats_to_test = ["JPEG", "PNG", "BMP", "WEBP"]
 

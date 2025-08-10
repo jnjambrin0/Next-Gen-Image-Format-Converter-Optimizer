@@ -3,12 +3,16 @@
 import asyncio
 import io
 import json
+import os
+import tempfile
 import threading
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 from PIL import Image
+from PIL.ExifTags import TAGS
 
 from app.config import settings
 from app.core.constants import (
@@ -27,10 +31,11 @@ from app.core.constants import (
     SUSPICIOUS_PATTERNS,
 )
 from app.core.exceptions import ConversionError
+from app.core.security.memory import SecureMemoryManager, secure_memory_context
 from app.core.security.metadata import MetadataStripper
 from app.core.security.sandbox import SandboxConfig, SecuritySandbox
 from app.models.process_sandbox import ProcessSandbox
-from app.models.security_event import SecuritySeverity
+from app.models.security_event import SecurityEvent, SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()
 
@@ -47,7 +52,7 @@ class SecurityEngine:
     - Security audit logging
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize the security engine."""
         self._sandboxes: Dict[str, ProcessSandbox] = {}
         self._sandbox_lock = threading.Lock()  # Thread-safe access to _sandboxes
@@ -56,7 +61,7 @@ class SecurityEngine:
         self._configure_logging()
 
     @property
-    def security_tracker(self) -> None:
+    def security_tracker(self):
         """Lazy load security tracker to avoid circular imports."""
         if self._security_tracker is None:
             from app.api.routes.monitoring import security_tracker
@@ -68,6 +73,7 @@ class SecurityEngine:
         """Configure structured security logging."""
         # Security logs will be configured with structlog
         # This is handled at application startup, we just use the logger
+        pass
 
     def create_sandbox(
         self, conversion_id: str, strictness: str = "standard"
@@ -261,6 +267,7 @@ class SecurityEngine:
             except Exception as e:
                 # Log the specific error for debugging but don't expose it
                 logger.debug(f"PIL verification failed: {str(e)}")
+                pass
 
         if not is_valid_image and "File too small" not in str(
             report.get("threats_found", [])
@@ -474,7 +481,7 @@ class SecurityEngine:
             sandbox: SecuritySandbox instance
             conversion_id: Conversion UUID
             command: Command to execute
-            input_data: Optional[Any] input data
+            input_data: Optional input data
 
         Returns:
             Tuple of (output_data, process_sandbox_record)
@@ -626,7 +633,8 @@ class SecurityEngine:
         Args:
             limit: Maximum number of entries to return
 
-        Returns: List[Any] of audit log entries
+        Returns:
+            List of audit log entries
         """
         history = []
         for sandbox in list(self._sandboxes.values())[-limit:]:

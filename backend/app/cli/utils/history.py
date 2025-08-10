@@ -7,7 +7,7 @@ import json
 from collections import deque
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app.cli.config import get_config, get_history_dir
 from app.cli.productivity.autocomplete import PrivacySanitizer
@@ -22,7 +22,7 @@ from app.cli.productivity.fuzzy_search import (
 class HistoryManager:
     """Manages command history for undo/redo with fuzzy search"""
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.history_dir = get_history_dir()
         self.history_file = self.history_dir / "commands.json"
         self.undo_stack_file = self.history_dir / "undo_stack.json"
@@ -48,7 +48,7 @@ class HistoryManager:
         # Apply retention limit on startup
         self._apply_retention_limit()
 
-    def _ensure_history_dir(self) -> None:
+    def _ensure_history_dir(self):
         """Ensure history directory exists"""
         self.history_dir.mkdir(parents=True, exist_ok=True)
 
@@ -62,7 +62,7 @@ class HistoryManager:
                 return []
         return []
 
-    def _save_history(self) -> None:
+    def _save_history(self):
         """Save command history"""
         # Keep only the most recent entries
         if len(self.history) > self.config.history_size:
@@ -81,14 +81,14 @@ class HistoryManager:
                 return []
         return []
 
-    def _save_stack(self, stack: deque, file: Path) -> None:
+    def _save_stack(self, stack: deque, file: Path):
         """Save undo/redo stack"""
         with open(file, "w") as f:
             json.dump(list(stack), f, indent=2)
 
     def add_command(
         self, command: str, success: bool = True, result: Optional[Dict] = None
-    ) -> None:
+    ):
         """Add a command to history"""
         if not self.config.history_enabled:
             return
@@ -142,7 +142,7 @@ class HistoryManager:
 
         return command
 
-    def clear_history(self) -> None:
+    def clear_history(self):
         """Clear all history"""
         self.history.clear()
         self.undo_stack.clear()
@@ -152,7 +152,7 @@ class HistoryManager:
         self._save_stack(self.undo_stack, self.undo_stack_file)
         self._save_stack(self.redo_stack, self.redo_stack_file)
 
-    def _apply_retention_limit(self, days: int = 7) -> None:
+    def _apply_retention_limit(self, days: int = 7):
         """Apply retention limit to history (default 7 days)"""
         if not self.history:
             return
@@ -179,7 +179,8 @@ class HistoryManager:
             limit: Maximum number of results
             filter_success: Filter by success status
 
-        Returns: List[Any] of (entry, score) tuples
+        Returns:
+            List of (entry, score) tuples
         """
         # Convert history dicts to HistoryEntry objects
         entries = [HistoryEntry.from_dict(h) for h in self.history]
@@ -198,7 +199,7 @@ class HistoryManager:
 
         Args:
             query: Search query
-            time_range: Optional[Any] time range filter
+            time_range: Optional time range filter
             command_prefix: Filter by command prefix
             limit: Maximum results
 
@@ -250,7 +251,8 @@ class HistoryManager:
         Args:
             top_n: Number of top commands
 
-        Returns: List[Any] of (command, count) tuples
+        Returns:
+            List of (command, count) tuples
         """
         entries = [HistoryEntry.from_dict(h) for h in self.history]
         return self.fuzzy_searcher.get_command_frequency(entries, top_n)
@@ -273,7 +275,7 @@ class HistoryManager:
 
         Args:
             query: Search query
-            display_callback: Optional[Any] display callback
+            display_callback: Optional display callback
 
         Returns:
             Selected entry or None
@@ -345,9 +347,7 @@ def get_history_manager() -> HistoryManager:
     return _history_manager
 
 
-def record_command(
-    command: str, success: bool = True, result: Optional[Dict] = None
-) -> None:
+def record_command(command: str, success: bool = True, result: Optional[Dict] = None):
     """Record a command in history"""
     manager = get_history_manager()
     manager.add_command(command, success, result)

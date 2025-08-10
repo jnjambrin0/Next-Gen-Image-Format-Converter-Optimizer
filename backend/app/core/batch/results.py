@@ -3,10 +3,12 @@
 import io
 import json
 import zipfile
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, BinaryIO, Dict, List, Optional
 
-from app.core.batch.models import BatchJob, BatchResult
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchResult
+from app.core.exceptions import ValidationError
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -15,7 +17,7 @@ logger = get_logger(__name__)
 class BatchResultCollector:
     """Collects and manages results from batch processing."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize the result collector."""
         self.logger = get_logger(__name__)
 
@@ -29,8 +31,8 @@ class BatchResultCollector:
 
         Args:
             job: The batch job
-            successful_files: List[Any] of successful file results
-            failed_files: List[Any] of failed file results
+            successful_files: List of successful file results
+            failed_files: List of failed file results
 
         Returns:
             BatchResult object with compiled results

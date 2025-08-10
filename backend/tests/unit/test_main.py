@@ -1,4 +1,3 @@
-from typing import Any
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -17,17 +16,17 @@ class TestMainApplication:
     """Test FastAPI application setup and configuration."""
 
     @pytest.fixture
-    def client(self) -> None:
+    def client(self):
         """Create test client."""
         return TestClient(app)
 
-    def test_app_creation(self) -> None:
+    def test_app_creation(self):
         """Test that app is created successfully."""
         assert app is not None
         assert app.title == "Image Converter API"
         assert app.version == "0.1.0"
 
-    def test_openapi_configuration(self, client) -> None:
+    def test_openapi_configuration(self, client):
         """Test OpenAPI configuration."""
         response = client.get("/api/openapi.json")
         assert response.status_code == 200
@@ -41,7 +40,7 @@ class TestMainApplication:
             == f"http://localhost:{settings.api_port}/api"
         )
 
-    def test_docs_endpoints(self, client) -> None:
+    def test_docs_endpoints(self, client):
         """Test documentation endpoints."""
         # Test Swagger UI
         response = client.get("/api/docs")
@@ -53,7 +52,7 @@ class TestMainApplication:
         assert response.status_code == 200
         assert "redoc" in response.text.lower()
 
-    def test_cors_headers(self, client) -> None:
+    def test_cors_headers(self, client):
         """Test CORS configuration."""
         response = client.options(
             "/api/health",
@@ -69,7 +68,7 @@ class TestMainApplication:
         # CORS middleware allows all methods when configured with ["*"]
         assert "GET" in response.headers["access-control-allow-methods"]
 
-    def test_root_endpoint_development(self, client) -> None:
+    def test_root_endpoint_development(self, client):
         """Test root endpoint in development mode."""
         with patch.object(settings, "env", "development"):
             response = client.get("/")
@@ -80,7 +79,7 @@ class TestMainApplication:
             }
 
     @patch("app.main.Path")
-    def test_static_files_production(self, mock_path_class, client) -> None:
+    def test_static_files_production(self, mock_path_class, client):
         """Test static file serving in production mode."""
         # Mock production environment
         with patch.object(settings, "env", "production"):
@@ -93,7 +92,7 @@ class TestMainApplication:
             # Note: Actual static file serving requires app restart, so we just verify config
             assert settings.env == "production"
 
-    def test_middleware_order(self) -> None:
+    def test_middleware_order(self):
         """Test that middleware is added in correct order."""
         # Check that middleware is properly configured
         # FastAPI internally manages middleware, we can verify by checking app.middleware
@@ -108,7 +107,7 @@ class TestMainApplication:
         # Verify CORS middleware is present
         assert any("CORSMiddleware" in name for name in middleware_names)
 
-    def test_exception_handlers_registered(self) -> None:
+    def test_exception_handlers_registered(self):
         """Test that exception handlers are properly registered."""
         # Check that custom exception handlers are registered
         assert len(app.exception_handlers) > 0
@@ -121,14 +120,14 @@ class TestMainApplication:
         assert HTTPException in app.exception_handlers
         assert Exception in app.exception_handlers
 
-    def test_api_router_included(self, client) -> None:
+    def test_api_router_included(self, client):
         """Test that API router is included."""
         # Test that health endpoint from router is accessible
         response = client.get("/api/health")
         assert response.status_code == 200
         assert response.json() == {"status": "healthy"}
 
-    def test_lifespan_context(self) -> None:
+    def test_lifespan_context(self):
         """Test lifespan context manager."""
         # This is tested implicitly when the app starts
         # We can verify logging setup is called

@@ -1,10 +1,12 @@
 """Authentication middleware for optional API key support."""
 
-from typing import Any, Optional
+from typing import Optional, Tuple
 
 from fastapi import HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 
+from app.config import settings
 from app.models.database import ApiKey
 from app.services.api_key_service import api_key_service
 from app.utils.logging import get_logger
@@ -15,7 +17,7 @@ logger = get_logger(__name__)
 class OptionalAPIKeyAuth:
     """Optional API key authentication dependency."""
 
-    def __init__(self, auto_error: bool = False) -> None:
+    def __init__(self, auto_error: bool = False):
         """Initialize optional API key authentication.
 
         Args:
@@ -221,7 +223,7 @@ class OptionalAPIKeyAuth:
 class RequiredAPIKeyAuth(OptionalAPIKeyAuth):
     """Required API key authentication dependency."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize required API key authentication."""
         super().__init__(auto_error=True)
 

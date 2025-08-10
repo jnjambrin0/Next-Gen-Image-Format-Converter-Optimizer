@@ -1,5 +1,4 @@
 """
-from typing import Any
 Unit tests for cache management in documentation components
 """
 
@@ -16,11 +15,11 @@ class TestHelpContextCacheManagement:
     """Test cache management in HelpContextAnalyzer"""
 
     @pytest.fixture
-    def analyzer(self) -> None:
+    def analyzer(self):
         """Create analyzer with short TTL for testing"""
         return HelpContextAnalyzer(cache_ttl=1)  # 1 second TTL
 
-    def test_cache_ttl_expiration(self, analyzer) -> None:
+    def test_cache_ttl_expiration(self, analyzer):
         """Test that cache entries expire after TTL"""
         # Create mock context
         ctx = Mock(spec=typer.Context)
@@ -41,7 +40,7 @@ class TestHelpContextCacheManagement:
         # Cache should still have 1 entry (old evicted, new added)
         assert len(analyzer._help_cache) == 1
 
-    def test_cache_size_limit(self, analyzer) -> None:
+    def test_cache_size_limit(self, analyzer):
         """Test that cache respects size limits"""
         # Set a smaller max cache size for testing
         analyzer.MAX_CACHE_SIZE = 5
@@ -61,7 +60,7 @@ class TestHelpContextCacheManagement:
         # Cache should be within limits
         assert len(analyzer._help_cache) <= analyzer.MAX_CACHE_SIZE
 
-    def test_lru_eviction(self, analyzer) -> None:
+    def test_lru_eviction(self, analyzer):
         """Test that least recently used entries are evicted"""
         analyzer.MAX_CACHE_SIZE = 3
 
@@ -95,7 +94,7 @@ class TestHelpContextCacheManagement:
         cache_keys = list(analyzer._help_cache.keys())
         assert "command2:{'param': 2}:None" not in cache_keys or len(cache_keys) <= 3
 
-    def test_cache_access_count_tracking(self, analyzer) -> None:
+    def test_cache_access_count_tracking(self, analyzer):
         """Test that cache tracks access counts correctly"""
         ctx = Mock(spec=typer.Context)
         ctx.command_path = "img convert"
@@ -111,7 +110,7 @@ class TestHelpContextCacheManagement:
             analyzer._cache_access_count[cache_key] == 4
         )  # First access doesn't count
 
-    def test_cache_cleanup_interval(self, analyzer) -> None:
+    def test_cache_cleanup_interval(self, analyzer):
         """Test that cleanup respects interval"""
         analyzer.CACHE_CLEANUP_INTERVAL = 10  # 10 seconds
 
@@ -128,7 +127,7 @@ class TestHelpContextCacheManagement:
         analyzer._maybe_cleanup_cache()
         assert analyzer._last_cleanup > first_cleanup
 
-    def test_clear_cache_resets_all(self, analyzer) -> None:
+    def test_clear_cache_resets_all(self, analyzer):
         """Test that clear_cache resets all cache structures"""
         # Add some cache entries
         ctx = Mock(spec=typer.Context)
@@ -154,7 +153,7 @@ class TestHelpContextCacheManagement:
 class TestLazyLoadingPerformance:
     """Test lazy loading optimizations"""
 
-    def test_knowledge_base_lazy_index(self) -> None:
+    def test_knowledge_base_lazy_index(self):
         """Test that knowledge base lazily loads search index"""
         from app.cli.documentation.knowledge_base import KnowledgeBase
 
@@ -169,7 +168,7 @@ class TestLazyLoadingPerformance:
             _ = kb.search_index
             assert kb._index_initialized
 
-    def test_knowledge_base_handles_missing_whoosh(self) -> None:
+    def test_knowledge_base_handles_missing_whoosh(self):
         """Test graceful fallback when Whoosh is not available"""
         from app.cli.documentation.knowledge_base import KnowledgeBase
 

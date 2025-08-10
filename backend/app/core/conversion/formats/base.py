@@ -1,6 +1,7 @@
 """Base format handler interface."""
 
 from abc import ABC, abstractmethod
+from io import BytesIO
 from typing import Any, BinaryIO, Dict, Optional
 
 from PIL import Image
@@ -11,7 +12,7 @@ from app.models.conversion import ConversionSettings, ImageMetadata
 class BaseFormatHandler(ABC):
     """Abstract base class for format handlers."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize format handler."""
         self.supported_formats: list[str] = []
         self.format_name: str = ""
@@ -19,20 +20,24 @@ class BaseFormatHandler(ABC):
     @abstractmethod
     def can_handle(self, format_name: str) -> bool:
         """Check if this handler can process the given format."""
+        pass
 
     @abstractmethod
     def validate_image(self, image_data: bytes) -> bool:
         """Validate that the image data is valid for this format."""
+        pass
 
     @abstractmethod
     def load_image(self, image_data: bytes) -> Image.Image:
         """Load image from bytes."""
+        pass
 
     @abstractmethod
     def save_image(
         self, image: Image.Image, output_buffer: BinaryIO, settings: ConversionSettings
     ) -> None:
         """Save image to buffer with given settings."""
+        pass
 
     def extract_metadata(
         self, image: Image.Image, strip_metadata: bool = True

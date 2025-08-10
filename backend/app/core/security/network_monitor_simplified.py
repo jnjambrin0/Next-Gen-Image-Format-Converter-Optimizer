@@ -9,7 +9,7 @@ import asyncio
 import os
 import subprocess
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
 import structlog
 
@@ -33,7 +33,7 @@ class NetworkMonitor:
         security_tracker: Optional[SecurityEventTracker] = None,
         check_interval: float = DEFAULT_MONITORING_INTERVAL,
         enabled: bool = True,
-    ) -> None:
+    ):
         """Initialize network monitor."""
         self.security_tracker = security_tracker
         self.check_interval = check_interval

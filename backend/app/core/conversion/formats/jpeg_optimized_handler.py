@@ -2,11 +2,13 @@
 
 import os
 import tempfile
-from typing import Any, BinaryIO, Dict
+from io import BytesIO
+from typing import Any, BinaryIO, Dict, Optional
 
 import structlog
 from PIL import Image
 
+from app.config import settings
 from app.core.conversion.formats.jpeg_handler import JPEGHandler
 from app.core.conversion.tools import ExternalToolExecutor
 from app.core.exceptions import ConversionFailedError
@@ -18,7 +20,7 @@ logger = structlog.get_logger()
 class JPEGOptimizedHandler(JPEGHandler):
     """Handler for optimized JPEG format using mozjpeg."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize optimized JPEG handler."""
         super().__init__()
         self.supported_formats = ["jpeg_opt", "jpeg_optimized", "jpg_optimized"]

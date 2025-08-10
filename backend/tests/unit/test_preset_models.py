@@ -1,6 +1,5 @@
 """Unit tests for preset data models."""
 
-from typing import Any
 from datetime import datetime
 
 import pytest
@@ -8,8 +7,10 @@ from pydantic import ValidationError
 
 from app.models.schemas import (
     PresetBase,
+    PresetCreate,
     PresetExport,
     PresetImport,
+    PresetListResponse,
     PresetResponse,
     PresetSettings,
     PresetUpdate,
@@ -19,7 +20,7 @@ from app.models.schemas import (
 class TestPresetSettings:
     """Test PresetSettings model validation."""
 
-    def test_valid_preset_settings(self) -> None:
+    def test_valid_preset_settings(self):
         """Test creating valid preset settings."""
         settings = PresetSettings(
             output_format="webp",
@@ -32,13 +33,13 @@ class TestPresetSettings:
         assert settings.optimization_mode == "balanced"
         assert settings.preserve_metadata is False
 
-    def test_invalid_output_format(self) -> None:
+    def test_invalid_output_format(self):
         """Test invalid output format raises error."""
         with pytest.raises(ValidationError) as exc_info:
             PresetSettings(output_format="invalid_format", quality=85)
         assert "Unsupported output format" in str(exc_info.value)
 
-    def test_quality_bounds(self) -> None:
+    def test_quality_bounds(self):
         """Test quality value bounds."""
         # Valid range
         settings = PresetSettings(output_format="jpeg", quality=1)
@@ -55,13 +56,13 @@ class TestPresetSettings:
         with pytest.raises(ValidationError):
             PresetSettings(output_format="jpeg", quality=101)
 
-    def test_invalid_optimization_mode(self) -> None:
+    def test_invalid_optimization_mode(self):
         """Test invalid optimization mode raises error."""
         with pytest.raises(ValidationError) as exc_info:
             PresetSettings(output_format="webp", optimization_mode="invalid_mode")
         assert "Invalid optimization mode" in str(exc_info.value)
 
-    def test_optional_fields(self) -> None:
+    def test_optional_fields(self):
         """Test optional fields in settings."""
         settings = PresetSettings(
             output_format="png",
@@ -75,7 +76,7 @@ class TestPresetSettings:
 class TestPresetBase:
     """Test PresetBase model validation."""
 
-    def test_valid_preset_base(self) -> None:
+    def test_valid_preset_base(self):
         """Test creating valid preset base."""
         preset = PresetBase(
             name="Web Optimized",
@@ -86,7 +87,7 @@ class TestPresetBase:
         assert preset.description == "Optimized for web use"
         assert preset.settings.output_format == "webp"
 
-    def test_name_validation(self) -> None:
+    def test_name_validation(self):
         """Test preset name validation."""
         # Valid names
         valid_names = [
@@ -112,7 +113,7 @@ class TestPresetBase:
             with pytest.raises(ValidationError):
                 PresetBase(name=name, settings=PresetSettings(output_format="webp"))
 
-    def test_name_length_limits(self) -> None:
+    def test_name_length_limits(self):
         """Test name length validation."""
         # Minimum length
         with pytest.raises(ValidationError):
@@ -129,7 +130,7 @@ class TestPresetBase:
         with pytest.raises(ValidationError):
             PresetBase(name="a" * 101, settings=PresetSettings(output_format="webp"))
 
-    def test_description_length_limit(self) -> None:
+    def test_description_length_limit(self):
         """Test description length validation."""
         long_desc = "a" * 500
         preset = PresetBase(
@@ -151,7 +152,7 @@ class TestPresetBase:
 class TestPresetUpdate:
     """Test PresetUpdate model validation."""
 
-    def test_partial_update(self) -> None:
+    def test_partial_update(self):
         """Test partial updates are allowed."""
         # Update only name
         update = PresetUpdate(name="New Name")
@@ -164,7 +165,7 @@ class TestPresetUpdate:
         assert update.name is None
         assert update.settings.output_format == "jpeg"
 
-    def test_empty_update(self) -> None:
+    def test_empty_update(self):
         """Test empty update is valid."""
         update = PresetUpdate()
         assert update.name is None
@@ -175,7 +176,7 @@ class TestPresetUpdate:
 class TestPresetResponse:
     """Test PresetResponse model."""
 
-    def test_preset_response(self) -> None:
+    def test_preset_response(self):
         """Test creating preset response."""
         now = datetime.utcnow()
         response = PresetResponse(
@@ -194,7 +195,7 @@ class TestPresetResponse:
 class TestPresetImport:
     """Test PresetImport model validation."""
 
-    def test_valid_import(self) -> None:
+    def test_valid_import(self):
         """Test valid preset import."""
         import_data = PresetImport(
             presets=[
@@ -208,13 +209,13 @@ class TestPresetImport:
         )
         assert len(import_data.presets) == 2
 
-    def test_empty_import(self) -> None:
+    def test_empty_import(self):
         """Test empty import raises error."""
         with pytest.raises(ValidationError) as exc_info:
             PresetImport(presets=[])
         assert "At least one preset must be provided" in str(exc_info.value)
 
-    def test_too_many_presets(self) -> None:
+    def test_too_many_presets(self):
         """Test import limit."""
         presets = [
             PresetBase(
@@ -226,7 +227,7 @@ class TestPresetImport:
             PresetImport(presets=presets)
         assert "Cannot import more than 50 presets" in str(exc_info.value)
 
-    def test_duplicate_names(self) -> None:
+    def test_duplicate_names(self):
         """Test duplicate names in import."""
         with pytest.raises(ValidationError) as exc_info:
             PresetImport(
@@ -245,7 +246,7 @@ class TestPresetImport:
 class TestPresetExport:
     """Test PresetExport model."""
 
-    def test_preset_export(self) -> None:
+    def test_preset_export(self):
         """Test creating preset export."""
         now = datetime.utcnow()
         preset_response = PresetResponse(

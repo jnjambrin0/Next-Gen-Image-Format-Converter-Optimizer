@@ -3,12 +3,17 @@ Main CLI Application
 Core Typer application with command groups and global configuration
 """
 
+import sys
 from enum import Enum
-from typing import Any, Annotated, Optional
+from pathlib import Path
+from typing import Annotated, Optional
 
 import typer
+from rich import print as rprint
+from rich.console import Console
 from rich.table import Table
 
+from app.cli import __version__
 from app.cli.commands import analyze, batch, chain, convert, formats, optimize, presets
 from app.cli.config import CLIConfig, get_config, update_config
 from app.cli.plugins import loader as plugin_loader
@@ -16,8 +21,11 @@ from app.cli.ui.themes import get_theme_manager
 from app.cli.utils import aliases, errors, i18n
 from app.cli.utils.branding import (
     show_cli_banner,
+    show_error_message,
+    show_success_message,
     show_version_info,
 )
+from app.cli.utils.terminal import get_terminal_detector
 
 # Initialize theme manager and console
 theme_manager = get_theme_manager()
@@ -168,7 +176,7 @@ app.add_typer(
 @app.command("c", hidden=True)
 def convert_shortcut(
     ctx: typer.Context,
-) -> None:
+):
     """Shortcut for 'convert' command"""
     # Forward to convert command
     convert.app.invoke(ctx)
@@ -177,7 +185,7 @@ def convert_shortcut(
 @app.command("b", hidden=True)
 def batch_shortcut(
     ctx: typer.Context,
-) -> None:
+):
     """Shortcut for 'batch' command"""
     # Forward to batch command
     batch.app.invoke(ctx)
@@ -186,7 +194,7 @@ def batch_shortcut(
 @app.command("o", hidden=True)
 def optimize_shortcut(
     ctx: typer.Context,
-) -> None:
+):
     """Shortcut for 'optimize' command"""
     # Forward to optimize command
     optimize.app.invoke(ctx)
@@ -422,7 +430,7 @@ def plugins(
 
 
 @app.command()
-def tui() -> None:
+def tui():
     """
     Launch interactive Terminal UI mode
 
@@ -512,7 +520,7 @@ def history(
 # Error handling
 # Note: Typer doesn't have exception_handler attribute
 # This would need to be implemented differently
-def handle_exceptions(e: Exception) -> None:
+def handle_exceptions(e: Exception):
     """Global exception handler with helpful suggestions"""
     if state.get("debug"):
         # In debug mode, show full traceback

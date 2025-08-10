@@ -1,5 +1,6 @@
 """WebP2 format handler with fallback to WebP."""
 
+from io import BytesIO
 from typing import Any, BinaryIO, Dict
 
 import structlog
@@ -13,7 +14,7 @@ except ImportError:
     WEBP2_AVAILABLE = False
 
 from app.core.conversion.formats.webp_handler import WebPHandler
-from app.core.exceptions import ConversionFailedError
+from app.core.exceptions import ConversionFailedError, UnsupportedFormatError
 from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
@@ -22,7 +23,7 @@ logger = structlog.get_logger()
 class WebP2Handler(WebPHandler):
     """Handler for WebP2 format with automatic fallback to WebP."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize WebP2 handler."""
         super().__init__()
         self.supported_formats = ["webp2"]

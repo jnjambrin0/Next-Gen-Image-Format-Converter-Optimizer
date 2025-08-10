@@ -15,6 +15,7 @@ from app.core.constants import (
     DEFAULT_MONITORING_HOURS,
     MAX_RECENT_EVENTS_DISPLAY,
     SECURITY_EVENT_RETENTION_DAYS,
+    SECURITY_EVENT_TABLE_NAME,
 )
 from app.core.security.rate_limiter import SecurityEventRateLimiter
 from app.core.security.types import RateLimitConfig
@@ -39,7 +40,7 @@ class SecurityEventTracker:
         self,
         db_path: Optional[str] = None,
         rate_limit_config: Optional[RateLimitConfig] = None,
-    ) -> None:
+    ):
         """
         Initialize security event tracker.
 
@@ -53,7 +54,7 @@ class SecurityEventTracker:
         self._rate_limited_events = 0
         self._init_database()
 
-    def _init_database(self) -> None:
+    def _init_database(self):
         """Initialize SQLite database for security events."""
         if self.db_path != ":memory:":
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -80,7 +81,7 @@ class SecurityEventTracker:
             )
 
     @contextmanager
-    def _get_db(self) -> None:
+    def _get_db(self):
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
@@ -272,7 +273,7 @@ class SecurityEventTracker:
         Record metadata stripping event.
 
         Args:
-            removed_fields: List[Any] of metadata fields removed (generic names only)
+            removed_fields: List of metadata fields removed (generic names only)
             input_format: Input image format
 
         Returns:

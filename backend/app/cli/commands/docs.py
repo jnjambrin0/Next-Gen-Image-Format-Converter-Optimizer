@@ -4,7 +4,7 @@ Browse and search offline documentation
 """
 
 import asyncio
-from typing import Any, Annotated, Optional
+from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
@@ -134,7 +134,7 @@ def docs_command(
         _show_overview()
 
 
-def _show_overview() -> None:
+def _show_overview():
     """Show documentation overview"""
     panel = Panel(
         """
@@ -184,7 +184,7 @@ Available resources:
     )
 
 
-def _view_section(section_id: str) -> None:
+def _view_section(section_id: str):
     """View specific documentation section"""
     section = doc_browser.sections.get(section_id)
 
@@ -204,7 +204,7 @@ def _view_section(section_id: str) -> None:
         )
 
 
-def _browse_examples() -> None:
+def _browse_examples():
     """Browse command examples"""
     console.print("\n[bold cyan]Command Examples[/bold cyan]\n")
 
@@ -257,7 +257,7 @@ def _browse_examples() -> None:
             break
 
 
-def _browse_knowledge_base() -> None:
+def _browse_knowledge_base():
     """Browse Q&A knowledge base"""
     console.print("\n[bold cyan]Q&A Knowledge Base[/bold cyan]\n")
 
@@ -322,7 +322,7 @@ def _browse_knowledge_base() -> None:
             break
 
 
-def _generate_reference(card_type: str) -> None:
+def _generate_reference(card_type: str):
     """Generate reference card"""
     try:
         # Display in console
@@ -394,7 +394,7 @@ async def _play_demo(demo_id: str):
         await demo_player.play(demo_id, speed)
 
 
-def _generate_man_page(command: str) -> None:
+def _generate_man_page(command: str):
     """Generate man page"""
     try:
         content = man_generator.generate(command)
@@ -418,7 +418,7 @@ def _generate_man_page(command: str) -> None:
         )
 
 
-def _search_documentation(query: str) -> None:
+def _search_documentation(query: str):
     """Search all documentation"""
     console.print(f"\n[bold cyan]Searching for: '{query}'[/bold cyan]\n")
 

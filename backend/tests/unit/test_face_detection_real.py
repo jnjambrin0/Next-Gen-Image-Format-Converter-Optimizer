@@ -1,6 +1,6 @@
 """Unit tests for face detection with real images."""
 
-from typing import Any
+import os
 from pathlib import Path
 
 import pytest
@@ -14,17 +14,17 @@ class TestFaceDetectorWithRealImages:
     """Test suite for FaceDetector with real test images."""
 
     @pytest.fixture
-    def face_detector(self) -> None:
+    def face_detector(self):
         """Create a FaceDetector instance for testing."""
         return FaceDetector(model_session=None, input_size=128)
 
     @pytest.fixture
-    def fixtures_path(self) -> None:
+    def fixtures_path(self):
         """Get path to test fixtures."""
         return Path(__file__).parent.parent / "fixtures" / "intelligence"
 
     @pytest.fixture
-    def portrait_image(self, fixtures_path) -> None:
+    def portrait_image(self, fixtures_path):
         """Load portrait image."""
         img_path = fixtures_path / "faces" / "portrait.jpg"
         if img_path.exists():
@@ -32,7 +32,7 @@ class TestFaceDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def woman_face_image(self, fixtures_path) -> None:
+    def woman_face_image(self, fixtures_path):
         """Load woman face image."""
         img_path = fixtures_path / "faces" / "woman-face.png"
         if img_path.exists():
@@ -40,7 +40,7 @@ class TestFaceDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def portrait_with_text(self, fixtures_path) -> None:
+    def portrait_with_text(self, fixtures_path):
         """Load portrait with text overlay."""
         img_path = fixtures_path / "edge_cases" / "portrait-with-text.png"
         if img_path.exists():
@@ -48,7 +48,7 @@ class TestFaceDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def group_photo(self, fixtures_path) -> None:
+    def group_photo(self, fixtures_path):
         """Load group photo."""
         img_path = fixtures_path / "edge_cases" / "group-mixed-text.JPG"
         if img_path.exists():
@@ -56,7 +56,7 @@ class TestFaceDetectorWithRealImages:
         pytest.skip(f"Test image not found: {img_path}")
 
     @pytest.fixture
-    def no_face_image(self, fixtures_path) -> None:
+    def no_face_image(self, fixtures_path):
         """Load image without faces."""
         # Use a random image like building or plant
         for name in ["building.JPG", "plant-with-dog-and-light.JPG"]:
@@ -65,7 +65,7 @@ class TestFaceDetectorWithRealImages:
                 return Image.open(img_path)
         pytest.skip("No non-face test image found")
 
-    def test_detect_single_portrait(self, face_detector, portrait_image) -> None:
+    def test_detect_single_portrait(self, face_detector, portrait_image):
         """Test face detection on single portrait."""
         faces = face_detector.detect(portrait_image)
 
@@ -96,7 +96,7 @@ class TestFaceDetectorWithRealImages:
         assert face_center_x > portrait_image.width * 0.1
         assert face_center_x < portrait_image.width * 0.9
 
-    def test_detect_woman_face(self, face_detector, woman_face_image) -> None:
+    def test_detect_woman_face(self, face_detector, woman_face_image):
         """Test face detection on woman face image."""
         faces = face_detector.detect(woman_face_image)
 
@@ -116,7 +116,7 @@ class TestFaceDetectorWithRealImages:
         aspect_ratio = face.height / face.width
         assert 0.8 < aspect_ratio < 1.5
 
-    def test_detect_portrait_with_text(self, face_detector, portrait_with_text) -> None:
+    def test_detect_portrait_with_text(self, face_detector, portrait_with_text):
         """Test face detection on portrait with text overlay."""
         faces = face_detector.detect(portrait_with_text)
 
@@ -134,7 +134,7 @@ class TestFaceDetectorWithRealImages:
             face_area = face.width * face.height
             assert face_area > img_area * 0.01
 
-    def test_detect_group_faces(self, face_detector, group_photo) -> None:
+    def test_detect_group_faces(self, face_detector, group_photo):
         """Test face detection on group photo."""
         faces = face_detector.detect(group_photo)
 
@@ -162,7 +162,7 @@ class TestFaceDetectorWithRealImages:
                 # Faces should be separated
                 assert distance > min(face1.width, face2.width)
 
-    def test_no_face_detection(self, face_detector, no_face_image) -> None:
+    def test_no_face_detection(self, face_detector, no_face_image):
         """Test that no faces are detected in non-face images."""
         faces = face_detector.detect(no_face_image)
 
@@ -175,7 +175,7 @@ class TestFaceDetectorWithRealImages:
         for face in faces:
             assert face.confidence < 0.5
 
-    def test_importance_scoring(self, face_detector, portrait_image) -> None:
+    def test_importance_scoring(self, face_detector, portrait_image):
         """Test face importance scoring."""
         faces = face_detector.detect(portrait_image)
 
@@ -192,7 +192,7 @@ class TestFaceDetectorWithRealImages:
                 for i in range(len(faces) - 1):
                     assert faces[i].confidence >= faces[i + 1].confidence
 
-    def test_skin_detection_accuracy(self, face_detector, portrait_image) -> None:
+    def test_skin_detection_accuracy(self, face_detector, portrait_image):
         """Test skin region detection on real portrait."""
         img_array = np.array(portrait_image)
 
@@ -208,7 +208,7 @@ class TestFaceDetectorWithRealImages:
         # Portrait should have 5-40% skin pixels
         assert 0.02 < skin_ratio < 0.6, f"Skin ratio {skin_ratio} out of expected range"
 
-    def test_performance_on_all_faces(self, face_detector, fixtures_path) -> None:
+    def test_performance_on_all_faces(self, face_detector, fixtures_path):
         """Test detection performance on all face images."""
         faces_dir = fixtures_path / "faces"
 
@@ -245,9 +245,7 @@ class TestFaceDetectorWithRealImages:
             )
             assert avg_time < 1.0, "Average face detection should be under 1 second"
 
-    def test_privacy_preservation_real_images(
-        self, face_detector, portrait_image
-    ) -> None:
+    def test_privacy_preservation_real_images(self, face_detector, portrait_image):
         """Test that only privacy-safe information is returned."""
         faces = face_detector.detect(portrait_image)
 
@@ -266,7 +264,7 @@ class TestFaceDetectorWithRealImages:
             assert not hasattr(face, "landmarks")
             assert not hasattr(face, "embeddings")
 
-    def test_edge_cases_robustness(self, face_detector, fixtures_path) -> None:
+    def test_edge_cases_robustness(self, face_detector, fixtures_path):
         """Test robustness on edge case images."""
         edge_cases_dir = fixtures_path / "edge_cases"
 

@@ -1,15 +1,16 @@
 """
-from typing import Any
 Comprehensive tests for output format consistency
 Tests JSON, CSV, YAML, XML, and Markdown formatters
 """
 
 import csv
 import json
+import tempfile
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from io import StringIO
+from pathlib import Path
 
 import pytest
 import yaml
@@ -29,12 +30,12 @@ class TestOutputFormatter:
     """Test base OutputFormatter functionality"""
 
     @pytest.fixture
-    def formatter(self) -> None:
+    def formatter(self):
         """Create formatter instance"""
         return OutputFormatter()
 
     @pytest.fixture
-    def sample_data(self) -> None:
+    def sample_data(self):
         """Create sample data for testing"""
         return {
             "status": "success",
@@ -49,7 +50,7 @@ class TestOutputFormatter:
             "timestamp": "2024-01-15T10:30:00Z",
         }
 
-    def test_json_formatting(self, formatter, sample_data) -> None:
+    def test_json_formatting(self, formatter, sample_data):
         """Test JSON output formatting"""
         output = formatter.format(sample_data, FormatType.JSON)
 
@@ -59,7 +60,7 @@ class TestOutputFormatter:
         assert parsed["compression_ratio"] == 0.5
         assert parsed["metadata"]["width"] == 1920
 
-    def test_json_pretty_printing(self, formatter, sample_data) -> None:
+    def test_json_pretty_printing(self, formatter, sample_data):
         """Test JSON pretty printing option"""
         options = FormatterOptions(pretty=True, indent=2)
         output = formatter.format(sample_data, FormatType.JSON, options)
@@ -72,7 +73,7 @@ class TestOutputFormatter:
         parsed = json.loads(output)
         assert parsed["status"] == "success"
 
-    def test_csv_formatting(self, formatter) -> None:
+    def test_csv_formatting(self, formatter):
         """Test CSV output formatting"""
         data = [
             {"file": "img1.jpg", "size": 1000, "format": "webp"},
@@ -91,7 +92,7 @@ class TestOutputFormatter:
         assert rows[1]["size"] == "2000"
         assert rows[2]["format"] == "jxl"
 
-    def test_csv_with_headers(self, formatter) -> None:
+    def test_csv_with_headers(self, formatter):
         """Test CSV header customization"""
         data = [{"a": 1, "b": 2}, {"a": 3, "b": 4}]
         options = FormatterOptions(headers=["Column A", "Column B"])
@@ -102,7 +103,7 @@ class TestOutputFormatter:
         assert "Column A" in lines[0]
         assert "Column B" in lines[0]
 
-    def test_yaml_formatting(self, formatter, sample_data) -> None:
+    def test_yaml_formatting(self, formatter, sample_data):
         """Test YAML output formatting"""
         output = formatter.format(sample_data, FormatType.YAML)
 
@@ -112,7 +113,7 @@ class TestOutputFormatter:
         assert parsed["compression_ratio"] == 0.5
         assert parsed["metadata"]["height"] == 1080
 
-    def test_yaml_with_anchors(self, formatter) -> None:
+    def test_yaml_with_anchors(self, formatter):
         """Test YAML anchor/alias support"""
         data = {
             "defaults": {"quality": 85, "format": "webp"},
@@ -128,7 +129,7 @@ class TestOutputFormatter:
         assert parsed["defaults"]["quality"] == 85
         assert len(parsed["conversions"]) == 2
 
-    def test_xml_formatting(self, formatter, sample_data) -> None:
+    def test_xml_formatting(self, formatter, sample_data):
         """Test XML output formatting"""
         output = formatter.format(sample_data, FormatType.XML)
 
@@ -138,7 +139,7 @@ class TestOutputFormatter:
         assert root.find("format").text == "webp"
         assert float(root.find("compression_ratio").text) == 0.5
 
-    def test_xml_with_attributes(self, formatter) -> None:
+    def test_xml_with_attributes(self, formatter):
         """Test XML attribute handling"""
         data = {
             "@version": "1.0",
@@ -154,7 +155,7 @@ class TestOutputFormatter:
         result = root.find("result")
         assert result.attrib.get("type") == "conversion"
 
-    def test_markdown_formatting(self, formatter, sample_data) -> None:
+    def test_markdown_formatting(self, formatter, sample_data):
         """Test Markdown output formatting"""
         output = formatter.format(sample_data, FormatType.MARKDOWN)
 
@@ -164,7 +165,7 @@ class TestOutputFormatter:
         assert "**" in output or "*" in output  # Bold/italic
         assert "```" in output  # Code blocks for nested data
 
-    def test_markdown_table_generation(self, formatter) -> None:
+    def test_markdown_table_generation(self, formatter):
         """Test Markdown table formatting"""
         data = [
             {"File": "img1.jpg", "Size": "1.2 MB", "Format": "WebP"},
@@ -180,7 +181,7 @@ class TestOutputFormatter:
         assert "---" in lines[1]  # Separator
         assert "img1.jpg" in lines[2]  # Data
 
-    def test_format_auto_detection(self, formatter, sample_data) -> None:
+    def test_format_auto_detection(self, formatter, sample_data):
         """Test automatic format detection from file extension"""
         # Test with file paths
         assert formatter.detect_format("output.json") == FormatType.JSON
@@ -190,7 +191,7 @@ class TestOutputFormatter:
         assert formatter.detect_format("response.xml") == FormatType.XML
         assert formatter.detect_format("README.md") == FormatType.MARKDOWN
 
-    def test_format_validation(self, formatter) -> None:
+    def test_format_validation(self, formatter):
         """Test format validation for different data types"""
         # JSON should handle all types
         assert formatter.validate_data({"key": "value"}, FormatType.JSON)
@@ -210,11 +211,11 @@ class TestResultFormatter:
     """Test ResultFormatter for conversion results"""
 
     @pytest.fixture
-    def formatter(self) -> None:
+    def formatter(self):
         return ResultFormatter()
 
     @pytest.fixture
-    def conversion_result(self) -> None:
+    def conversion_result(self):
         """Create sample conversion result"""
         return {
             "success": True,
@@ -234,7 +235,7 @@ class TestResultFormatter:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def test_format_single_result_json(self, formatter, conversion_result) -> None:
+    def test_format_single_result_json(self, formatter, conversion_result):
         """Test formatting single conversion result as JSON"""
         output = formatter.format_result(conversion_result, FormatType.JSON)
 
@@ -243,7 +244,7 @@ class TestResultFormatter:
         assert data["compression_ratio"] == 0.5
         assert data["dimensions"]["width"] == 3840
 
-    def test_format_batch_results_csv(self, formatter) -> None:
+    def test_format_batch_results_csv(self, formatter):
         """Test formatting batch results as CSV"""
         results = [
             {
@@ -277,7 +278,7 @@ class TestResultFormatter:
         assert rows[0]["status"] == "success"
         assert rows[2]["status"] == "failed"
 
-    def test_format_summary_markdown(self, formatter) -> None:
+    def test_format_summary_markdown(self, formatter):
         """Test formatting conversion summary as Markdown"""
         summary = {
             "total_files": 100,
@@ -302,7 +303,7 @@ class TestResultFormatter:
         assert "Success Rate" in output or "95%" in output
         assert "Average Compression" in output or "50%" in output
 
-    def test_format_with_custom_fields(self, formatter, conversion_result) -> None:
+    def test_format_with_custom_fields(self, formatter, conversion_result):
         """Test custom field selection"""
         options = FormatterOptions(
             fields=[
@@ -322,7 +323,7 @@ class TestResultFormatter:
         assert "quality" not in data  # Not in field list
         assert "dimensions" not in data  # Not in field list
 
-    def test_human_readable_sizes(self, formatter) -> None:
+    def test_human_readable_sizes(self, formatter):
         """Test human-readable size formatting"""
         assert formatter.format_size(1024) == "1.0 KB"
         assert formatter.format_size(1048576) == "1.0 MB"
@@ -335,11 +336,11 @@ class TestErrorFormatter:
     """Test ErrorFormatter for error reporting"""
 
     @pytest.fixture
-    def formatter(self) -> None:
+    def formatter(self):
         return ErrorFormatter()
 
     @pytest.fixture
-    def error_data(self) -> None:
+    def error_data(self):
         """Create sample error data"""
         return {
             "error_code": "CONV_001",
@@ -355,7 +356,7 @@ class TestErrorFormatter:
             "suggestions": ["Try converting to WebP instead", "Update codec libraries"],
         }
 
-    def test_format_error_json(self, formatter, error_data) -> None:
+    def test_format_error_json(self, formatter, error_data):
         """Test JSON error formatting"""
         output = formatter.format_error(error_data, FormatType.JSON)
 
@@ -364,7 +365,7 @@ class TestErrorFormatter:
         assert data["message"] == "Failed to convert image"
         assert len(data["suggestions"]) == 2
 
-    def test_format_error_user_friendly(self, formatter, error_data) -> None:
+    def test_format_error_user_friendly(self, formatter, error_data):
         """Test user-friendly error formatting"""
         options = FormatterOptions(verbose=False, user_friendly=True)
         output = formatter.format_error(error_data, FormatType.MARKDOWN, options)
@@ -374,7 +375,7 @@ class TestErrorFormatter:
         assert "Try converting" in output  # Should include suggestions
         assert "❌" in output or "Error" in output
 
-    def test_format_batch_errors_csv(self, formatter) -> None:
+    def test_format_batch_errors_csv(self, formatter):
         """Test batch error formatting as CSV"""
         errors = [
             {"file": "img1.xyz", "error": "Unsupported format", "code": "FMT_001"},
@@ -391,7 +392,7 @@ class TestErrorFormatter:
         assert rows[0]["error"] == "Unsupported format"
         assert rows[1]["code"] == "SIZE_001"
 
-    def test_error_aggregation(self, formatter) -> None:
+    def test_error_aggregation(self, formatter):
         """Test error aggregation and statistics"""
         errors = [
             {"code": "FMT_001", "type": "FormatError"},
@@ -413,10 +414,10 @@ class TestProgressFormatter:
     """Test ProgressFormatter for progress reporting"""
 
     @pytest.fixture
-    def formatter(self) -> None:
+    def formatter(self):
         return ProgressFormatter()
 
-    def test_format_progress_json(self, formatter) -> None:
+    def test_format_progress_json(self, formatter):
         """Test JSON progress formatting"""
         progress = {
             "current": 45,
@@ -437,7 +438,7 @@ class TestProgressFormatter:
         assert data["percentage"] == 45.0
         assert data["current_file"] == "image45.jpg"
 
-    def test_format_progress_bar_text(self, formatter) -> None:
+    def test_format_progress_bar_text(self, formatter):
         """Test text progress bar formatting"""
         progress = {"current": 75, "total": 100, "percentage": 75.0}
 
@@ -449,7 +450,7 @@ class TestProgressFormatter:
         assert "=" in output or "█" in output  # Progress fill
         assert "75%" in output
 
-    def test_format_eta_calculation(self, formatter) -> None:
+    def test_format_eta_calculation(self, formatter):
         """Test ETA calculation and formatting"""
         # Test various time ranges
         assert formatter.format_time(30) == "30s"
@@ -457,7 +458,7 @@ class TestProgressFormatter:
         assert formatter.format_time(3665) == "1h 1m 5s"
         assert formatter.format_time(0.5) == "<1s"
 
-    def test_format_speed_calculation(self, formatter) -> None:
+    def test_format_speed_calculation(self, formatter):
         """Test speed calculation and formatting"""
         progress = {
             "bytes_processed": 10485760,  # 10MB
@@ -475,18 +476,18 @@ class TestTableFormatter:
     """Test TableFormatter for tabular data"""
 
     @pytest.fixture
-    def formatter(self) -> None:
+    def formatter(self):
         return TableFormatter()
 
     @pytest.fixture
-    def table_data(self) -> None:
+    def table_data(self):
         return [
             {"Name": "Alice", "Age": 30, "City": "New York"},
             {"Name": "Bob", "Age": 25, "City": "Los Angeles"},
             {"Name": "Charlie", "Age": 35, "City": "Chicago"},
         ]
 
-    def test_format_ascii_table(self, formatter, table_data) -> None:
+    def test_format_ascii_table(self, formatter, table_data):
         """Test ASCII table formatting"""
         output = formatter.format_table(table_data, style="ascii")
 
@@ -498,7 +499,7 @@ class TestTableFormatter:
         assert "Name" in lines[1]
         assert "Alice" in output
 
-    def test_format_markdown_table(self, formatter, table_data) -> None:
+    def test_format_markdown_table(self, formatter, table_data):
         """Test Markdown table formatting"""
         output = formatter.format_table(table_data, style="markdown")
 
@@ -509,7 +510,7 @@ class TestTableFormatter:
         assert "---|" in lines[1]  # Separator
         assert "Alice" in lines[2]  # Data
 
-    def test_column_alignment(self, formatter) -> None:
+    def test_column_alignment(self, formatter):
         """Test column alignment options"""
         data = [
             {"Left": "text", "Center": "data", "Right": 123},
@@ -527,7 +528,7 @@ class TestTableFormatter:
         assert "text" in output
         assert "45678" in output
 
-    def test_column_width_calculation(self, formatter, table_data) -> None:
+    def test_column_width_calculation(self, formatter, table_data):
         """Test automatic column width calculation"""
         widths = formatter.calculate_column_widths(table_data)
 
@@ -538,7 +539,7 @@ class TestTableFormatter:
         # City column for "Los Angeles"
         assert widths["City"] >= 11
 
-    def test_table_truncation(self, formatter) -> None:
+    def test_table_truncation(self, formatter):
         """Test table truncation for large datasets"""
         # Create large dataset
         large_data = [{"id": i, "value": f"item_{i}"} for i in range(1000)]
@@ -556,7 +557,7 @@ class TestFormatterConsistency:
     """Test consistency across all formatters"""
 
     @pytest.fixture
-    def all_formatters(self) -> None:
+    def all_formatters(self):
         """Create all formatter types"""
         return {
             "output": OutputFormatter(),
@@ -567,7 +568,7 @@ class TestFormatterConsistency:
         }
 
     @pytest.fixture
-    def test_data(self) -> None:
+    def test_data(self):
         """Create test data that all formatters should handle"""
         return {
             "status": "success",
@@ -575,7 +576,7 @@ class TestFormatterConsistency:
             "metadata": {"timestamp": "2024-01-15T10:00:00Z", "version": "1.0"},
         }
 
-    def test_all_formats_supported(self, all_formatters, test_data) -> None:
+    def test_all_formats_supported(self, all_formatters, test_data):
         """Test that all formatters support all format types"""
         formats = [
             FormatType.JSON,
@@ -604,7 +605,7 @@ class TestFormatterConsistency:
                     # Some combinations might not be implemented
                     pass
 
-    def test_unicode_handling(self, all_formatters) -> None:
+    def test_unicode_handling(self, all_formatters):
         """Test Unicode character handling"""
         unicode_data = {
             "text": "Hello 世界 🌍",
@@ -627,7 +628,7 @@ class TestFormatterConsistency:
         root = ET.fromstring(xml_out)
         assert root.find("text").text == "Hello 世界 🌍"
 
-    def test_special_characters_escaping(self, all_formatters) -> None:
+    def test_special_characters_escaping(self, all_formatters):
         """Test special character escaping"""
         special_data = {
             "quotes": 'He said "Hello"',
@@ -649,7 +650,7 @@ class TestFormatterConsistency:
         xml_out = formatter.format(special_data, FormatType.XML)
         assert "&lt;script&gt;" in xml_out or "<![CDATA[" in xml_out
 
-    def test_null_and_empty_handling(self, all_formatters) -> None:
+    def test_null_and_empty_handling(self, all_formatters):
         """Test null and empty value handling"""
         edge_data = {
             "null_value": None,
@@ -676,7 +677,7 @@ class TestFormatterConsistency:
         assert parsed["null_value"] is None
         assert parsed["empty_list"] == []
 
-    def test_large_number_precision(self, all_formatters) -> None:
+    def test_large_number_precision(self, all_formatters):
         """Test large number and decimal precision"""
         number_data = {
             "large_int": 9223372036854775807,  # Max int64
@@ -693,7 +694,7 @@ class TestFormatterConsistency:
         assert parsed["large_int"] == 9223372036854775807
         assert abs(parsed["float_precise"] - 3.141592653589793) < 1e-10
 
-    def test_format_consistency_across_runs(self, all_formatters, test_data) -> None:
+    def test_format_consistency_across_runs(self, all_formatters, test_data):
         """Test that formatting is consistent across multiple runs"""
         formatter = all_formatters["output"]
 
@@ -706,7 +707,7 @@ class TestFormatterConsistency:
         # All outputs should be identical
         assert all(out == outputs[0] for out in outputs)
 
-    def test_format_round_trip(self, all_formatters, test_data) -> None:
+    def test_format_round_trip(self, all_formatters, test_data):
         """Test data integrity through format/parse round trip"""
         formatter = all_formatters["output"]
 
@@ -724,7 +725,7 @@ class TestFormatterConsistency:
 class TestFormatterIntegration:
     """Integration tests for formatters"""
 
-    def test_cli_output_pipeline(self) -> None:
+    def test_cli_output_pipeline(self):
         """Test complete CLI output pipeline"""
         # Simulate CLI command output
         formatter = OutputFormatter()
@@ -759,7 +760,7 @@ class TestFormatterIntegration:
         yaml_output = result_formatter.format_batch_results(results, FormatType.YAML)
         assert yaml.safe_load(yaml_output)  # Valid YAML
 
-    def test_error_recovery_formatting(self) -> None:
+    def test_error_recovery_formatting(self):
         """Test formatting with error recovery"""
         formatter = OutputFormatter()
         error_formatter = ErrorFormatter()
@@ -781,12 +782,12 @@ class TestFormatterIntegration:
         except Exception as e:
             pytest.fail(f"Formatter should handle errors gracefully: {e}")
 
-    def test_streaming_format_output(self) -> None:
+    def test_streaming_format_output(self):
         """Test streaming format output for large datasets"""
         formatter = OutputFormatter()
 
         # Simulate streaming data
-        def generate_data() -> None:
+        def generate_data():
             for i in range(1000):
                 yield {"id": i, "value": f"item_{i}"}
 

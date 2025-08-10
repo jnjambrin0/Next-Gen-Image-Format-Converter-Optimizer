@@ -191,17 +191,17 @@ def get_logger(name: Optional[str] = None) -> structlog.stdlib.BoundLogger:
 class LoggingContext:
     """Context manager for adding context to logs."""
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs):
         self.context = kwargs
         self.tokens = []
 
-    def __enter__(self) -> None:
+    def __enter__(self):
         for key, value in self.context.items():
             token = structlog.contextvars.bind_contextvars(**{key: value})
             self.tokens.append(token)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
         for token in self.tokens:
             structlog.contextvars.unbind_contextvars(token)
 

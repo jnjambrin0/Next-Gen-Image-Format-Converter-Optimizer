@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import structlog
 
@@ -16,14 +16,19 @@ from app.core.constants import (
     KB_TO_BYTES_FACTOR,
     MAX_MEMORY_VIOLATIONS,
     MB_TO_BYTES_FACTOR,
+    MEMORY_CHECK_INTERVAL,
+    PROCESS_NICE_LEVEL,
     SANDBOX_CPU_LIMITS,
     SANDBOX_MEMORY_LIMITS,
     SANDBOX_OUTPUT_LIMITS,
     SANDBOX_TIMEOUTS,
 )
+from app.core.exceptions import ConversionError
 from app.core.security.errors import (
+    SecurityError,
     create_file_error,
     create_sandbox_error,
+    handle_security_errors,
 )
 from app.core.security.memory import MemoryError as SecureMemoryError
 from app.core.security.memory import (
@@ -48,7 +53,7 @@ class SandboxConfig:
         enable_memory_tracking: bool = True,
         enable_memory_locking: bool = True,
         memory_violation_threshold: int = MAX_MEMORY_VIOLATIONS["standard"],
-    ) -> None:
+    ):
         self.max_memory_mb = max_memory_mb
         self.max_cpu_percent = max_cpu_percent
         self.timeout_seconds = timeout_seconds
@@ -129,7 +134,7 @@ class SandboxConfig:
 class SecuritySandbox:
     """Secure sandbox for running image conversion processes."""
 
-    def __init__(self, config: Optional[SandboxConfig] = None) -> None:
+    def __init__(self, config: Optional[SandboxConfig] = None):
         """Initialize security sandbox with configuration."""
         self.config = config or SandboxConfig()
         self._temp_dirs: List[Path] = []
@@ -137,11 +142,11 @@ class SecuritySandbox:
         self._memory_violations: int = 0
         self._peak_memory_mb: float = 0.0
 
-    def __enter__(self) -> None:
+    def __enter__(self):
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit - cleanup resources."""
         self._cleanup_temp_dirs()
         self._cleanup_memory()
@@ -153,7 +158,7 @@ class SecuritySandbox:
         Create a new sandbox instance with specified resource limits.
 
         Args:
-            resource_limits: Optional[Any] resource limit overrides
+            resource_limits: Optional resource limit overrides
 
         Returns:
             New SecuritySandbox instance
@@ -475,12 +480,13 @@ class SecuritySandbox:
 
         Args:
             command: Command to execute
-            input_data: Optional[Any] input data to pipe to command
+            input_data: Optional input data to pipe to command
             timeout: Override timeout in seconds
             max_memory_mb: Override memory limit
             max_output_size_mb: Override output size limit
 
-        Returns: Dict[str, Any] with 'output', 'stderr', 'returncode', 'process_id',
+        Returns:
+            Dict with 'output', 'stderr', 'returncode', 'process_id',
             'memory_used_mb', 'cpu_time', 'wall_time'
 
         Raises:
@@ -609,12 +615,13 @@ class SecuritySandbox:
 
         Args:
             command: Command to execute
-            input_data: Optional[Any] input data to pipe to command
+            input_data: Optional input data to pipe to command
             timeout: Override timeout in seconds
             max_memory_mb: Override memory limit
             max_output_size_mb: Override output size limit
 
-        Returns: Dict[str, Any] with 'output', 'stderr', 'returncode', 'process_id',
+        Returns:
+            Dict with 'output', 'stderr', 'returncode', 'process_id',
             'memory_used_mb', 'cpu_time', 'wall_time'
 
         Raises:
@@ -746,7 +753,8 @@ class SecuritySandbox:
         Args:
             pid: Process ID
 
-        Returns: Dict[str, Any] with resource usage metrics
+        Returns:
+            Dict with resource usage metrics
         """
         usage = {
             "memory_mb": 0,
@@ -789,7 +797,7 @@ def create_sandbox(resource_limits: Optional[Dict[str, Any]] = None) -> Security
     Factory function to create a new sandbox instance.
 
     Args:
-        resource_limits: Optional[Any] resource limit configuration
+        resource_limits: Optional resource limit configuration
 
     Returns:
         New SecuritySandbox instance

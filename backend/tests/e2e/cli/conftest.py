@@ -2,6 +2,7 @@
 Shared fixtures and configuration for CLI E2E tests
 """
 
+import io
 import os
 import shutil
 import subprocess
@@ -22,19 +23,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 class CLIRunner:
     """Helper class to run CLI commands with real execution"""
 
-    def __init__(self, backend_url: str = "http://localhost:8000") -> None:
+    def __init__(self, backend_url: str = "http://localhost:8000"):
         self.backend_url = backend_url
         self.cli_path = (
             Path(__file__).parent.parent.parent.parent / "app" / "cli" / "main.py"
         )
         self.temp_dir = None
 
-    def setup(self) -> None:
+    def setup(self):
         """Create temporary directory for test outputs"""
         self.temp_dir = tempfile.mkdtemp(prefix="cli_test_")
         return self.temp_dir
 
-    def cleanup(self) -> None:
+    def cleanup(self):
         """Clean up temporary directory"""
         if self.temp_dir and os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
@@ -140,7 +141,7 @@ class CLIRunner:
 
 
 @pytest.fixture(scope="session")
-def backend_server() -> None:
+def backend_server():
     """Ensure backend server is running"""
     # Check if backend is running
     max_retries = 5
@@ -260,7 +261,7 @@ def terminal_configs() -> list:
 
 
 @pytest.fixture
-def ansi_parser() -> None:
+def ansi_parser():
     """Helper to parse ANSI escape codes from output"""
     import re
 
@@ -312,7 +313,7 @@ def ansi_parser() -> None:
 
 
 @pytest.fixture
-def progress_validator() -> None:
+def progress_validator():
     """Helper to validate progress output"""
 
     class ProgressValidator:
@@ -354,7 +355,7 @@ def progress_validator() -> None:
 
 
 @pytest.fixture
-def theme_validator() -> None:
+def theme_validator():
     """Helper to validate theme application"""
 
     class ThemeValidator:
@@ -405,7 +406,7 @@ def wait_for_file(filepath: Path, timeout: int = 10) -> bool:
     return False
 
 
-def capture_screenshot(output_text: str, filename: str) -> None:
+def capture_screenshot(output_text: str, filename: str):
     """Save colored output as HTML for visual verification"""
     # This would convert ANSI to HTML for visual inspection
     # Simplified version - real implementation would use ansi2html

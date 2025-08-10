@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from rich import box
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
@@ -33,34 +34,32 @@ class CLIProfiler:
     CLI-specific profiler for tracking command performance.
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize CLI profiler."""
         self.enabled = False
         self.output_path: Optional[Path] = None
         self.show_summary = True
         self.current_metrics = None
 
-    def enable(
-        self, output_path: Optional[Path] = None, show_summary: bool = True
-    ) -> None:
+    def enable(self, output_path: Optional[Path] = None, show_summary: bool = True):
         """
         Enable profiling for CLI commands.
 
         Args:
-            output_path: Optional[Any] path to save profile JSON
+            output_path: Optional path to save profile JSON
             show_summary: Whether to show summary after command
         """
         self.enabled = True
         self.output_path = output_path
         self.show_summary = show_summary
 
-    def disable(self) -> None:
+    def disable(self):
         """Disable profiling."""
         self.enabled = False
         self.output_path = None
 
     @contextmanager
-    def profile_operation(self, operation_name: str) -> None:
+    def profile_operation(self, operation_name: str):
         """
         Context manager for profiling an operation.
 
@@ -95,7 +94,7 @@ class CLIProfiler:
         input_format: str = "",
         output_format: str = "",
         memory_used: int = 0,
-    ) -> None:
+    ):
         """
         Track metrics for a single conversion.
 
@@ -127,7 +126,7 @@ class CLIProfiler:
             compression_ratio=input_size / output_size if output_size > 0 else 0,
         )
 
-    def display_profile_summary(self, profile_data: Dict[str, Any]) -> None:
+    def display_profile_summary(self, profile_data: Dict[str, Any]):
         """
         Display a formatted summary of profile data.
 
@@ -249,7 +248,7 @@ class CLIProfiler:
             console.print("\n")
             console.print(conversion_table)
 
-    def save_profile(self, profile_data: Dict[str, Any]) -> None:
+    def save_profile(self, profile_data: Dict[str, Any]):
         """
         Save profile data to JSON file.
 
@@ -277,7 +276,7 @@ class CLIProfiler:
         except Exception as e:
             console.print(f"[error]Failed to save profile: {e}[/error]")
 
-    def display_batch_metrics(self, batch_metrics: BatchMetrics) -> None:
+    def display_batch_metrics(self, batch_metrics: BatchMetrics):
         """
         Display formatted batch processing metrics.
 
@@ -355,12 +354,12 @@ def profile_command(func: Callable) -> Callable:
 
     Usage:
         @profile_command
-        def my_command(args) -> None:
+        def my_command(args):
             ...
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> None:
+    def wrapper(*args, **kwargs):
         # Check if profiling is enabled via kwargs
         profile = kwargs.pop("profile", False)
         profile_output = kwargs.pop("profile_output", None)

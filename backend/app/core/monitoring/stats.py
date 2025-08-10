@@ -3,10 +3,11 @@ Privacy-focused statistics collection for the image converter.
 Collects only aggregate data with no user correlation.
 """
 
+import asyncio
 import json
 import os
 import sqlite3
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -18,7 +19,9 @@ from app.core.constants import (
     DB_CHECK_SAME_THREAD,
     FILE_SIZE_CATEGORIES,
     HOURLY_STATS_RETENTION_HOURS,
+    KB_TO_BYTES_FACTOR,
     MAX_PROCESSING_TIMES_MEMORY,
+    MB_TO_BYTES_FACTOR,
 )
 from app.utils.logging import get_logger
 
@@ -83,9 +86,7 @@ class StatsCollector:
     No user data or file information is stored.
     """
 
-    def __init__(
-        self, persist_to_db: bool = False, db_path: Optional[str] = None
-    ) -> None:
+    def __init__(self, persist_to_db: bool = False, db_path: Optional[str] = None):
         """
         Initialize the stats collector.
 
@@ -112,7 +113,7 @@ class StatsCollector:
         if self.persist_to_db:
             self._init_database()
 
-    def _init_database(self) -> None:
+    def _init_database(self):
         """Initialize SQLite database for persistent stats."""
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
@@ -137,7 +138,7 @@ class StatsCollector:
             )
 
     @contextmanager
-    def _get_db(self) -> None:
+    def _get_db(self):
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         try:

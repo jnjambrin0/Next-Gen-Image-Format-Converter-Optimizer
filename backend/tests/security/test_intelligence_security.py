@@ -1,6 +1,5 @@
 """Security-focused tests for Intelligence Engine.
 
-from typing import Any
 Tests specifically designed to validate security measures including:
 - Input validation and sanitization
 - DoS attack prevention
@@ -16,7 +15,7 @@ import os
 import struct
 import tempfile
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -31,7 +30,7 @@ class TestIntelligenceEngineSecurity:
     """Security-focused tests for the Intelligence Engine."""
 
     @pytest.fixture
-    def engine(self) -> None:
+    def engine(self):
         """Create engine instance for security testing."""
         engine = IntelligenceEngine(
             models_dir="./test_models", fallback_mode=True, enable_caching=True
@@ -380,7 +379,7 @@ class TestIntelligenceEngineSecurity:
                 assert not hasattr(face, "features")
                 assert not hasattr(face, "encoding")
 
-    def _get_memory_usage(self) -> None:
+    def _get_memory_usage(self):
         """Get current memory usage in MB."""
         import psutil
 

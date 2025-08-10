@@ -1,7 +1,6 @@
 """Unit tests for recommendation engine."""
 
-from typing import Any
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -23,12 +22,12 @@ class TestRecommendationEngine:
     """Test cases for RecommendationEngine."""
 
     @pytest.fixture
-    def engine(self) -> None:
+    def engine(self):
         """Create recommendation engine instance."""
         return RecommendationEngine()
 
     @pytest.fixture
-    def sample_classification(self) -> None:
+    def sample_classification(self):
         """Create sample content classification."""
         return ContentClassification(
             primary_type=ContentType.PHOTO,
@@ -39,7 +38,7 @@ class TestRecommendationEngine:
         )
 
     @pytest.fixture
-    def sample_request(self, sample_classification) -> None:
+    def sample_request(self, sample_classification):
         """Create sample recommendation request."""
         return RecommendationRequest(
             content_classification=sample_classification,
@@ -49,7 +48,7 @@ class TestRecommendationEngine:
             prioritize="size",
         )
 
-    def test_format_characteristics_defined(self, engine) -> None:
+    def test_format_characteristics_defined(self, engine):
         """Test that format characteristics are properly defined."""
         assert len(RecommendationEngine.FORMAT_CHARACTERISTICS) >= 6
 
@@ -60,7 +59,7 @@ class TestRecommendationEngine:
         assert webp.features["transparency"] is True
         assert webp.features["animation"] is True
 
-    def test_content_scores_defined(self, engine) -> None:
+    def test_content_scores_defined(self, engine):
         """Test that content scores are properly defined."""
         assert len(RecommendationEngine.CONTENT_SCORES) == 4
 
@@ -124,7 +123,7 @@ class TestRecommendationEngine:
         png_rec = next(r for r in recommendations if r.format == OutputFormat.PNG)
         assert png_rec.quality_score >= 0.95  # Perfect quality
 
-    def test_content_score_calculation(self, engine) -> None:
+    def test_content_score_calculation(self, engine):
         """Test content-based scoring."""
         # Photo content
         score = engine._get_content_score(OutputFormat.AVIF, ContentType.PHOTO)
@@ -138,7 +137,7 @@ class TestRecommendationEngine:
         score = engine._get_content_score(OutputFormat.WEBP, ContentType.ILLUSTRATION)
         assert score == 0.95
 
-    def test_use_case_score_calculation(self, engine) -> None:
+    def test_use_case_score_calculation(self, engine):
         """Test use case scoring."""
         # Web use case with high browser support format
         score = engine._get_use_case_score(OutputFormat.JPEG, UseCaseType.WEB, None)
@@ -150,7 +149,7 @@ class TestRecommendationEngine:
         )
         assert score > 0.7  # JPEG XL is future-proof
 
-    def test_use_case_score_with_priority(self, engine) -> None:
+    def test_use_case_score_with_priority(self, engine):
         """Test use case scoring with user priority."""
         # Size priority
         score_size = engine._get_use_case_score(
@@ -165,7 +164,7 @@ class TestRecommendationEngine:
         # Different priorities should yield different scores
         assert score_size != score_quality
 
-    def test_compatibility_score_calculation(self, engine) -> None:
+    def test_compatibility_score_calculation(self, engine):
         """Test format compatibility scoring."""
         # Same format
         score = engine._get_compatibility_score(OutputFormat.JPEG, InputFormat.JPEG)
@@ -213,7 +212,7 @@ class TestRecommendationEngine:
         # WebP should have higher score due to preference
         assert webp_score > jpeg_score
 
-    def test_trade_off_analysis(self, engine, sample_request) -> None:
+    def test_trade_off_analysis(self, engine, sample_request):
         """Test trade-off analysis generation."""
         trade_offs = engine._analyze_trade_offs(OutputFormat.AVIF, sample_request)
 
@@ -223,7 +222,7 @@ class TestRecommendationEngine:
         assert 0 <= trade_offs.feature_score <= 1
         assert 0 <= trade_offs.performance_score <= 1
 
-    def test_reason_generation(self, engine, sample_request) -> None:
+    def test_reason_generation(self, engine, sample_request):
         """Test human-readable reason generation."""
         characteristics = RecommendationEngine.FORMAT_CHARACTERISTICS[OutputFormat.AVIF]
         reasons = engine._generate_reasons(
@@ -234,7 +233,7 @@ class TestRecommendationEngine:
         assert len(reasons) > 0
         assert all(isinstance(r, str) and len(r) > 0 for r in reasons)
 
-    def test_pros_cons_generation(self, engine, sample_request) -> None:
+    def test_pros_cons_generation(self, engine, sample_request):
         """Test pros and cons generation."""
         characteristics = RecommendationEngine.FORMAT_CHARACTERISTICS[OutputFormat.WEBP]
         pros, cons = engine._generate_pros_cons(
@@ -247,7 +246,7 @@ class TestRecommendationEngine:
         assert all(isinstance(p, str) for p in pros)
         assert all(isinstance(c, str) for c in cons)
 
-    def test_size_estimation(self, engine) -> None:
+    def test_size_estimation(self, engine):
         """Test output size estimation."""
         # Photo to AVIF (should be smaller)
         size = engine._estimate_output_size(
@@ -288,7 +287,7 @@ class TestRecommendationEngine:
             assert isinstance(rec.pros, list)
             assert isinstance(rec.cons, list)
 
-    def test_available_formats_filtering(self, engine) -> None:
+    def test_available_formats_filtering(self, engine):
         """Test filtering of available formats."""
         request = Mock()
         request.exclude_formats = [OutputFormat.WEBP]

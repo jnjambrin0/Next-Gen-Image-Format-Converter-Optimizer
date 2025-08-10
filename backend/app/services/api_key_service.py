@@ -4,10 +4,10 @@ import hashlib
 import json
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import create_engine, select, update
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
 from app.models.database import ApiKey, ApiUsageStats, Base
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class ApiKeyService:
     """Service for managing API keys."""
 
-    def __init__(self, db_path: str = "./data/api_keys.db") -> None:
+    def __init__(self, db_path: str = "./data/api_keys.db"):
         """Initialize the API key service.
 
         Args:
@@ -61,10 +61,10 @@ class ApiKeyService:
         """Create a new API key.
 
         Args:
-            name: Optional[Any] name for the API key
-            permissions: Optional[Any] permissions dict (for future use)
-            rate_limit_override: Optional[Any] custom rate limit per minute
-            expires_days: Optional[Any] expiration in days from now
+            name: Optional name for the API key
+            permissions: Optional permissions dict (for future use)
+            rate_limit_override: Optional custom rate limit per minute
+            expires_days: Optional expiration in days from now
 
         Returns:
             Tuple of (ApiKey model, raw API key string)
@@ -157,7 +157,8 @@ class ApiKeyService:
         Args:
             include_inactive: Whether to include inactive keys
 
-        Returns: List[Any] of ApiKey records
+        Returns:
+            List of ApiKey records
         """
         with self.SessionLocal() as session:
             query = select(ApiKey)

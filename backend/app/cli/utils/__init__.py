@@ -1,5 +1,4 @@
 """
-from typing import Any
 CLI Utilities Package
 Helper utilities for the CLI
 """
@@ -8,7 +7,7 @@ import sys
 from pathlib import Path
 
 
-def setup_sdk_path() -> None:
+def setup_sdk_path():
     """Setup SDK path for imports"""
     # Find the SDK path relative to backend directory
     backend_dir = Path(__file__).parent.parent.parent

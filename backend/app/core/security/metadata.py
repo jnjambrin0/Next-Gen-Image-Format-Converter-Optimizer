@@ -3,12 +3,12 @@
 import asyncio
 import io
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import piexif
 import structlog
 from PIL import Image
-from PIL.ExifTags import TAGS
+from PIL.ExifTags import GPSTAGS, TAGS
 
 logger = structlog.get_logger()
 
@@ -45,7 +45,7 @@ class MetadataStripper:
         """
         loop = asyncio.get_event_loop()
 
-        def save_sync() -> None:
+        def save_sync():
             output_buffer = io.BytesIO()
             image.save(output_buffer, format=format, **save_kwargs)
             output_buffer.seek(0)
@@ -116,7 +116,7 @@ class MetadataStripper:
         "LensModel",
     }
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize the metadata stripper."""
         self.supported_formats = {
             "JPEG",

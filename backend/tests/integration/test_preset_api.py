@@ -1,21 +1,24 @@
 """Integration tests for preset API endpoints."""
 
-from typing import Any
+import asyncio
+from contextlib import asynccontextmanager
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models.schemas import PresetSettings
 
 
 @pytest.fixture
-def client() -> None:
+def client():
     """Create test client with proper lifespan handling."""
     with TestClient(app) as test_client:
         yield test_client
 
 
 @pytest.fixture
-def sample_preset_payload() -> None:
+def sample_preset_payload():
     """Sample preset creation payload."""
     return {
         "name": "API Test Preset",
@@ -29,7 +32,7 @@ def sample_preset_payload() -> None:
     }
 
 
-def get_error_message(response_json) -> None:
+def get_error_message(response_json):
     """Extract error message from various response formats."""
     # Check for nested error format: {"error": {"message": "..."}}
     if "error" in response_json and isinstance(response_json["error"], dict):
@@ -46,7 +49,7 @@ def get_error_message(response_json) -> None:
 class TestPresetAPI:
     """Test preset API endpoints."""
 
-    def test_list_presets(self, client) -> None:
+    def test_list_presets(self, client):
         """Test listing all presets."""
         response = client.get("/api/presets")
         assert response.status_code == 200
@@ -62,7 +65,7 @@ class TestPresetAPI:
         assert "Print Quality" in preset_names
         assert "Archive" in preset_names
 
-    def test_list_presets_exclude_builtin(self, client) -> None:
+    def test_list_presets_exclude_builtin(self, client):
         """Test listing only custom presets."""
         # Get initial count of custom presets
         response = client.get("/api/presets?include_builtin=false")
@@ -75,7 +78,7 @@ class TestPresetAPI:
         for preset in data["presets"]:
             assert not preset["is_builtin"]
 
-    def test_get_preset(self, client) -> None:
+    def test_get_preset(self, client):
         """Test getting a specific preset."""
         # First get list to find a preset ID
         list_response = client.get("/api/presets")
@@ -91,14 +94,14 @@ class TestPresetAPI:
         assert preset["name"] == test_preset["name"]
         assert "settings" in preset
 
-    def test_get_preset_not_found(self, client) -> None:
+    def test_get_preset_not_found(self, client):
         """Test getting non-existent preset."""
         response = client.get("/api/presets/non-existent-id")
         assert response.status_code == 404
         error_message = get_error_message(response.json())
         assert "not found" in error_message.lower()
 
-    def test_create_preset(self, client, sample_preset_payload) -> None:
+    def test_create_preset(self, client, sample_preset_payload):
         """Test creating a new preset."""
         # Clean up any existing preset with same name first
         list_response = client.get("/api/presets?include_builtin=false")
@@ -124,7 +127,7 @@ class TestPresetAPI:
         # Cleanup
         client.delete(f"/api/presets/{preset['id']}")
 
-    def test_create_preset_duplicate_name(self, client, sample_preset_payload) -> None:
+    def test_create_preset_duplicate_name(self, client, sample_preset_payload):
         """Test creating preset with duplicate name."""
         # Create first preset
         response1 = client.post("/api/presets", json=sample_preset_payload)
@@ -140,7 +143,7 @@ class TestPresetAPI:
         # Cleanup
         client.delete(f"/api/presets/{preset1['id']}")
 
-    def test_create_preset_invalid_format(self, client) -> None:
+    def test_create_preset_invalid_format(self, client):
         """Test creating preset with invalid output format."""
         payload = {
             "name": "Invalid Format",
@@ -150,7 +153,7 @@ class TestPresetAPI:
         # Should be 422 for validation error, but getting 500 due to error serialization issue
         assert response.status_code in [422, 500]  # Accept both for now
 
-    def test_update_preset(self, client, sample_preset_payload) -> None:
+    def test_update_preset(self, client, sample_preset_payload):
         """Test updating a preset."""
         # Create preset
         create_response = client.post("/api/presets", json=sample_preset_payload)
@@ -179,7 +182,7 @@ class TestPresetAPI:
         # Cleanup
         client.delete(f"/api/presets/{preset['id']}")
 
-    def test_update_preset_partial(self, client, sample_preset_payload) -> None:
+    def test_update_preset_partial(self, client, sample_preset_payload):
         """Test partial update of preset."""
         # Create preset
         create_response = client.post("/api/presets", json=sample_preset_payload)
@@ -201,7 +204,7 @@ class TestPresetAPI:
         # Cleanup
         client.delete(f"/api/presets/{preset['id']}")
 
-    def test_update_builtin_preset(self, client) -> None:
+    def test_update_builtin_preset(self, client):
         """Test that built-in presets cannot be updated."""
         # Get a built-in preset
         list_response = client.get("/api/presets")
@@ -219,7 +222,7 @@ class TestPresetAPI:
         error_message = get_error_message(response.json())
         assert "Cannot modify built-in presets" in error_message
 
-    def test_delete_preset(self, client, sample_preset_payload) -> None:
+    def test_delete_preset(self, client, sample_preset_payload):
         """Test deleting a preset."""
         # Create preset
         create_response = client.post("/api/presets", json=sample_preset_payload)
@@ -233,7 +236,7 @@ class TestPresetAPI:
         get_response = client.get(f"/api/presets/{preset['id']}")
         assert get_response.status_code == 404
 
-    def test_delete_builtin_preset(self, client) -> None:
+    def test_delete_builtin_preset(self, client):
         """Test that built-in presets cannot be deleted."""
         # Get a built-in preset
         list_response = client.get("/api/presets")
@@ -247,7 +250,7 @@ class TestPresetAPI:
         error_message = get_error_message(response.json())
         assert "Cannot delete built-in presets" in error_message
 
-    def test_import_presets(self, client) -> None:
+    def test_import_presets(self, client):
         """Test importing presets."""
         import_payload = {
             "presets": [
@@ -286,7 +289,7 @@ class TestPresetAPI:
         for preset in imported:
             client.delete(f"/api/presets/{preset['id']}")
 
-    def test_import_presets_duplicate(self, client, sample_preset_payload) -> None:
+    def test_import_presets_duplicate(self, client, sample_preset_payload):
         """Test importing presets with duplicate names."""
         # Create existing preset
         create_response = client.post("/api/presets", json=sample_preset_payload)
@@ -310,7 +313,7 @@ class TestPresetAPI:
         # Cleanup
         client.delete(f"/api/presets/{existing['id']}")
 
-    def test_export_preset(self, client, sample_preset_payload) -> None:
+    def test_export_preset(self, client, sample_preset_payload):
         """Test exporting a single preset."""
         # Create preset
         create_response = client.post("/api/presets", json=sample_preset_payload)
@@ -330,7 +333,7 @@ class TestPresetAPI:
         # Cleanup
         client.delete(f"/api/presets/{preset['id']}")
 
-    def test_export_all_presets(self, client) -> None:
+    def test_export_all_presets(self, client):
         """Test exporting all user presets."""
         # Create some test presets
         preset_ids = []

@@ -3,11 +3,13 @@ Optimize Command
 Intelligent image optimization with presets and auto-detection
 """
 
+import asyncio
 import time
 from pathlib import Path
-from typing import Any, Annotated, Optional
+from typing import Annotated, Optional
 
 import typer
+from rich.console import Console
 from rich.table import Table
 
 from app.cli.config import get_config
@@ -359,5 +361,6 @@ def optimize_analyze(
 
 
 @app.callback()
-def optimize_callback() -> None:
+def optimize_callback():
     """Intelligent image optimization"""
+    pass

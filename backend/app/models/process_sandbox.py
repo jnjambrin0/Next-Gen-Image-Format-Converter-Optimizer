@@ -89,7 +89,7 @@ class ProcessSandbox(BaseModel):
             exit_code: Process exit code
             actual_usage: Actual resource usage metrics
             terminated_by_signal: Signal number if process was killed
-            error_message: Optional[Any] error message
+            error_message: Optional error message
         """
         self.end_time = datetime.now(timezone.utc)
         self.exit_code = exit_code

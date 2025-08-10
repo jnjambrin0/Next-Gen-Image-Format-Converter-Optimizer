@@ -1,9 +1,9 @@
 """
-from typing import Any
 Comprehensive tests to verify the application works completely offline.
 """
 
 import asyncio
+import base64
 import io
 import socket
 from unittest.mock import MagicMock, patch
@@ -20,15 +20,15 @@ from app.models.conversion import ConversionRequest, ConversionSettings
 class NetworkBlocker:
     """Context manager to block all network access during tests."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.original_socket = socket.socket
         self.original_getaddrinfo = socket.getaddrinfo
         self.original_gethostbyname = socket.gethostbyname
 
-    def __enter__(self) -> None:
+    def __enter__(self):
         """Block network on entry."""
 
-        def blocked(*args, **kwargs) -> None:
+        def blocked(*args, **kwargs):
             raise OSError("Network access blocked in offline test")
 
         socket.socket = blocked
@@ -45,7 +45,7 @@ class NetworkBlocker:
 
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """Restore network on exit."""
         socket.socket = self.original_socket
         socket.getaddrinfo = self.original_getaddrinfo
@@ -57,12 +57,12 @@ class TestOfflineOperation:
     """Test suite for offline operation verification."""
 
     @pytest.fixture
-    def client(self) -> None:
+    def client(self):
         """Create test client."""
         return TestClient(app)
 
     @pytest.fixture
-    def sample_image(self) -> None:
+    def sample_image(self):
         """Create a sample test image."""
         # Create a simple 10x10 RGB image
         img = Image.new("RGB", (10, 10), color="red")
@@ -71,7 +71,7 @@ class TestOfflineOperation:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def test_health_endpoint_offline(self, client) -> None:
+    def test_health_endpoint_offline(self, client):
         """Test health endpoint works offline."""
         with NetworkBlocker():
             response = client.get("/api/health")
@@ -80,7 +80,7 @@ class TestOfflineOperation:
             assert data["status"] == "healthy"
             assert "network_isolated" in data
 
-    def test_all_api_endpoints_offline(self, client) -> None:
+    def test_all_api_endpoints_offline(self, client):
         """Test all API endpoints work without network."""
         with NetworkBlocker():
             # Test all GET endpoints
@@ -149,7 +149,7 @@ class TestOfflineOperation:
                     if "not supported" not in str(e):
                         raise
 
-    def test_api_convert_endpoint_offline(self, client, sample_image) -> None:
+    def test_api_convert_endpoint_offline(self, client, sample_image):
         """Test the convert API endpoint works offline."""
         with NetworkBlocker():
             # Prepare multipart form data
@@ -193,7 +193,7 @@ class TestOfflineOperation:
 
                 assert result["type"] == "photo"
 
-    def test_static_file_serving_offline(self, client) -> None:
+    def test_static_file_serving_offline(self, client):
         """Test static files can be served offline."""
         with NetworkBlocker():
             # In production mode, static files should be served
@@ -222,7 +222,7 @@ class TestOfflineOperation:
             stats = collector.get_current_stats()
             assert stats["total_conversions"] == 1
 
-    def test_logging_works_offline(self) -> None:
+    def test_logging_works_offline(self):
         """Test logging system works offline."""
         from app.utils.logging import get_logger
 
@@ -261,7 +261,7 @@ class TestOfflineOperation:
             summary = tracker.get_event_summary(hours=1)
             assert summary.total_events == 1
 
-    def test_network_verification_runs_offline(self) -> None:
+    def test_network_verification_runs_offline(self):
         """Test network verification itself works offline."""
         from app.core.security.network_verifier import (
             NetworkStrictness,
@@ -280,7 +280,7 @@ class TestOfflineOperation:
                 # Should not fail due to network being blocked
                 assert "Network access blocked" not in str(e)
 
-    def test_comprehensive_offline_scenario(self, client, sample_image) -> None:
+    def test_comprehensive_offline_scenario(self, client, sample_image):
         """Test a complete user workflow offline."""
         with NetworkBlocker():
             # 1. Check health
@@ -306,7 +306,7 @@ class TestOfflineOperation:
             assert response.status_code == 200
 
     @pytest.mark.parametrize("strictness", ["standard", "strict", "paranoid"])
-    def test_different_strictness_levels_offline(self, strictness) -> None:
+    def test_different_strictness_levels_offline(self, strictness):
         """Test different network verification strictness levels work offline."""
         from app.core.security.network_verifier import (
             NetworkStrictness,

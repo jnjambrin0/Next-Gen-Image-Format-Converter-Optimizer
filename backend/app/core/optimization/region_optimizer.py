@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 
 from app.core.constants import IMAGE_MAX_PIXELS
 from app.core.security.errors_simplified import create_file_error
+from app.core.security.memory import secure_clear
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -55,7 +56,7 @@ class RegionOptimizer:
         self,
         intelligence_engine: Optional[Any] = None,
         quality_factors: Optional[Dict[RegionType, float]] = None,
-    ) -> None:
+    ):
         """Initialize the region optimizer.
 
         Args:

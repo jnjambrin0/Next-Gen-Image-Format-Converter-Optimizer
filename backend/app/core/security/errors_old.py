@@ -8,7 +8,7 @@ security-related errors with privacy-aware messaging.
 import asyncio
 import traceback
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
 import structlog
 
@@ -75,7 +75,7 @@ class SecurityError(Exception):
         message: str,
         details: Optional[Dict[str, Any]] = None,
         cause: Optional[Exception] = None,
-    ) -> None:
+    ):
         """
         Initialize security error.
 
@@ -132,9 +132,13 @@ class SecurityError(Exception):
 class NetworkSecurityError(SecurityError):
     """Network-related security errors."""
 
+    pass
+
 
 class SandboxSecurityError(SecurityError):
     """Sandbox-related security errors."""
+
+    pass
 
 
 class RateLimitError(SecurityError):
@@ -145,7 +149,7 @@ class RateLimitError(SecurityError):
         message: str = "Rate limit exceeded",
         details: Optional[Dict[str, Any]] = None,
         retry_after: Optional[int] = None,
-    ) -> None:
+    ):
         """
         Initialize rate limit error.
 
@@ -166,9 +170,13 @@ class RateLimitError(SecurityError):
 class VerificationError(SecurityError):
     """Verification-related errors."""
 
+    pass
+
 
 class MemorySecurityError(SecurityError):
     """Memory security errors."""
+
+    pass
 
 
 # Error factory functions
@@ -212,7 +220,7 @@ class SecurityErrorHandler:
     formatting for all security errors.
     """
 
-    def __init__(self, log_errors: bool = True) -> None:
+    def __init__(self, log_errors: bool = True):
         """
         Initialize error handler.
 
@@ -324,7 +332,7 @@ error_handler = SecurityErrorHandler()
 def handle_security_errors(
     default_code: SecurityErrorCode = SecurityErrorCode.UNKNOWN_SECURITY_ERROR,
     default_message: str = "A security error occurred",
-) -> None:
+):
     """
     Decorator to automatically handle security errors.
 
@@ -333,7 +341,7 @@ def handle_security_errors(
         default_message: Default message if none specified
     """
 
-    def decorator(func) -> None:
+    def decorator(func):
         async def async_wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
@@ -342,7 +350,7 @@ def handle_security_errors(
             except Exception as e:
                 raise SecurityError(code=default_code, message=default_message, cause=e)
 
-        def sync_wrapper(*args, **kwargs) -> None:
+        def sync_wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except SecurityError:

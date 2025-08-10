@@ -1,8 +1,9 @@
 """
-from typing import Any
 Integration tests for command chaining and piping
 """
 
+import sys
+from io import BytesIO
 from unittest.mock import Mock, mock_open, patch
 
 import pytest
@@ -12,7 +13,7 @@ from app.cli.commands.chain import app as chain_app
 
 
 @pytest.fixture
-def runner() -> None:
+def runner():
     """Create a CLI test runner"""
     return CliRunner()
 
@@ -22,9 +23,7 @@ class TestCommandChaining:
 
     @patch("app.cli.commands.chain.ImageConverterClient")
     @patch("builtins.open", new_callable=mock_open, read_data=b"image_data")
-    def test_chain_multiple_operations(
-        self, mock_file, mock_client_class, runner
-    ) -> None:
+    def test_chain_multiple_operations(self, mock_file, mock_client_class, runner):
         """Test chaining multiple operations"""
         # Setup mock
         mock_client = Mock()
@@ -57,7 +56,7 @@ class TestCommandChaining:
     @patch("sys.stdout")
     def test_pipe_stdin_stdout(
         self, mock_stdout, mock_stdin, mock_client_class, runner
-    ) -> None:
+    ):
         """Test piping from stdin to stdout"""
         # Setup mock stdin
         mock_stdin.isatty.return_value = False
@@ -76,14 +75,15 @@ class TestCommandChaining:
         # Verify conversion was called
         mock_client.convert.assert_called_once()
 
-    def test_chain_format_parsing(self, runner) -> None:
+    def test_chain_format_parsing(self, runner):
         """Test parsing of chain operation formats"""
         operations = ["format:webp", "quality:90", "resize:1920x1080", "optimize"]
 
         # Test that operations are parsed correctly
         # This would be tested through the actual command execution
+        pass
 
-    def test_chain_resize_parsing(self) -> None:
+    def test_chain_resize_parsing(self):
         """Test parsing of resize operations"""
         test_cases = [
             ("resize:1920x1080", (1920, 1080)),
@@ -92,9 +92,10 @@ class TestCommandChaining:
         ]
 
         # Test each resize format is parsed correctly
+        pass
 
     @patch("app.cli.commands.chain.ImageConverterClient")
-    def test_chain_error_handling(self, mock_client_class, runner) -> None:
+    def test_chain_error_handling(self, mock_client_class, runner):
         """Test error handling in chain operations"""
         # Setup mock to raise error
         mock_client = Mock()
@@ -107,7 +108,7 @@ class TestCommandChaining:
         # Should exit with error
         assert result.exit_code == 1
 
-    def test_pipe_no_stdin_error(self, runner) -> None:
+    def test_pipe_no_stdin_error(self, runner):
         """Test pipe command with no stdin data"""
         with patch("sys.stdin") as mock_stdin:
             mock_stdin.isatty.return_value = True

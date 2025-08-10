@@ -1,10 +1,11 @@
 """
-from typing import Any
 Security tests for CLI visual features
 Tests PathSanitizer, RateLimiter, and other security features
 """
 
 import os
+import tempfile
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -15,7 +16,7 @@ import pytest
 class TestPathSanitizer:
     """Test path sanitization security features"""
 
-    def test_path_traversal_prevention(self, cli_runner) -> None:
+    def test_path_traversal_prevention(self, cli_runner):
         """Test that path traversal attacks are prevented"""
         # Try various path traversal patterns
         dangerous_paths = [
@@ -44,7 +45,7 @@ class TestPathSanitizer:
                 path
             ), f"Should block dangerous path: {dangerous_path}"
 
-    def test_filename_sanitization(self) -> None:
+    def test_filename_sanitization(self):
         """Test filename sanitization for output files"""
         from app.cli.ui.tui import PathSanitizer
 
@@ -76,7 +77,7 @@ class TestPathSanitizer:
             assert len(sanitized) <= 255, f"Should limit length of {dangerous}"
             assert sanitized != "", f"Should not return empty string for {dangerous}"
 
-    def test_base_directory_restriction(self, cli_runner) -> None:
+    def test_base_directory_restriction(self, cli_runner):
         """Test that file access is restricted to base directory"""
         from app.cli.ui.tui import PathSanitizer
 
@@ -100,7 +101,7 @@ class TestPathSanitizer:
         # Should block absolute paths when base is set
         assert not sanitizer.is_safe_path(Path("/etc/passwd"), base_dir)
 
-    def test_file_permission_checks(self, cli_runner) -> None:
+    def test_file_permission_checks(self, cli_runner):
         """Test that file permissions are checked"""
         from app.cli.ui.tui import PathSanitizer
 
@@ -124,7 +125,7 @@ class TestPathSanitizer:
 class TestRateLimiter:
     """Test rate limiting for UI updates"""
 
-    def test_rate_limiting_basic(self) -> None:
+    def test_rate_limiting_basic(self):
         """Test basic rate limiting functionality"""
         from app.cli.ui.tui import RateLimiter
 
@@ -140,7 +141,7 @@ class TestRateLimiter:
         time.sleep(0.11)
         assert limiter.should_allow("test")
 
-    def test_rate_limiting_different_keys(self) -> None:
+    def test_rate_limiting_different_keys(self):
         """Test rate limiting with different operation keys"""
         from app.cli.ui.tui import RateLimiter
 
@@ -155,14 +156,14 @@ class TestRateLimiter:
         assert not limiter.should_allow("progress")
         assert not limiter.should_allow("log")
 
-    def test_rate_limiting_concurrent_access(self) -> None:
+    def test_rate_limiting_concurrent_access(self):
         """Test rate limiting under concurrent access"""
         from app.cli.ui.tui import RateLimiter
 
         limiter = RateLimiter(min_interval=0.05)
         allowed_count = 0
 
-        def try_access() -> None:
+        def try_access():
             nonlocal allowed_count
             if limiter.should_allow("concurrent"):
                 allowed_count += 1
@@ -177,7 +178,7 @@ class TestRateLimiter:
         assert allowed_count < 100, "Should limit concurrent calls"
         assert allowed_count > 0, "Should allow some calls"
 
-    def test_wait_if_needed(self) -> None:
+    def test_wait_if_needed(self):
         """Test wait_if_needed functionality"""
         from app.cli.ui.tui import RateLimiter
 
@@ -195,7 +196,7 @@ class TestRateLimiter:
         second_duration = time.time() - start
         assert second_duration >= 0.05, "Second call should wait"
 
-    def test_tui_rate_limits(self) -> None:
+    def test_tui_rate_limits(self):
         """Test actual TUI rate limits are appropriate"""
         from app.cli.ui.tui import ImageConverterTUI
 
@@ -216,7 +217,7 @@ class TestRateLimiter:
 class TestFileSizeLimits:
     """Test file size and memory limits"""
 
-    def test_preview_file_size_limit(self, cli_runner) -> None:
+    def test_preview_file_size_limit(self, cli_runner):
         """Test that preview has file size limits"""
         from app.cli.ui.preview import ImagePreview
 
@@ -233,8 +234,9 @@ class TestFileSizeLimits:
 
             assert "too large" in result.lower()
 
-    def test_preview_dimension_limits(self, cli_runner) -> None:
+    def test_preview_dimension_limits(self, cli_runner):
         """Test that preview has dimension limits"""
+        import io
 
         from PIL import Image
 
@@ -253,7 +255,7 @@ class TestFileSizeLimits:
         result = preview.generate_preview(normal_file)
         assert "Error" not in result or "dimension" not in result.lower()
 
-    def test_tui_file_size_check(self) -> None:
+    def test_tui_file_size_check(self):
         """Test TUI file size validation"""
         from app.cli.ui.tui import ImageConverterTUI
 
@@ -273,7 +275,7 @@ class TestFileSizeLimits:
 class TestMemorySafety:
     """Test memory safety features"""
 
-    def test_preview_memory_cleanup(self, cli_runner) -> None:
+    def test_preview_memory_cleanup(self, cli_runner):
         """Test that preview cleans up memory properly"""
         from PIL import Image
 
@@ -294,7 +296,7 @@ class TestMemorySafety:
         # Memory should be cleaned up (can't easily measure, but verify no crash)
         assert True, "No memory issues after multiple previews"
 
-    def test_secure_memory_clearing(self) -> None:
+    def test_secure_memory_clearing(self):
         """Test secure memory clearing patterns"""
         # This tests the concept, actual implementation would be in conversion
         test_data = bytearray(b"sensitive data here")
@@ -314,7 +316,7 @@ class TestMemorySafety:
 class TestSecurityIntegration:
     """Integration tests for security features"""
 
-    def test_complete_security_flow(self, cli_runner) -> None:
+    def test_complete_security_flow(self, cli_runner):
         """Test complete flow with all security features active"""
         from PIL import Image
 
@@ -332,7 +334,7 @@ class TestSecurityIntegration:
         output_file = safe_file.with_suffix(".webp")
         assert output_file.name == "safe_test.webp"
 
-    def test_malicious_input_handling(self, cli_runner) -> None:
+    def test_malicious_input_handling(self, cli_runner):
         """Test handling of potentially malicious inputs"""
         # Try command injection in filename
         dangerous_inputs = [
@@ -352,7 +354,7 @@ class TestSecurityIntegration:
             assert "whoami" not in result.stderr
             assert "/etc/passwd" not in result.stderr
 
-    def test_dos_prevention(self) -> None:
+    def test_dos_prevention(self):
         """Test prevention of DoS attacks"""
         from app.cli.ui.tui import RateLimiter
 
@@ -371,7 +373,7 @@ class TestSecurityIntegration:
         assert allowed > 50, f"Should allow reasonable requests, got {allowed}"
 
 
-def test_security_summary() -> None:
+def test_security_summary():
     """Summary of security features tested"""
     print("\n" + "=" * 60)
     print("CLI SECURITY FEATURES TEST SUMMARY")

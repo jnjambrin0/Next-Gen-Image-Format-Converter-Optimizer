@@ -1,7 +1,8 @@
 """Integration tests for format fallback in conversion pipeline."""
 
+import asyncio
+
 # Import fixtures
-from typing import Any
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -13,14 +14,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import UnsupportedFormatError
-from app.models.conversion import ConversionRequest, ConversionSettings
+from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
 class TestFormatFallbackIntegration:
     """Integration tests for format fallback in actual conversions."""
 
     @pytest.fixture
-    def sample_image_data(self) -> None:
+    def sample_image_data(self):
         """Create sample image data."""
         img = Image.new("RGB", (100, 100), color="red")
         buffer = BytesIO()
@@ -29,7 +30,7 @@ class TestFormatFallbackIntegration:
         return buffer.getvalue()
 
     @pytest.fixture
-    def conversion_manager(self) -> None:
+    def conversion_manager(self):
         """Create actual conversion manager."""
         return ConversionManager()
 
@@ -121,7 +122,7 @@ class TestFormatFallbackIntegration:
         # Completely unknown format
         assert conversion_manager.is_format_available("unknown_format") is False
 
-    def test_available_formats_list(self, conversion_manager) -> None:
+    def test_available_formats_list(self, conversion_manager):
         """Test getting list of available formats."""
         formats = conversion_manager.get_available_formats()
 

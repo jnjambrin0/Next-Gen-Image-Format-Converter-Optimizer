@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field, field_validator
@@ -240,7 +241,7 @@ class Settings(BaseSettings):
 
     @field_validator("env")
     @classmethod
-    def validate_env(cls, v) -> None:
+    def validate_env(cls, v):
         allowed = ["development", "production", "testing"]
         if v not in allowed:
             raise ValueError(f"env must be one of {allowed}")
@@ -248,7 +249,7 @@ class Settings(BaseSettings):
 
     @field_validator("log_level")
     @classmethod
-    def validate_log_level(cls, v) -> None:
+    def validate_log_level(cls, v):
         allowed = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in allowed:
             raise ValueError(f"log_level must be one of {allowed}")
@@ -256,14 +257,14 @@ class Settings(BaseSettings):
 
     @field_validator("api_port")
     @classmethod
-    def validate_port(cls, v) -> None:
+    def validate_port(cls, v):
         if not 1 <= v <= 65535:
             raise ValueError("api_port must be between 1 and 65535")
         return v
 
     @field_validator("sandbox_strictness")
     @classmethod
-    def validate_sandbox_strictness(cls, v) -> None:
+    def validate_sandbox_strictness(cls, v):
         allowed = ["standard", "strict", "paranoid"]
         if v not in allowed:
             raise ValueError(f"sandbox_strictness must be one of {allowed}")
@@ -271,7 +272,7 @@ class Settings(BaseSettings):
 
     @field_validator("network_verification_strictness")
     @classmethod
-    def validate_network_strictness(cls, v) -> None:
+    def validate_network_strictness(cls, v):
         allowed = ["standard", "strict", "paranoid"]
         if v not in allowed:
             raise ValueError(
@@ -294,7 +295,7 @@ class Settings(BaseSettings):
         "cors_origins", "allowed_input_formats", "allowed_output_formats", mode="before"
     )
     @classmethod
-    def parse_comma_separated_list(cls, v) -> None:
+    def parse_comma_separated_list(cls, v):
         """Parse comma-separated string into list."""
         if isinstance(v, str):
             # Handle empty strings
@@ -309,7 +310,7 @@ class Settings(BaseSettings):
             # For any other type, try to convert to string first
             return cls.parse_comma_separated_list(str(v))
 
-    def __init__(self, **values) -> None:
+    def __init__(self, **values):
         super().__init__(**values)
         # Ensure list fields are lists after initialization
         for field in [

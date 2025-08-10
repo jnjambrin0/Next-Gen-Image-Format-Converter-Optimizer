@@ -5,8 +5,9 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import and_, create_engine, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.exceptions import SecurityError, ValidationError
 from app.models.database import Base, UserPreset
@@ -24,7 +25,7 @@ from app.models.schemas import (
 class PresetService:
     """Service for managing conversion presets."""
 
-    def __init__(self, db_path: str = "./data/presets.db") -> None:
+    def __init__(self, db_path: str = "./data/presets.db"):
         """Initialize preset service.
 
         Args:
@@ -158,7 +159,8 @@ class PresetService:
         Args:
             include_builtin: Whether to include built-in presets
 
-        Returns: List[Any] of presets
+        Returns:
+            List of presets
         """
         with self.SessionLocal() as session:
             query = session.query(UserPreset)
@@ -355,7 +357,8 @@ class PresetService:
         Args:
             import_data: Import data containing presets
 
-        Returns: List[Any] of imported presets
+        Returns:
+            List of imported presets
 
         Raises:
             APIError: If any preset names conflict
@@ -407,7 +410,8 @@ class PresetService:
     async def export_all_presets(self) -> List[PresetBase]:
         """Export all user presets (excluding built-in).
 
-        Returns: List[Any] of preset data for export
+        Returns:
+            List of preset data for export
         """
         presets = await self.list_presets(include_builtin=False)
         return [

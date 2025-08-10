@@ -1,24 +1,25 @@
 """Unit tests for WebSocket security and authentication."""
 
-from typing import Any
+import hashlib
+import secrets
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from app.api.websockets.secure_progress import SecureConnectionManager
-from app.core.batch.models import BatchItemStatus, BatchJob, BatchProgress
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchProgress, BatchStatus
 
 
 class TestSecureConnectionManager:
     """Test secure WebSocket connection management."""
 
     @pytest.fixture
-    def manager(self) -> None:
+    def manager(self):
         """Create a SecureConnectionManager instance."""
         return SecureConnectionManager()
 
-    def test_generate_job_token(self, manager) -> None:
+    def test_generate_job_token(self, manager):
         """Test token generation."""
         job_id = "test-job-123"
 
@@ -38,7 +39,7 @@ class TestSecureConnectionManager:
         assert expiry > datetime.utcnow()
         assert expiry < datetime.utcnow() + timedelta(hours=25)
 
-    def test_verify_job_token_valid(self, manager) -> None:
+    def test_verify_job_token_valid(self, manager):
         """Test verifying a valid token."""
         job_id = "test-job-123"
 
@@ -48,7 +49,7 @@ class TestSecureConnectionManager:
         # Verify token
         assert manager.verify_job_token(job_id, token) is True
 
-    def test_verify_job_token_invalid(self, manager) -> None:
+    def test_verify_job_token_invalid(self, manager):
         """Test verifying an invalid token."""
         job_id = "test-job-123"
 
@@ -60,7 +61,7 @@ class TestSecureConnectionManager:
         assert manager.verify_job_token(job_id, None) is False
         assert manager.verify_job_token("wrong-job", "any-token") is False
 
-    def test_verify_job_token_expired(self, manager) -> None:
+    def test_verify_job_token_expired(self, manager):
         """Test verifying an expired token."""
         job_id = "test-job-123"
 
@@ -77,7 +78,7 @@ class TestSecureConnectionManager:
         assert job_id not in manager._job_tokens
         assert job_id not in manager._token_expiry
 
-    def test_check_rate_limit_within_limit(self, manager) -> None:
+    def test_check_rate_limit_within_limit(self, manager):
         """Test rate limiting within allowed limit."""
         client_ip = "192.168.1.100"
 
@@ -88,7 +89,7 @@ class TestSecureConnectionManager:
         # 11th request should be denied
         assert manager.check_rate_limit(client_ip) is False
 
-    def test_check_rate_limit_reset(self, manager) -> None:
+    def test_check_rate_limit_reset(self, manager):
         """Test rate limit reset after time window."""
         client_ip = "192.168.1.100"
 

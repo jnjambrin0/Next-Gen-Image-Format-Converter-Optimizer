@@ -16,7 +16,7 @@ logger = structlog.get_logger()
 class PNGHandler(BaseFormatHandler):
     """Handler for PNG format."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize PNG handler."""
         super().__init__()
         self.supported_formats = ["png"]

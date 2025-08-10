@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Generate test images for the image converter test suite."""
 
-from typing import Any
+import json
 import os
 from datetime import datetime
 
 import numpy as np
 import piexif
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL.ExifTags import GPSTAGS, TAGS
 
 
-def create_sample_photo() -> None:
+def create_sample_photo():
     """Create a realistic landscape photo with EXIF data."""
     # Create a gradient background simulating a sunset
     width, height = 1920, 1080
@@ -69,7 +70,7 @@ def create_sample_photo() -> None:
     print("Created sample_photo.jpg")
 
 
-def create_portrait_photo() -> None:
+def create_portrait_photo():
     """Create a portrait orientation photo with GPS metadata."""
     width, height = 1080, 1920
     img = Image.new("RGB", (width, height))
@@ -132,7 +133,7 @@ def create_portrait_photo() -> None:
     print("Created portrait_photo.jpg")
 
 
-def create_screenshot() -> None:
+def create_screenshot():
     """Create a realistic desktop screenshot."""
     width, height = 1440, 900
     img = Image.new("RGB", (width, height), color=(245, 245, 245))
@@ -170,7 +171,7 @@ def create_screenshot() -> None:
     print("Created screenshot.png")
 
 
-def create_document_scan() -> None:
+def create_document_scan():
     """Create a document scan (A4 size)."""
     # A4 at 300 DPI
     width, height = 2480, 3508
@@ -219,7 +220,7 @@ def create_document_scan() -> None:
     print("Created document_scan.png")
 
 
-def create_illustration() -> None:
+def create_illustration():
     """Create a digital illustration with transparency."""
     width, height = 800, 800
     img = Image.new("RGBA", (width, height), color=(0, 0, 0, 0))
@@ -259,7 +260,7 @@ def create_illustration() -> None:
     print("Created illustration.png")
 
 
-def create_animated_gif() -> None:
+def create_animated_gif():
     """Create a simple animated GIF."""
     width, height = 500, 500
     frames = []
@@ -289,7 +290,7 @@ def create_animated_gif() -> None:
     print("Created animated.gif")
 
 
-def create_large_photo() -> None:
+def create_large_photo():
     """Create a large photo for performance testing."""
     width, height = 4000, 3000
     img = Image.new("RGB", (width, height))
@@ -315,7 +316,7 @@ def create_large_photo() -> None:
     print("Created large_photo.jpg")
 
 
-def create_tiny_icon() -> None:
+def create_tiny_icon():
     """Create a tiny icon for edge case testing."""
     width, height = 16, 16
     img = Image.new("RGBA", (width, height), color=(0, 0, 0, 0))
@@ -329,7 +330,7 @@ def create_tiny_icon() -> None:
     print("Created tiny_icon.png")
 
 
-def create_corrupted_image() -> None:
+def create_corrupted_image():
     """Create an intentionally corrupted JPEG file."""
     # Start with a valid small image
     img = Image.new("RGB", (100, 100), color=(255, 0, 0))
@@ -346,13 +347,13 @@ def create_corrupted_image() -> None:
     print("Created corrupted.jpg")
 
 
-def create_empty_file() -> None:
+def create_empty_file():
     """Create an empty file for validation testing."""
     open("images/empty.png", "wb").close()
     print("Created empty.png")
 
 
-def create_all_test_images() -> None:
+def create_all_test_images():
     """Generate all test images."""
     # Create images directory if it doesn't exist
     os.makedirs("images", exist_ok=True)

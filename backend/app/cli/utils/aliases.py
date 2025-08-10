@@ -4,7 +4,8 @@ Handles user-defined command aliases
 """
 
 import json
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Dict, Optional
 
 import typer
 
@@ -14,7 +15,7 @@ from app.cli.config import get_aliases_file
 class AliasManager:
     """Manages command aliases"""
 
-    def __init__(self) -> None:
+    def __init__(self):
         self.aliases_file = get_aliases_file()
         self.aliases = self._load_aliases()
 
@@ -45,7 +46,7 @@ class AliasManager:
             "ls": "formats list",
         }
 
-    def _save_aliases(self) -> None:
+    def _save_aliases(self):
         """Save aliases to file"""
         self.aliases_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.aliases_file, "w") as f:
@@ -78,7 +79,7 @@ class AliasManager:
 _alias_manager = AliasManager()
 
 
-def apply_aliases(app: typer.Typer) -> None:
+def apply_aliases(app: typer.Typer):
     """Apply aliases to a Typer app"""
     aliases = _alias_manager.list_aliases()
 

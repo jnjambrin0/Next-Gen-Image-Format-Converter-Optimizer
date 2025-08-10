@@ -1,7 +1,7 @@
 """Common validation and utility functions for API endpoints."""
 
 import asyncio
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import structlog
 from fastapi import HTTPException, Request, UploadFile
@@ -97,7 +97,7 @@ class SemaphoreContextManager:
         error_code: str,
         service_name: str,
         request: Request,
-    ) -> None:
+    ):
         self.semaphore = semaphore
         self.timeout = timeout
         self.error_code = error_code
@@ -134,7 +134,7 @@ def validate_content_type(
 
     Args:
         file: The uploaded file
-        allowed_types: List[Any] of allowed MIME types (if None, uses project defaults)
+        allowed_types: List of allowed MIME types (if None, uses project defaults)
 
     Returns:
         True if valid, False otherwise
@@ -164,7 +164,7 @@ def create_error_response(
         error_code: Application-specific error code
         message: Human-readable error message
         correlation_id: Request correlation ID
-        details: Optional[Any] additional details
+        details: Optional additional details
 
     Returns:
         Error response dict

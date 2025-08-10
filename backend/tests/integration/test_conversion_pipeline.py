@@ -1,6 +1,5 @@
 """Integration tests for the complete conversion pipeline."""
 
-from typing import Any
 import asyncio
 import io
 
@@ -16,6 +15,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import (
     ConversionFailedError,
+    InvalidImageError,
+    UnsupportedFormatError,
 )
 from app.models.conversion import (
     ConversionRequest,
@@ -29,7 +30,7 @@ class TestConversionPipeline:
     """Integration tests for the full conversion pipeline."""
 
     @pytest.fixture
-    def conversion_manager(self) -> None:
+    def conversion_manager(self):
         """Create a ConversionManager instance."""
         return ConversionManager()
 

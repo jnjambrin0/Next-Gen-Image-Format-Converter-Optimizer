@@ -6,14 +6,20 @@ import asyncio
 import os
 import socket
 import subprocess
+import sys
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
 from app.core.constants import NETWORK_CHECK_TIMEOUT
 from app.core.monitoring.network_check import NetworkIsolationChecker
 from app.core.monitoring.security_events import SecurityEventTracker
+from app.core.security.errors import (
+    SecurityError,
+    create_network_error,
+    create_verification_error,
+)
 from app.core.security.metrics import SecurityMetricsCollector
 from app.core.security.types import NetworkStatus, VerificationResult
 from app.models.security_event import SecurityEventType, SecuritySeverity
@@ -39,13 +45,13 @@ class NetworkVerifier(NetworkIsolationChecker):
         self,
         strictness: NetworkStrictness = NetworkStrictness.STANDARD,
         security_tracker: Optional[SecurityEventTracker] = None,
-    ) -> None:
+    ):
         """
         Initialize network verifier.
 
         Args:
             strictness: Verification strictness level
-            security_tracker: Optional[Any] security event tracker
+            security_tracker: Optional security event tracker
         """
         super().__init__()
         self.strictness = strictness
@@ -64,7 +70,8 @@ class NetworkVerifier(NetworkIsolationChecker):
         """
         Perform comprehensive network isolation verification.
 
-        Returns: Dict[str, Any] with isolation status and detailed findings
+        Returns:
+            Dict with isolation status and detailed findings
         """
         logger.info(
             f"Starting network isolation verification (strictness: {self.strictness.value})"
@@ -156,7 +163,8 @@ class NetworkVerifier(NetworkIsolationChecker):
         """
         Verify that all sockets are bound to localhost only.
 
-        Returns: Dict[str, Any] with verification results
+        Returns:
+            Dict with verification results
         """
         result: VerificationResult = {"passed": True, "warnings": []}
 
@@ -202,7 +210,8 @@ class NetworkVerifier(NetworkIsolationChecker):
         """
         Verify no active outbound connections.
 
-        Returns: Dict[str, Any] with verification results
+        Returns:
+            Dict with verification results
         """
         result: VerificationResult = {"passed": True, "warnings": []}
 
@@ -245,7 +254,8 @@ class NetworkVerifier(NetworkIsolationChecker):
         """
         Verify DNS resolution is blocked.
 
-        Returns: Dict[str, Any] with verification results
+        Returns:
+            Dict with verification results
         """
         result: VerificationResult = {"passed": True, "warnings": []}
 
@@ -283,7 +293,8 @@ class NetworkVerifier(NetworkIsolationChecker):
         """
         Verify network interface configuration.
 
-        Returns: Dict[str, Any] with verification results
+        Returns:
+            Dict with verification results
         """
         result: VerificationResult = {"passed": True, "warnings": []}
 
@@ -381,7 +392,7 @@ async def verify_network_at_startup(
 
     Args:
         strictness: Verification strictness level
-        security_tracker: Optional[Any] security event tracker
+        security_tracker: Optional security event tracker
 
     Returns:
         Network isolation status

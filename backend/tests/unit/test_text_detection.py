@@ -1,7 +1,7 @@
 """Unit tests for text detection functionality."""
 
-from typing import Any
-from unittest.mock import Mock, patch
+import io
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -15,12 +15,12 @@ class TestTextDetector:
     """Test suite for TextDetector class."""
 
     @pytest.fixture
-    def text_detector(self) -> None:
+    def text_detector(self):
         """Create a TextDetector instance for testing."""
         return TextDetector(model_session=None)  # Will use heuristics
 
     @pytest.fixture
-    def mock_model_session(self) -> None:
+    def mock_model_session(self):
         """Create a mock ONNX model session."""
         mock = Mock()
 
@@ -38,7 +38,7 @@ class TestTextDetector:
         return mock
 
     @pytest.fixture
-    def document_image(self) -> None:
+    def document_image(self):
         """Create a document-like test image."""
         # Create image with text-like patterns
         img = Image.new("RGB", (800, 600), color="white")
@@ -54,20 +54,18 @@ class TestTextDetector:
         return img
 
     @pytest.fixture
-    def blank_image(self) -> None:
+    def blank_image(self):
         """Create a blank test image."""
         return Image.new("RGB", (400, 300), color="white")
 
-    def test_detector_initialization(self, text_detector) -> None:
+    def test_detector_initialization(self, text_detector):
         """Test detector initializes correctly."""
         assert text_detector.input_size == (736, 736)
         assert text_detector.threshold == 0.3
         assert text_detector.min_area == 100
         assert text_detector.model_session is None
 
-    def test_detect_with_heuristics_document(
-        self, text_detector, document_image
-    ) -> None:
+    def test_detect_with_heuristics_document(self, text_detector, document_image):
         """Test heuristic text detection on document image."""
         regions = text_detector.detect(document_image)
 
@@ -83,14 +81,14 @@ class TestTextDetector:
         assert first_region.height > 5
         assert 0 <= first_region.confidence <= 1.0
 
-    def test_detect_with_heuristics_blank(self, text_detector, blank_image) -> None:
+    def test_detect_with_heuristics_blank(self, text_detector, blank_image):
         """Test heuristic text detection on blank image."""
         regions = text_detector.detect(blank_image)
 
         assert isinstance(regions, list)
         assert len(regions) == 0  # No text in blank image
 
-    def test_detect_with_model(self, mock_model_session, document_image) -> None:
+    def test_detect_with_model(self, mock_model_session, document_image):
         """Test ML-based text detection."""
         detector = TextDetector(model_session=mock_model_session)
         regions = detector.detect(document_image)
@@ -101,7 +99,7 @@ class TestTextDetector:
         # Verify model was called
         mock_model_session.run.assert_called_once()
 
-    def test_preprocess_for_model(self, text_detector) -> None:
+    def test_preprocess_for_model(self, text_detector):
         """Test image preprocessing for model."""
         # Create test image
         test_img = Image.new("RGB", (400, 300), color="blue")
@@ -117,7 +115,7 @@ class TestTextDetector:
         assert isinstance(padding, tuple)
         assert len(padding) == 2
 
-    def test_extract_text_regions(self, text_detector) -> None:
+    def test_extract_text_regions(self, text_detector):
         """Test text region extraction from binary map."""
         # Create binary map with text regions
         binary_map = np.zeros((100, 100), dtype=np.uint8)
@@ -136,7 +134,7 @@ class TestTextDetector:
         assert h > 0
         assert 0 <= conf <= 1.0
 
-    def test_merge_overlapping_regions(self, text_detector) -> None:
+    def test_merge_overlapping_regions(self, text_detector):
         """Test merging of overlapping text regions."""
         # Create overlapping regions
         regions = [
@@ -151,7 +149,7 @@ class TestTextDetector:
         assert len(merged) == 2  # Two regions after merging
         assert merged[0].width > 100  # First region expanded
 
-    def test_calculate_text_density(self, text_detector, document_image) -> None:
+    def test_calculate_text_density(self, text_detector, document_image):
         """Test text density calculation."""
         # Create some text regions
         regions = [
@@ -166,9 +164,7 @@ class TestTextDetector:
         assert 0 <= density <= 1.0
         assert density > 0  # Should have some density
 
-    def test_horizontal_projection_analysis(
-        self, text_detector, document_image
-    ) -> None:
+    def test_horizontal_projection_analysis(self, text_detector, document_image):
         """Test horizontal projection analysis for text lines."""
         # Convert to grayscale
         gray = document_image.convert("L")
@@ -182,7 +178,7 @@ class TestTextDetector:
         assert gradient.max() > gradient.mean()
         assert np.std(gradient) > 0
 
-    def test_detection_timeout(self, text_detector) -> None:
+    def test_detection_timeout(self, text_detector):
         """Test that detection completes within reasonable time."""
         # Create large image
         large_img = Image.new("RGB", (2000, 2000), color="white")
@@ -196,7 +192,7 @@ class TestTextDetector:
         assert isinstance(regions, list)
         assert duration < 1.0  # Should complete in under 1 second
 
-    def test_minimum_region_size(self, text_detector) -> None:
+    def test_minimum_region_size(self, text_detector):
         """Test that small regions are filtered out."""
         # Create binary map with tiny region
         binary_map = np.zeros((100, 100), dtype=np.uint8)
@@ -208,7 +204,7 @@ class TestTextDetector:
         # Should be filtered out due to min_area
         assert len(regions) == 0
 
-    def test_detection_error_handling(self, text_detector) -> None:
+    def test_detection_error_handling(self, text_detector):
         """Test error handling in detection."""
         # Mock an error during detection
         with patch.object(
@@ -221,7 +217,7 @@ class TestTextDetector:
             # Should return empty list on error
             assert regions == []
 
-    def test_aspect_ratio_preservation(self, text_detector) -> None:
+    def test_aspect_ratio_preservation(self, text_detector):
         """Test that preprocessing preserves aspect ratio."""
         # Create image with specific aspect ratio
         test_img = Image.new("RGB", (800, 400), color="white")

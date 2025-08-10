@@ -4,7 +4,7 @@ Token bucket rate limiter for security events and API requests.
 
 import time
 from threading import Lock
-from typing import Any, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from app.core.constants import (
     RATE_LIMIT_BURST_SIZE,
@@ -19,7 +19,7 @@ from app.core.security.types import RateLimitConfig
 class TokenBucket:
     """Token bucket implementation for rate limiting."""
 
-    def __init__(self, rate: float, capacity: int) -> None:
+    def __init__(self, rate: float, capacity: int):
         """
         Initialize token bucket.
 
@@ -67,7 +67,7 @@ class TokenBucket:
 class SecurityEventRateLimiter:
     """Rate limiter for security events."""
 
-    def __init__(self, config: Optional[RateLimitConfig] = None) -> None:
+    def __init__(self, config: Optional[RateLimitConfig] = None):
         """
         Initialize rate limiter.
 
@@ -136,7 +136,7 @@ class SecurityEventRateLimiter:
 
         return allowed
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> Dict[str, any]:
         """Get rate limiter statistics."""
         with self.lock:
             return {
@@ -179,7 +179,7 @@ class SecurityEventRateLimiter:
 class ApiRateLimiter:
     """Rate limiter for API requests with per-key support."""
 
-    def __init__(self) -> None:
+    def __init__(self):
         """Initialize API rate limiter."""
         self.limiters: Dict[str, SecurityEventRateLimiter] = {}
         self.default_limiter = SecurityEventRateLimiter()
@@ -234,7 +234,7 @@ class ApiRateLimiter:
 
         return allowed, headers
 
-    def get_stats(self, api_key_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_stats(self, api_key_id: Optional[str] = None) -> Dict:
         """Get rate limiter statistics.
 
         Args:
@@ -260,11 +260,11 @@ class ApiRateLimiter:
                     "config": {},
                 }
 
-    def cleanup_unused_limiters(self, active_key_ids: set[str]) -> int:
+    def cleanup_unused_limiters(self, active_key_ids: set) -> int:
         """Clean up rate limiters for unused API keys.
 
         Args:
-            active_key_ids: Set[Any] of currently active API key IDs
+            active_key_ids: Set of currently active API key IDs
 
         Returns:
             Number of limiters cleaned up

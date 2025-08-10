@@ -1,9 +1,12 @@
 """
-from typing import Any
 Integration tests for documentation flow
 """
 
-from unittest.mock import Mock, patch
+import asyncio
+import sqlite3
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -13,6 +16,7 @@ from app.cli.documentation.examples import ExampleCategory, ExampleDatabase
 from app.cli.documentation.help_context import HelpContextAnalyzer
 from app.cli.documentation.knowledge_base import (
     KnowledgeBase,
+    Question,
     QuestionCategory,
 )
 from app.cli.documentation.reference_cards import ReferenceCardGenerator
@@ -23,18 +27,18 @@ class TestDocumentationIntegration:
     """Test integrated documentation flow"""
 
     @pytest.fixture
-    def temp_home(self, tmp_path) -> None:
+    def temp_home(self, tmp_path):
         """Create temporary home directory"""
         with patch("pathlib.Path.home", return_value=tmp_path):
             yield tmp_path
 
     @pytest.fixture
-    def help_analyzer(self) -> None:
+    def help_analyzer(self):
         """Create help analyzer"""
         return HelpContextAnalyzer()
 
     @pytest.fixture
-    def tutorial_engine(self, temp_home) -> None:
+    def tutorial_engine(self, temp_home):
         """Create tutorial engine with temp directory"""
         engine = TutorialEngine()
         engine.config_dir = temp_home / ".image-converter"
@@ -43,12 +47,12 @@ class TestDocumentationIntegration:
         return engine
 
     @pytest.fixture
-    def example_db(self) -> None:
+    def example_db(self):
         """Create example database"""
         return ExampleDatabase()
 
     @pytest.fixture
-    def knowledge_base(self, temp_home) -> None:
+    def knowledge_base(self, temp_home):
         """Create knowledge base with temp database"""
         kb = KnowledgeBase()
         kb.db_path = temp_home / ".image-converter" / "knowledge.db"
@@ -57,11 +61,11 @@ class TestDocumentationIntegration:
         return kb
 
     @pytest.fixture
-    def doc_browser(self) -> None:
+    def doc_browser(self):
         """Create documentation browser"""
         return DocumentationBrowser()
 
-    def test_help_search_integration(self, help_analyzer) -> None:
+    def test_help_search_integration(self, help_analyzer):
         """Test searching help across multiple topics"""
         # Search for "convert"
         results = help_analyzer.search_help("convert")
@@ -74,7 +78,7 @@ class TestDocumentationIntegration:
         # Should also find related commands
         assert any(r["command"] in ["batch", "chain"] for r in results)
 
-    def test_tutorial_progress_persistence(self, tutorial_engine) -> None:
+    def test_tutorial_progress_persistence(self, tutorial_engine):
         """Test tutorial progress saves and loads correctly"""
         # Start a tutorial
         progress = TutorialProgress(
@@ -101,7 +105,7 @@ class TestDocumentationIntegration:
         assert len(loaded_progress.completed_steps) == 3
         assert loaded_progress.completion_percentage == 50.0
 
-    def test_example_search_and_validation(self, example_db) -> None:
+    def test_example_search_and_validation(self, example_db):
         """Test searching examples and validation"""
         # Search for batch examples
         examples = example_db.search("batch")
@@ -120,7 +124,7 @@ class TestDocumentationIntegration:
         for ex in batch_examples:
             assert "batch" in ex.tags
 
-    def test_knowledge_base_qa_flow(self, knowledge_base) -> None:
+    def test_knowledge_base_qa_flow(self, knowledge_base):
         """Test Q&A flow in knowledge base"""
         # Search for common issues
         questions = knowledge_base.search("slow conversion")
@@ -146,7 +150,7 @@ class TestDocumentationIntegration:
         )
         assert len(troubleshooting) > 0
 
-    def test_reference_card_generation(self, reference_cards) -> None:
+    def test_reference_card_generation(self, reference_cards):
         """Test reference card generation"""
         # Generate markdown
         markdown = reference_cards.generate_markdown("basic")
@@ -185,7 +189,7 @@ class TestDocumentationIntegration:
         assert len(demo.frames) > 0
         assert demo.duration > 0
 
-    def test_documentation_browser_navigation(self, doc_browser) -> None:
+    def test_documentation_browser_navigation(self, doc_browser):
         """Test documentation browser navigation"""
         # Get root section
         root = doc_browser.sections.get("root")
@@ -212,7 +216,7 @@ class TestDocumentationIntegration:
 
     def test_cross_component_search(
         self, help_analyzer, example_db, knowledge_base, doc_browser
-    ) -> None:
+    ):
         """Test searching across all documentation components"""
         query = "webp"
 
@@ -240,7 +244,7 @@ class TestDocumentationIntegration:
         )
         assert any(query in s.content.lower() for s in doc_results)
 
-    def test_offline_operation(self, temp_home) -> None:
+    def test_offline_operation(self, temp_home):
         """Test all documentation works offline"""
         # All components should work without network
         with patch("socket.socket") as mock_socket:
@@ -266,7 +270,7 @@ class TestDocumentationIntegration:
 
     def test_documentation_completeness(
         self, help_analyzer, tutorial_engine, example_db
-    ) -> None:
+    ):
         """Test documentation covers all major commands"""
         commands = [
             "convert",
@@ -292,7 +296,7 @@ class TestDocumentationIntegration:
         assert "basic_conversion" in tutorial_ids
         assert "batch_processing" in tutorial_ids
 
-    def test_error_code_coverage(self, help_analyzer, knowledge_base) -> None:
+    def test_error_code_coverage(self, help_analyzer, knowledge_base):
         """Test error codes are documented"""
         error_codes = ["CONV001", "CONV002", "CONV003", "BATCH001", "OPT001"]
 

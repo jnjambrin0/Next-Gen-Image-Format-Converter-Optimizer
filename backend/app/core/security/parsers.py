@@ -5,7 +5,7 @@ This module provides basic validation for network command outputs
 to ensure no unexpected connections exist in the sandboxed environment.
 """
 
-from typing import Any, List
+from typing import List
 
 import structlog
 
@@ -92,7 +92,8 @@ def check_network_isolation(output: str) -> dict:
     Args:
         output: Network command output
 
-    Returns: Dict[str, Any] with isolation status and details
+    Returns:
+        Dict with isolation status and details
     """
     is_isolated = validate_no_network_activity(output)
     connection_count = get_active_connections_count(output)

@@ -3,8 +3,10 @@ Internationalization Support
 Multi-language support for CLI interface
 """
 
+import json
 import locale
-from typing import Any, Dict
+from pathlib import Path
+from typing import Dict, Optional
 
 
 class I18nManager:

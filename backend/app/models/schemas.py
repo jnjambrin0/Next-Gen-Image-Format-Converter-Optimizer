@@ -1,5 +1,6 @@
 """Pydantic schemas for API requests and responses."""
 
+import json
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -79,6 +80,8 @@ class PresetBase(BaseModel):
 
 class PresetCreate(PresetBase):
     """Schema for creating a new preset."""
+
+    pass
 
 
 class PresetUpdate(BaseModel):

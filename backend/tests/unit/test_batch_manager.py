@@ -1,9 +1,9 @@
 """Unit tests for the BatchManager class."""
 
-from typing import Any
 import asyncio
 import uuid
-from unittest.mock import AsyncMock, patch
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -22,7 +22,7 @@ class TestBatchManager:
     """Test BatchManager functionality."""
 
     @pytest.fixture
-    def mock_conversion_service(self) -> None:
+    def mock_conversion_service(self):
         """Create a mock conversion service."""
         service = AsyncMock()
         service.convert.return_value = (
@@ -48,7 +48,7 @@ class TestBatchManager:
         await manager.shutdown()
 
     @pytest.fixture
-    def sample_batch_job(self) -> None:
+    def sample_batch_job(self):
         """Create a sample batch job."""
         job_id = str(uuid.uuid4())
         items = [

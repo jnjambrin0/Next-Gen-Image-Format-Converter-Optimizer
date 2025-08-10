@@ -1,7 +1,8 @@
-from typing import Any
 import os
 import tempfile
 from datetime import datetime, timedelta
+
+import pytest
 
 from app.utils.logging import cleanup_old_logs, filter_sensitive_data
 
@@ -9,7 +10,7 @@ from app.utils.logging import cleanup_old_logs, filter_sensitive_data
 class TestPrivacyFiltering:
     """Test privacy filtering in logging module."""
 
-    def test_basic_sensitive_keys(self) -> None:
+    def test_basic_sensitive_keys(self):
         """Test filtering of basic sensitive keys."""
         event_dict = {
             "message": "Processing image",
@@ -33,7 +34,7 @@ class TestPrivacyFiltering:
         assert filtered["email"] == "***REDACTED***"
         assert filtered["user_id"] == "***REDACTED***"
 
-    def test_nested_sensitive_data(self) -> None:
+    def test_nested_sensitive_data(self):
         """Test filtering of nested sensitive data."""
         event_dict = {
             "request": {
@@ -55,7 +56,7 @@ class TestPrivacyFiltering:
         # Entire metadata value is redacted when key contains "metadata"
         assert filtered["metadata"] == "***REDACTED***"
 
-    def test_list_filtering(self) -> None:
+    def test_list_filtering(self):
         """Test filtering of sensitive data in lists."""
         event_dict = {
             "files": [
@@ -74,7 +75,7 @@ class TestPrivacyFiltering:
         assert all(filtered["files"][i]["size"] in [1024, 2048] for i in range(2))
         assert filtered["paths"] == ["***PATH_REDACTED***", "***PATH_REDACTED***"]
 
-    def test_pattern_detection(self) -> None:
+    def test_pattern_detection(self):
         """Test pattern-based filtering."""
         event_dict = {
             "email_value": "test@example.com",
@@ -97,7 +98,7 @@ class TestPrivacyFiltering:
         assert filtered["image_file"] == "***FILENAME_REDACTED***"
         assert filtered["regular_text"] == "This is just regular text"
 
-    def test_case_insensitive_keys(self) -> None:
+    def test_case_insensitive_keys(self):
         """Test case-insensitive key matching."""
         event_dict = {
             "FileName": "document.pdf",
@@ -113,7 +114,7 @@ class TestPrivacyFiltering:
         assert filtered["Email_Address"] == "***REDACTED***"
         assert filtered["GPS_Location"] == "***REDACTED***"
 
-    def test_metadata_filtering(self) -> None:
+    def test_metadata_filtering(self):
         """Test filtering of image metadata."""
         event_dict = {
             "image_metadata": {
@@ -132,7 +133,7 @@ class TestPrivacyFiltering:
         assert filtered["image_metadata"] == "***REDACTED***"
         assert filtered["content_hash"] == "***REDACTED***"
 
-    def test_depth_limit_protection(self) -> None:
+    def test_depth_limit_protection(self):
         """Test protection against deeply nested structures."""
         # Create deeply nested structure
         deep_dict = {"level": 0}
@@ -159,7 +160,7 @@ class TestPrivacyFiltering:
 class TestLogCleanup:
     """Test log cleanup functionality."""
 
-    def test_cleanup_old_logs(self) -> None:
+    def test_cleanup_old_logs(self):
         """Test cleanup of old log files."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create test log files with different ages
@@ -191,12 +192,12 @@ class TestLogCleanup:
             assert os.path.exists(recent_file), "Recent log file should be kept"
             assert os.path.exists(other_file), "Non-log file should be kept"
 
-    def test_cleanup_nonexistent_directory(self) -> None:
+    def test_cleanup_nonexistent_directory(self):
         """Test cleanup with non-existent directory."""
         # Should not raise exception
         cleanup_old_logs("/nonexistent/directory", retention_hours=24)
 
-    def test_cleanup_error_handling(self, monkeypatch) -> None:
+    def test_cleanup_error_handling(self, monkeypatch):
         """Test cleanup handles errors gracefully."""
         with tempfile.TemporaryDirectory() as temp_dir:
             log_file = os.path.join(temp_dir, "test.log")
@@ -204,7 +205,7 @@ class TestLogCleanup:
                 f.write("test content")
 
             # Mock os.remove to raise exception
-            def mock_remove(path) -> None:
+            def mock_remove(path):
                 raise PermissionError("Cannot delete file")
 
             monkeypatch.setattr(os, "remove", mock_remove)

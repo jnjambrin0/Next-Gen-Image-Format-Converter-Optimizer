@@ -1,21 +1,22 @@
 """Unit tests for the Security Sandbox module."""
 
-from typing import Any
+import os
+import resource
 import subprocess
+import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 
-from app.core.security.sandbox import SandboxConfig, SecuritySandbox
-from app.core.security.errors import SecurityError
+from app.core.security.sandbox import SandboxConfig, SecurityError, SecuritySandbox
 
 
 class TestSecuritySandbox:
     """Test suite for SecuritySandbox class."""
 
     @pytest.fixture
-    def security_sandbox(self) -> None:
+    def security_sandbox(self):
         """Create a SecuritySandbox instance for testing."""
         config = SandboxConfig(
             max_memory_mb=512,
@@ -26,7 +27,7 @@ class TestSecuritySandbox:
         return SecuritySandbox(config)
 
     @pytest.fixture
-    def temp_dir(self) -> None:
+    def temp_dir(self):
         """Create a temporary directory for testing."""
         import tempfile
 
@@ -38,7 +39,7 @@ class TestSecuritySandbox:
         shutil.rmtree(temp_path, ignore_errors=True)
 
     @pytest.fixture
-    def malicious_payloads(self) -> None:
+    def malicious_payloads(self):
         """Get malicious test payloads."""
         return [
             "../../../etc/passwd",
@@ -46,7 +47,7 @@ class TestSecuritySandbox:
             "image.jpg\x00.exe",
         ]
 
-    def test_sandbox_initialization(self, security_sandbox) -> None:
+    def test_sandbox_initialization(self, security_sandbox):
         """Test sandbox initializes with proper defaults."""
         assert security_sandbox.config.max_memory_mb == 512
         assert security_sandbox.config.max_cpu_percent == 80
@@ -55,16 +56,14 @@ class TestSecuritySandbox:
         assert isinstance(security_sandbox.config.blocked_commands, set)
         assert isinstance(security_sandbox.config.blocked_env_vars, set)
 
-    def test_sandbox_blocks_path_traversal(
-        self, security_sandbox, malicious_payloads
-    ) -> None:
+    def test_sandbox_blocks_path_traversal(self, security_sandbox, malicious_payloads):
         """Test sandbox blocks path traversal attempts."""
         for filename in malicious_payloads:
             # Act & Assert
             with pytest.raises(SecurityError, match="Path traversal|Null byte"):
                 security_sandbox.validate_path(filename)
 
-    def test_sandbox_allows_safe_paths(self, security_sandbox, temp_dir) -> None:
+    def test_sandbox_allows_safe_paths(self, security_sandbox, temp_dir):
         """Test sandbox allows legitimate paths."""
         # Arrange
         safe_paths = [
@@ -79,9 +78,7 @@ class TestSecuritySandbox:
             security_sandbox.validate_path(path)
 
     @patch("subprocess.Popen")
-    def test_sandbox_enforces_resource_limits(
-        self, mock_popen, security_sandbox
-    ) -> None:
+    def test_sandbox_enforces_resource_limits(self, mock_popen, security_sandbox):
         """Test sandbox enforces resource limits on subprocess."""
         # Arrange
         mock_process = Mock()
@@ -102,7 +99,7 @@ class TestSecuritySandbox:
         assert result["returncode"] == 0
         assert result["output"] == b"output"
 
-    def test_sandbox_blocks_dangerous_commands(self, security_sandbox) -> None:
+    def test_sandbox_blocks_dangerous_commands(self, security_sandbox):
         """Test sandbox blocks dangerous shell commands."""
         # Arrange
         dangerous_commands = [
@@ -123,7 +120,7 @@ class TestSecuritySandbox:
     @patch("subprocess.Popen")
     def test_sandbox_timeout_enforcement(
         self, mock_popen, mock_getpgid, mock_killpg, security_sandbox
-    ) -> None:
+    ):
         """Test sandbox enforces execution timeout."""
         # Arrange
         mock_process = Mock()
@@ -145,9 +142,7 @@ class TestSecuritySandbox:
         mock_killpg.assert_called_once_with(12345, 9)
 
     @patch("subprocess.Popen")
-    def test_sandbox_memory_limit_enforcement(
-        self, mock_popen, security_sandbox
-    ) -> None:
+    def test_sandbox_memory_limit_enforcement(self, mock_popen, security_sandbox):
         """Test sandbox enforces memory limits."""
         # Arrange
         mock_process = Mock()
@@ -162,7 +157,7 @@ class TestSecuritySandbox:
                 command=["echo", "test"], max_memory_mb=100
             )
 
-    def test_sandbox_network_isolation(self, security_sandbox) -> None:
+    def test_sandbox_network_isolation(self, security_sandbox):
         """Test sandbox blocks network access."""
         # Arrange
         network_commands = [
@@ -177,7 +172,7 @@ class TestSecuritySandbox:
             with pytest.raises(SecurityError, match="Forbidden command"):
                 security_sandbox.validate_command(cmd)
 
-    def test_sandbox_filesystem_restrictions(self, security_sandbox, temp_dir) -> None:
+    def test_sandbox_filesystem_restrictions(self, security_sandbox, temp_dir):
         """Test sandbox filesystem access restrictions."""
         # Arrange
         restricted_paths = [
@@ -195,7 +190,7 @@ class TestSecuritySandbox:
             ):
                 security_sandbox.validate_file_access(path, mode="read")
 
-    def test_sandbox_prevents_code_injection(self, security_sandbox) -> None:
+    def test_sandbox_prevents_code_injection(self, security_sandbox):
         """Test sandbox prevents code injection attempts."""
         # Arrange
         injection_attempts = [
@@ -212,7 +207,7 @@ class TestSecuritySandbox:
             with pytest.raises(SecurityError, match="Invalid filename"):
                 security_sandbox.sanitize_filename(payload)
 
-    def test_sandbox_environment_isolation(self, security_sandbox) -> None:
+    def test_sandbox_environment_isolation(self, security_sandbox):
         """Test sandbox isolates environment variables."""
         # Arrange
         with patch("subprocess.Popen") as mock_popen:
@@ -236,7 +231,7 @@ class TestSecuritySandbox:
             assert "API_KEY" not in env
             assert "PATH" in env  # But PATH should be minimal
 
-    def test_sandbox_handles_zombie_processes(self, security_sandbox) -> None:
+    def test_sandbox_handles_zombie_processes(self, security_sandbox):
         """Test sandbox properly cleans up zombie processes."""
         # Arrange
         with patch("subprocess.Popen") as mock_popen:
@@ -258,9 +253,7 @@ class TestSecuritySandbox:
 
     @patch("os.setuid")
     @patch("os.setgid")
-    def test_sandbox_drops_privileges(
-        self, mock_setgid, mock_setuid, security_sandbox
-    ) -> None:
+    def test_sandbox_drops_privileges(self, mock_setgid, mock_setuid, security_sandbox):
         """Test sandbox drops privileges when configured."""
         # Arrange
         security_sandbox.sandbox_uid = 1000
@@ -282,7 +275,7 @@ class TestSecuritySandbox:
             call_args = mock_popen.call_args
             assert call_args.kwargs.get("preexec_fn") is not None
 
-    def test_sandbox_validates_output_size(self, security_sandbox) -> None:
+    def test_sandbox_validates_output_size(self, security_sandbox):
         """Test sandbox validates output doesn't exceed limits."""
         # Arrange
         with patch("subprocess.Popen") as mock_popen:
