@@ -35,18 +35,18 @@ function createHeader() {
   // Logo
   const logoContainer = document.createElement('div')
   logoContainer.className = 'mr-4'
-
+  
   const logo = document.createElement('img')
   logo.src = '/logo.png'
   logo.alt = 'Image Converter Logo'
   logo.className = 'w-10 h-10'
   logo.style.filter = 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))'
-
+  
   logoContainer.appendChild(logo)
 
   // Title section
   const textContainer = document.createElement('div')
-
+  
   const h1 = document.createElement('h1')
   h1.className = 'text-3xl font-bold text-gray-900'
   h1.textContent = 'Image Converter'
@@ -57,7 +57,7 @@ function createHeader() {
 
   textContainer.appendChild(h1)
   textContainer.appendChild(subtitle)
-
+  
   titleContainer.appendChild(logoContainer)
   titleContainer.appendChild(textContainer)
 

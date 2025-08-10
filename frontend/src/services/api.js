@@ -63,7 +63,10 @@ export const apiClient = {
    */
   async postForm(endpoint, formData, options = {}) {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), options.timeout || API_CONFIG.TIMEOUT)
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      options.timeout || API_CONFIG.TIMEOUT
+    )
 
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
