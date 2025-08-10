@@ -1,8 +1,8 @@
 """Format detection and analysis API endpoints."""
 
+from typing import Any
 import asyncio
 from pathlib import Path
-from typing import Any
 
 import structlog
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile

@@ -1,8 +1,8 @@
 """Unit tests for the OptimizationEngine."""
 
+from typing import Any
 import asyncio
 import io
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

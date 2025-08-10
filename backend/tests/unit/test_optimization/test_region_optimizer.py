@@ -1,7 +1,7 @@
 """Unit tests for the RegionOptimizer."""
 
-import io
 from typing import Any
+import io
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

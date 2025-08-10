@@ -1,11 +1,11 @@
 """Security tests for memory management."""
 
+from typing import Any
 import gc
 import os
 import resource
 import tempfile
 import time
-from typing import Any
 from unittest.mock import patch
 
 import pytest

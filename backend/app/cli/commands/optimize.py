@@ -5,7 +5,7 @@ Intelligent image optimization with presets and auto-detection
 
 import time
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Any, Annotated, Optional
 
 import typer
 from rich.table import Table

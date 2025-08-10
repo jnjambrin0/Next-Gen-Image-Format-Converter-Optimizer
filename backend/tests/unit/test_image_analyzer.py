@@ -1,7 +1,7 @@
 """Unit tests for the Image Analyzer module (ML content detection)."""
 
-import io
 from typing import Any
+import io
 from unittest.mock import Mock, patch
 
 import numpy as np

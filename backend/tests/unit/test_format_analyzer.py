@@ -1,7 +1,6 @@
 """Unit tests for format analyzer."""
 
 from typing import Any
-
 import pytest
 
 from app.core.intelligence.format_analyzer import FormatAnalyzer, FormatCompatibility

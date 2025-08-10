@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generate test images for the image converter test suite."""
 
+from typing import Any
 import os
 from datetime import datetime
-from typing import Any
 
 import numpy as np
 import piexif

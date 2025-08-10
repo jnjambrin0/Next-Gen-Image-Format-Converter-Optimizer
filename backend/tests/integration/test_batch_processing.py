@@ -1,7 +1,7 @@
 """Integration tests for batch image processing functionality."""
 
-import time
 from typing import Any
+import time
 from unittest.mock import Mock
 
 import pytest

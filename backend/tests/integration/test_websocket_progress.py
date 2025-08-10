@@ -1,8 +1,8 @@
 """Integration tests for WebSocket progress updates."""
 
+from typing import Any
 import asyncio
 import uuid
-from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest

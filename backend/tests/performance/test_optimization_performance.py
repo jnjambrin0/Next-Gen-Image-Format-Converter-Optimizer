@@ -1,9 +1,9 @@
 """Performance tests for optimization features."""
 
+from typing import Any
 import asyncio
 import io
 import time
-from typing import Any
 
 import pytest
 from PIL import Image

@@ -1,9 +1,9 @@
 """Unit tests for format fallback system."""
 
 # Import fixtures
+from typing import Any
 import sys
 from pathlib import Path
-from typing import Any
 from unittest.mock import Mock
 
 import pytest

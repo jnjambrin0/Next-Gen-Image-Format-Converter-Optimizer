@@ -4,7 +4,7 @@ Browse and search offline documentation
 """
 
 import asyncio
-from typing import Annotated, Any, Optional
+from typing import Any, Annotated, Optional
 
 import typer
 from rich.console import Console

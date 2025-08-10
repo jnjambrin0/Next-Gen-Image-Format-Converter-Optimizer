@@ -1,12 +1,12 @@
 """Integration tests for the complete conversion pipeline."""
 
+from typing import Any
 import asyncio
 import io
 
 # Import fixtures
 import sys
 from pathlib import Path
-from typing import Any
 
 import pytest
 from PIL import Image

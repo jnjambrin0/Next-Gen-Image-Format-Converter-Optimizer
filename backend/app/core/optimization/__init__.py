@@ -1,7 +1,6 @@
 """Advanced optimization algorithms for image conversion."""
 
 from typing import Any
-
 from .alpha_optimizer import AlphaOptimizer
 from .encoding_options import ChromaSubsampling, EncodingOptions
 from .lossless_compressor import CompressionLevel, LosslessCompressor

@@ -1,7 +1,7 @@
+from typing import Any
 import logging
 import os
 import sys
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 # Add parent directory to path

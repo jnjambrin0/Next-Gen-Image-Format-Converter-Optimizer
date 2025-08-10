@@ -1,7 +1,6 @@
 """Data models for the image converter application."""
 
 from typing import Any
-
 from app.models.conversion import (
     ConversionRequest,
     ConversionResult,

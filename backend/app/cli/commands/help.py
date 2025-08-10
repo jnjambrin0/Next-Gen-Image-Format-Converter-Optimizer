@@ -3,7 +3,7 @@ Enhanced Help Command
 Context-aware help with examples and search functionality
 """
 
-from typing import Annotated, Any, Optional
+from typing import Any, Annotated, Optional
 
 import typer
 from rich.console import Console

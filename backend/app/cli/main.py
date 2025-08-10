@@ -4,7 +4,7 @@ Core Typer application with command groups and global configuration
 """
 
 from enum import Enum
-from typing import Annotated, Any, Optional
+from typing import Any, Annotated, Optional
 
 import typer
 from rich.table import Table

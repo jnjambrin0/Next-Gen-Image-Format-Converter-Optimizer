@@ -6,7 +6,7 @@ Monitor directories and automatically convert images
 import signal
 import sys
 from pathlib import Path
-from typing import Annotated, Any, List, Optional
+from typing import Any, Annotated, List, Optional
 
 import typer
 from rich.console import Console

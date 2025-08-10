@@ -1,7 +1,7 @@
 """Integration tests for metadata stripping in the conversion pipeline."""
 
-import io
 from typing import Any
+import io
 
 import piexif
 import pytest

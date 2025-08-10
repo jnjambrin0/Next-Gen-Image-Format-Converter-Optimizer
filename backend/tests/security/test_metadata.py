@@ -1,7 +1,7 @@
 """Tests for metadata stripping functionality."""
 
-import io
 from typing import Any
+import io
 
 import piexif
 import pytest

@@ -6,7 +6,7 @@ Single image conversion with rich progress and options
 import sys
 import time
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Any, Annotated, Optional
 
 import typer
 from rich.table import Table

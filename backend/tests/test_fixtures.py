@@ -1,8 +1,8 @@
 """Test that all fixtures work correctly."""
 
+from typing import Any
 import json
 from pathlib import Path
-from typing import Any
 
 from PIL import Image
 

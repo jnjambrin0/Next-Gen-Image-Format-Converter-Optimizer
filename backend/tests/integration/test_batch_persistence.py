@@ -1,10 +1,10 @@
 """Integration tests for batch job persistence and history service."""
 
+from typing import Any
 import asyncio
 import os
 import tempfile
 from datetime import datetime, timedelta
-from typing import Any
 
 import pytest
 

@@ -1,8 +1,8 @@
 """Unit tests for the Intelligence Engine module."""
 
+from typing import Any
 import asyncio
 import io
-from typing import Any
 from unittest.mock import Mock, patch
 
 import numpy as np

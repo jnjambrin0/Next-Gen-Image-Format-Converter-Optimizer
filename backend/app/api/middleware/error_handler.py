@@ -1,8 +1,8 @@
+from typing import Any
 import json
 import traceback
 import uuid
 from datetime import datetime
-from typing import Any
 
 import structlog
 from fastapi import Request, status

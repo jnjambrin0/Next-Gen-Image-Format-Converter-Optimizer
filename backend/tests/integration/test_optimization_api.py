@@ -1,7 +1,7 @@
 """Integration tests for optimization API endpoints."""
 
-import io
 from typing import Any
+import io
 
 import pytest
 from fastapi import status

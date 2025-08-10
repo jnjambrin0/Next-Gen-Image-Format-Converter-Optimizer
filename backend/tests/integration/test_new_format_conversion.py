@@ -1,10 +1,10 @@
 """Integration tests for new format conversion support."""
 
 # Import fixtures
+from typing import Any
 import sys
 from io import BytesIO
 from pathlib import Path
-from typing import Any
 
 import pytest
 from PIL import Image
