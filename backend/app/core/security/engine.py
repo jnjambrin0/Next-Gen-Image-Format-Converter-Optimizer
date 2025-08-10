@@ -11,13 +11,21 @@ import structlog
 from PIL import Image
 
 from app.config import settings
-from app.core.constants import (HEIF_AVIF_BRANDS, IMAGE_BUFFER_CHECK_LIMIT,
-                                IMAGE_MAGIC_BYTES, MAX_IMAGE_PIXELS,
-                                MAX_MEMORY_VIOLATIONS, MAX_SECURITY_EVENTS,
-                                MIN_VALIDATION_FILE_SIZE, SANDBOX_CPU_LIMITS,
-                                SANDBOX_MEMORY_LIMITS, SANDBOX_OUTPUT_LIMITS,
-                                SANDBOX_TIMEOUTS, STDERR_TRUNCATION_LENGTH,
-                                SUSPICIOUS_PATTERNS)
+from app.core.constants import (
+    HEIF_AVIF_BRANDS,
+    IMAGE_BUFFER_CHECK_LIMIT,
+    IMAGE_MAGIC_BYTES,
+    MAX_IMAGE_PIXELS,
+    MAX_MEMORY_VIOLATIONS,
+    MAX_SECURITY_EVENTS,
+    MIN_VALIDATION_FILE_SIZE,
+    SANDBOX_CPU_LIMITS,
+    SANDBOX_MEMORY_LIMITS,
+    SANDBOX_OUTPUT_LIMITS,
+    SANDBOX_TIMEOUTS,
+    STDERR_TRUNCATION_LENGTH,
+    SUSPICIOUS_PATTERNS,
+)
 from app.core.exceptions import ConversionError
 from app.core.security.metadata import MetadataStripper
 from app.core.security.sandbox import SandboxConfig, SecuritySandbox

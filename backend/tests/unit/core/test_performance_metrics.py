@@ -12,9 +12,12 @@ import pytest
 
 from app.cli.utils.profiler import CLIProfiler
 from app.core.monitoring.metrics import MetricsCollector
-from app.core.monitoring.performance import (BatchMetrics, ConversionMetrics,
-                                             PerformanceMonitor,
-                                             PerformanceProfiler)
+from app.core.monitoring.performance import (
+    BatchMetrics,
+    ConversionMetrics,
+    PerformanceMonitor,
+    PerformanceProfiler,
+)
 
 
 class TestConversionMetrics:

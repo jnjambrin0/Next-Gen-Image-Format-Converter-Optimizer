@@ -10,8 +10,7 @@ import pytest
 from PIL import Image
 
 from app.core.intelligence.engine import IntelligenceEngine
-from app.models.conversion import (BoundingBox, ContentClassification,
-                                   ContentType)
+from app.models.conversion import BoundingBox, ContentClassification, ContentType
 
 
 class TestIntelligenceEngine:

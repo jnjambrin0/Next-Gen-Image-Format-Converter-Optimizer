@@ -3,9 +3,11 @@ from typing import Any
 Unit tests for simplified network output validation.
 """
 
-from app.core.security.parsers import (NETWORK_ACTIVITY_PATTERNS,
-                                       check_network_isolation,
-                                       validate_no_network_activity)
+from app.core.security.parsers import (
+    NETWORK_ACTIVITY_PATTERNS,
+    check_network_isolation,
+    validate_no_network_activity,
+)
 
 
 class TestNetworkValidation:

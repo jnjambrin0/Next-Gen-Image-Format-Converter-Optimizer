@@ -7,8 +7,12 @@ from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.core.constants import MAX_FILE_SIZE
-from app.models.conversion import (ContentClassification, ContentType,
-                                   InputFormat, OutputFormat)
+from app.models.conversion import (
+    ContentClassification,
+    ContentType,
+    InputFormat,
+    OutputFormat,
+)
 from app.models.recommendation import RecommendationRequest, UseCaseType
 from app.services.intelligence_service import intelligence_service
 from app.services.recommendation_service import recommendation_service

@@ -2,8 +2,7 @@
 
 from typing import Any
 
-from .models import (BatchItem, BatchItemStatus, BatchJob, BatchProgress,
-                     BatchStatus)
+from .models import BatchItem, BatchItemStatus, BatchJob, BatchProgress, BatchStatus
 
 __all__ = [
     "BatchJob",

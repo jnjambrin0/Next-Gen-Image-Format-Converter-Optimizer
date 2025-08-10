@@ -6,16 +6,27 @@ import os
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
-from fastapi import (APIRouter, File, Form, HTTPException, Request, UploadFile,
-                     status)
+from fastapi import (
+    APIRouter,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.config import settings
-from app.core.batch.models import (BatchCreateResponse, BatchItemStatus,
-                                   BatchResult, BatchStatus,
-                                   BatchStatusResponse)
+from app.core.batch.models import (
+    BatchCreateResponse,
+    BatchItemStatus,
+    BatchResult,
+    BatchStatus,
+    BatchStatusResponse,
+)
 from app.services.batch_service import batch_service
 from app.utils.logging import get_logger
 
@@ -213,8 +224,7 @@ async def create_batch_job(
         websocket_url = f"ws://{request.headers.get('host', 'localhost')}/ws/batch/{batch_job.job_id}"
         if settings.batch_websocket_auth_enabled:
             # Import here to avoid circular imports
-            from app.api.websockets.secure_progress import \
-                secure_connection_manager
+            from app.api.websockets.secure_progress import secure_connection_manager
 
             token = secure_connection_manager.generate_job_token(batch_job.job_id)
             websocket_url = f"{websocket_url}?token={token}"
@@ -773,8 +783,7 @@ async def create_websocket_token(job_id: str, request: Request) -> Dict[str, str
             )
 
         # Import here to avoid circular imports
-        from app.api.websockets.secure_progress import \
-            secure_connection_manager
+        from app.api.websockets.secure_progress import secure_connection_manager
 
         # Generate new token
         token = secure_connection_manager.generate_job_token(job_id)

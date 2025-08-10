@@ -4,8 +4,7 @@ from typing import Any
 import pytest
 
 from app.core.monitoring.security_events import SecurityEventTracker
-from app.models.security_event import (SecurityEvent, SecurityEventType,
-                                       SecuritySeverity)
+from app.models.security_event import SecurityEvent, SecurityEventType, SecuritySeverity
 
 
 class TestSecurityEventTracker:

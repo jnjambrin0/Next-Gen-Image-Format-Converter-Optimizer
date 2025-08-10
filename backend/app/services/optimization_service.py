@@ -5,14 +5,24 @@ import uuid
 from typing import Any, Dict, Optional, Tuple
 
 from app.core.intelligence.engine import IntelligenceEngine
-from app.core.optimization import (AlphaOptimizer, EncodingOptions,
-                                   LosslessCompressor, OptimizationEngine,
-                                   QualityAnalyzer, RegionOptimizer)
+from app.core.optimization import (
+    AlphaOptimizer,
+    EncodingOptions,
+    LosslessCompressor,
+    OptimizationEngine,
+    QualityAnalyzer,
+    RegionOptimizer,
+)
 from app.core.security.errors_simplified import SecurityErrorHandler
-from app.models.optimization import AlphaChannelInfo
+from app.models.optimization import (
+    AlphaChannelInfo,
+)
 from app.models.optimization import OptimizationPass as OptimizationPassModel
-from app.models.optimization import (OptimizationRequest, OptimizationResponse,
-                                     QualityMetrics)
+from app.models.optimization import (
+    OptimizationRequest,
+    OptimizationResponse,
+    QualityMetrics,
+)
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

@@ -10,8 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from app.config import settings
 from app.core.monitoring.security_events import SecurityEventTracker
 from app.core.security.network_monitor import NetworkMonitor
-from app.core.security.network_verifier import (NetworkStrictness,
-                                                NetworkVerifier)
+from app.core.security.network_verifier import NetworkStrictness, NetworkVerifier
 
 router = APIRouter(prefix="/security", tags=["security"])
 

@@ -10,9 +10,11 @@ from unittest.mock import patch
 
 import pytest
 
-from app.cli.productivity.autocomplete import (AutocompleteEngine,
-                                               CommandLearner,
-                                               PrivacySanitizer)
+from app.cli.productivity.autocomplete import (
+    AutocompleteEngine,
+    CommandLearner,
+    PrivacySanitizer,
+)
 
 
 class TestPrivacySanitizer:

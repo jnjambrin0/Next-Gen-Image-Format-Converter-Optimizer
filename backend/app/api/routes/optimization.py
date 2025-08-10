@@ -4,15 +4,17 @@ import asyncio
 from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import (APIRouter, BackgroundTasks, File, Form, HTTPException,
-                     UploadFile)
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from sse_starlette.sse import EventSourceResponse
 
 from app.core.optimization.encoding_options import ChromaSubsampling
 from app.core.security.errors_simplified import SecurityErrorHandler
-from app.models.optimization import (OptimizationMode, OptimizationRequest,
-                                     OptimizationResponse)
+from app.models.optimization import (
+    OptimizationMode,
+    OptimizationRequest,
+    OptimizationResponse,
+)
 from app.services.format_detection_service import format_detection_service
 from app.services.optimization_service import optimization_service
 from app.utils.logging import get_logger

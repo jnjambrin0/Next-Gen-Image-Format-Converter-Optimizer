@@ -9,8 +9,13 @@ import pytest
 import pytest_asyncio
 
 from app.core.exceptions import SecurityError, ValidationError
-from app.models.schemas import (PresetBase, PresetCreate, PresetImport,
-                                PresetSettings, PresetUpdate)
+from app.models.schemas import (
+    PresetBase,
+    PresetCreate,
+    PresetImport,
+    PresetSettings,
+    PresetUpdate,
+)
 from app.services.preset_service import PresetService
 
 

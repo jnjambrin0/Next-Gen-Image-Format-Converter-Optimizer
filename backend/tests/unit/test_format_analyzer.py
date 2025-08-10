@@ -4,8 +4,7 @@ from typing import Any
 
 import pytest
 
-from app.core.intelligence.format_analyzer import (FormatAnalyzer,
-                                                   FormatCompatibility)
+from app.core.intelligence.format_analyzer import FormatAnalyzer, FormatCompatibility
 from app.models.conversion import ContentType, InputFormat, OutputFormat
 
 

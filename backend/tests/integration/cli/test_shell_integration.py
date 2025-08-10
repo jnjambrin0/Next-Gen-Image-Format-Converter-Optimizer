@@ -13,10 +13,14 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from app.cli.productivity.shell_integration import (CompletionScript,
-                                                    FunctionLibrary,
-                                                    ShellDetector, ShellHelper,
-                                                    ShellIntegrator, ShellType)
+from app.cli.productivity.shell_integration import (
+    CompletionScript,
+    FunctionLibrary,
+    ShellDetector,
+    ShellHelper,
+    ShellIntegrator,
+    ShellType,
+)
 
 
 class TestShellDetector:

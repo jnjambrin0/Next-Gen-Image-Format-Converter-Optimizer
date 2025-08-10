@@ -11,9 +11,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.cli.productivity.dry_run import (BatchEstimate, ConversionEstimate,
-                                          DryRunSimulator, ResourceEstimate,
-                                          SimulationMode, ValidationResult)
+from app.cli.productivity.dry_run import (
+    BatchEstimate,
+    ConversionEstimate,
+    DryRunSimulator,
+    ResourceEstimate,
+    SimulationMode,
+    ValidationResult,
+)
 
 
 class TestConversionEstimate:

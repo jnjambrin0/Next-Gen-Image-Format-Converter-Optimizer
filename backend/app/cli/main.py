@@ -9,13 +9,15 @@ from typing import Annotated, Any, Optional
 import typer
 from rich.table import Table
 
-from app.cli.commands import (analyze, batch, chain, convert, formats,
-                              optimize, presets)
+from app.cli.commands import analyze, batch, chain, convert, formats, optimize, presets
 from app.cli.config import CLIConfig, get_config, update_config
 from app.cli.plugins import loader as plugin_loader
 from app.cli.ui.themes import get_theme_manager
 from app.cli.utils import aliases, errors, i18n
-from app.cli.utils.branding import show_cli_banner, show_version_info
+from app.cli.utils.branding import (
+    show_cli_banner,
+    show_version_info,
+)
 
 # Initialize theme manager and console
 theme_manager = get_theme_manager()

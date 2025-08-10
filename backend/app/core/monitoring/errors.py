@@ -14,11 +14,15 @@ from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
-from app.core.constants import (DB_CHECK_SAME_THREAD, DEFAULT_MONITORING_HOURS,
-                                ERROR_MESSAGE_MAX_LENGTH, ERROR_RETENTION_DAYS,
-                                ERROR_SIGNATURE_HASH_LENGTH,
-                                MAX_CATEGORY_ERRORS_DISPLAY,
-                                MAX_TOP_ERRORS_DISPLAY)
+from app.core.constants import (
+    DB_CHECK_SAME_THREAD,
+    DEFAULT_MONITORING_HOURS,
+    ERROR_MESSAGE_MAX_LENGTH,
+    ERROR_RETENTION_DAYS,
+    ERROR_SIGNATURE_HASH_LENGTH,
+    MAX_CATEGORY_ERRORS_DISPLAY,
+    MAX_TOP_ERRORS_DISPLAY,
+)
 from app.utils.logging import filter_sensitive_data, get_logger
 
 logger = get_logger(__name__)

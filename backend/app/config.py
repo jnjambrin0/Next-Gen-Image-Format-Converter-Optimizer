@@ -5,12 +5,18 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Import constants to avoid magic numbers
 try:
-    from app.core.constants import (DEFAULT_MONITORING_INTERVAL,
-                                    ERROR_RETENTION_DAYS)
+    from app.core.constants import (
+        DEFAULT_MONITORING_INTERVAL,
+        ERROR_RETENTION_DAYS,
+    )
     from app.core.constants import MAX_BATCH_SIZE as DEFAULT_MAX_BATCH_SIZE
-    from app.core.constants import (MONITORING_INTERVAL_SECONDS,
-                                    SANDBOX_CPU_LIMITS, SANDBOX_MEMORY_LIMITS,
-                                    SANDBOX_OUTPUT_LIMITS, SANDBOX_TIMEOUTS)
+    from app.core.constants import (
+        MONITORING_INTERVAL_SECONDS,
+        SANDBOX_CPU_LIMITS,
+        SANDBOX_MEMORY_LIMITS,
+        SANDBOX_OUTPUT_LIMITS,
+        SANDBOX_TIMEOUTS,
+    )
 except ImportError:
     # Fallback values if constants can't be imported (e.g., during initial setup)
     SANDBOX_MEMORY_LIMITS = {"standard": 512, "strict": 256, "paranoid": 128}

@@ -11,9 +11,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.cli.config import get_config, get_history_dir
 from app.cli.productivity.autocomplete import PrivacySanitizer
-from app.cli.productivity.fuzzy_search import (FuzzySearcher, HistoryEntry,
-                                               HistoryExporter,
-                                               InteractiveHistoryBrowser)
+from app.cli.productivity.fuzzy_search import (
+    FuzzySearcher,
+    HistoryEntry,
+    HistoryExporter,
+    InteractiveHistoryBrowser,
+)
 
 
 class HistoryManager:

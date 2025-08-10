@@ -10,8 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.core.monitoring.performance import (ConversionMetrics,
-                                             PerformanceMonitor)
+from app.core.monitoring.performance import ConversionMetrics, PerformanceMonitor
 from app.core.processing.vips_ops import VipsOperations
 
 

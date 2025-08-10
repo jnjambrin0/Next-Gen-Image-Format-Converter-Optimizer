@@ -10,13 +10,20 @@ from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
-from app.core.constants import (DB_CHECK_SAME_THREAD, DEFAULT_MONITORING_HOURS,
-                                MAX_RECENT_EVENTS_DISPLAY,
-                                SECURITY_EVENT_RETENTION_DAYS)
+from app.core.constants import (
+    DB_CHECK_SAME_THREAD,
+    DEFAULT_MONITORING_HOURS,
+    MAX_RECENT_EVENTS_DISPLAY,
+    SECURITY_EVENT_RETENTION_DAYS,
+)
 from app.core.security.rate_limiter import SecurityEventRateLimiter
 from app.core.security.types import RateLimitConfig
-from app.models.security_event import (SecurityEvent, SecurityEventSummary,
-                                       SecurityEventType, SecuritySeverity)
+from app.models.security_event import (
+    SecurityEvent,
+    SecurityEventSummary,
+    SecurityEventType,
+    SecuritySeverity,
+)
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

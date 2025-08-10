@@ -10,9 +10,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.core.security.network_verifier import (NetworkStrictness,
-                                                NetworkVerifier,
-                                                verify_network_at_startup)
+from app.core.security.network_verifier import (
+    NetworkStrictness,
+    NetworkVerifier,
+    verify_network_at_startup,
+)
 
 
 def command_available(cmd: str) -> bool:

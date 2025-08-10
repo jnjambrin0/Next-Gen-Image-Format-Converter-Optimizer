@@ -9,9 +9,13 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from app.api.middleware.error_handler import handle_exception
-from app.core.exceptions import (ConversionError, FormatNotSupportedError,
-                                 ProcessingTimeoutError, ResourceLimitError,
-                                 SecurityError)
+from app.core.exceptions import (
+    ConversionError,
+    FormatNotSupportedError,
+    ProcessingTimeoutError,
+    ResourceLimitError,
+    SecurityError,
+)
 from app.main import app
 
 
@@ -146,8 +150,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_http_exception_handling(self):
         """Test HTTP exception handling."""
-        from starlette.exceptions import \
-            HTTPException as StarletteHTTPException
+        from starlette.exceptions import HTTPException as StarletteHTTPException
 
         error = StarletteHTTPException(status_code=400, detail="Bad request")
         correlation_id = "test-correlation-104"

@@ -7,8 +7,13 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.core.exceptions import ConversionError, InvalidImageError
-from app.models.conversion import (ConversionResult, ConversionSettings,
-                                   ConversionStatus, InputFormat, OutputFormat)
+from app.models.conversion import (
+    ConversionResult,
+    ConversionSettings,
+    ConversionStatus,
+    InputFormat,
+    OutputFormat,
+)
 from app.models.requests import ConversionApiRequest
 from app.services.conversion_service import ConversionService
 

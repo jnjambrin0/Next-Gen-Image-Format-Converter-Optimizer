@@ -9,10 +9,17 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.websockets.progress import (connection_manager, router,
-                                         send_batch_progress,
-                                         send_job_status_update)
-from app.core.batch.models import BatchItemStatus, BatchProgress, BatchStatus
+from app.api.websockets.progress import (
+    connection_manager,
+    router,
+    send_batch_progress,
+    send_job_status_update,
+)
+from app.core.batch.models import (
+    BatchItemStatus,
+    BatchProgress,
+    BatchStatus,
+)
 
 
 class TestWebSocketProgress:

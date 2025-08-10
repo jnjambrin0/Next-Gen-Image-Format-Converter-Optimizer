@@ -6,8 +6,14 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from app.models.schemas import (PresetBase, PresetExport, PresetImport,
-                                PresetResponse, PresetSettings, PresetUpdate)
+from app.models.schemas import (
+    PresetBase,
+    PresetExport,
+    PresetImport,
+    PresetResponse,
+    PresetSettings,
+    PresetUpdate,
+)
 
 
 class TestPresetSettings:

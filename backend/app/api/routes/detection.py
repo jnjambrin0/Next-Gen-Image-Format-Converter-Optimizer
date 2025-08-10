@@ -8,18 +8,26 @@ import structlog
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
 from app.api.utils.error_handling import EndpointErrorHandler
-from app.api.utils.validation import (SemaphoreContextManager,
-                                      secure_memory_clear,
-                                      validate_content_type,
-                                      validate_uploaded_file)
+from app.api.utils.validation import (
+    SemaphoreContextManager,
+    secure_memory_clear,
+    validate_content_type,
+    validate_uploaded_file,
+)
 from app.config import settings
-from app.core.constants import (FORMAT_TO_MIME_TYPE, SUPPORTED_INPUT_FORMATS,
-                                SUPPORTED_OUTPUT_FORMATS)
-from app.models.responses import (ErrorResponse, FormatCompatibilityMatrix,
-                                  FormatCompatibilityResponse,
-                                  FormatDetectionResponse,
-                                  FormatRecommendation,
-                                  FormatRecommendationResponse)
+from app.core.constants import (
+    FORMAT_TO_MIME_TYPE,
+    SUPPORTED_INPUT_FORMATS,
+    SUPPORTED_OUTPUT_FORMATS,
+)
+from app.models.responses import (
+    ErrorResponse,
+    FormatCompatibilityMatrix,
+    FormatCompatibilityResponse,
+    FormatDetectionResponse,
+    FormatRecommendation,
+    FormatRecommendationResponse,
+)
 from app.services.format_detection_service import format_detection_service
 from app.services.intelligence_service import intelligence_service
 from app.services.recommendation_service import recommendation_service

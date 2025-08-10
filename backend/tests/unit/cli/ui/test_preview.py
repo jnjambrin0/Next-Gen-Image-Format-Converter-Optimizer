@@ -9,8 +9,12 @@ from unittest.mock import Mock, patch
 import pytest
 from PIL import Image
 
-from app.cli.ui.preview import (ImagePreview, PreviewMode,
-                                create_ascii_preview, show_image_comparison)
+from app.cli.ui.preview import (
+    ImagePreview,
+    PreviewMode,
+    create_ascii_preview,
+    show_image_comparison,
+)
 
 
 class TestImagePreview:

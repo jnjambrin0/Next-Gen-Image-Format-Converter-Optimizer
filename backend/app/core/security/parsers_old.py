@@ -11,7 +11,10 @@ from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 import structlog
 
-from app.core.constants import LOCALHOST_VARIANTS, MIN_CONNECTION_PARTS
+from app.core.constants import (
+    LOCALHOST_VARIANTS,
+    MIN_CONNECTION_PARTS,
+)
 from app.core.security.types import ConnectionInfo
 
 logger = structlog.get_logger()

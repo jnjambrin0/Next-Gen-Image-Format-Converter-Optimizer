@@ -5,11 +5,14 @@ Unit tests for simplified security error handling.
 
 import pytest
 
-from app.core.security.errors import (SecurityError, create_file_error,
-                                      create_network_error,
-                                      create_rate_limit_error,
-                                      create_sandbox_error,
-                                      create_verification_error)
+from app.core.security.errors import (
+    SecurityError,
+    create_file_error,
+    create_network_error,
+    create_rate_limit_error,
+    create_sandbox_error,
+    create_verification_error,
+)
 
 
 class TestSecurityError:

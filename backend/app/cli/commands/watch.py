@@ -17,8 +17,12 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from app.cli.config import get_config
-from app.cli.productivity.watcher import (DirectoryWatcher, FileEvent,
-                                          ResourceLimits, WatcherStatus)
+from app.cli.productivity.watcher import (
+    DirectoryWatcher,
+    FileEvent,
+    ResourceLimits,
+    WatcherStatus,
+)
 from app.cli.utils.errors import handle_error
 
 # Import SDK for conversions

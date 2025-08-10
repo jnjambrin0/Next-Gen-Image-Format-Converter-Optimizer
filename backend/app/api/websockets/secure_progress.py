@@ -7,8 +7,13 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Set, Tuple
 
-from fastapi import (HTTPException, Query, WebSocket, WebSocketDisconnect,
-                     status)
+from fastapi import (
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.routing import APIRouter
 
 from app.config import settings

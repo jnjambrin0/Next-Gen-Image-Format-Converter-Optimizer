@@ -13,10 +13,13 @@ from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
-from app.core.constants import (DAILY_STATS_RETENTION_DAYS,
-                                DB_CHECK_SAME_THREAD, FILE_SIZE_CATEGORIES,
-                                HOURLY_STATS_RETENTION_HOURS,
-                                MAX_PROCESSING_TIMES_MEMORY)
+from app.core.constants import (
+    DAILY_STATS_RETENTION_DAYS,
+    DB_CHECK_SAME_THREAD,
+    FILE_SIZE_CATEGORIES,
+    HOURLY_STATS_RETENTION_HOURS,
+    MAX_PROCESSING_TIMES_MEMORY,
+)
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

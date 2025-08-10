@@ -13,6 +13,7 @@ from rich.table import Table
 from app.cli.config import get_config
 from app.cli.ui.preview import show_image_comparison
 from app.cli.ui.themes import get_theme_manager
+
 # Import SDK client
 from app.cli.utils import setup_sdk_path
 from app.cli.utils.emoji import format_with_emoji, get_emoji, get_quality_stars

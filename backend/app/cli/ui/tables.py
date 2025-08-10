@@ -15,8 +15,11 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from app.cli.utils.emoji import (get_format_emoji, get_quality_stars,
-                                 get_status_emoji)
+from app.cli.utils.emoji import (
+    get_format_emoji,
+    get_quality_stars,
+    get_status_emoji,
+)
 from app.cli.utils.terminal import get_safe_width
 
 

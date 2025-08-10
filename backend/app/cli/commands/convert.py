@@ -17,7 +17,9 @@ from app.cli.utils.emoji import get_emoji, get_format_emoji
 from app.cli.utils.errors import handle_api_error
 from app.cli.utils.history import record_command
 from app.cli.utils.profiler import cli_profiler
-from app.cli.utils.progress import InterruptableProgress
+from app.cli.utils.progress import (
+    InterruptableProgress,
+)
 from app.cli.utils.terminal import should_use_emoji
 from app.cli.utils.validation import validate_input_file, validate_output_path
 

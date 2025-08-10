@@ -13,8 +13,7 @@ from typing import Any, Optional
 
 import structlog
 
-from app.core.constants import (CONNECTION_CHECK_TIMEOUT,
-                                DEFAULT_MONITORING_INTERVAL)
+from app.core.constants import CONNECTION_CHECK_TIMEOUT, DEFAULT_MONITORING_INTERVAL
 from app.core.monitoring.security_events import SecurityEventTracker
 from app.core.security.parsers import check_network_isolation
 from app.models.security_event import SecurityEventType, SecuritySeverity

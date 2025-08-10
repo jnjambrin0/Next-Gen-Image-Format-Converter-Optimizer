@@ -6,7 +6,10 @@ from typing import Any, Optional
 import structlog
 from PIL import Image
 
-from app.core.exceptions import ConversionFailedError, InvalidImageError
+from app.core.exceptions import (
+    ConversionFailedError,
+    InvalidImageError,
+)
 
 logger = structlog.get_logger()
 

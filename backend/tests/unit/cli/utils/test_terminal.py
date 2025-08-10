@@ -7,10 +7,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.cli.utils.terminal import (TerminalCapability, TerminalDetector,
-                                    adapt_output, get_safe_width,
-                                    get_terminal_detector, should_use_color,
-                                    should_use_emoji)
+from app.cli.utils.terminal import (
+    TerminalCapability,
+    TerminalDetector,
+    adapt_output,
+    get_safe_width,
+    get_terminal_detector,
+    should_use_color,
+    should_use_emoji,
+)
 
 
 class TestTerminalDetector:

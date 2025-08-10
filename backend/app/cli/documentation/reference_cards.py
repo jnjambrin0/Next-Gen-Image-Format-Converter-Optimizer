@@ -18,9 +18,15 @@ try:
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+    from reportlab.platypus import (
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+    )
     from reportlab.platypus import Table as RLTable
-    from reportlab.platypus import TableStyle
+    from reportlab.platypus import (
+        TableStyle,
+    )
 
     REPORTLAB_AVAILABLE = True
 except ImportError:

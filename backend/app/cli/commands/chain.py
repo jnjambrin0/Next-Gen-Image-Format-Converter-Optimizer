@@ -11,6 +11,7 @@ import typer
 from rich.console import Console
 
 from app.cli.config import get_config
+
 # Import SDK client
 from app.cli.utils import setup_sdk_path
 

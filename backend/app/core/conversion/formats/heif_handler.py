@@ -16,7 +16,10 @@ except ImportError:
     HEIF_AVAILABLE = False
 
 from app.core.conversion.formats.base import BaseFormatHandler
-from app.core.exceptions import HeifDecodingError, UnsupportedFormatError
+from app.core.exceptions import (
+    HeifDecodingError,
+    UnsupportedFormatError,
+)
 from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()

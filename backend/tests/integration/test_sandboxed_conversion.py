@@ -12,8 +12,7 @@ from PIL import Image
 from app.config import settings
 from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import ConversionError
-from app.models.conversion import (ConversionRequest, ConversionSettings,
-                                   OutputFormat)
+from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
 class TestSandboxedConversion:

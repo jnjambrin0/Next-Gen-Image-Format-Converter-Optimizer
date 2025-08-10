@@ -7,10 +7,12 @@ from unittest.mock import patch
 
 import pytest
 
-from app.cli.documentation.tutorial_engine import (TutorialEngine,
-                                                   TutorialProgress,
-                                                   TutorialStep,
-                                                   TutorialStepType)
+from app.cli.documentation.tutorial_engine import (
+    TutorialEngine,
+    TutorialProgress,
+    TutorialStep,
+    TutorialStepType,
+)
 
 
 class TestTutorialStep:

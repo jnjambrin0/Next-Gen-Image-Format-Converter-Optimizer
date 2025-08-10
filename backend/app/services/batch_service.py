@@ -5,8 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from app.api.websockets.progress import connection_manager
 from app.core.batch.manager import BatchManager
-from app.core.batch.models import (BatchItemStatus, BatchJob, BatchProgress,
-                                   BatchResult)
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchProgress, BatchResult
 from app.core.batch.results import BatchResultCollector
 from app.services.batch_history_service import batch_history_service
 
