@@ -7,12 +7,9 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.cli.productivity.fuzzy_search import (
-    FuzzySearcher,
-    HistoryEntry,
-    HistoryExporter,
-    InteractiveHistoryBrowser,
-)
+from app.cli.productivity.fuzzy_search import (FuzzySearcher, HistoryEntry,
+                                               HistoryExporter,
+                                               InteractiveHistoryBrowser)
 
 
 class TestHistoryEntry:

@@ -12,14 +12,9 @@ from unittest.mock import patch
 
 import pytest
 
-from app.cli.productivity.watcher import (
-    Debouncer,
-    DirectoryWatcher,
-    RateLimiter,
-    ResourceLimits,
-    ResourceMonitor,
-    WatcherStatus,
-)
+from app.cli.productivity.watcher import (Debouncer, DirectoryWatcher,
+                                          RateLimiter, ResourceLimits,
+                                          ResourceMonitor, WatcherStatus)
 
 
 class TestRateLimiter:

@@ -12,13 +12,12 @@ import pytest
 
 from app.core.conversion.manager import ConversionManager
 from app.core.security.memory import MemoryError as SecureMemoryError
-from app.core.security.memory import (
-    SecureMemoryManager,
-    get_system_memory_info,
-    secure_memory_context,
-)
+from app.core.security.memory import (SecureMemoryManager,
+                                      get_system_memory_info,
+                                      secure_memory_context)
 from app.core.security.sandbox import SandboxConfig, SecuritySandbox
-from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
+from app.models.conversion import (ConversionRequest, ConversionSettings,
+                                   OutputFormat)
 
 
 class TestSecureMemoryManager:

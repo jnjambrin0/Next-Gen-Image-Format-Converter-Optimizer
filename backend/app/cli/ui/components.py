@@ -10,17 +10,8 @@ from typing import Any, Callable, List, Optional
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.reactive import reactive
-from textual.widgets import (
-    Button,
-    Label,
-    ListItem,
-    ListView,
-    ProgressBar,
-    RadioButton,
-    RadioSet,
-    Static,
-    Switch,
-)
+from textual.widgets import (Button, Label, ListItem, ListView, ProgressBar,
+                             RadioButton, RadioSet, Static, Switch)
 
 from app.cli.utils.emoji import get_emoji, get_format_emoji
 

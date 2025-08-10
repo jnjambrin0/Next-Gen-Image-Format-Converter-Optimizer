@@ -252,7 +252,8 @@ async def _setup_connection_manager(
         and settings.batch_websocket_auth_enabled
     ):
         # Import here to avoid circular imports
-        from app.api.websockets.secure_progress import secure_connection_manager
+        from app.api.websockets.secure_progress import \
+            secure_connection_manager
 
         # Get client IP for rate limiting
         client_ip = None
@@ -399,7 +400,8 @@ async def send_batch_progress(progress: BatchProgress) -> None:
         and settings.batch_websocket_auth_enabled
     ):
         # Import here to avoid circular imports
-        from app.api.websockets.secure_progress import secure_connection_manager
+        from app.api.websockets.secure_progress import \
+            secure_connection_manager
 
         await secure_connection_manager.broadcast_progress(progress)
     else:
@@ -419,7 +421,8 @@ async def send_job_status_update(job_id: str, status: BatchStatus) -> None:
         and settings.batch_websocket_auth_enabled
     ):
         # Import here to avoid circular imports
-        from app.api.websockets.secure_progress import secure_connection_manager
+        from app.api.websockets.secure_progress import \
+            secure_connection_manager
 
         await secure_connection_manager.broadcast_job_status(job_id, status)
     else:

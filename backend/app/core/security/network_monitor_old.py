@@ -11,18 +11,14 @@ from typing import Any, Dict, List, Optional, Set
 
 import structlog
 
-from app.core.constants import (
-    DEFAULT_MONITORING_INTERVAL,
-    MONITORING_JITTER_PERCENT,
-    NETWORK_BASELINE_MAX_CONNECTIONS,
-    NETWORK_VIOLATION_THRESHOLD,
-    PROCESS_TERMINATION_GRACE_PERIOD,
-)
+from app.core.constants import (DEFAULT_MONITORING_INTERVAL,
+                                MONITORING_JITTER_PERCENT,
+                                NETWORK_BASELINE_MAX_CONNECTIONS,
+                                NETWORK_VIOLATION_THRESHOLD,
+                                PROCESS_TERMINATION_GRACE_PERIOD)
 from app.core.monitoring.security_events import SecurityEventTracker
 from app.core.security.metrics import SecurityMetricsCollector
-from app.core.security.parsers import (
-    parse_connections,
-)
+from app.core.security.parsers import parse_connections
 from app.core.security.types import ViolationStats
 from app.models.security_event import SecurityEventType, SecuritySeverity
 

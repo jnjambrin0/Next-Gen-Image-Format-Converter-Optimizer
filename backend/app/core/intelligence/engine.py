@@ -11,19 +11,15 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from PIL import Image
 
-from app.core.constants import (
-    IMAGE_MAX_PIXELS,
-    INTELLIGENCE_MODEL_MAX_SIZE,
-    INTELLIGENCE_TIMEOUT_MS,
-)
-from app.core.security.errors_simplified import (
-    SecurityError,
-    create_file_error,
-    create_verification_error,
-    handle_security_errors,
-)
+from app.core.constants import (IMAGE_MAX_PIXELS, INTELLIGENCE_MODEL_MAX_SIZE,
+                                INTELLIGENCE_TIMEOUT_MS)
+from app.core.security.errors_simplified import (SecurityError,
+                                                 create_file_error,
+                                                 create_verification_error,
+                                                 handle_security_errors)
 from app.core.security.memory import secure_clear
-from app.models.conversion import BoundingBox, ContentClassification, ContentType
+from app.models.conversion import (BoundingBox, ContentClassification,
+                                   ContentType)
 from app.utils.logging import get_logger
 
 from .classifiers import ClassificationResult, MLClassifier, QuickClassifier

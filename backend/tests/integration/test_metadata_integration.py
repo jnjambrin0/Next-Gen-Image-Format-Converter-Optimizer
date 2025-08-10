@@ -8,7 +8,8 @@ import pytest
 from PIL import Image
 
 from app.core.conversion.manager import ConversionManager
-from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
+from app.models.conversion import (ConversionRequest, ConversionSettings,
+                                   OutputFormat)
 
 
 class TestMetadataIntegration:

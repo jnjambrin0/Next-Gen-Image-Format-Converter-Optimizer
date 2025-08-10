@@ -8,13 +8,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from app.core.batch.manager import BatchManager, BatchWorkerTask
-from app.core.batch.models import (
-    BatchItem,
-    BatchItemStatus,
-    BatchJob,
-    BatchProgress,
-    BatchStatus,
-)
+from app.core.batch.models import (BatchItem, BatchItemStatus, BatchJob,
+                                   BatchProgress, BatchStatus)
 from app.models.conversion import ConversionRequest, ConversionResult
 
 

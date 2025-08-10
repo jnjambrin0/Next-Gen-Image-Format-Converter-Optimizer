@@ -14,15 +14,10 @@ from io import StringIO
 import pytest
 import yaml
 
-from app.cli.productivity.formatters import (
-    ErrorFormatter,
-    FormatterOptions,
-    FormatType,
-    OutputFormatter,
-    ProgressFormatter,
-    ResultFormatter,
-    TableFormatter,
-)
+from app.cli.productivity.formatters import (ErrorFormatter, FormatterOptions,
+                                             FormatType, OutputFormatter,
+                                             ProgressFormatter,
+                                             ResultFormatter, TableFormatter)
 
 
 class TestOutputFormatter:

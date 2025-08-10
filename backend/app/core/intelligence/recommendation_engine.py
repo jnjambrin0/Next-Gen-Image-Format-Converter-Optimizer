@@ -6,13 +6,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.constants import SUPPORTED_OUTPUT_FORMATS
 from app.models.conversion import ContentType, InputFormat, OutputFormat
-from app.models.recommendation import (
-    FormatCharacteristics,
-    FormatRecommendation,
-    RecommendationRequest,
-    TradeOffAnalysis,
-    UseCaseType,
-)
+from app.models.recommendation import (FormatCharacteristics,
+                                       FormatRecommendation,
+                                       RecommendationRequest, TradeOffAnalysis,
+                                       UseCaseType)
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

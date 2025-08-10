@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.conversion import ContentClassification, InputFormat, OutputFormat
+from app.models.conversion import (ContentClassification, InputFormat,
+                                   OutputFormat)
 
 
 class UseCaseType(str, Enum):

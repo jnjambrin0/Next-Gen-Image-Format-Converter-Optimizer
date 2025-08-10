@@ -6,17 +6,15 @@ from pathlib import Path
 from typing import Any, Optional
 
 import structlog
-from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import (APIRouter, File, Form, HTTPException, Request, Response,
+                     UploadFile)
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.api.utils.validation import secure_memory_clear, validate_content_type
 from app.config import settings
 from app.core.constants import FORMAT_TO_CONTENT_TYPE
-from app.core.exceptions import (
-    ConversionFailedError,
-    InvalidImageError,
-    UnsupportedFormatError,
-)
+from app.core.exceptions import (ConversionFailedError, InvalidImageError,
+                                 UnsupportedFormatError)
 from app.models.conversion import ConversionSettings, OutputFormat
 from app.models.requests import ConversionApiRequest
 from app.models.responses import ErrorResponse
@@ -256,7 +254,8 @@ async def convert_image(
         # Try to detect format from content (more reliable than extension)
         detected_format = None
         try:
-            from app.services.format_detection_service import format_detection_service
+            from app.services.format_detection_service import \
+                format_detection_service
 
             detected_format, confident = await format_detection_service.detect_format(
                 contents

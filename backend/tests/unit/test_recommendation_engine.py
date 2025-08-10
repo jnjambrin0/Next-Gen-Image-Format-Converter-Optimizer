@@ -6,17 +6,10 @@ from unittest.mock import Mock
 import pytest
 
 from app.core.intelligence.recommendation_engine import RecommendationEngine
-from app.models.conversion import (
-    ContentClassification,
-    ContentType,
-    InputFormat,
-    OutputFormat,
-)
-from app.models.recommendation import (
-    FormatRecommendation,
-    RecommendationRequest,
-    UseCaseType,
-)
+from app.models.conversion import (ContentClassification, ContentType,
+                                   InputFormat, OutputFormat)
+from app.models.recommendation import (FormatRecommendation,
+                                       RecommendationRequest, UseCaseType)
 
 
 class TestRecommendationEngine:

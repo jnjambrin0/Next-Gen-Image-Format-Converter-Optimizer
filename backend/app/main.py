@@ -8,12 +8,8 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api.middleware import (
-    auth_middleware,
-    error_handler_middleware,
-    logging_middleware,
-    setup_exception_handlers,
-)
+from .api.middleware import (auth_middleware, error_handler_middleware,
+                             logging_middleware, setup_exception_handlers)
 from .api.middleware.validation import validation_middleware
 from .api.routes import api_router, api_v1_router
 from .config import settings
@@ -49,9 +45,7 @@ async def lifespan(app: FastAPI):
     # Initialize recommendation service (CRITICAL: Must be initialized for Story 3.4)
     import app.services.recommendation_service as rec_module
 
-    from .services.recommendation_service import (
-        RecommendationService,
-    )
+    from .services.recommendation_service import RecommendationService
 
     rec_module.recommendation_service = RecommendationService()
 
@@ -85,10 +79,8 @@ async def lifespan(app: FastAPI):
     # Run enhanced network isolation verification
     if settings.network_verification_enabled:
         from .core.monitoring.security_events import SecurityEventTracker
-        from .core.security.network_verifier import (
-            NetworkStrictness,
-            verify_network_at_startup,
-        )
+        from .core.security.network_verifier import (NetworkStrictness,
+                                                     verify_network_at_startup)
 
         # Map string to enum
         strictness_map = {
@@ -156,7 +148,8 @@ async def lifespan(app: FastAPI):
         while True:
             await asyncio.sleep(86400)  # Run once per day
             try:
-                from .services.batch_history_service import batch_history_service
+                from .services.batch_history_service import \
+                    batch_history_service
 
                 deleted_count = await batch_history_service.cleanup_old_jobs()
                 if deleted_count > 0:
@@ -961,7 +954,8 @@ app.include_router(websocket_router)
 
 # Include secure WebSocket routes if authentication is enabled
 if settings.batch_websocket_auth_enabled:
-    from .api.websockets.secure_progress import router as secure_websocket_router
+    from .api.websockets.secure_progress import \
+        router as secure_websocket_router
 
     app.include_router(secure_websocket_router, prefix="/api")
 

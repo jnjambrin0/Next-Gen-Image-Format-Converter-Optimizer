@@ -4,10 +4,7 @@ from typing import Any
 
 from app.core.security.engine import SecurityEngine
 from app.core.security.errors import SecurityError
-from app.core.security.sandbox import (
-    SandboxConfig,
-    SecuritySandbox,
-)
+from app.core.security.sandbox import SandboxConfig, SecuritySandbox
 
 
 # Backward compatibility - create_sandbox function

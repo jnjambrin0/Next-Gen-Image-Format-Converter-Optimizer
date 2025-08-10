@@ -14,11 +14,9 @@ Usage:
 
 import io
 import json
-
 # Disable all logging before any other imports
 import logging
 import os
-
 # Standard library imports only - no app imports to avoid logging initialization
 import sys
 import traceback
@@ -201,16 +199,10 @@ from PIL import Image
 # 2. Network access is already blocked before any imports
 # 3. Only specific constants are imported, not executable code
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from app.core.constants import (
-    MAX_FILE_SIZE,
-    MAX_IMAGE_PIXELS,
-    MAX_QUALITY,
-    MIN_QUALITY,
-    PNG_COMPRESS_LEVEL,
-    SUPPORTED_INPUT_FORMATS,
-    SUPPORTED_OUTPUT_FORMATS,
-    WEBP_METHOD,
-)
+from app.core.constants import (MAX_FILE_SIZE, MAX_IMAGE_PIXELS, MAX_QUALITY,
+                                MIN_QUALITY, PNG_COMPRESS_LEVEL,
+                                SUPPORTED_INPUT_FORMATS,
+                                SUPPORTED_OUTPUT_FORMATS, WEBP_METHOD)
 
 # Set decompression bomb protection limit
 Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS

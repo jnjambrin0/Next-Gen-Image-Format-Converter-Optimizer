@@ -7,13 +7,9 @@ from unittest.mock import MagicMock, patch
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from app.utils.logging import (
-    LoggingContext,
-    add_correlation_id,
-    filter_sensitive_data,
-    get_logger,
-    setup_logging,
-)
+from app.utils.logging import (LoggingContext, add_correlation_id,
+                               filter_sensitive_data, get_logger,
+                               setup_logging)
 
 
 class TestLoggingConfiguration:

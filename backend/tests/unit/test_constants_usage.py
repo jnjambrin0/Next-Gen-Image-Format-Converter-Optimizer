@@ -7,24 +7,16 @@ import importlib
 
 import pytest
 
-from app.core.constants import (
-    CONNECTION_PID_PARSE_START_INDEX,
-    DEFAULT_MONITORING_HOURS,
-    ERROR_RETENTION_DAYS,
-    FILE_SIZE_CATEGORIES,
-    KB_TO_BYTES_FACTOR,
-    LOCALHOST_VARIANTS,
-    MAX_MEMORY_VIOLATIONS,
-    MB_TO_BYTES_FACTOR,
-    MEMORY_CLEAR_PATTERNS,
-    MIN_CONNECTION_PARTS,
-    RATE_LIMIT_EVENTS_PER_HOUR,
-    RATE_LIMIT_EVENTS_PER_MINUTE,
-    SANDBOX_CPU_LIMITS,
-    SANDBOX_MEMORY_LIMITS,
-    SANDBOX_OUTPUT_LIMITS,
-    SANDBOX_TIMEOUTS,
-)
+from app.core.constants import (CONNECTION_PID_PARSE_START_INDEX,
+                                DEFAULT_MONITORING_HOURS, ERROR_RETENTION_DAYS,
+                                FILE_SIZE_CATEGORIES, KB_TO_BYTES_FACTOR,
+                                LOCALHOST_VARIANTS, MAX_MEMORY_VIOLATIONS,
+                                MB_TO_BYTES_FACTOR, MEMORY_CLEAR_PATTERNS,
+                                MIN_CONNECTION_PARTS,
+                                RATE_LIMIT_EVENTS_PER_HOUR,
+                                RATE_LIMIT_EVENTS_PER_MINUTE,
+                                SANDBOX_CPU_LIMITS, SANDBOX_MEMORY_LIMITS,
+                                SANDBOX_OUTPUT_LIMITS, SANDBOX_TIMEOUTS)
 
 
 class TestConstantsDefinition:

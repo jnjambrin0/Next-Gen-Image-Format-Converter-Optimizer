@@ -10,20 +10,13 @@ from pathlib import Path
 from typing import Annotated, Any, List, Optional
 
 import typer
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-)
+from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
+                           SpinnerColumn, TaskProgressColumn, TextColumn)
 from rich.table import Table
 
 from app.cli.config import get_config
 from app.cli.ui.tables import ColumnType, SmartTable
 from app.cli.ui.themes import get_theme_manager
-
 # Import SDK client
 from app.cli.utils import setup_sdk_path
 from app.cli.utils.emoji import format_with_emoji

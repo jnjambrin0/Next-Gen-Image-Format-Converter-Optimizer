@@ -12,10 +12,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.image_processor import ImageProcessor
-from app.core.exceptions import (
-    ConversionFailedError,
-    InvalidImageError,
-)
+from app.core.exceptions import ConversionFailedError, InvalidImageError
 
 
 class TestImageProcessor:

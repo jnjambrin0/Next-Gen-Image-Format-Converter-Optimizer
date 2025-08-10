@@ -16,24 +16,11 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
 from textual.validation import ValidationResult, Validator
-from textual.widgets import (
-    Button,
-    Checkbox,
-    DataTable,
-    DirectoryTree,
-    Footer,
-    Header,
-    Input,
-    Label,
-    ProgressBar,
-    RichLog,
-    Select,
-    Tab,
-    Tabs,
-)
+from textual.widgets import (Button, Checkbox, DataTable, DirectoryTree,
+                             Footer, Header, Input, Label, ProgressBar,
+                             RichLog, Select, Tab, Tabs)
 
 from app.cli.config import get_config
-
 # Import SDK client
 from app.cli.utils import setup_sdk_path
 from app.cli.utils.emoji import get_emoji, get_format_emoji
@@ -41,9 +28,7 @@ from app.cli.utils.emoji import get_emoji, get_format_emoji
 setup_sdk_path()
 try:
     from image_converter.client import ImageConverterClient
-    from image_converter.models import (
-        ConversionRequest,
-    )
+    from image_converter.models import ConversionRequest
     from image_converter.models import OutputFormat as SDKOutputFormat
 
     SDK_AVAILABLE = True

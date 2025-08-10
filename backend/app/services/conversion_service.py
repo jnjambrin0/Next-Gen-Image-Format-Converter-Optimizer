@@ -16,9 +16,7 @@ except ImportError:
 from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import ConversionError, InvalidImageError
 from app.models.conversion import ConversionRequest as CoreConversionRequest
-from app.models.conversion import (
-    ConversionResult,
-)
+from app.models.conversion import ConversionResult
 from app.models.requests import ConversionApiRequest
 from app.services.format_detection_service import format_detection_service
 
@@ -145,12 +143,14 @@ class ConversionService:
                             )
                             preset_dict.update(request_dict)
 
-                            from app.models.conversion import ConversionSettings
+                            from app.models.conversion import \
+                                ConversionSettings
 
                             conversion_settings = ConversionSettings(**preset_dict)
                         else:
                             # Use preset settings directly
-                            from app.models.conversion import ConversionSettings
+                            from app.models.conversion import \
+                                ConversionSettings
 
                             conversion_settings = ConversionSettings(
                                 quality=preset.settings.quality,
@@ -285,7 +285,8 @@ class ConversionService:
             Detected format string or None
         """
         try:
-            from app.services.format_detection_service import format_detection_service
+            from app.services.format_detection_service import \
+                format_detection_service
 
             detected_format, _ = await format_detection_service.detect_format(
                 image_data
