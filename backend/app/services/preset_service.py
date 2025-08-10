@@ -2,29 +2,29 @@
 
 import json
 import uuid
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy import create_engine, select, and_
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
+from typing import Any, Dict, List, Optional
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.core.exceptions import SecurityError, ValidationError
 from app.models.database import Base, UserPreset
 from app.models.schemas import (
+    PresetBase,
     PresetCreate,
-    PresetUpdate,
+    PresetExport,
+    PresetImport,
     PresetResponse,
     PresetSettings,
-    PresetImport,
-    PresetExport,
-    PresetBase,
+    PresetUpdate,
 )
-from app.core.exceptions import ValidationError, SecurityError
 
 
 class PresetService:
     """Service for managing conversion presets."""
 
-    def __init__(self, db_path: str = "./data/presets.db"):
+    def __init__(self, db_path: str = "./data/presets.db") -> None:
         """Initialize preset service.
 
         Args:
@@ -158,8 +158,7 @@ class PresetService:
         Args:
             include_builtin: Whether to include built-in presets
 
-        Returns:
-            List of presets
+        Returns: List[Any] of presets
         """
         with self.SessionLocal() as session:
             query = session.query(UserPreset)
@@ -356,8 +355,7 @@ class PresetService:
         Args:
             import_data: Import data containing presets
 
-        Returns:
-            List of imported presets
+        Returns: List[Any] of imported presets
 
         Raises:
             APIError: If any preset names conflict
@@ -409,8 +407,7 @@ class PresetService:
     async def export_all_presets(self) -> List[PresetBase]:
         """Export all user presets (excluding built-in).
 
-        Returns:
-            List of preset data for export
+        Returns: List[Any] of preset data for export
         """
         presets = await self.list_presets(include_builtin=False)
         return [

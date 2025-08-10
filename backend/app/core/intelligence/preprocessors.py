@@ -1,13 +1,14 @@
 """Image preprocessing utilities for ML models."""
 
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 from PIL import Image
-from typing import Tuple, Optional, List, Dict, Any
-import logging
 
 # Try to import optional dependencies
 try:
-    from scipy import signal, ndimage
+    from scipy import signal
 
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -118,8 +119,7 @@ class ImagePreprocessor:
             patch_size: Size of each square patch
             stride: Stride between patches
 
-        Returns:
-            List of image patches as numpy arrays
+        Returns: List[Any] of image patches as numpy arrays
         """
         width, height = image.size
         patches = []
@@ -213,8 +213,7 @@ class ImagePreprocessor:
             n_colors: Number of dominant colors to extract
             sample_size: Number of pixels to sample
 
-        Returns:
-            List of hex color codes
+        Returns: List[Any] of hex color codes
         """
         try:
             from sklearn.cluster import KMeans

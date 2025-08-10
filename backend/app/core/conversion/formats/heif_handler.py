@@ -1,9 +1,10 @@
 """HEIF/HEIC format handler."""
 
-from typing import BinaryIO, Dict, Any
 from io import BytesIO
-from PIL import Image
+from typing import Any, BinaryIO, Dict
+
 import structlog
+from PIL import Image
 
 try:
     import pillow_heif
@@ -14,13 +15,12 @@ try:
 except ImportError:
     HEIF_AVAILABLE = False
 
-from app.models.conversion import ConversionSettings
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.exceptions import (
-    ConversionFailedError,
-    UnsupportedFormatError,
     HeifDecodingError,
+    UnsupportedFormatError,
 )
+from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
 
@@ -28,7 +28,7 @@ logger = structlog.get_logger()
 class HeifHandler(BaseFormatHandler):
     """Handler for HEIF/HEIC format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HEIF handler."""
         super().__init__()
         self.supported_formats = ["heif", "heic", "heix", "hevc", "hevx"]

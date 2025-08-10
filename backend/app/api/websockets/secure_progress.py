@@ -1,25 +1,25 @@
 """Secure WebSocket endpoint for batch processing progress updates with authentication."""
 
 import asyncio
+import hashlib
 import json
 import secrets
-import hashlib
-from typing import Dict, Set, Optional, Tuple
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Set, Tuple
+
 from fastapi import (
+    HTTPException,
+    Query,
     WebSocket,
     WebSocketDisconnect,
-    WebSocketException,
     status,
-    Query,
-    HTTPException,
 )
 from fastapi.routing import APIRouter
 
-from app.core.batch.models import BatchProgress, BatchStatus
-from app.utils.logging import get_logger
 from app.config import settings
+from app.core.batch.models import BatchProgress, BatchStatus
 from app.services.batch_service import batch_service
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,7 @@ router = APIRouter()
 class SecureConnectionManager:
     """Manages WebSocket connections for batch progress updates with authentication."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the connection manager."""
         # Map job_id to set of active connections
         self._connections: Dict[str, Set[WebSocket]] = {}
@@ -135,7 +135,7 @@ class SecureConnectionManager:
         Args:
             websocket: WebSocket connection
             job_id: Batch job ID to subscribe to
-            token: Optional authentication token
+            token: Optional[Any] authentication token
             client_ip: Client IP address for rate limiting
 
         Returns:
@@ -422,7 +422,7 @@ async def websocket_endpoint(
     Args:
         websocket: WebSocket connection
         job_id: Batch job ID to subscribe to
-        token: Optional authentication token
+        token: Optional[Any] authentication token
     """
     # Validate job_id format
     if not job_id or len(job_id) != 36:  # UUID format

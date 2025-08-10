@@ -1,17 +1,19 @@
 """Performance tests for optimization features."""
 
-import pytest
 import asyncio
-import time
 import io
+import time
+from typing import Any
+
+import pytest
 from PIL import Image
 
 from app.core.optimization import (
-    QualityAnalyzer,
+    CompressionLevel,
+    LosslessCompressor,
     OptimizationEngine,
     OptimizationMode,
-    LosslessCompressor,
-    CompressionLevel,
+    QualityAnalyzer,
 )
 
 
@@ -19,7 +21,7 @@ class TestOptimizationPerformance:
     """Performance tests for optimization components."""
 
     @pytest.fixture
-    def large_image(self):
+    def large_image(self) -> None:
         """Create a large test image (10MP)."""
         # 10 megapixel image (3650x2740)
         img = Image.new("RGB", (3650, 2740), color="blue")
@@ -34,7 +36,7 @@ class TestOptimizationPerformance:
         return buffer.getvalue()
 
     @pytest.fixture
-    def typical_image(self):
+    def typical_image(self) -> None:
         """Create a typical size test image (2MP)."""
         # 2 megapixel image (1600x1200)
         img = Image.new("RGB", (1600, 1200), color="green")
@@ -198,8 +200,9 @@ class TestOptimizationPerformance:
     @pytest.mark.asyncio
     async def test_memory_efficiency(self, typical_image):
         """Test memory usage remains reasonable."""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

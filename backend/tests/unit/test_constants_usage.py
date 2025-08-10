@@ -1,35 +1,36 @@
 """
+from typing import Any
 Unit tests to verify constants are being used correctly throughout the codebase.
 """
 
-import pytest
 import importlib
-import sys
+
+import pytest
 
 from app.core.constants import (
-    RATE_LIMIT_EVENTS_PER_MINUTE,
-    RATE_LIMIT_EVENTS_PER_HOUR,
-    SANDBOX_MEMORY_LIMITS,
-    SANDBOX_CPU_LIMITS,
-    SANDBOX_TIMEOUTS,
-    SANDBOX_OUTPUT_LIMITS,
+    CONNECTION_PID_PARSE_START_INDEX,
     DEFAULT_MONITORING_HOURS,
     ERROR_RETENTION_DAYS,
-    MIN_CONNECTION_PARTS,
-    CONNECTION_PID_PARSE_START_INDEX,
-    LOCALHOST_VARIANTS,
-    KB_TO_BYTES_FACTOR,
-    MB_TO_BYTES_FACTOR,
-    MAX_MEMORY_VIOLATIONS,
-    MEMORY_CLEAR_PATTERNS,
     FILE_SIZE_CATEGORIES,
+    KB_TO_BYTES_FACTOR,
+    LOCALHOST_VARIANTS,
+    MAX_MEMORY_VIOLATIONS,
+    MB_TO_BYTES_FACTOR,
+    MEMORY_CLEAR_PATTERNS,
+    MIN_CONNECTION_PARTS,
+    RATE_LIMIT_EVENTS_PER_HOUR,
+    RATE_LIMIT_EVENTS_PER_MINUTE,
+    SANDBOX_CPU_LIMITS,
+    SANDBOX_MEMORY_LIMITS,
+    SANDBOX_OUTPUT_LIMITS,
+    SANDBOX_TIMEOUTS,
 )
 
 
 class TestConstantsDefinition:
     """Test that constants are properly defined."""
 
-    def test_rate_limit_constants(self):
+    def test_rate_limit_constants(self) -> None:
         """Test rate limiting constants."""
         assert RATE_LIMIT_EVENTS_PER_MINUTE == 60
         assert RATE_LIMIT_EVENTS_PER_HOUR == 1000
@@ -37,7 +38,7 @@ class TestConstantsDefinition:
         # (to prevent allowing more in an hour than would be allowed by minute limit)
         assert RATE_LIMIT_EVENTS_PER_HOUR <= RATE_LIMIT_EVENTS_PER_MINUTE * 60
 
-    def test_sandbox_limits(self):
+    def test_sandbox_limits(self) -> None:
         """Test sandbox resource limit constants."""
         # Check all strictness levels exist
         for level in ["standard", "strict", "paranoid"]:
@@ -56,13 +57,13 @@ class TestConstantsDefinition:
         assert SANDBOX_TIMEOUTS["standard"] > SANDBOX_TIMEOUTS["strict"]
         assert SANDBOX_TIMEOUTS["strict"] > SANDBOX_TIMEOUTS["paranoid"]
 
-    def test_monitoring_constants(self):
+    def test_monitoring_constants(self) -> None:
         """Test monitoring-related constants."""
         assert DEFAULT_MONITORING_HOURS == 24
         assert ERROR_RETENTION_DAYS == 30
         assert ERROR_RETENTION_DAYS * 24 > DEFAULT_MONITORING_HOURS
 
-    def test_network_constants(self):
+    def test_network_constants(self) -> None:
         """Test network-related constants."""
         assert MIN_CONNECTION_PARTS == 5
         assert CONNECTION_PID_PARSE_START_INDEX == 6
@@ -73,7 +74,7 @@ class TestConstantsDefinition:
         assert "::1" in LOCALHOST_VARIANTS
         assert "localhost" in LOCALHOST_VARIANTS
 
-    def test_memory_constants(self):
+    def test_memory_constants(self) -> None:
         """Test memory-related constants."""
         assert KB_TO_BYTES_FACTOR == 1024
         assert MB_TO_BYTES_FACTOR == 1024 * 1024
@@ -88,7 +89,7 @@ class TestConstantsDefinition:
         assert 0x00 in MEMORY_CLEAR_PATTERNS
         assert 0xFF in MEMORY_CLEAR_PATTERNS
 
-    def test_file_size_categories(self):
+    def test_file_size_categories(self) -> None:
         """Test file size category constants."""
         assert isinstance(FILE_SIZE_CATEGORIES, dict)
 
@@ -105,7 +106,7 @@ class TestConstantsDefinition:
 class TestConstantsUsage:
     """Test that constants are actually being used in modules."""
 
-    def test_rate_limiter_uses_constants(self):
+    def test_rate_limiter_uses_constants(self) -> None:
         """Test rate limiter uses constants."""
         from app.core.security.rate_limiter import SecurityEventRateLimiter
 
@@ -115,7 +116,7 @@ class TestConstantsUsage:
         assert config["max_events_per_minute"] == RATE_LIMIT_EVENTS_PER_MINUTE
         assert config["max_events_per_hour"] == RATE_LIMIT_EVENTS_PER_HOUR
 
-    def test_sandbox_config_uses_constants(self):
+    def test_sandbox_config_uses_constants(self) -> None:
         """Test sandbox config uses constants."""
         from app.core.security.sandbox import SandboxConfig
 
@@ -127,7 +128,7 @@ class TestConstantsUsage:
         assert config.max_output_size_mb == SANDBOX_OUTPUT_LIMITS["standard"]
         assert config.memory_violation_threshold == MAX_MEMORY_VIOLATIONS["standard"]
 
-    def test_security_events_uses_constants(self):
+    def test_security_events_uses_constants(self) -> None:
         """Test security events module uses constants."""
         from app.core.monitoring.security_events import SecurityEventTracker
 
@@ -140,7 +141,7 @@ class TestConstantsUsage:
         sig = inspect.signature(tracker.get_event_summary)
         assert sig.parameters["hours"].default == DEFAULT_MONITORING_HOURS
 
-    def test_stats_collector_uses_constants(self):
+    def test_stats_collector_uses_constants(self) -> None:
         """Test stats collector uses file size categories."""
         from app.core.monitoring.stats import StatsCollector
 
@@ -152,7 +153,7 @@ class TestConstantsUsage:
         for category in FILE_SIZE_CATEGORIES.keys():
             assert category.lower() in bucket_names
 
-    def test_config_imports_constants(self):
+    def test_config_imports_constants(self) -> None:
         """Test that config.py successfully imports and uses constants."""
         # This test verifies the try/except import in config.py works
         from app.config import Settings
@@ -178,7 +179,7 @@ class TestConstantsUsage:
 class TestConstantsConsistency:
     """Test constants are consistent across the codebase."""
 
-    def test_no_hardcoded_values_in_security_modules(self):
+    def test_no_hardcoded_values_in_security_modules(self) -> None:
         """Verify no magic numbers remain in security modules."""
         # This is a simple check - in production you might use AST parsing
         security_modules = [
@@ -196,13 +197,13 @@ class TestConstantsConsistency:
             except Exception as e:
                 pytest.fail(f"Failed to import {module_name}: {e}")
 
-    def test_memory_conversion_factors(self):
+    def test_memory_conversion_factors(self) -> None:
         """Test memory conversion factors are used consistently."""
         # Verify conversions are correct
         assert 1 * MB_TO_BYTES_FACTOR == 1024 * KB_TO_BYTES_FACTOR
         assert 1024 * MB_TO_BYTES_FACTOR == 1024 * 1024 * KB_TO_BYTES_FACTOR
 
-    def test_monitoring_time_consistency(self):
+    def test_monitoring_time_consistency(self) -> None:
         """Test monitoring time periods are consistent."""
         # Hours in a week
         assert 168 == 7 * 24

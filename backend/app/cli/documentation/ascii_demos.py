@@ -3,20 +3,17 @@ ASCII Demo Framework
 Plays ASCII-based terminal demonstrations
 """
 
-import time
-import json
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
-from enum import Enum
 import asyncio
+import json
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.prompt import Prompt
-from rich.live import Live
-from rich.layout import Layout
 from rich.text import Text
 
 
@@ -48,7 +45,7 @@ class DemoFrame:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "DemoFrame":
+    def from_dict(cls, data: Dict[str, Any]) -> "DemoFrame":
         """Create from dictionary"""
         return cls(
             content=data["content"],
@@ -85,7 +82,7 @@ class AsciiDemo:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "AsciiDemo":
+    def from_dict(cls, data: Dict[str, Any]) -> "AsciiDemo":
         """Create from dictionary"""
         return cls(
             id=data["id"],
@@ -107,7 +104,7 @@ class AsciiDemo:
 class AsciiDemoPlayer:
     """Plays ASCII demonstrations in terminal"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.demos: Dict[str, AsciiDemo] = {}
         self.current_demo: Optional[AsciiDemo] = None
@@ -117,7 +114,7 @@ class AsciiDemoPlayer:
         self.speed = DemoSpeed.NORMAL
         self._load_demos()
 
-    def _load_demos(self):
+    def _load_demos(self) -> None:
         """Load demo library"""
         # Demos are embedded for offline operation
         demos_data = [
@@ -354,23 +351,23 @@ class AsciiDemoPlayer:
             self.current_frame = 0
             await self._play_frames(demo)
 
-    def pause(self):
+    def pause(self) -> None:
         """Pause playback"""
         self.is_paused = True
         self.console.print("[yellow]⏸ Paused[/yellow]")
 
-    def resume(self):
+    def resume(self) -> None:
         """Resume playback"""
         self.is_paused = False
         self.console.print("[green]▶ Resumed[/green]")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop playback"""
         self.is_playing = False
         self.current_frame = 0
         self.console.print("[red]■ Stopped[/red]")
 
-    def set_speed(self, speed: DemoSpeed):
+    def set_speed(self, speed: DemoSpeed) -> None:
         """Change playback speed"""
         self.speed = speed
         self.console.print(f"[cyan]Speed: {speed.name}[/cyan]")
@@ -412,7 +409,7 @@ class AsciiDemoPlayer:
         """Start recording a new demo"""
         return DemoRecorder(title, description, self)
 
-    def save_demo(self, demo: AsciiDemo):
+    def save_demo(self, demo: AsciiDemo) -> None:
         """Save a demo to library"""
         self.demos[demo.id] = demo
 
@@ -429,7 +426,7 @@ class AsciiDemoPlayer:
 class DemoRecorder:
     """Records terminal sessions as ASCII demos"""
 
-    def __init__(self, title: str, description: str, player: AsciiDemoPlayer):
+    def __init__(self, title: str, description: str, player: AsciiDemoPlayer) -> None:
         self.title = title
         self.description = description
         self.player = player
@@ -437,7 +434,7 @@ class DemoRecorder:
         self.start_time = time.time()
         self.last_frame_time = self.start_time
 
-    def add_frame(self, content: str, clear: bool = False):
+    def add_frame(self, content: str, clear: bool = False) -> None:
         """Add a frame to the recording"""
         current_time = time.time()
         delay = int((current_time - self.last_frame_time) * 1000)

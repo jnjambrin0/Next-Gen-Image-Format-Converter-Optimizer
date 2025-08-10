@@ -1,41 +1,34 @@
 """Batch processing API endpoints."""
 
-import os
-import uuid
-import json
 import asyncio
+import json
+import os
 from datetime import datetime
-from typing import List, Dict, Any, Optional, AsyncGenerator
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 from fastapi import (
     APIRouter,
     File,
-    UploadFile,
     Form,
     HTTPException,
     Request,
-    Depends,
+    UploadFile,
     status,
 )
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
-from app.core.batch.models import (
-    BatchCreateRequest,
-    BatchCreateResponse,
-    BatchStatusResponse,
-    BatchStatus,
-    BatchJob,
-    BatchItem,
-    BatchItemStatus,
-    BatchJobStatus,
-    BatchResult,
-)
-from app.core.exceptions import ValidationError
-from app.models import ErrorResponse
-from app.config import settings
-from app.utils.logging import get_logger
-from app.services.batch_service import batch_service
 from app.api.utils.error_handling import EndpointErrorHandler
+from app.config import settings
+from app.core.batch.models import (
+    BatchCreateResponse,
+    BatchItemStatus,
+    BatchResult,
+    BatchStatus,
+    BatchStatusResponse,
+)
+from app.services.batch_service import batch_service
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -60,7 +53,7 @@ def validate_batch_request(
     """Validate batch request parameters.
 
     Args:
-        files: List of uploaded files
+        files: List[Any] of uploaded files
         output_format: Target conversion format
         request: FastAPI request object
 
@@ -181,11 +174,11 @@ async def create_batch_job(
 
     Args:
         request: FastAPI request object
-        files: List of image files to convert
+        files: List[Any] of image files to convert
         output_format: Target format for all conversions
-        quality: Optional quality setting (1-100)
-        optimization_mode: Optional optimization mode
-        preset_id: Optional preset to apply
+        quality: Optional[Any] quality setting (1-100)
+        optimization_mode: Optional[Any] optimization mode
+        preset_id: Optional[Any] preset to apply
         preserve_metadata: Whether to preserve metadata
 
     Returns:
@@ -643,8 +636,8 @@ async def get_batch_results(job_id: str, request: Request) -> BatchResult:
     """
     try:
         # Import here to avoid circular dependency
-        from app.services.batch_history_service import batch_history_service
         from app.core.batch.models import BatchResult
+        from app.services.batch_history_service import batch_history_service
 
         # Try to get from history service first
         result = await batch_history_service.get_job_results(job_id)

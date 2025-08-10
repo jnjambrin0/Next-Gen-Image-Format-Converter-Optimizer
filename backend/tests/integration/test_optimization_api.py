@@ -1,10 +1,12 @@
 """Integration tests for optimization API endpoints."""
 
-import pytest
 import io
-from PIL import Image
-from httpx import AsyncClient
+from typing import Any
+
+import pytest
 from fastapi import status
+from httpx import AsyncClient
+from PIL import Image
 
 from app.main import app
 
@@ -13,7 +15,7 @@ class TestOptimizationAPI:
     """Test cases for optimization API endpoints."""
 
     @pytest.fixture
-    def test_image(self):
+    def test_image(self) -> None:
         """Create a test image file."""
         img = Image.new("RGB", (200, 200), color="red")
         buffer = io.BytesIO()
@@ -22,7 +24,7 @@ class TestOptimizationAPI:
         return buffer
 
     @pytest.fixture
-    def test_image_with_alpha(self):
+    def test_image_with_alpha(self) -> None:
         """Create a test image with alpha channel."""
         img = Image.new("RGBA", (200, 200), color=(255, 0, 0, 128))
         buffer = io.BytesIO()

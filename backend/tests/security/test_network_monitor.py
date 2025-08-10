@@ -1,17 +1,16 @@
 """
+from typing import Any
 Tests for real-time network connection monitoring.
 """
 
-import pytest
 import asyncio
 import os
 import shutil
-from unittest.mock import patch, MagicMock, AsyncMock
-from app.core.security.network_monitor import (
-    NetworkConnection,
-    NetworkMonitor,
-    create_network_monitor,
-)
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from app.core.security.network_monitor import NetworkMonitor
 
 
 def command_available(cmd: str) -> bool:
@@ -19,7 +18,7 @@ def command_available(cmd: str) -> bool:
     return shutil.which(cmd) is not None
 
 
-def get_network_command():
+def get_network_command() -> None:
     """Get available network command (ss or netstat)."""
     if command_available("ss"):
         return "ss"
@@ -31,7 +30,7 @@ def get_network_command():
 class TestNetworkConnection:
     """Test NetworkConnection class."""
 
-    def test_localhost_detection(self):
+    def test_localhost_detection(self) -> None:
         """Test localhost connection detection."""
         # Localhost connections
         conn1 = NetworkConnection(
@@ -48,7 +47,7 @@ class TestNetworkConnection:
         )
         assert conn3.is_localhost() is False
 
-    def test_to_dict_privacy(self):
+    def test_to_dict_privacy(self) -> None:
         """Test that to_dict doesn't leak sensitive info."""
         conn = NetworkConnection(
             "tcp",
@@ -118,7 +117,7 @@ class TestNetworkMonitor:
             # Should allow localhost and listening
             assert len(monitor._baseline_connections) == 2
 
-    def test_parse_connection_line(self):
+    def test_parse_connection_line(self) -> None:
         """Test parsing connection lines from ss/netstat."""
         monitor = NetworkMonitor()
 
@@ -148,7 +147,7 @@ class TestNetworkMonitor:
         assert monitor._parse_connection_line("") is None
         assert monitor._parse_connection_line("invalid line") is None
 
-    def test_parse_address(self):
+    def test_parse_address(self) -> None:
         """Test address parsing."""
         monitor = NetworkMonitor()
 
@@ -167,7 +166,7 @@ class TestNetworkMonitor:
         assert addr == "*"
         assert port == 0
 
-    def test_is_our_process(self):
+    def test_is_our_process(self) -> None:
         """Test process ownership detection."""
         monitor = NetworkMonitor()
 
@@ -257,7 +256,7 @@ class TestNetworkMonitor:
             await monitor._handle_violations([violation])
             mock_terminate.assert_called_once_with(12345)
 
-    def test_get_violation_stats(self):
+    def test_get_violation_stats(self) -> None:
         """Test violation statistics."""
         monitor = NetworkMonitor()
         monitor._monitoring = True
@@ -302,7 +301,7 @@ class TestNetworkMonitor:
             monitor._monitoring = False
             await task
 
-    def test_get_metrics(self):
+    def test_get_metrics(self) -> None:
         """Test metrics collection and retrieval."""
         monitor = NetworkMonitor()
 

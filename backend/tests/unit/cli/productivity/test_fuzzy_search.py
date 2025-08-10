@@ -1,23 +1,24 @@
 """
+from typing import Any
 Unit tests for fuzzy search functionality
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+
+import pytest
 
 from app.cli.productivity.fuzzy_search import (
-    HistoryEntry,
     FuzzySearcher,
-    InteractiveHistoryBrowser,
+    HistoryEntry,
     HistoryExporter,
+    InteractiveHistoryBrowser,
 )
 
 
 class TestHistoryEntry:
     """Test HistoryEntry data class"""
 
-    def test_entry_creation(self):
+    def test_entry_creation(self) -> None:
         """Test creating history entry"""
         entry = HistoryEntry(
             command="img convert photo.jpg -f webp",
@@ -29,7 +30,7 @@ class TestHistoryEntry:
         assert entry.success is True
         assert entry.result is None
 
-    def test_entry_to_dict(self):
+    def test_entry_to_dict(self) -> None:
         """Test converting entry to dictionary"""
         timestamp = datetime.now()
         entry = HistoryEntry(
@@ -45,7 +46,7 @@ class TestHistoryEntry:
         assert data["success"] is False
         assert data["result"]["error"] == "File not found"
 
-    def test_entry_from_dict(self):
+    def test_entry_from_dict(self) -> None:
         """Test creating entry from dictionary"""
         timestamp = datetime.now()
         data = {
@@ -65,7 +66,7 @@ class TestFuzzySearcher:
     """Test fuzzy search functionality"""
 
     @pytest.fixture
-    def sample_history(self):
+    def sample_history(self) -> None:
         """Create sample history entries"""
         base_time = datetime.now()
         return [
@@ -97,11 +98,11 @@ class TestFuzzySearcher:
         ]
 
     @pytest.fixture
-    def searcher(self):
+    def searcher(self) -> None:
         """Create FuzzySearcher instance"""
         return FuzzySearcher(threshold=60.0)
 
-    def test_basic_search(self, searcher, sample_history):
+    def test_basic_search(self, searcher, sample_history) -> None:
         """Test basic fuzzy search"""
         results = searcher.search("convert", sample_history)
 
@@ -109,7 +110,7 @@ class TestFuzzySearcher:
         # Should find commands with "convert"
         assert any("convert" in entry.command for entry, _ in results)
 
-    def test_fuzzy_matching(self, searcher, sample_history):
+    def test_fuzzy_matching(self, searcher, sample_history) -> None:
         """Test fuzzy matching with typos"""
         # Search with typo
         results = searcher.search("conver", sample_history)  # Missing 't'
@@ -118,7 +119,7 @@ class TestFuzzySearcher:
         # Should still find convert commands
         assert any("convert" in entry.command for entry, _ in results)
 
-    def test_partial_matching(self, searcher, sample_history):
+    def test_partial_matching(self, searcher, sample_history) -> None:
         """Test partial string matching"""
         results = searcher.search("webp", sample_history)
 
@@ -126,7 +127,7 @@ class TestFuzzySearcher:
         # Should find command with webp
         assert any("webp" in entry.command for entry, _ in results)
 
-    def test_filter_by_success(self, searcher, sample_history):
+    def test_filter_by_success(self, searcher, sample_history) -> None:
         """Test filtering by success status"""
         # Only successful commands
         results = searcher.search("img", sample_history, filter_success=True)
@@ -137,12 +138,12 @@ class TestFuzzySearcher:
         assert all(not entry.success for entry, _ in results)
         assert len(results) == 1  # Only one failed command in sample
 
-    def test_limit_results(self, searcher, sample_history):
+    def test_limit_results(self, searcher, sample_history) -> None:
         """Test result limiting"""
         results = searcher.search("img", sample_history, limit=2)
         assert len(results) <= 2
 
-    def test_scoring_order(self, searcher, sample_history):
+    def test_scoring_order(self, searcher, sample_history) -> None:
         """Test that results are ordered by score"""
         results = searcher.search("convert photo", sample_history)
 
@@ -151,7 +152,7 @@ class TestFuzzySearcher:
             scores = [score for _, score in results]
             assert scores == sorted(scores, reverse=True)
 
-    def test_search_with_time_filter(self, searcher, sample_history):
+    def test_search_with_time_filter(self, searcher, sample_history) -> None:
         """Test searching with time range filter"""
         now = datetime.now()
 
@@ -165,7 +166,7 @@ class TestFuzzySearcher:
         for entry, _ in results:
             assert entry.timestamp >= now - timedelta(hours=3)
 
-    def test_search_with_command_prefix(self, searcher, sample_history):
+    def test_search_with_command_prefix(self, searcher, sample_history) -> None:
         """Test searching with command prefix filter"""
         results = searcher.search_with_filters(
             "jpg", sample_history, command_prefix="img convert"
@@ -174,7 +175,7 @@ class TestFuzzySearcher:
         # Should only find convert commands
         assert all(entry.command.startswith("img convert") for entry, _ in results)
 
-    def test_find_similar_commands(self, searcher, sample_history):
+    def test_find_similar_commands(self, searcher, sample_history) -> None:
         """Test finding similar commands"""
         reference = "img convert image.png -f webp -q 90"
         results = searcher.find_similar_commands(reference, sample_history)
@@ -185,7 +186,7 @@ class TestFuzzySearcher:
         # Should not include the exact command
         assert not any(entry.command == reference for entry, _ in results)
 
-    def test_search_by_pattern(self, searcher, sample_history):
+    def test_search_by_pattern(self, searcher, sample_history) -> None:
         """Test pattern-based search"""
         # Simple substring search
         results = searcher.search_by_pattern("preset", sample_history)
@@ -195,14 +196,14 @@ class TestFuzzySearcher:
         results = searcher.search_by_pattern(r"\*.png", sample_history, is_regex=True)
         assert any("*.png" in entry.command for entry in results)
 
-    def test_search_by_invalid_regex(self, searcher, sample_history):
+    def test_search_by_invalid_regex(self, searcher, sample_history) -> None:
         """Test search with invalid regex falls back to substring"""
         # Invalid regex should fall back to substring search
         results = searcher.search_by_pattern("[invalid(", sample_history, is_regex=True)
         # Should not crash, might return empty or use substring
         assert isinstance(results, list)
 
-    def test_get_command_frequency(self, searcher):
+    def test_get_command_frequency(self, searcher) -> None:
         """Test command frequency calculation"""
         history = [
             HistoryEntry("img convert a.jpg", datetime.now(), True),
@@ -222,7 +223,7 @@ class TestFuzzySearcher:
         ]
         assert frequencies[0][1] >= 1
 
-    def test_get_command_patterns(self, searcher, sample_history):
+    def test_get_command_patterns(self, searcher, sample_history) -> None:
         """Test command pattern extraction"""
         patterns = searcher.get_command_patterns(sample_history)
 
@@ -237,7 +238,7 @@ class TestFuzzySearcher:
         assert any("convert" in cmd for cmd in patterns["convert_commands"])
         assert any("batch" in cmd for cmd in patterns["batch_commands"])
 
-    def test_empty_search(self, searcher):
+    def test_empty_search(self, searcher) -> None:
         """Test search with empty query or history"""
         # Empty query
         results = searcher.search("", [])
@@ -252,13 +253,13 @@ class TestInteractiveHistoryBrowser:
     """Test interactive history browser"""
 
     @pytest.fixture
-    def browser(self):
+    def browser(self) -> None:
         """Create browser instance"""
         searcher = FuzzySearcher()
         return InteractiveHistoryBrowser(searcher)
 
     @pytest.fixture
-    def sample_history(self):
+    def sample_history(self) -> None:
         """Create sample history"""
         return [
             HistoryEntry("img convert a.jpg", datetime.now(), True),
@@ -266,12 +267,12 @@ class TestInteractiveHistoryBrowser:
             HistoryEntry("img optimize b.jpg", datetime.now(), True),
         ]
 
-    def test_search_and_display(self, browser, sample_history):
+    def test_search_and_display(self, browser, sample_history) -> None:
         """Test search and display functionality"""
         # Mock display callback
         display_called = False
 
-        def mock_display(results, index):
+        def mock_display(results, index) -> None:
             nonlocal display_called
             display_called = True
             assert len(results) > 0
@@ -285,7 +286,7 @@ class TestInteractiveHistoryBrowser:
         assert result is not None
         assert "convert" in result.command
 
-    def test_navigation(self, browser, sample_history):
+    def test_navigation(self, browser, sample_history) -> None:
         """Test result navigation"""
         # Perform search first
         browser.search_and_display("img", sample_history)
@@ -299,7 +300,7 @@ class TestInteractiveHistoryBrowser:
         prev_entry = browser.navigate_up()
         assert prev_entry == initial
 
-    def test_navigation_boundaries(self, browser, sample_history):
+    def test_navigation_boundaries(self, browser, sample_history) -> None:
         """Test navigation at boundaries"""
         browser.search_and_display("img", sample_history)
 
@@ -322,7 +323,7 @@ class TestHistoryExporter:
     """Test history export/import functionality"""
 
     @pytest.fixture
-    def sample_history(self):
+    def sample_history(self) -> None:
         """Create sample history with PII"""
         return [
             HistoryEntry(
@@ -338,7 +339,7 @@ class TestHistoryExporter:
             ),
         ]
 
-    def test_export_with_pii_removal(self, sample_history, tmp_path):
+    def test_export_with_pii_removal(self, sample_history, tmp_path) -> None:
         """Test export removes PII"""
         output_file = tmp_path / "history.json"
 
@@ -362,7 +363,7 @@ class TestHistoryExporter:
             assert "/Users/john" not in entry["command"]
             assert entry["result"] is None  # Results removed
 
-    def test_export_without_pii_removal(self, sample_history, tmp_path):
+    def test_export_without_pii_removal(self, sample_history, tmp_path) -> None:
         """Test export without PII removal"""
         output_file = tmp_path / "history.json"
 
@@ -380,7 +381,7 @@ class TestHistoryExporter:
 
         assert any("/home/user/photo.jpg" in entry["command"] for entry in data)
 
-    def test_import_history(self, tmp_path):
+    def test_import_history(self, tmp_path) -> None:
         """Test importing history"""
         # Create test import file
         import json
@@ -414,7 +415,7 @@ class TestHistoryExporter:
         assert entries[1].command == "img batch <PATH>"
         assert entries[1].success is False
 
-    def test_import_validates_commands(self, tmp_path):
+    def test_import_validates_commands(self, tmp_path) -> None:
         """Test that import validates commands"""
         import json
 
@@ -447,12 +448,12 @@ class TestHistoryExporter:
         assert len(entries) == 2
         assert all(e.command.startswith("img") for e in entries)
 
-    def test_import_handles_invalid_file(self):
+    def test_import_handles_invalid_file(self) -> None:
         """Test import handles invalid file gracefully"""
         entries = HistoryExporter.import_history("/nonexistent/file.json")
         assert entries is None
 
-    def test_import_handles_invalid_json(self, tmp_path):
+    def test_import_handles_invalid_json(self, tmp_path) -> None:
         """Test import handles invalid JSON"""
         import_file = tmp_path / "invalid.json"
         import_file.write_text("not valid json{]}")

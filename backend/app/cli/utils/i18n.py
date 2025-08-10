@@ -3,16 +3,14 @@ Internationalization Support
 Multi-language support for CLI interface
 """
 
-import json
-from pathlib import Path
-from typing import Dict, Optional
 import locale
+from typing import Any, Dict
 
 
 class I18nManager:
     """Manages internationalization for the CLI"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_language = self._detect_system_language()
         self.translations: Dict[str, Dict[str, str]] = {}
         self.fallback_language = "en"
@@ -29,7 +27,7 @@ class I18nManager:
             pass
         return "en"
 
-    def _load_translations(self):
+    def _load_translations(self) -> None:
         """Load translation files"""
         # For now, we'll use embedded translations
         # In production, these would be loaded from JSON files
@@ -127,7 +125,7 @@ class I18nManager:
             },
         }
 
-    def set_language(self, language: str):
+    def set_language(self, language: str) -> None:
         """Set the current language"""
         if language in self.translations:
             self.current_language = language
@@ -135,7 +133,7 @@ class I18nManager:
             # Fallback to English if language not supported
             self.current_language = self.fallback_language
 
-    def get(self, key: str, **kwargs) -> str:
+    def get(self, key: str, **kwargs: str) -> str:
         """Get translated string"""
         # Get translation for current language
         if self.current_language in self.translations:
@@ -169,12 +167,12 @@ class I18nManager:
 _i18n_manager = I18nManager()
 
 
-def set_language(language: str):
+def set_language(language: str) -> None:
     """Set the interface language"""
     _i18n_manager.set_language(language)
 
 
-def t(key: str, **kwargs) -> str:
+def t(key: str, **kwargs: str) -> str:
     """Translate a string (shorthand for get)"""
     return _i18n_manager.get(key, **kwargs)
 

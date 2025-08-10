@@ -1,10 +1,10 @@
 """Pydantic schemas for API requests and responses."""
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional, Dict, Any, List
-from datetime import datetime
 import re
-import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PresetSettings(BaseModel):
@@ -79,8 +79,6 @@ class PresetBase(BaseModel):
 
 class PresetCreate(PresetBase):
     """Schema for creating a new preset."""
-
-    pass
 
 
 class PresetUpdate(BaseModel):

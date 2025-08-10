@@ -1,13 +1,14 @@
 """GIF format handler."""
 
-from typing import BinaryIO, Dict, Any
 from io import BytesIO
-from PIL import Image
-import structlog
+from typing import Any, BinaryIO, Dict
 
-from app.models.conversion import ConversionSettings
+import structlog
+from PIL import Image
+
 from app.core.conversion.formats.base import BaseFormatHandler
-from app.core.exceptions import ConversionFailedError, GifDecodingError
+from app.core.exceptions import GifDecodingError
+from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
 
@@ -15,7 +16,7 @@ logger = structlog.get_logger()
 class GifHandler(BaseFormatHandler):
     """Handler for GIF format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GIF handler."""
         super().__init__()
         self.supported_formats = ["gif"]

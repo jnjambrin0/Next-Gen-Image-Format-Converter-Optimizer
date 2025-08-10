@@ -20,7 +20,7 @@ export class UnifiedConversionSettings {
   constructor(mode = 'single') {
     this.mode = mode // 'single' | 'batch'
     this.element = null
-    
+
     // Sub-components
     this.headerComponent = null
     this.formatSelector = null
@@ -30,7 +30,7 @@ export class UnifiedConversionSettings {
     this.presetSelector = null
     this.qualitySlider = null
     this.settingsGroups = null
-    
+
     this.eventHandlers = new Map()
 
     // Unified settings structure
@@ -155,13 +155,10 @@ export class UnifiedConversionSettings {
     // Initialize batch controls (batch mode only)
     if (this.mode === 'batch') {
       this.batchControls = new BatchControls()
-      const batchElement = this.batchControls.init(
-        (data) => this.handleBatchSettingsChange(data),
-        {
-          optimizationMode: this.settings.optimizationMode,
-          applyToAll: this.settings.applyToAll
-        }
-      )
+      const batchElement = this.batchControls.init((data) => this.handleBatchSettingsChange(data), {
+        optimizationMode: this.settings.optimizationMode,
+        applyToAll: this.settings.applyToAll,
+      })
       this.element.querySelector('#batch-controls-container').appendChild(batchElement)
     }
 
@@ -366,7 +363,7 @@ export class UnifiedConversionSettings {
     if (this.batchControls && this.mode === 'batch') {
       this.batchControls.setSettings({
         optimizationMode: this.settings.optimizationMode,
-        applyToAll: this.settings.applyToAll
+        applyToAll: this.settings.applyToAll,
       })
     }
 
@@ -410,7 +407,7 @@ export class UnifiedConversionSettings {
           (data) => this.handleBatchSettingsChange(data),
           {
             optimizationMode: this.settings.optimizationMode,
-            applyToAll: this.settings.applyToAll
+            applyToAll: this.settings.applyToAll,
           }
         )
         batchContainer.appendChild(batchElement)
@@ -424,7 +421,7 @@ export class UnifiedConversionSettings {
 
     // Update data attribute
     this.element?.setAttribute('data-mode', newMode)
-    
+
     // Notify of change
     this.notifyChange()
   }

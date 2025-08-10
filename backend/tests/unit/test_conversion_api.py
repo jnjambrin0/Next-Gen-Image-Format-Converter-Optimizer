@@ -1,22 +1,23 @@
 """Unit tests for conversion API route."""
 
-import pytest
-from fastapi import UploadFile, HTTPException
-from unittest.mock import Mock, AsyncMock, patch
-import io
 import asyncio
+from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from fastapi import HTTPException, UploadFile
 
 from app.api.routes.conversion import convert_image
+from app.core.exceptions import (
+    ConversionFailedError,
+    InvalidImageError,
+    UnsupportedFormatError,
+)
 from app.models.conversion import (
     ConversionResult,
     ConversionStatus,
     InputFormat,
     OutputFormat,
-)
-from app.core.exceptions import (
-    InvalidImageError,
-    UnsupportedFormatError,
-    ConversionFailedError,
 )
 
 
@@ -24,14 +25,14 @@ class TestConversionAPI:
     """Test conversion API endpoint."""
 
     @pytest.fixture
-    def mock_request(self):
+    def mock_request(self) -> None:
         """Create mock request with correlation ID."""
         request = Mock()
         request.state.correlation_id = "test-correlation-id"
         return request
 
     @pytest.fixture
-    def mock_file(self):
+    def mock_file(self) -> None:
         """Create mock upload file."""
         file = Mock(spec=UploadFile)
         file.filename = "test.jpg"
@@ -40,7 +41,7 @@ class TestConversionAPI:
         return file
 
     @pytest.fixture
-    def mock_conversion_result(self):
+    def mock_conversion_result(self) -> None:
         """Create mock conversion result."""
         return ConversionResult(
             id="test-id",

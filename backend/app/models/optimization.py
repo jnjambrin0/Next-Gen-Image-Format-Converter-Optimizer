@@ -1,9 +1,10 @@
 """Data models for advanced optimization features."""
 
-from typing import Optional, Dict, Any, List, Literal
-from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
+
+from pydantic import BaseModel, Field, validator
 
 from app.core.optimization.encoding_options import ChromaSubsampling
 from app.core.optimization.optimization_engine import OptimizationMode
@@ -57,7 +58,7 @@ class OptimizationRequest(BaseModel):
     )
 
     @validator("max_quality")
-    def validate_quality_range(cls, v, values):
+    def validate_quality_range(cls, v, values) -> None:
         """Ensure max_quality >= min_quality."""
         if "min_quality" in values and v < values["min_quality"]:
             raise ValueError("max_quality must be >= min_quality")

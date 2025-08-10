@@ -3,23 +3,23 @@ Token bucket rate limiter for security events and API requests.
 """
 
 import time
-from typing import Dict, Optional, Tuple
 from threading import Lock
+from typing import Any, Dict, Optional, Tuple
 
-from app.core.security.types import RateLimitConfig
 from app.core.constants import (
-    RATE_LIMIT_EVENTS_PER_MINUTE,
-    RATE_LIMIT_EVENTS_PER_HOUR,
     RATE_LIMIT_BURST_SIZE,
+    RATE_LIMIT_EVENTS_PER_HOUR,
+    RATE_LIMIT_EVENTS_PER_MINUTE,
     RATE_LIMIT_HOUR_BURST_DIVISOR,
     RATE_LIMIT_TOKEN_REFILL_AMOUNT,
 )
+from app.core.security.types import RateLimitConfig
 
 
 class TokenBucket:
     """Token bucket implementation for rate limiting."""
 
-    def __init__(self, rate: float, capacity: int):
+    def __init__(self, rate: float, capacity: int) -> None:
         """
         Initialize token bucket.
 
@@ -67,7 +67,7 @@ class TokenBucket:
 class SecurityEventRateLimiter:
     """Rate limiter for security events."""
 
-    def __init__(self, config: Optional[RateLimitConfig] = None):
+    def __init__(self, config: Optional[RateLimitConfig] = None) -> None:
         """
         Initialize rate limiter.
 
@@ -77,9 +77,9 @@ class SecurityEventRateLimiter:
         if config is None:
             # Default configuration
             config = {
-                "max_events_per_minute": RATE_LIMIT_EVENTS_PER_MINUTE,
-                "max_events_per_hour": RATE_LIMIT_EVENTS_PER_HOUR,
-                "burst_size": RATE_LIMIT_BURST_SIZE,
+                "max_events_per_minute": int(RATE_LIMIT_EVENTS_PER_MINUTE),
+                "max_events_per_hour": int(RATE_LIMIT_EVENTS_PER_HOUR),
+                "burst_size": int(RATE_LIMIT_BURST_SIZE),
                 "enabled": True,
             }
 
@@ -94,8 +94,9 @@ class SecurityEventRateLimiter:
 
         self.hour_bucket = TokenBucket(
             rate=config["max_events_per_hour"] / 3600.0,  # tokens per second
-            capacity=config["max_events_per_hour"]
-            // RATE_LIMIT_HOUR_BURST_DIVISOR,  # 10% burst capacity
+            capacity=int(
+                config["max_events_per_hour"] // RATE_LIMIT_HOUR_BURST_DIVISOR
+            ),  # 10% burst capacity
         )
 
         # Track rate limit violations
@@ -103,7 +104,7 @@ class SecurityEventRateLimiter:
         self.last_violation_time = None
         self.lock = Lock()
 
-    def should_allow_event(self, event_type: str = None) -> bool:
+    def should_allow_event(self, event_type: Optional[str] = None) -> bool:
         """
         Check if event should be allowed based on rate limits.
 
@@ -135,7 +136,7 @@ class SecurityEventRateLimiter:
 
         return allowed
 
-    def get_stats(self) -> Dict[str, any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get rate limiter statistics."""
         with self.lock:
             return {
@@ -178,7 +179,7 @@ class SecurityEventRateLimiter:
 class ApiRateLimiter:
     """Rate limiter for API requests with per-key support."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize API rate limiter."""
         self.limiters: Dict[str, SecurityEventRateLimiter] = {}
         self.default_limiter = SecurityEventRateLimiter()
@@ -233,7 +234,7 @@ class ApiRateLimiter:
 
         return allowed, headers
 
-    def get_stats(self, api_key_id: Optional[str] = None) -> Dict:
+    def get_stats(self, api_key_id: Optional[str] = None) -> Dict[str, Any]:
         """Get rate limiter statistics.
 
         Args:
@@ -259,11 +260,11 @@ class ApiRateLimiter:
                     "config": {},
                 }
 
-    def cleanup_unused_limiters(self, active_key_ids: set) -> int:
+    def cleanup_unused_limiters(self, active_key_ids: set[str]) -> int:
         """Clean up rate limiters for unused API keys.
 
         Args:
-            active_key_ids: Set of currently active API key IDs
+            active_key_ids: Set[Any] of currently active API key IDs
 
         Returns:
             Number of limiters cleaned up

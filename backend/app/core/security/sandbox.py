@@ -7,31 +7,27 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union
+from typing import Any, Dict, List, Optional
+
 import structlog
 
-from app.core.exceptions import ConversionError
-from app.core.security.memory import (
-    SecureMemoryManager,
-    MemoryError as SecureMemoryError,
+from app.core.constants import (
+    COMMAND_NAME_MAX_LENGTH,
+    KB_TO_BYTES_FACTOR,
+    MAX_MEMORY_VIOLATIONS,
+    MB_TO_BYTES_FACTOR,
+    SANDBOX_CPU_LIMITS,
+    SANDBOX_MEMORY_LIMITS,
+    SANDBOX_OUTPUT_LIMITS,
+    SANDBOX_TIMEOUTS,
 )
 from app.core.security.errors import (
-    SecurityError,
-    create_sandbox_error,
     create_file_error,
-    handle_security_errors,
+    create_sandbox_error,
 )
-from app.core.constants import (
-    SANDBOX_MEMORY_LIMITS,
-    SANDBOX_CPU_LIMITS,
-    SANDBOX_TIMEOUTS,
-    SANDBOX_OUTPUT_LIMITS,
-    KB_TO_BYTES_FACTOR,
-    MB_TO_BYTES_FACTOR,
-    COMMAND_NAME_MAX_LENGTH,
-    PROCESS_NICE_LEVEL,
-    MEMORY_CHECK_INTERVAL,
-    MAX_MEMORY_VIOLATIONS,
+from app.core.security.memory import MemoryError as SecureMemoryError
+from app.core.security.memory import (
+    SecureMemoryManager,
 )
 
 logger = structlog.get_logger()
@@ -52,7 +48,7 @@ class SandboxConfig:
         enable_memory_tracking: bool = True,
         enable_memory_locking: bool = True,
         memory_violation_threshold: int = MAX_MEMORY_VIOLATIONS["standard"],
-    ):
+    ) -> None:
         self.max_memory_mb = max_memory_mb
         self.max_cpu_percent = max_cpu_percent
         self.timeout_seconds = timeout_seconds
@@ -133,7 +129,7 @@ class SandboxConfig:
 class SecuritySandbox:
     """Secure sandbox for running image conversion processes."""
 
-    def __init__(self, config: Optional[SandboxConfig] = None):
+    def __init__(self, config: Optional[SandboxConfig] = None) -> None:
         """Initialize security sandbox with configuration."""
         self.config = config or SandboxConfig()
         self._temp_dirs: List[Path] = []
@@ -141,11 +137,11 @@ class SecuritySandbox:
         self._memory_violations: int = 0
         self._peak_memory_mb: float = 0.0
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit - cleanup resources."""
         self._cleanup_temp_dirs()
         self._cleanup_memory()
@@ -157,7 +153,7 @@ class SecuritySandbox:
         Create a new sandbox instance with specified resource limits.
 
         Args:
-            resource_limits: Optional resource limit overrides
+            resource_limits: Optional[Any] resource limit overrides
 
         Returns:
             New SecuritySandbox instance
@@ -479,13 +475,12 @@ class SecuritySandbox:
 
         Args:
             command: Command to execute
-            input_data: Optional input data to pipe to command
+            input_data: Optional[Any] input data to pipe to command
             timeout: Override timeout in seconds
             max_memory_mb: Override memory limit
             max_output_size_mb: Override output size limit
 
-        Returns:
-            Dict with 'output', 'stderr', 'returncode', 'process_id',
+        Returns: Dict[str, Any] with 'output', 'stderr', 'returncode', 'process_id',
             'memory_used_mb', 'cpu_time', 'wall_time'
 
         Raises:
@@ -614,13 +609,12 @@ class SecuritySandbox:
 
         Args:
             command: Command to execute
-            input_data: Optional input data to pipe to command
+            input_data: Optional[Any] input data to pipe to command
             timeout: Override timeout in seconds
             max_memory_mb: Override memory limit
             max_output_size_mb: Override output size limit
 
-        Returns:
-            Dict with 'output', 'stderr', 'returncode', 'process_id',
+        Returns: Dict[str, Any] with 'output', 'stderr', 'returncode', 'process_id',
             'memory_used_mb', 'cpu_time', 'wall_time'
 
         Raises:
@@ -752,8 +746,7 @@ class SecuritySandbox:
         Args:
             pid: Process ID
 
-        Returns:
-            Dict with resource usage metrics
+        Returns: Dict[str, Any] with resource usage metrics
         """
         usage = {
             "memory_mb": 0,
@@ -796,7 +789,7 @@ def create_sandbox(resource_limits: Optional[Dict[str, Any]] = None) -> Security
     Factory function to create a new sandbox instance.
 
     Args:
-        resource_limits: Optional resource limit configuration
+        resource_limits: Optional[Any] resource limit configuration
 
     Returns:
         New SecuritySandbox instance

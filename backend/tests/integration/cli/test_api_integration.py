@@ -1,39 +1,39 @@
 """
+from typing import Any
 Integration tests for CLI-to-API communication
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from pathlib import Path
 import sys
-import asyncio
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Add SDK path for imports
 sys.path.insert(
     0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python")
 )
 
-from app.cli.commands import convert, batch
-from image_converter.models import ConversionResult, BatchStatus, OutputFormat
+from image_converter.models import BatchStatus, ConversionResponse, OutputFormat
 
 
 class TestCLIAPIIntegration:
     """Test CLI integration with API"""
 
     @pytest.fixture
-    def mock_client(self):
+    def mock_client(self) -> None:
         """Create mock API client"""
         client = Mock()
         return client
 
     @pytest.fixture
-    def mock_async_client(self):
+    def mock_async_client(self) -> None:
         """Create mock async API client"""
         client = AsyncMock()
         return client
 
     @patch("app.cli.commands.convert.ImageConverterClient")
-    def test_convert_api_call(self, mock_client_class):
+    def test_convert_api_call(self, mock_client_class) -> None:
         """Test that convert command properly calls API"""
         # Setup mock
         mock_client = Mock()
@@ -56,7 +56,7 @@ class TestCLIAPIIntegration:
         # mock_client.convert.assert_called_once()
 
     @patch("app.cli.commands.batch.AsyncImageConverterClient")
-    def test_batch_api_call(self, mock_client_class):
+    def test_batch_api_call(self, mock_client_class) -> None:
         """Test that batch command properly calls API"""
         # Setup mock
         mock_client = AsyncMock()
@@ -83,21 +83,18 @@ class TestCLIAPIIntegration:
         # Test would invoke the batch command
         # This tests the integration between CLI batch command and async SDK client
 
-    def test_error_handling_chain(self):
+    def test_error_handling_chain(self) -> None:
         """Test that API errors are properly handled through the chain"""
         # Test various error scenarios:
         # - Connection errors
         # - Authentication errors
         # - Rate limiting errors
         # - Server errors
-        pass
 
-    def test_progress_tracking(self):
+    def test_progress_tracking(self) -> None:
         """Test that progress is properly tracked and displayed"""
         # Test progress updates from API are reflected in CLI output
-        pass
 
-    def test_configuration_propagation(self):
+    def test_configuration_propagation(self) -> None:
         """Test that CLI configuration is properly passed to API client"""
         # Test that settings like API URL, API key, timeout are passed correctly
-        pass

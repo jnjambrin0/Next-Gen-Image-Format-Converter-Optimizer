@@ -1,27 +1,27 @@
 """Service for format recommendations."""
 
-import time
-from typing import List, Optional, Dict, Any
 import asyncio
-import os
 import copy
+import os
+import time
+from typing import Any, Dict, List, Optional
 
-from app.models.conversion import ContentType, OutputFormat, InputFormat
-from app.models.recommendation import (
-    RecommendationRequest,
-    RecommendationResponse,
-    FormatRecommendation,
-    UseCaseType,
-)
-from app.core.intelligence.recommendation_engine import RecommendationEngine
 from app.core.intelligence.format_analyzer import FormatAnalyzer
+from app.core.intelligence.recommendation_engine import RecommendationEngine
 from app.core.intelligence.user_preferences import UserPreferenceTracker
-from app.utils.logging import get_logger
 from app.core.security.errors_simplified import (
     create_file_error,
-    create_verification_error,
     create_rate_limit_error,
+    create_verification_error,
 )
+from app.models.conversion import ContentType, OutputFormat
+from app.models.recommendation import (
+    FormatRecommendation,
+    RecommendationRequest,
+    RecommendationResponse,
+    UseCaseType,
+)
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,7 @@ logger = get_logger(__name__)
 class RecommendationService:
     """Service for generating intelligent format recommendations."""
 
-    def __init__(self, preference_db_path: Optional[str] = None):
+    def __init__(self, preference_db_path: Optional[str] = None) -> None:
         """Initialize recommendation service.
 
         Args:
@@ -54,7 +54,7 @@ class RecommendationService:
 
         logger.info("Recommendation service initialized")
 
-    def _get_preference_callback(self):
+    def _get_preference_callback(self) -> None:
         """Create preference callback for recommendation engine."""
 
         async def callback(content_type, format_option, use_case):
@@ -73,7 +73,7 @@ class RecommendationService:
 
         Args:
             request: Recommendation request
-            override_format: Optional format override
+            override_format: Optional[Any] format override
 
         Returns:
             Recommendation response with top formats
@@ -265,7 +265,7 @@ class RecommendationService:
         Args:
             content_type: Type of content
             chosen_format: Format chosen by user
-            use_case: Optional use case context
+            use_case: Optional[Any] use case context
             was_override: Whether this was an override of recommendations
         """
         try:
@@ -287,10 +287,9 @@ class RecommendationService:
 
         Args:
             content_type: Type of content
-            use_case: Optional use case context
+            use_case: Optional[Any] use case context
 
-        Returns:
-            List of format preferences
+        Returns: List[Any] of format preferences
         """
         try:
             preferences = await self.preference_tracker.get_format_preferences(
@@ -318,8 +317,8 @@ class RecommendationService:
         """Reset user preferences.
 
         Args:
-            content_type: Optional content type to reset
-            format_option: Optional format to reset
+            content_type: Optional[Any] content type to reset
+            format_option: Optional[Any] format to reset
 
         Returns:
             Number of preferences reset

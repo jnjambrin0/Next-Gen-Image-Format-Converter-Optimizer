@@ -1,19 +1,19 @@
 """
+from typing import Any
 Tests for DNS resolution blocking in sandboxed environments.
 """
 
-import pytest
-import socket
 import subprocess
 import sys
-import os
 from pathlib import Path
+
+import pytest
 
 
 class TestDNSBlocking:
     """Test DNS blocking in sandboxed conversion script."""
 
-    def test_sandboxed_script_blocks_dns(self):
+    def test_sandboxed_script_blocks_dns(self) -> None:
         """Test that sandboxed conversion script blocks DNS resolution."""
         # Path to sandboxed script
         script_path = (
@@ -57,7 +57,7 @@ except (socket.gaierror, OSError) as e:
         assert result.returncode == 0
         assert "SUCCESS: DNS blocked" in result.stdout
 
-    def test_sandboxed_script_blocks_socket_creation(self):
+    def test_sandboxed_script_blocks_socket_creation(self) -> None:
         """Test that sandboxed conversion script blocks socket creation."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -98,7 +98,7 @@ except OSError as e:
         assert result.returncode == 0
         assert "SUCCESS: Socket creation blocked" in result.stdout
 
-    def test_sandboxed_script_blocks_urllib(self):
+    def test_sandboxed_script_blocks_urllib(self) -> None:
         """Test that sandboxed conversion script blocks urllib."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -139,7 +139,7 @@ except OSError as e:
         assert result.returncode == 0
         assert "SUCCESS: urllib blocked" in result.stdout
 
-    def test_sandboxed_script_hostname_returns_localhost(self):
+    def test_sandboxed_script_hostname_returns_localhost(self) -> None:
         """Test that hostname functions return localhost."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -179,7 +179,7 @@ else:
         assert result.returncode == 0
         assert "SUCCESS: Hostname functions return localhost" in result.stdout
 
-    def test_sandbox_blocks_dns_commands(self):
+    def test_sandbox_blocks_dns_commands(self) -> None:
         """Test that sandbox blocks DNS-related commands."""
         from app.core.security.sandbox import SecuritySandbox
 
@@ -197,7 +197,7 @@ else:
                 sandbox.validate_command(cmd)
             assert "Forbidden command" in str(exc_info.value)
 
-    def test_sandbox_blocks_network_commands(self):
+    def test_sandbox_blocks_network_commands(self) -> None:
         """Test that sandbox blocks network-related commands."""
         from app.core.security.sandbox import SecuritySandbox
 
@@ -243,7 +243,7 @@ except:
         assert "DNS_BLOCKED" in output
         assert "DNS_NOT_BLOCKED" not in output
 
-    def test_dns_blocking_comprehensive(self):
+    def test_dns_blocking_comprehensive(self) -> None:
         """Test comprehensive DNS blocking with various methods."""
         script_path = (
             Path(__file__).parent.parent.parent

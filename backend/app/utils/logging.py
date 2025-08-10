@@ -1,11 +1,12 @@
-import structlog
 import logging
-import sys
-from typing import Dict, Any, Optional
-import uuid
 import logging.handlers
 import os
+import sys
+import uuid
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
+import structlog
 
 
 def filter_sensitive_data(_, __, event_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -190,17 +191,17 @@ def get_logger(name: Optional[str] = None) -> structlog.stdlib.BoundLogger:
 class LoggingContext:
     """Context manager for adding context to logs."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self.context = kwargs
         self.tokens = []
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         for key, value in self.context.items():
             token = structlog.contextvars.bind_contextvars(**{key: value})
             self.tokens.append(token)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         for token in self.tokens:
             structlog.contextvars.unbind_contextvars(token)
 

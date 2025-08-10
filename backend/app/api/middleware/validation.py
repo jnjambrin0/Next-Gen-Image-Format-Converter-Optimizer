@@ -1,17 +1,16 @@
 """Request validation middleware for enhanced API security."""
 
-import time
 import asyncio
-from typing import Dict, Optional, Set
+import time
 from collections import defaultdict, deque
+from typing import Any, Dict, Optional
 
-from fastapi import Request, Response, HTTPException
-from fastapi.responses import JSONResponse
 import structlog
+from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.core.security.rate_limiter import api_rate_limiter
-from app.services.api_key_service import api_key_service
 
 logger = structlog.get_logger()
 
@@ -19,7 +18,7 @@ logger = structlog.get_logger()
 class RequestValidator:
     """Enhanced request validation with rate limiting and size controls."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Use maxlen to automatically limit deque size and prevent unbounded growth
         self.request_counts: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self.blocked_ips: Dict[str, float] = {}  # IP -> block expiry timestamp

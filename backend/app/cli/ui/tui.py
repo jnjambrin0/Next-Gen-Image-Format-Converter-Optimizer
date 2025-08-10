@@ -3,54 +3,48 @@ Terminal UI (TUI) Interface
 Interactive terminal interface using Textual framework
 """
 
-import time
-import os
-from pathlib import Path
-from typing import List, Optional, Dict, Any
 import asyncio
+import os
 import threading
+import time
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.containers import Container, Horizontal, Vertical
+from textual.message import Message
+from textual.reactive import reactive
+from textual.validation import ValidationResult, Validator
 from textual.widgets import (
-    Header,
-    Footer,
     Button,
-    Static,
+    Checkbox,
+    DataTable,
+    DirectoryTree,
+    Footer,
+    Header,
     Input,
     Label,
-    Select,
-    DirectoryTree,
-    ListView,
-    ListItem,
     ProgressBar,
-    DataTable,
     RichLog,
-    Tabs,
+    Select,
     Tab,
-    RadioButton,
-    RadioSet,
-    Checkbox,
-    Switch,
+    Tabs,
 )
-from textual.reactive import reactive
-from textual.message import Message
-from textual.validation import Number, ValidationResult, Validator
 
-from app.cli.utils.emoji import get_emoji, get_format_emoji
 from app.cli.config import get_config
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
+from app.cli.utils.emoji import get_emoji, get_format_emoji
 
 setup_sdk_path()
 try:
     from image_converter.client import ImageConverterClient
     from image_converter.models import (
         ConversionRequest,
-        OutputFormat as SDKOutputFormat,
     )
+    from image_converter.models import OutputFormat as SDKOutputFormat
 
     SDK_AVAILABLE = True
 except ImportError:
@@ -170,7 +164,7 @@ class PathSanitizer:
 
         Args:
             path: Path to check
-            base_path: Optional base directory to restrict access to
+            base_path: Optional[Any] base directory to restrict access to
 
         Returns:
             True if path is safe
@@ -277,7 +271,7 @@ class PathSanitizer:
 class RateLimiter:
     """Rate limiter for preventing excessive updates"""
 
-    def __init__(self, min_interval: float = 0.1):
+    def __init__(self, min_interval: float = 0.1) -> None:
         """
         Initialize rate limiter
 
@@ -414,7 +408,7 @@ class ImageConverterTUI(App):
     selected_files: reactive[List[Path]] = reactive(list)
     is_converting: reactive[bool] = reactive(False)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize TUI with rate limiter and path sanitizer"""
         super().__init__()
         # Rate limiters for different operations
@@ -741,7 +735,7 @@ class ImageConverterTUI(App):
         self.exit()
 
 
-def launch_tui():
+def launch_tui() -> None:
     """Launch the TUI application"""
     app = ImageConverterTUI()
     app.run()

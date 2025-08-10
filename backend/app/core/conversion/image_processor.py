@@ -1,15 +1,14 @@
 """Core image processing operations."""
 
 import io
-from typing import Optional, Tuple
-from PIL import Image
+from typing import Any, Optional
+
 import structlog
+from PIL import Image
 
 from app.core.exceptions import (
-    ConversionError,
-    ValidationError,
-    InvalidImageError,
     ConversionFailedError,
+    InvalidImageError,
 )
 
 logger = structlog.get_logger()

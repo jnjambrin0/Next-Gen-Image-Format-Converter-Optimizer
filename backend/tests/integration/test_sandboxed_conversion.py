@@ -1,24 +1,25 @@
 """Integration tests for sandboxed image conversions."""
 
-import pytest
 import asyncio
 import os
-from unittest.mock import Mock, patch, AsyncMock
-import tempfile
 from io import BytesIO
+from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from PIL import Image
 
-from app.core.conversion.manager import ConversionManager
-from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
-from app.core.exceptions import ConversionError, SecurityError
 from app.config import settings
+from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import ConversionError
+from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
 class TestSandboxedConversion:
     """Integration tests for sandboxed image conversion pipeline."""
 
     @pytest.fixture
-    def test_image_data(self):
+    def test_image_data(self) -> None:
         """Create test image data."""
         # Create a simple test image
         img = Image.new("RGB", (100, 100), color="red")
@@ -28,7 +29,7 @@ class TestSandboxedConversion:
         return buffer.read()
 
     @pytest.fixture
-    def conversion_manager(self):
+    def conversion_manager(self) -> None:
         """Create ConversionManager instance with sandboxing enabled."""
         # Ensure sandboxing is enabled
         original_setting = settings.enable_sandboxing
@@ -41,7 +42,7 @@ class TestSandboxedConversion:
         settings.enable_sandboxing = original_setting
 
     @pytest.fixture
-    def conversion_request(self):
+    def conversion_request(self) -> None:
         """Create a test conversion request."""
         return ConversionRequest(
             output_format=OutputFormat.PNG,
@@ -73,12 +74,12 @@ class TestSandboxedConversion:
             original_exists = os.path.exists
             original_open = open
 
-            def mock_exists(path):
+            def mock_exists(path) -> None:
                 if "_converted.png" in path:
                     return True
                 return original_exists(path)
 
-            def mock_open_func(path, mode="r"):
+            def mock_open_func(path, mode="r") -> None:
                 if "_converted.png" in path and "rb" in mode:
                     return BytesIO(output_data)
                 return original_open(path, mode)
@@ -189,7 +190,7 @@ class TestSandboxedConversion:
         """Test that sandbox cleanup happens properly."""
         cleanup_called = False
 
-        def mock_cleanup(conversion_id):
+        def mock_cleanup(conversion_id) -> None:
             nonlocal cleanup_called
             cleanup_called = True
 
@@ -277,7 +278,7 @@ class TestSandboxedConversion:
             mock_strip.assert_called_once()
 
 
-def mock_open(read_data=None):
+def mock_open(read_data=None) -> None:
     """Helper to create a mock file object."""
     m = Mock()
     m.__enter__ = Mock(return_value=BytesIO(read_data or b""))

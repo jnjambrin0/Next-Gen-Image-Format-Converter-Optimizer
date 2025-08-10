@@ -2,30 +2,29 @@
 Security event tracking with privacy compliance.
 """
 
-import sqlite3
 import json
 import os
+import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 from threading import Lock
+from typing import Any, Dict, List, Optional
 
-from app.models.security_event import (
-    SecurityEvent,
-    SecurityEventType,
-    SecuritySeverity,
-    SecurityEventSummary,
+from app.core.constants import (
+    DB_CHECK_SAME_THREAD,
+    DEFAULT_MONITORING_HOURS,
+    MAX_RECENT_EVENTS_DISPLAY,
+    SECURITY_EVENT_RETENTION_DAYS,
 )
-from app.utils.logging import get_logger
 from app.core.security.rate_limiter import SecurityEventRateLimiter
 from app.core.security.types import RateLimitConfig
-from app.core.constants import (
-    DEFAULT_MONITORING_HOURS,
-    SECURITY_EVENT_RETENTION_DAYS,
-    MAX_RECENT_EVENTS_DISPLAY,
-    DB_CHECK_SAME_THREAD,
-    SECURITY_EVENT_TABLE_NAME,
+from app.models.security_event import (
+    SecurityEvent,
+    SecurityEventSummary,
+    SecurityEventType,
+    SecuritySeverity,
 )
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -40,7 +39,7 @@ class SecurityEventTracker:
         self,
         db_path: Optional[str] = None,
         rate_limit_config: Optional[RateLimitConfig] = None,
-    ):
+    ) -> None:
         """
         Initialize security event tracker.
 
@@ -54,7 +53,7 @@ class SecurityEventTracker:
         self._rate_limited_events = 0
         self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for security events."""
         if self.db_path != ":memory:":
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -81,7 +80,7 @@ class SecurityEventTracker:
             )
 
     @contextmanager
-    def _get_db(self):
+    def _get_db(self) -> None:
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
@@ -273,7 +272,7 @@ class SecurityEventTracker:
         Record metadata stripping event.
 
         Args:
-            removed_fields: List of metadata fields removed (generic names only)
+            removed_fields: List[Any] of metadata fields removed (generic names only)
             input_format: Input image format
 
         Returns:

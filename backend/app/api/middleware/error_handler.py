@@ -1,17 +1,18 @@
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
+import json
 import traceback
 import uuid
-import json
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any
+
 import structlog
+from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ...core.exceptions import ImageConverterError
-from ..routes.monitoring import error_reporter
 from ...models.responses import ErrorResponse
+from ..routes.monitoring import error_reporter
 
 logger = structlog.get_logger()
 
@@ -114,7 +115,7 @@ async def handle_exception(exc: Exception, correlation_id: str) -> JSONResponse:
     )
 
 
-def setup_exception_handlers(app):
+def setup_exception_handlers(app) -> None:
     """Set up exception handlers for the FastAPI app."""
 
     @app.exception_handler(ImageConverterError)

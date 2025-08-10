@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+# Required permissions for auto-fixing and committing
+permissions:
+  contents: write          # For making commits
+  pull-requests: write     # For updating PRs
+  actions: read           # For workflow execution
+  security-events: write  # For security scanning
+
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
@@ -14,98 +21,24 @@ env:
 
 jobs:
   # ============================================
-  # GATE 1: CODE QUALITY (STRICT - MUST PASS)
+  # GATE 1A: AUTO-FIX CODE QUALITY ISSUES  
   # ============================================
-  code-quality-backend:
-    name: "🔍 Backend Code Quality (STRICT)"
+  auto-fix-quality:
+    name: "🔧 Auto-Fix Code Quality Issues"
     runs-on: ubuntu-latest
+    # Only run on pull requests, not on push to avoid loops
+    if: github.event_name == 'pull_request'
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        ref: ${{ github.head_ref }}  # Checkout the PR branch
     
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Cache Python dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements-dev.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
-      run: |
-        cd backend
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-    
-    - name: "📐 Code Formatting (Black) - STRICT"
-      run: |
-        cd backend
-        echo "Checking code formatting with Black (STRICT MODE)..."
-        if ! black --check --diff app/ tests/; then
-          echo ""
-          echo "❌ FORMATTING FAILURE - CODE QUALITY GATE FAILED"
-          echo "🔧 Fix with: cd backend && black app/ tests/"
-          echo "📋 This is NON-NEGOTIABLE for code consistency"
-          exit 1
-        fi
-        echo "✅ Code formatting passed"
-    
-    - name: "🔍 Import Organization (isort) - STRICT"
-      run: |
-        cd backend
-        echo "Checking import organization..."
-        if ! isort --check-only --diff app/ tests/; then
-          echo ""
-          echo "❌ IMPORT ORDER FAILURE - CODE QUALITY GATE FAILED" 
-          echo "🔧 Fix with: cd backend && isort app/ tests/"
-          exit 1
-        fi
-        echo "✅ Import organization passed"
-    
-    - name: "🔍 Code Linting (Flake8) - COMPREHENSIVE"
-      run: |
-        cd backend
-        echo "Running comprehensive linting..."
-        if ! flake8 app/ tests/ \
-          --max-line-length=88 \
-          --extend-ignore=E203,W503 \
-          --max-complexity=10 \
-          --statistics; then
-          echo ""
-          echo "❌ LINTING FAILURE - CODE QUALITY GATE FAILED"
-          echo "🔧 Fix all linting issues before proceeding"
-          exit 1
-        fi
-        echo "✅ Comprehensive linting passed"
-    
-    - name: "🔍 Type Checking (MyPy) - STRICT MODE"
-      run: |
-        cd backend
-        echo "Running strict type checking..."
-        if ! mypy app/ \
-          --strict \
-          --ignore-missing-imports \
-          --no-implicit-optional \
-          --warn-redundant-casts \
-          --warn-unused-ignores; then
-          echo ""
-          echo "❌ TYPE CHECKING FAILURE - CODE QUALITY GATE FAILED"
-          echo "🔧 Add proper type hints and fix type issues"
-          exit 1
-        fi
-        echo "✅ Strict type checking passed"
-
-  code-quality-frontend:
-    name: "🔍 Frontend Code Quality (STRICT)"
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
     
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -114,46 +47,168 @@ jobs:
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
     
-    - name: Install dependencies
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+    
+    - name: Install Frontend dependencies
       run: |
         cd frontend
         npm ci
     
-    - name: "📐 Code Formatting (Prettier) - STRICT"
+    - name: "🔧 Auto-fix Backend Code Quality"
       run: |
-        cd frontend
-        echo "Checking code formatting with Prettier (STRICT MODE)..."
-        if ! npx prettier --check "src/**/*.{js,css,html}"; then
-          echo ""
-          echo "❌ FORMATTING FAILURE - FRONTEND CODE QUALITY GATE FAILED"
-          echo "🔧 Fix with: cd frontend && npm run format"
-          exit 1
-        fi
-        echo "✅ Frontend formatting passed"
+        cd backend
+        echo "🔧 Auto-fixing Python code formatting and imports..."
+        
+        # Apply Black formatting
+        black app/ tests/
+        echo "✅ Applied Black formatting"
+        
+        # Organize imports with isort
+        isort app/ tests/
+        echo "✅ Organized imports with isort"
     
-    - name: "🔍 Code Linting (ESLint) - COMPREHENSIVE"
+    - name: "🔧 Auto-fix Frontend Code Quality" 
       run: |
         cd frontend
-        echo "Running comprehensive ESLint..."
-        if ! npm run lint; then
-          echo ""
-          echo "❌ ESLINT FAILURE - FRONTEND CODE QUALITY GATE FAILED"
-          echo "🔧 Fix all ESLint errors and warnings"
-          exit 1
-        fi
-        echo "✅ Frontend linting passed"
+        echo "🔧 Auto-fixing Frontend code formatting and linting..."
+        
+        # Apply Prettier formatting
+        npx prettier --write "src/**/*.{js,css,html}"
+        echo "✅ Applied Prettier formatting"
+        
+        # Fix auto-fixable ESLint issues
+        npx eslint src/ --fix --ext .js || true
+        echo "✅ Applied ESLint auto-fixes"
     
-    - name: "🏗️ Build Test - MUST COMPILE"
+    - name: "📝 Commit Auto-fixes"
+      run: |
+        # Configure git
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action Auto-fix"
+        
+        # Check if there are changes to commit
+        if ! git diff --quiet; then
+          echo "📝 Changes detected, committing auto-fixes..."
+          git add .
+          git commit -m "$(cat <<'EOF'
+        🤖 Auto-fix: code formatting and style issues
+        
+        - Applied Black formatting to Python code
+        - Organized imports with isort  
+        - Applied Prettier formatting to frontend
+        - Fixed auto-fixable ESLint issues
+        
+        Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+        EOF
+        )"
+          
+          # Push changes back to PR branch
+          git push
+          echo "✅ Auto-fixes committed and pushed to PR"
+        else
+          echo "ℹ️ No formatting issues found to fix"
+        fi
+    
+    - name: "⏭️ Continue to Validation"
+      run: echo "🎯 Auto-fix stage complete, proceeding to validation..."
+
+  # ============================================
+  # GATE 1B: CODE QUALITY VALIDATION (POST-FIX)
+  # ============================================
+  code-quality-validation:
+    name: "🔍 Code Quality Validation (POST-FIX)"
+    runs-on: ubuntu-latest
+    needs: [auto-fix-quality]
+    # Always run, even if auto-fix is skipped (on push events)
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref || github.ref }}  # Get latest version after auto-fix
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+    
+    - name: Install Frontend dependencies
       run: |
         cd frontend
-        echo "Testing frontend build..."
-        if ! npm run build; then
+        npm ci
+    
+    - name: "✅ Validate Backend Code Quality"
+      run: |
+        cd backend
+        echo "🔍 Validating backend code quality (should be clean after auto-fix)..."
+        
+        # These should all pass now after auto-fix
+        echo "📐 Checking Black formatting..."
+        black --check --diff app/ tests/
+        
+        echo "🔍 Checking import organization..."
+        isort --check-only --diff app/ tests/
+        
+        echo "🔍 Running Flake8 linting..."
+        flake8 app/ tests/ \
+          --max-line-length=88 \
+          --extend-ignore=E203,W503 \
+          --max-complexity=10 \
+          --statistics
+        
+        echo "✅ Backend code quality validation passed"
+    
+    - name: "🔍 Type Checking (MyPy) - STRICT MODE"
+      run: |
+        cd backend
+        echo "Running strict type checking (cannot be auto-fixed)..."
+        if ! mypy app/ \
+          --strict \
+          --ignore-missing-imports \
+          --no-implicit-optional \
+          --warn-redundant-casts \
+          --warn-unused-ignores; then
           echo ""
-          echo "❌ BUILD FAILURE - FRONTEND CODE QUALITY GATE FAILED"
-          echo "🔧 Fix build errors before proceeding"
+          echo "❌ TYPE CHECKING FAILURE - MANUAL FIX REQUIRED"
+          echo "🔧 Add proper type hints and fix type issues"
+          echo "📚 This requires developer intervention - cannot be auto-fixed"
           exit 1
         fi
-        echo "✅ Frontend build passed"
+        echo "✅ Strict type checking passed"
+    
+    - name: "✅ Validate Frontend Code Quality"
+      run: |
+        cd frontend
+        echo "🔍 Validating frontend code quality (should be clean after auto-fix)..."
+        
+        # These should all pass now after auto-fix
+        echo "📐 Checking Prettier formatting..."
+        npx prettier --check "src/**/*.{js,css,html}"
+        
+        echo "🔍 Running ESLint (remaining issues)..."
+        npm run lint
+        
+        echo "🏗️ Testing build..."
+        npm run build
+        
+        echo "✅ Frontend code quality validation passed"
 
   # ============================================
   # GATE 2: SECURITY VALIDATION (ZERO TOLERANCE)  
@@ -161,7 +216,7 @@ jobs:
   security-validation:
     name: "🛡️ Security Validation (ZERO TOLERANCE)"
     runs-on: ubuntu-latest
-    needs: [code-quality-backend, code-quality-frontend]
+    needs: [code-quality-validation]
     permissions:
       actions: read
       contents: read

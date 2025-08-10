@@ -2,7 +2,11 @@ import { DropZone } from './components/dropzone.js'
 import { validateImageFile, formatFileSize } from './utils/validators.js'
 import { UIStateManager, UIStates } from './utils/uiState.js'
 import { createLoadingSpinner } from './components/loadingSpinner.js'
-import { createErrorMessage, createSuccessMessage, createBatchSuccessMessage } from './components/uiMessages.js'
+import {
+  createErrorMessage,
+  createSuccessMessage,
+  createBatchSuccessMessage,
+} from './components/uiMessages.js'
 import { createAppLayout } from './components/appLayout.js'
 import { UI_TIMING, FEATURE_FLAGS } from './config/constants.js'
 import { convertImage, APIError, mapErrorCodeToMessage } from './services/api.js'
@@ -659,15 +663,15 @@ export function initializeApp() {
         if (data.file_index >= 0) {
           batchQueue.updateProgress(data.file_index, data.progress)
           batchQueue.updateStatus(data.file_index, data.status, data.message)
-          
+
           // Track file status
           fileStatuses.set(data.file_index, data.status)
-          
+
           // Check if all files are done (completed, failed, or cancelled)
-          const allDone = Array.from(fileStatuses.values()).every(status => 
+          const allDone = Array.from(fileStatuses.values()).every((status) =>
             ['completed', 'failed', 'cancelled'].includes(status)
           )
-          
+
           if (allDone && !downloadTriggered) {
             downloadTriggered = true
             clearInterval(statusInterval)
@@ -679,9 +683,9 @@ export function initializeApp() {
 
       // Track if download was triggered to prevent duplicate downloads
       let downloadTriggered = false
-      
+
       // Handle job status updates
-      websocketService.on('job_status', async (data) => {
+      websocketService.on('job_status', (data) => {
         if (data.status === 'completed' && !downloadTriggered) {
           // Don't immediately download - wait for all progress updates
           // The progress handler will trigger download when all files are done
@@ -697,10 +701,10 @@ export function initializeApp() {
       const statusInterval = setInterval(async () => {
         try {
           const status = await getBatchStatus(currentBatchJobId)
-          
+
           // Update file statuses from the status response
           if (status.items) {
-            status.items.forEach(item => {
+            status.items.forEach((item) => {
               const itemStatus = item.status.toLowerCase()
               fileStatuses.set(item.file_index, itemStatus)
               batchQueue.updateStatus(item.file_index, itemStatus, item.error_message)
@@ -709,12 +713,12 @@ export function initializeApp() {
               }
             })
           }
-          
+
           // Check if all files are done
-          const allDone = Array.from(fileStatuses.values()).every(status => 
+          const allDone = Array.from(fileStatuses.values()).every((status) =>
             ['completed', 'failed', 'cancelled'].includes(status)
           )
-          
+
           if (allDone && !downloadTriggered) {
             downloadTriggered = true
             clearInterval(statusInterval)
@@ -723,7 +727,9 @@ export function initializeApp() {
           } else if (status.status === 'failed' || status.status === 'cancelled') {
             clearInterval(statusInterval)
             if (!downloadTriggered) {
-              showBatchError(`Batch processing ${status.status}. Some files could not be converted.`)
+              showBatchError(
+                `Batch processing ${status.status}. Some files could not be converted.`
+              )
             }
           }
         } catch (error) {

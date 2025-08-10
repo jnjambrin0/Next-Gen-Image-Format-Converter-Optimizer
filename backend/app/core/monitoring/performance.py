@@ -3,15 +3,16 @@ Performance monitoring and metrics collection for image conversions.
 Provides detailed timing, memory, and throughput metrics.
 """
 
-import time
 import json
-import psutil
-from dataclasses import dataclass, field, asdict
-from typing import Dict, Any, List, Optional
+import threading
+import time
+from collections import deque
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-import threading
-from collections import deque
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 from app.utils.logging import get_logger
 
@@ -149,7 +150,7 @@ class PerformanceMonitor:
     Tracks CPU, memory, and I/O metrics.
     """
 
-    def __init__(self, sample_interval: float = 0.5):
+    def __init__(self, sample_interval: float = 0.5) -> None:
         """
         Initialize performance monitor.
 
@@ -164,7 +165,7 @@ class PerformanceMonitor:
         self._start_memory = self._process.memory_info().rss
         self._peak_memory = self._start_memory
 
-    def start(self):
+    def start(self) -> None:
         """Start performance monitoring."""
         if self._monitoring:
             return
@@ -228,7 +229,7 @@ class PerformanceMonitor:
         logger.debug("Performance monitoring stopped", **stats)
         return stats
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Background monitoring loop."""
         while self._monitoring:
             try:
@@ -280,7 +281,7 @@ class PerformanceProfiler:
     Used by CLI for --profile flag functionality.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize profiler."""
         self._profiles: Dict[str, Any] = {}
         self._monitor = PerformanceMonitor()

@@ -3,30 +3,30 @@ Quick Reference Card Generator
 Creates PDF and Markdown reference cards for commands
 """
 
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 import json
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.table import Table
-from rich.markdown import Markdown
 
 # Optional import for PDF generation
 try:
-    from reportlab.lib.pagesizes import letter, A4
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
     from reportlab.platypus import (
-        SimpleDocTemplate,
-        Table as RLTable,
-        TableStyle,
         Paragraph,
+        SimpleDocTemplate,
         Spacer,
-        PageBreak,
     )
-    from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from reportlab.platypus import Table as RLTable
+    from reportlab.platypus import (
+        TableStyle,
+    )
 
     REPORTLAB_AVAILABLE = True
 except ImportError:
@@ -36,7 +36,7 @@ except ImportError:
 class ReferenceCardGenerator:
     """Generates quick reference cards in various formats"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.output_dir = Path.home() / ".image-converter" / "reference"
         self.cards = self._load_reference_data()
@@ -471,7 +471,7 @@ class ReferenceCardGenerator:
             )
         return cards
 
-    def display_card(self, card_type: str = "basic"):
+    def display_card(self, card_type: str = "basic") -> None:
         """Display reference card in console"""
         if card_type not in self.cards:
             self.console.print(f"[red]Unknown card type:[/red] {card_type}")

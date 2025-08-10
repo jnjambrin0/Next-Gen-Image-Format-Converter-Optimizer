@@ -1,25 +1,24 @@
 """Security tests for process isolation verification."""
 
+from typing import Any
+from unittest.mock import Mock, patch
+
 import pytest
-import os
-import tempfile
-from unittest.mock import Mock, patch, MagicMock
-import subprocess
 
 from app.core.security.engine import SecurityEngine
-from app.core.security.sandbox import SecuritySandbox, SecurityError
+from app.core.security.errors import SecurityError
 
 
 class TestProcessIsolation:
     """Test suite for verifying process isolation security."""
 
     @pytest.fixture
-    def security_engine(self):
+    def security_engine(self) -> None:
         """Create SecurityEngine instance for testing."""
         return SecurityEngine()
 
     @pytest.fixture
-    def sandbox(self):
+    def sandbox(self) -> None:
         """Create a sandbox instance for testing."""
         engine = SecurityEngine()
         return engine.create_sandbox(
@@ -80,7 +79,7 @@ class TestProcessIsolation:
 
             assert result["environment_sanitized"] is True
 
-    def test_sandbox_blocks_shell_injection(self, sandbox):
+    def test_sandbox_blocks_shell_injection(self, sandbox) -> None:
         """Test that sandbox blocks shell injection attempts."""
         injection_commands = [
             ["echo", "test; rm -rf /"],
@@ -93,7 +92,7 @@ class TestProcessIsolation:
             with pytest.raises(SecurityError):
                 sandbox.validate_command(cmd)
 
-    def test_sandbox_blocks_path_traversal_in_commands(self, sandbox):
+    def test_sandbox_blocks_path_traversal_in_commands(self, sandbox) -> None:
         """Test that sandbox blocks path traversal in command arguments."""
         traversal_commands = [
             ["cat", "../../../etc/passwd"],
@@ -128,7 +127,7 @@ class TestProcessIsolation:
         assert process_sandbox is not None
         assert process_sandbox.security_violations > 0
 
-    def test_sandbox_resource_usage_tracking(self, sandbox):
+    def test_sandbox_resource_usage_tracking(self, sandbox) -> None:
         """Test that resource usage is properly tracked."""
         with patch("subprocess.Popen") as mock_popen:
             # Setup mock process
@@ -149,7 +148,7 @@ class TestProcessIsolation:
                 assert result["cpu_time"] == 1.2
                 assert result["wall_time"] > 0
 
-    def test_sandbox_prevents_fork_bombs(self, sandbox):
+    def test_sandbox_prevents_fork_bombs(self, sandbox) -> None:
         """Test that sandbox prevents fork bomb attacks."""
         # Fork bomb command
         fork_bomb_cmd = ["sh", "-c", ":(){ :|: & };:"]
@@ -157,7 +156,7 @@ class TestProcessIsolation:
         with pytest.raises(SecurityError, match="Forbidden command"):
             sandbox.validate_command(fork_bomb_cmd)
 
-    def test_sandbox_cleanup_after_crash(self, security_engine):
+    def test_sandbox_cleanup_after_crash(self, security_engine) -> None:
         """Test that sandbox properly cleans up after process crash."""
         conversion_id = "test-crash-cleanup"
         sandbox = security_engine.create_sandbox(conversion_id)
@@ -231,7 +230,7 @@ class TestProcessIsolation:
         # Verify all sandboxes were tracked separately
         assert len(security_engine._sandboxes) == 3
 
-    def test_sandbox_audit_log_privacy(self, security_engine):
+    def test_sandbox_audit_log_privacy(self, security_engine) -> None:
         """Test that audit logs don't contain sensitive information."""
         conversion_id = "test-privacy"
         sandbox = security_engine.create_sandbox(conversion_id)
@@ -255,7 +254,7 @@ class TestProcessIsolation:
         assert audit_log["was_successful"] is True
         assert audit_log["memory_mb"] not in log_str  # Should be in actual_usage
 
-    def test_sandbox_file_size_limits(self, sandbox):
+    def test_sandbox_file_size_limits(self, sandbox) -> None:
         """Test that sandbox enforces output file size limits."""
         with patch("subprocess.Popen") as mock_popen:
             # Create large output that exceeds limit

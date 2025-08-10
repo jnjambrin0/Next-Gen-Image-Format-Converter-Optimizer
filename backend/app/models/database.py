@@ -1,20 +1,21 @@
 """Database models for the Image Converter application."""
 
+import uuid
+from typing import Any
+
 from sqlalchemy import (
-    Column,
-    String,
     Boolean,
+    Column,
     DateTime,
-    Text,
-    Index,
-    UniqueConstraint,
-    Integer,
     ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-from datetime import datetime
-import uuid
 
 Base = declarative_base()
 
@@ -44,7 +45,7 @@ class UserPreset(Base):
         Index("idx_presets_builtin", "is_builtin"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f"<UserPreset(id={self.id}, name={self.name}, is_builtin={self.is_builtin})>"
 
 
@@ -71,7 +72,7 @@ class ApiKey(Base):
         Index("idx_api_keys_expires", "expires_at"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f"<ApiKey(id={self.id}, name={self.name}, is_active={self.is_active})>"
 
 
@@ -99,5 +100,5 @@ class ApiUsageStats(Base):
         Index("idx_usage_status", "status_code"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f"<ApiUsageStats(id={self.id}, endpoint={self.endpoint}, method={self.method}, status={self.status_code})>"

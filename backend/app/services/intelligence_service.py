@@ -1,11 +1,11 @@
 """Intelligence service for ML-based image analysis."""
 
 import asyncio
-from typing import Optional, Dict, Any
 import logging
+from typing import Any, Dict, Optional
 
 from app.core.intelligence import IntelligenceEngine
-from app.models.conversion import ContentType, ContentClassification
+from app.models.conversion import ContentClassification, ContentType
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class IntelligenceService:
     """Service layer for intelligence engine operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the intelligence service."""
         self.engine: Optional[IntelligenceEngine] = None
         self.stats_collector = None  # Will be injected at startup

@@ -3,27 +3,24 @@ Privacy-focused statistics collection for the image converter.
 Collects only aggregate data with no user correlation.
 """
 
-import asyncio
-from collections import defaultdict, Counter
+import json
+import os
+import sqlite3
+from collections import defaultdict
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-import json
-import sqlite3
-from contextlib import contextmanager
 from threading import Lock
-import os
+from typing import Any, Dict, List, Optional
 
-from app.utils.logging import get_logger
 from app.core.constants import (
-    HOURLY_STATS_RETENTION_HOURS,
     DAILY_STATS_RETENTION_DAYS,
-    MAX_PROCESSING_TIMES_MEMORY,
-    FILE_SIZE_CATEGORIES,
-    KB_TO_BYTES_FACTOR,
-    MB_TO_BYTES_FACTOR,
     DB_CHECK_SAME_THREAD,
+    FILE_SIZE_CATEGORIES,
+    HOURLY_STATS_RETENTION_HOURS,
+    MAX_PROCESSING_TIMES_MEMORY,
 )
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -86,7 +83,9 @@ class StatsCollector:
     No user data or file information is stored.
     """
 
-    def __init__(self, persist_to_db: bool = False, db_path: Optional[str] = None):
+    def __init__(
+        self, persist_to_db: bool = False, db_path: Optional[str] = None
+    ) -> None:
         """
         Initialize the stats collector.
 
@@ -113,7 +112,7 @@ class StatsCollector:
         if self.persist_to_db:
             self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for persistent stats."""
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
@@ -138,7 +137,7 @@ class StatsCollector:
             )
 
     @contextmanager
-    def _get_db(self):
+    def _get_db(self) -> None:
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         try:

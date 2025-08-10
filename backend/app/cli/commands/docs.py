@@ -4,19 +4,20 @@ Browse and search offline documentation
 """
 
 import asyncio
-from typing import Optional, Annotated
+from typing import Annotated, Any, Optional
+
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
-from app.cli.documentation.doc_browser import DocumentationBrowser
-from app.cli.documentation.examples import ExampleDatabase, ExampleCategory
-from app.cli.documentation.knowledge_base import KnowledgeBase, QuestionCategory
-from app.cli.documentation.reference_cards import ReferenceCardGenerator
 from app.cli.documentation.ascii_demos import AsciiDemoPlayer, DemoSpeed
+from app.cli.documentation.doc_browser import DocumentationBrowser
+from app.cli.documentation.examples import ExampleCategory, ExampleDatabase
+from app.cli.documentation.knowledge_base import KnowledgeBase, QuestionCategory
 from app.cli.documentation.man_generator import ManPageGenerator
+from app.cli.documentation.reference_cards import ReferenceCardGenerator
 from app.cli.ui.themes import get_theme_manager
 
 # Initialize theme manager and console
@@ -133,7 +134,7 @@ def docs_command(
         _show_overview()
 
 
-def _show_overview():
+def _show_overview() -> None:
     """Show documentation overview"""
     panel = Panel(
         """
@@ -183,7 +184,7 @@ Available resources:
     )
 
 
-def _view_section(section_id: str):
+def _view_section(section_id: str) -> None:
     """View specific documentation section"""
     section = doc_browser.sections.get(section_id)
 
@@ -203,7 +204,7 @@ def _view_section(section_id: str):
         )
 
 
-def _browse_examples():
+def _browse_examples() -> None:
     """Browse command examples"""
     console.print("\n[bold cyan]Command Examples[/bold cyan]\n")
 
@@ -256,7 +257,7 @@ def _browse_examples():
             break
 
 
-def _browse_knowledge_base():
+def _browse_knowledge_base() -> None:
     """Browse Q&A knowledge base"""
     console.print("\n[bold cyan]Q&A Knowledge Base[/bold cyan]\n")
 
@@ -321,7 +322,7 @@ def _browse_knowledge_base():
             break
 
 
-def _generate_reference(card_type: str):
+def _generate_reference(card_type: str) -> None:
     """Generate reference card"""
     try:
         # Display in console
@@ -393,7 +394,7 @@ async def _play_demo(demo_id: str):
         await demo_player.play(demo_id, speed)
 
 
-def _generate_man_page(command: str):
+def _generate_man_page(command: str) -> None:
     """Generate man page"""
     try:
         content = man_generator.generate(command)
@@ -417,7 +418,7 @@ def _generate_man_page(command: str):
         )
 
 
-def _search_documentation(query: str):
+def _search_documentation(query: str) -> None:
     """Search all documentation"""
     console.print(f"\n[bold cyan]Searching for: '{query}'[/bold cyan]\n")
 

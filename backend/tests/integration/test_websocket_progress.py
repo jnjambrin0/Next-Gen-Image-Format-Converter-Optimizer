@@ -1,25 +1,24 @@
 """Integration tests for WebSocket progress updates."""
 
-import pytest
 import asyncio
-import json
 import uuid
-from datetime import datetime
-from unittest.mock import AsyncMock, patch
-from fastapi.testclient import TestClient
+from typing import Any
+from unittest.mock import AsyncMock
+
+import pytest
 from fastapi import FastAPI
-from websocket import create_connection, WebSocket as WSClient
+from fastapi.testclient import TestClient
 
 from app.api.websockets.progress import (
-    router,
     connection_manager,
+    router,
     send_batch_progress,
     send_job_status_update,
 )
 from app.core.batch.models import (
+    BatchItemStatus,
     BatchProgress,
     BatchStatus,
-    BatchItemStatus,
 )
 
 
@@ -27,18 +26,18 @@ class TestWebSocketProgress:
     """Test WebSocket progress functionality."""
 
     @pytest.fixture
-    def app(self):
+    def app(self) -> None:
         """Create a test FastAPI app with WebSocket router."""
         app = FastAPI()
         app.include_router(router)
         return app
 
     @pytest.fixture
-    def client(self, app):
+    def client(self, app) -> None:
         """Create a test client."""
         return TestClient(app)
 
-    def test_websocket_connection_success(self, client):
+    def test_websocket_connection_success(self, client) -> None:
         """Test successful WebSocket connection."""
         job_id = str(uuid.uuid4())
 
@@ -49,14 +48,14 @@ class TestWebSocketProgress:
             assert data["status"] == "connected"
             assert data["job_id"] == job_id
 
-    def test_websocket_invalid_job_id(self, client):
+    def test_websocket_invalid_job_id(self, client) -> None:
         """Test WebSocket connection with invalid job ID."""
         # Invalid job ID (not UUID format)
         with pytest.raises(Exception):
             with client.websocket_connect("/ws/batch/invalid-id") as websocket:
                 pass
 
-    def test_websocket_ping_pong(self, client):
+    def test_websocket_ping_pong(self, client) -> None:
         """Test WebSocket ping/pong mechanism."""
         job_id = str(uuid.uuid4())
 
@@ -72,7 +71,7 @@ class TestWebSocketProgress:
             assert data["type"] == "pong"
             assert "timestamp" in data
 
-    def test_websocket_progress_broadcast(self, client):
+    def test_websocket_progress_broadcast(self, client) -> None:
         """Test broadcasting progress updates."""
         job_id = str(uuid.uuid4())
 
@@ -102,7 +101,7 @@ class TestWebSocketProgress:
             assert data["status"] == "processing"
             assert data["progress"] == 50
 
-    def test_websocket_job_status_broadcast(self, client):
+    def test_websocket_job_status_broadcast(self, client) -> None:
         """Test broadcasting job status updates."""
         job_id = str(uuid.uuid4())
 
@@ -119,7 +118,7 @@ class TestWebSocketProgress:
             assert data["job_id"] == job_id
             assert data["status"] == "completed"
 
-    def test_websocket_multiple_connections(self, client):
+    def test_websocket_multiple_connections(self, client) -> None:
         """Test multiple WebSocket connections to same job."""
         job_id = str(uuid.uuid4())
 
@@ -151,7 +150,7 @@ class TestWebSocketProgress:
                 assert data1["progress"] == 100
                 assert data2["progress"] == 100
 
-    def test_websocket_invalid_json(self, client):
+    def test_websocket_invalid_json(self, client) -> None:
         """Test handling of invalid JSON messages."""
         job_id = str(uuid.uuid4())
 
@@ -167,7 +166,7 @@ class TestWebSocketProgress:
             assert data["type"] == "error"
             assert "Invalid JSON" in data["message"]
 
-    def test_websocket_unknown_message_type(self, client):
+    def test_websocket_unknown_message_type(self, client) -> None:
         """Test handling of unknown message types."""
         job_id = str(uuid.uuid4())
 
@@ -247,7 +246,7 @@ class TestWebSocketProgress:
         mock_ws2.close.assert_called_once()
         assert connection_manager.get_connection_count(job_id) == 0
 
-    def test_websocket_timeout_ping(self, client):
+    def test_websocket_timeout_ping(self, client) -> None:
         """Test WebSocket timeout and ping mechanism."""
         job_id = str(uuid.uuid4())
 

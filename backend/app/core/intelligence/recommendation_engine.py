@@ -1,20 +1,19 @@
 """Format recommendation engine for intelligent format selection."""
 
 import asyncio
-from typing import Dict, List, Optional, Tuple, Any
-from collections import defaultdict
 import time
+from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.conversion import ContentType, OutputFormat, InputFormat
+from app.core.constants import SUPPORTED_OUTPUT_FORMATS
+from app.models.conversion import ContentType, InputFormat, OutputFormat
 from app.models.recommendation import (
+    FormatCharacteristics,
     FormatRecommendation,
     RecommendationRequest,
-    UseCaseType,
-    FormatCharacteristics,
     TradeOffAnalysis,
+    UseCaseType,
 )
 from app.utils.logging import get_logger
-from app.core.constants import SUPPORTED_OUTPUT_FORMATS
 
 logger = get_logger(__name__)
 
@@ -226,11 +225,11 @@ class RecommendationEngine:
         },
     }
 
-    def __init__(self, preference_callback=None):
+    def __init__(self, preference_callback=None) -> None:
         """Initialize recommendation engine.
 
         Args:
-            preference_callback: Optional callback to get user preferences
+            preference_callback: Optional[Any] callback to get user preferences
         """
         self.preference_callback = preference_callback
         self._format_cache = {}
@@ -253,8 +252,7 @@ class RecommendationEngine:
             request: Recommendation request with content classification
             max_recommendations: Maximum number of recommendations to return
 
-        Returns:
-            List of format recommendations sorted by score
+        Returns: List[Any] of format recommendations sorted by score
         """
         # CRITICAL: Input validation (CLAUDE.md security requirements)
         from app.core.security.errors_simplified import create_file_error

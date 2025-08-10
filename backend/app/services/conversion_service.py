@@ -1,24 +1,25 @@
 """Service layer for image conversion operations."""
 
-from typing import Tuple, Optional
 import asyncio
+from typing import Any, Optional, Tuple
+
 import structlog
 
 # Try to import magic, but make it optional
 try:
-    import magic
+    pass
 
     HAS_MAGIC = True
 except ImportError:
     HAS_MAGIC = False
 
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import ConversionError, InvalidImageError
+from app.models.conversion import ConversionRequest as CoreConversionRequest
 from app.models.conversion import (
     ConversionResult,
-    ConversionRequest as CoreConversionRequest,
 )
 from app.models.requests import ConversionApiRequest
-from app.core.exceptions import ConversionError, InvalidImageError
 from app.services.format_detection_service import format_detection_service
 
 # Removed circular import - stats_collector will be injected or imported elsewhere
@@ -29,7 +30,7 @@ logger = structlog.get_logger()
 class ConversionService:
     """Service layer for handling image conversions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize conversion service."""
         self.conversion_manager = ConversionManager()
         # Initialize stats_collector as None - will be set later to avoid circular import
@@ -48,7 +49,7 @@ class ConversionService:
             "image/heic": ["heif", "heic"],
         }
 
-    def set_preset_service(self, preset_service):
+    def set_preset_service(self, preset_service) -> None:
         """Set the preset service instance to avoid circular imports."""
         self.preset_service = preset_service
 
@@ -64,7 +65,7 @@ class ConversionService:
         Args:
             image_data: Raw image data as bytes
             request: API conversion request
-            timeout: Optional timeout for conversion
+            timeout: Optional[Any] timeout for conversion
 
         Returns:
             Tuple of (ConversionResult, output_bytes)

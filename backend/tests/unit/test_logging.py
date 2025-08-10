@@ -1,26 +1,25 @@
-import pytest
-import json
 import logging
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from app.utils.logging import (
-    setup_logging,
-    get_logger,
-    filter_sensitive_data,
-    add_correlation_id,
     LoggingContext,
+    add_correlation_id,
+    filter_sensitive_data,
+    get_logger,
+    setup_logging,
 )
 
 
 class TestLoggingConfiguration:
     """Test logging configuration and utilities."""
 
-    def test_setup_logging_json(self):
+    def test_setup_logging_json(self) -> None:
         """Test JSON logging setup."""
         with patch("structlog.configure") as mock_configure:
             setup_logging(log_level="INFO", json_logs=True)
@@ -35,7 +34,7 @@ class TestLoggingConfiguration:
             ]
             assert any("JSONRenderer" in name for name in processor_names)
 
-    def test_setup_logging_console(self):
+    def test_setup_logging_console(self) -> None:
         """Test console logging setup."""
         with patch("structlog.configure") as mock_configure:
             setup_logging(log_level="DEBUG", json_logs=False)
@@ -50,7 +49,7 @@ class TestLoggingConfiguration:
             ]
             assert any("ConsoleRenderer" in name for name in processor_names)
 
-    def test_filter_sensitive_data(self):
+    def test_filter_sensitive_data(self) -> None:
         """Test sensitive data filtering."""
         event_dict = {
             "message": "Test log",
@@ -72,7 +71,7 @@ class TestLoggingConfiguration:
         assert filtered["safe_field"] == "visible"
         assert filtered["message"] == "Test log"
 
-    def test_add_correlation_id_new(self):
+    def test_add_correlation_id_new(self) -> None:
         """Test correlation ID generation when not present."""
         event_dict = {"message": "Test log"}
 
@@ -83,7 +82,7 @@ class TestLoggingConfiguration:
         # Should be a valid UUID format
         assert result["correlation_id"].count("-") == 4
 
-    def test_add_correlation_id_existing(self):
+    def test_add_correlation_id_existing(self) -> None:
         """Test correlation ID preservation when already present."""
         existing_id = "test-correlation-id-123"
         event_dict = {"message": "Test log", "correlation_id": existing_id}
@@ -92,7 +91,7 @@ class TestLoggingConfiguration:
 
         assert result["correlation_id"] == existing_id
 
-    def test_get_logger(self):
+    def test_get_logger(self) -> None:
         """Test logger creation."""
         logger = get_logger("test_logger")
 
@@ -103,7 +102,7 @@ class TestLoggingConfiguration:
         assert hasattr(logger, "debug")
         assert hasattr(logger, "warning")
 
-    def test_logging_context_manager(self):
+    def test_logging_context_manager(self) -> None:
         """Test LoggingContext context manager."""
         with patch("structlog.contextvars.bind_contextvars") as mock_bind:
             with patch("structlog.contextvars.unbind_contextvars") as mock_unbind:
@@ -121,7 +120,7 @@ class TestLoggingConfiguration:
                 # Check that context variables are unbound
                 assert mock_unbind.call_count == 2
 
-    def test_logging_levels(self):
+    def test_logging_levels(self) -> None:
         """Test different logging levels."""
         test_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
@@ -133,7 +132,7 @@ class TestLoggingConfiguration:
                 args, kwargs = mock_config.call_args
                 assert kwargs["level"] == getattr(logging, level)
 
-    def test_noisy_logger_suppression(self):
+    def test_noisy_logger_suppression(self) -> None:
         """Test that noisy loggers are suppressed."""
         with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
@@ -149,7 +148,7 @@ class TestLoggingConfiguration:
             assert mock_logger.setLevel.call_count >= 2
             mock_logger.setLevel.assert_any_call(logging.WARNING)
 
-    def test_sensitive_field_variations(self):
+    def test_sensitive_field_variations(self) -> None:
         """Test filtering of various sensitive field name variations."""
         event_dict = {
             "user_password": "secret",

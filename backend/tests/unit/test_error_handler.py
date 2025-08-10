@@ -1,34 +1,33 @@
+import os
+import sys
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
-from fastapi import HTTPException
-from unittest.mock import patch, Mock
-import sys
-import os
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from app.main import app
+from app.api.middleware.error_handler import handle_exception
 from app.core.exceptions import (
     ConversionError,
-    ValidationError,
-    SecurityError,
-    ResourceLimitError,
     FormatNotSupportedError,
     ProcessingTimeoutError,
+    ResourceLimitError,
+    SecurityError,
 )
-from app.api.middleware.error_handler import handle_exception
+from app.main import app
 
 
 class TestErrorHandling:
     """Test error handling middleware and exception handlers."""
 
     @pytest.fixture
-    def client(self):
+    def client(self) -> None:
         """Create test client."""
         return TestClient(app)
 
-    def test_404_not_found(self, client):
+    def test_404_not_found(self, client) -> None:
         """Test 404 error handling."""
         response = client.get("/api/nonexistent")
 
@@ -168,7 +167,7 @@ class TestErrorHandling:
         assert response_data["error"]["type"] == "HTTPException"
         assert response_data["error"]["message"] == "Bad request"
 
-    def test_correlation_id_propagation(self, client):
+    def test_correlation_id_propagation(self, client) -> None:
         """Test correlation ID is consistent across error response."""
         response = client.get("/api/nonexistent")
 
@@ -179,7 +178,7 @@ class TestErrorHandling:
         assert body_correlation_id is not None
         assert header_correlation_id == body_correlation_id
 
-    def test_error_response_structure(self, client):
+    def test_error_response_structure(self, client) -> None:
         """Test error response has consistent structure."""
         response = client.get("/api/nonexistent")
 
@@ -198,7 +197,7 @@ class TestErrorHandling:
         if "details" in error:
             assert isinstance(error["details"], dict)
 
-    def test_validation_error_structure(self, client):
+    def test_validation_error_structure(self, client) -> None:
         """Test validation error response structure."""
         # Send malformed JSON
         response = client.post(

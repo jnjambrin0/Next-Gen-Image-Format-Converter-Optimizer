@@ -1,30 +1,31 @@
 """
+from typing import Any
 Unit tests for plugin system
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
-import json
 import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
-from app.cli.plugins.loader import PluginLoader
+import pytest
+
 from app.cli.plugins.interface import CLIPlugin
+from app.cli.plugins.loader import PluginLoader
 
 
 class TestPluginInterface:
     """Test plugin interface"""
 
-    def test_plugin_interface_abstract(self):
+    def test_plugin_interface_abstract(self) -> None:
         """Test that CLIPlugin is abstract"""
         with pytest.raises(TypeError):
             CLIPlugin()
 
-    def test_plugin_implementation(self):
+    def test_plugin_implementation(self) -> None:
         """Test plugin implementation"""
 
         class TestPlugin(CLIPlugin):
-            def plugin_info(self):
+            def plugin_info(self) -> None:
                 return {
                     "name": "test",
                     "version": "1.0.0",
@@ -32,7 +33,7 @@ class TestPluginInterface:
                     "author": "Test Author",
                 }
 
-            def register(self, app):
+            def register(self, app) -> None:
                 pass
 
         plugin = TestPlugin()
@@ -48,14 +49,14 @@ class TestPluginLoader:
     """Test plugin loader"""
 
     @pytest.fixture
-    def temp_plugin_dir(self):
+    def temp_plugin_dir(self) -> None:
         """Create temporary plugin directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
             plugin_dir = Path(tmpdir) / "plugins"
             plugin_dir.mkdir()
             yield plugin_dir
 
-    def test_plugin_loader_init(self, temp_plugin_dir):
+    def test_plugin_loader_init(self, temp_plugin_dir) -> None:
         """Test plugin loader initialization"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -66,7 +67,7 @@ class TestPluginLoader:
             assert loader.loaded_plugins == {}
             assert loader.plugin_registry == {}
 
-    def test_discover_plugins_empty(self, temp_plugin_dir):
+    def test_discover_plugins_empty(self, temp_plugin_dir) -> None:
         """Test discovering plugins in empty directory"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -76,7 +77,7 @@ class TestPluginLoader:
 
             assert plugins == []
 
-    def test_discover_plugins_with_files(self, temp_plugin_dir):
+    def test_discover_plugins_with_files(self, temp_plugin_dir) -> None:
         """Test discovering plugin files"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -93,7 +94,7 @@ class TestPluginLoader:
             assert any("test_plugin.py" in str(p) for p in plugins)
             assert any("another_plugin.py" in str(p) for p in plugins)
 
-    def test_discover_plugins_with_directories(self, temp_plugin_dir):
+    def test_discover_plugins_with_directories(self, temp_plugin_dir) -> None:
         """Test discovering plugin directories"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -109,14 +110,14 @@ class TestPluginLoader:
             assert len(plugins) == 1
             assert "complex_plugin" in str(plugins[0])
 
-    def test_load_plugin_valid(self, temp_plugin_dir):
+    def test_load_plugin_valid(self, temp_plugin_dir) -> None:
         """Test loading a valid plugin"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
 
             # Create a valid plugin file
             plugin_content = """
-def plugin_info():
+def plugin_info() -> None:
     return {
         "name": "test",
         "version": "1.0.0",
@@ -124,7 +125,7 @@ def plugin_info():
         "author": "Test"
     }
 
-def register(app):
+def register(app) -> None:
     pass
 """
             plugin_file = temp_plugin_dir / "test_plugin.py"
@@ -137,7 +138,7 @@ def register(app):
             assert "test_plugin" in loader.loaded_plugins
             assert "test_plugin" in loader.plugin_registry
 
-    def test_load_plugin_invalid(self, temp_plugin_dir):
+    def test_load_plugin_invalid(self, temp_plugin_dir) -> None:
         """Test loading an invalid plugin"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -156,7 +157,7 @@ print("This is not a valid plugin")
             assert module is None
             assert "invalid_plugin" not in loader.loaded_plugins
 
-    def test_enable_disable_plugin(self, temp_plugin_dir):
+    def test_enable_disable_plugin(self, temp_plugin_dir) -> None:
         """Test enabling and disabling plugins"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -175,7 +176,7 @@ print("This is not a valid plugin")
             # Try to enable non-existent plugin
             assert loader.enable_plugin("non_existent") == False
 
-    def test_list_plugins(self, temp_plugin_dir):
+    def test_list_plugins(self, temp_plugin_dir) -> None:
         """Test listing plugins"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir
@@ -192,7 +193,7 @@ print("This is not a valid plugin")
             assert {"name": "Plugin 1", "enabled": True} in plugins
             assert {"name": "Plugin 2", "enabled": False} in plugins
 
-    def test_get_plugin_info(self, temp_plugin_dir):
+    def test_get_plugin_info(self, temp_plugin_dir) -> None:
         """Test getting plugin information"""
         with patch("app.cli.plugins.loader.get_plugins_dir") as mock_get_dir:
             mock_get_dir.return_value = temp_plugin_dir

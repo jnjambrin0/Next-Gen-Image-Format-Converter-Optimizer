@@ -3,21 +3,18 @@ Example Database System
 Manages command examples with safe execution and validation
 """
 
+import json
 import re
 import subprocess
-import sys
 import tempfile
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
 from enum import Enum
-import json
-import hashlib
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
-from rich.syntax import Syntax
 from rich.panel import Panel
-from rich.table import Table
+from rich.syntax import Syntax
 
 # Optional clipboard support
 try:
@@ -74,7 +71,7 @@ class CommandExample:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "CommandExample":
+    def from_dict(cls, data: Dict[str, Any]) -> "CommandExample":
         """Create from dictionary"""
         return cls(
             id=data["id"],
@@ -156,13 +153,13 @@ class CommandExample:
 class ExampleDatabase:
     """Database of command examples"""
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.examples: Dict[str, CommandExample] = {}
         self.sandbox_dir = Path(tempfile.gettempdir()) / "img-cli-examples"
         self._load_examples()
 
-    def _load_examples(self):
+    def _load_examples(self) -> None:
         """Load example database"""
         # Examples are embedded for offline operation
         examples_data = [
@@ -412,10 +409,9 @@ class ExampleDatabase:
 
         Args:
             query: Search string
-            category: Optional category filter
+            category: Optional[Any] category filter
 
-        Returns:
-            List of matching examples
+        Returns: List[Any] of matching examples
         """
         results = []
         query_lower = query.lower()
@@ -457,7 +453,9 @@ class ExampleDatabase:
         """Get all examples in a category"""
         return [ex for ex in self.examples.values() if ex.category == category]
 
-    def display_example(self, example: CommandExample, show_variations: bool = False):
+    def display_example(
+        self, example: CommandExample, show_variations: bool = False
+    ) -> None:
         """Display a single example"""
         # Title
         title = f"{example.description}"
@@ -623,7 +621,7 @@ class ExampleDatabase:
 
         return command
 
-    def _create_test_image(self, filepath: Path):
+    def _create_test_image(self, filepath: Path) -> None:
         """Create a minimal test image"""
         # Create a 1x1 PNG
         png_data = (
@@ -665,7 +663,7 @@ class ExampleDatabase:
 
     def export_examples(
         self, filepath: Path, category: Optional[ExampleCategory] = None
-    ):
+    ) -> None:
         """Export examples to file"""
         examples = (
             self.get_by_category(category) if category else list(self.examples.values())

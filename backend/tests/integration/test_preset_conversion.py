@@ -1,18 +1,17 @@
 """Integration tests for preset system with conversion pipeline."""
 
+from typing import Any
+
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
-import tempfile
-import os
 
 from app.main import app
 from app.services.preset_service import preset_service
-from app.services.conversion_service import conversion_service
 
 
 @pytest.fixture
-def client():
+def client() -> None:
     """Create test client with proper lifespan handling."""
     with TestClient(app) as test_client:
         yield test_client
@@ -41,11 +40,12 @@ async def test_preset():
     await preset_service.delete_preset(preset.id)
 
 
-def create_test_image():
+def create_test_image() -> None:
     """Create a simple test PNG image."""
     # Create a 100x100 red square
-    from PIL import Image
     import io
+
+    from PIL import Image
 
     img = Image.new("RGB", (100, 100), color="red")
     img_buffer = io.BytesIO()
@@ -57,7 +57,7 @@ def create_test_image():
 class TestPresetConversion:
     """Test preset integration with conversion pipeline."""
 
-    def test_convert_with_preset(self, client, test_preset):
+    def test_convert_with_preset(self, client, test_preset) -> None:
         """Test image conversion using a preset."""
         # Create test image
         image_data = create_test_image()
@@ -86,7 +86,7 @@ class TestPresetConversion:
         # The file should be smaller due to quality 70 vs 95
         assert len(result_data) < len(image_data)
 
-    def test_convert_with_preset_override(self, client, test_preset):
+    def test_convert_with_preset_override(self, client, test_preset) -> None:
         """Test conversion with preset but override some settings."""
         image_data = create_test_image()
 
@@ -110,7 +110,7 @@ class TestPresetConversion:
         result_data = response.content
         assert len(result_data) > 0
 
-    def test_convert_with_invalid_preset(self, client):
+    def test_convert_with_invalid_preset(self, client) -> None:
         """Test conversion with non-existent preset ID."""
         image_data = create_test_image()
 
@@ -129,7 +129,7 @@ class TestPresetConversion:
         assert response.status_code == 200
         assert response.headers["content-type"] == "image/jpeg"
 
-    def test_batch_convert_with_preset(self, client, test_preset):
+    def test_batch_convert_with_preset(self, client, test_preset) -> None:
         """Test batch conversion using a preset."""
         # Create multiple test images
         images = []
@@ -160,7 +160,7 @@ class TestPresetConversion:
         # BatchStatusResponse doesn't include settings, so we can't check them here
         # The preset is applied during conversion
 
-    def test_builtin_preset_conversion(self, client):
+    def test_builtin_preset_conversion(self, client) -> None:
         """Test conversion using a built-in preset."""
         image_data = create_test_image()
 

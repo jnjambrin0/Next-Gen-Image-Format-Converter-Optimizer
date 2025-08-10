@@ -1,20 +1,19 @@
 """
+from typing import Any
 End-to-End tests for CLI visual features
 Tests run against real backend and verify all visual enhancements
 """
 
-import pytest
-import time
 import os
 from pathlib import Path
-import json
-import re
+
+import pytest
 
 
 class TestCLIVisualFeatures:
     """Test suite for visual CLI features with real backend"""
 
-    def test_health_check_with_colors(self, cli_runner, ansi_parser):
+    def test_health_check_with_colors(self, cli_runner, ansi_parser) -> None:
         """Test that health check displays with colors and formatting"""
         # Run health check
         result = cli_runner.run_img_command("--version")
@@ -35,7 +34,7 @@ class TestCLIVisualFeatures:
 
     def test_convert_with_themed_output(
         self, cli_runner, sample_images, ansi_parser, progress_validator
-    ):
+    ) -> None:
         """Test image conversion with themed progress and output"""
         input_file = sample_images["small_red_jpg"]
 
@@ -71,7 +70,9 @@ class TestCLIVisualFeatures:
         output_file = input_file.with_suffix(".webp")
         assert output_file.exists(), "Converted file should exist"
 
-    def test_ascii_preview_generation(self, cli_runner, sample_images, ansi_parser):
+    def test_ascii_preview_generation(
+        self, cli_runner, sample_images, ansi_parser
+    ) -> None:
         """Test ASCII art preview generation"""
         input_file = sample_images["small_gradient_png"]
 
@@ -97,7 +98,7 @@ class TestCLIVisualFeatures:
                 c in preview for c in ascii_chars
             ), "Should contain ASCII art characters"
 
-    def test_ansi_color_preview(self, cli_runner, sample_images, ansi_parser):
+    def test_ansi_color_preview(self, cli_runner, sample_images, ansi_parser) -> None:
         """Test ANSI color block preview generation"""
         input_file = sample_images["small_gradient_png"]
 
@@ -115,7 +116,7 @@ class TestCLIVisualFeatures:
 
     def test_batch_conversion_with_progress(
         self, cli_runner, sample_images, progress_validator
-    ):
+    ) -> None:
         """Test batch conversion with multi-file progress"""
         # Prepare multiple files
         files = [
@@ -140,7 +141,9 @@ class TestCLIVisualFeatures:
             if progress_validator.has_progress_bar(result.stdout):
                 assert True, "Batch shows progress"
 
-    def test_smart_table_formatting(self, cli_runner, sample_images, ansi_parser):
+    def test_smart_table_formatting(
+        self, cli_runner, sample_images, ansi_parser
+    ) -> None:
         """Test smart table output with statistics"""
         # Run a command that outputs a table (e.g., formats list)
         result = cli_runner.run_img_command("formats list")
@@ -160,7 +163,7 @@ class TestCLIVisualFeatures:
 
     def test_emoji_support_and_fallback(
         self, cli_runner, sample_images, ansi_parser, terminal_configs
-    ):
+    ) -> None:
         """Test emoji display with fallback for unsupported terminals"""
         input_file = sample_images["small_red_jpg"]
 
@@ -188,7 +191,7 @@ class TestCLIVisualFeatures:
                 result_no_emoji.stdout
             ), "Should not have colors when NO_COLOR=1"
 
-    def test_theme_switching(self, cli_runner, ansi_parser, theme_validator):
+    def test_theme_switching(self, cli_runner, ansi_parser, theme_validator) -> None:
         """Test theme switching functionality"""
         # List available themes
         result = cli_runner.run_img_command("config theme")
@@ -210,7 +213,7 @@ class TestCLIVisualFeatures:
             theme_validator.has_styled_output(result.stdout) or True
         ), "Should have some styling"
 
-    def test_tui_launch(self, cli_runner):
+    def test_tui_launch(self, cli_runner) -> None:
         """Test TUI launch (basic test, can't fully interact)"""
         # Try to launch TUI with immediate exit
         # Send 'q' to quit immediately
@@ -223,7 +226,7 @@ class TestCLIVisualFeatures:
             or result.returncode != 0
         )
 
-    def test_error_display_with_styling(self, cli_runner, ansi_parser):
+    def test_error_display_with_styling(self, cli_runner, ansi_parser) -> None:
         """Test error messages are displayed with proper styling"""
         # Try to convert non-existent file
         result = cli_runner.run_img_command(
@@ -245,7 +248,7 @@ class TestCLIVisualFeatures:
 
     def test_terminal_capability_detection(
         self, cli_runner, terminal_configs, ansi_parser
-    ):
+    ) -> None:
         """Test adaptive output based on terminal capabilities"""
         input_file = None
         for img in cli_runner.sample_images.values():
@@ -284,7 +287,7 @@ class TestCLIVisualFeatures:
 
     def test_progress_bar_animation(
         self, cli_runner, sample_images, progress_validator
-    ):
+    ) -> None:
         """Test progress bar updates during conversion"""
         # Use a larger image for longer processing
         input_file = sample_images.get("medium_gradient_jpg")
@@ -308,7 +311,7 @@ class TestCLIVisualFeatures:
                     or "done" in result.stdout.lower()
                 )
 
-    def test_config_command_with_tables(self, cli_runner, ansi_parser):
+    def test_config_command_with_tables(self, cli_runner, ansi_parser) -> None:
         """Test config display with formatted tables"""
         # Show configuration
         result = cli_runner.run_img_command("config show")
@@ -323,7 +326,7 @@ class TestCLIVisualFeatures:
             if ansi_parser.has_ansi_codes(result.stdout):
                 assert True, "Config has formatted output"
 
-    def test_help_with_rich_formatting(self, cli_runner, ansi_parser):
+    def test_help_with_rich_formatting(self, cli_runner, ansi_parser) -> None:
         """Test help output with Rich formatting"""
         # Get help
         result = cli_runner.run_img_command("--help")
@@ -349,7 +352,7 @@ class TestCLIVisualIntegration:
 
     def test_full_conversion_workflow_with_visuals(
         self, cli_runner, sample_images, ansi_parser, progress_validator
-    ):
+    ) -> None:
         """Test complete conversion workflow with all visual features"""
         input_file = sample_images["small_gradient_png"]
 
@@ -385,7 +388,7 @@ class TestCLIVisualIntegration:
         output_file = input_file.with_suffix(".webp")
         assert output_file.exists()
 
-    def test_batch_with_preview_generation(self, cli_runner, sample_images):
+    def test_batch_with_preview_generation(self, cli_runner, sample_images) -> None:
         """Test batch conversion with preview generation for each file"""
         # This tests the combination of batch processing and preview features
         files = [sample_images["tiny_red_jpg"], sample_images["tiny_green_jpg"]]
@@ -397,7 +400,7 @@ class TestCLIVisualIntegration:
         # Even if batch doesn't show previews, it should complete
         assert result.returncode == 0 or "batch" in result.stdout.lower()
 
-    def test_theme_persistence(self, cli_runner, theme_validator):
+    def test_theme_persistence(self, cli_runner, theme_validator) -> None:
         """Test that theme settings persist across commands"""
         # Set theme
         cli_runner.run_img_command("config theme dark")
@@ -410,7 +413,7 @@ class TestCLIVisualIntegration:
             assert theme_validator.has_styled_output(result.stdout) or True
 
     @pytest.mark.slow
-    def test_performance_with_visual_features(self, cli_runner, sample_images):
+    def test_performance_with_visual_features(self, cli_runner, sample_images) -> None:
         """Test that visual features don't significantly impact performance"""
         import time
 
@@ -440,7 +443,7 @@ class TestCLIVisualIntegration:
 class TestCLIRobustness:
     """Test CLI robustness with visual features"""
 
-    def test_handles_unicode_filenames(self, cli_runner):
+    def test_handles_unicode_filenames(self, cli_runner) -> None:
         """Test handling of Unicode characters in filenames"""
         from PIL import Image
 
@@ -457,7 +460,7 @@ class TestCLIRobustness:
         # Should handle Unicode gracefully
         assert result.returncode == 0 or "encode" not in result.stderr.lower()
 
-    def test_handles_very_long_output(self, cli_runner):
+    def test_handles_very_long_output(self, cli_runner) -> None:
         """Test handling of very long output with progress"""
         # This would test with many files or verbose output
         # Create multiple small files
@@ -476,7 +479,7 @@ class TestCLIRobustness:
         # Should complete without buffer overflow
         assert result.returncode == 0 or len(result.stdout) > 0
 
-    def test_interrupt_handling(self, cli_runner, sample_images):
+    def test_interrupt_handling(self, cli_runner, sample_images) -> None:
         """Test that Ctrl+C is handled gracefully with visual cleanup"""
         # This is hard to test automatically, but we can verify the feature exists
         from app.cli.utils.progress import InterruptableProgress
@@ -486,7 +489,7 @@ class TestCLIRobustness:
         assert True, "Interrupt handling is implemented"
 
 
-def test_visual_features_summary(cli_runner):
+def test_visual_features_summary(cli_runner) -> None:
     """Summary test that validates all visual features are present"""
     print("\n" + "=" * 60)
     print("CLI VISUAL FEATURES TEST SUMMARY")

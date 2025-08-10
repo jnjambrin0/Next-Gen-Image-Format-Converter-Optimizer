@@ -1,42 +1,42 @@
 """Unit tests for format handlers."""
 
-import pytest
-from unittest.mock import Mock
-from io import BytesIO
-from PIL import Image
-
 # Import fixtures
 import sys
+from io import BytesIO
 from pathlib import Path
+from typing import Any
+from unittest.mock import Mock
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from app.core.conversion.formats.jpeg_handler import JPEGHandler
-from app.core.conversion.formats.png_handler import PNGHandler
-from app.core.conversion.formats.webp_handler import WebPHandler
 from app.core.conversion.formats.avif_handler import AVIFHandler
-from app.core.conversion.formats.jxl_handler import JxlHandler
 from app.core.conversion.formats.heif_handler import HeifHandler
-from app.core.conversion.formats.png_optimized_handler import PNGOptimizedHandler
+from app.core.conversion.formats.jpeg_handler import JPEGHandler
 from app.core.conversion.formats.jpeg_optimized_handler import JPEGOptimizedHandler
-from app.models.conversion import ConversionSettings
+from app.core.conversion.formats.jxl_handler import JxlHandler
+from app.core.conversion.formats.png_handler import PNGHandler
+from app.core.conversion.formats.png_optimized_handler import PNGOptimizedHandler
+from app.core.conversion.formats.webp_handler import WebPHandler
 from app.core.exceptions import (
     ConversionFailedError,
     UnsupportedFormatError,
-    HeifDecodingError,
 )
+from app.models.conversion import ConversionSettings
 
 
 class TestJPEGHandler:
     """Test suite for JPEG format handler."""
 
     @pytest.fixture
-    def jpeg_handler(self):
+    def jpeg_handler(self) -> None:
         """Create a JPEG handler instance."""
         return JPEGHandler()
 
     @pytest.fixture
-    def sample_jpeg_image(self):
+    def sample_jpeg_image(self) -> None:
         """Create a sample JPEG image."""
         img = Image.new("RGB", (100, 100), color="red")
         buffer = BytesIO()
@@ -44,7 +44,7 @@ class TestJPEGHandler:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def test_can_handle_jpeg_formats(self, jpeg_handler):
+    def test_can_handle_jpeg_formats(self, jpeg_handler) -> None:
         """Test JPEG handler recognizes JPEG formats."""
         assert jpeg_handler.can_handle("jpeg") is True
         assert jpeg_handler.can_handle("jpg") is True
@@ -52,17 +52,17 @@ class TestJPEGHandler:
         assert jpeg_handler.can_handle("jfif") is True
         assert jpeg_handler.can_handle("png") is False
 
-    def test_validate_valid_jpeg(self, jpeg_handler, sample_jpeg_image):
+    def test_validate_valid_jpeg(self, jpeg_handler, sample_jpeg_image) -> None:
         """Test validation of valid JPEG data."""
         assert jpeg_handler.validate_image(sample_jpeg_image) is True
 
-    def test_validate_invalid_jpeg(self, jpeg_handler):
+    def test_validate_invalid_jpeg(self, jpeg_handler) -> None:
         """Test validation of invalid JPEG data."""
         assert jpeg_handler.validate_image(b"not a jpeg") is False
         assert jpeg_handler.validate_image(b"") is False
         assert jpeg_handler.validate_image(b"x" * 10) is False
 
-    def test_load_jpeg_image(self, jpeg_handler, sample_jpeg_image):
+    def test_load_jpeg_image(self, jpeg_handler, sample_jpeg_image) -> None:
         """Test loading JPEG image."""
         # Act
         img = jpeg_handler.load_image(sample_jpeg_image)
@@ -72,7 +72,7 @@ class TestJPEGHandler:
         assert img.mode == "RGB"
         assert img.size == (100, 100)
 
-    def test_load_cmyk_jpeg_converts_to_rgb(self, jpeg_handler):
+    def test_load_cmyk_jpeg_converts_to_rgb(self, jpeg_handler) -> None:
         """Test loading CMYK JPEG converts to RGB."""
         # Arrange
         cmyk_img = Image.new("CMYK", (50, 50))
@@ -86,7 +86,7 @@ class TestJPEGHandler:
         # Assert
         assert img.mode == "RGB"
 
-    def test_save_jpeg_with_quality(self, jpeg_handler):
+    def test_save_jpeg_with_quality(self, jpeg_handler) -> None:
         """Test saving JPEG with quality settings."""
         # Arrange
         img = Image.new("RGB", (100, 100), color="blue")
@@ -101,7 +101,7 @@ class TestJPEGHandler:
         saved_img = Image.open(output_buffer)
         assert saved_img.format == "JPEG"
 
-    def test_save_jpeg_with_transparency_adds_background(self, jpeg_handler):
+    def test_save_jpeg_with_transparency_adds_background(self, jpeg_handler) -> None:
         """Test saving RGBA image as JPEG adds white background."""
         # Arrange
         rgba_img = Image.new("RGBA", (50, 50), (255, 0, 0, 128))
@@ -116,7 +116,7 @@ class TestJPEGHandler:
         saved_img = Image.open(output_buffer)
         assert saved_img.mode == "RGB"  # No alpha channel
 
-    def test_save_jpeg_with_optimization(self, jpeg_handler):
+    def test_save_jpeg_with_optimization(self, jpeg_handler) -> None:
         """Test saving JPEG with optimization enabled."""
         # Arrange
         img = Image.new("RGB", (200, 200), color="green")
@@ -130,7 +130,7 @@ class TestJPEGHandler:
         output_buffer.seek(0)
         assert len(output_buffer.getvalue()) > 0
 
-    def test_save_jpeg_strips_metadata(self, jpeg_handler, sample_image_bytes):
+    def test_save_jpeg_strips_metadata(self, jpeg_handler, sample_image_bytes) -> None:
         """Test saving JPEG strips metadata when requested."""
         # Arrange
         img = Image.open(BytesIO(sample_image_bytes))
@@ -145,7 +145,7 @@ class TestJPEGHandler:
         saved_img = Image.open(output_buffer)
         assert not hasattr(saved_img, "_getexif") or saved_img._getexif() is None
 
-    def test_quality_mapping(self, jpeg_handler):
+    def test_quality_mapping(self, jpeg_handler) -> None:
         """Test quality parameter mapping."""
         # Test different quality levels
         params_low = jpeg_handler.get_quality_param(ConversionSettings(quality=10))
@@ -160,7 +160,7 @@ class TestHeifHandler:
     """Test suite for HEIF/HEIC format handler."""
 
     @pytest.fixture
-    def heif_handler(self):
+    def heif_handler(self) -> None:
         """Create a HEIF handler instance."""
         try:
             from app.core.conversion.formats.heif_handler import HeifHandler
@@ -169,7 +169,7 @@ class TestHeifHandler:
         except ImportError:
             pytest.skip("HEIF support not available")
 
-    def test_can_handle_heif_formats(self, heif_handler):
+    def test_can_handle_heif_formats(self, heif_handler) -> None:
         """Test HEIF handler recognizes HEIF/HEIC formats."""
         assert heif_handler.can_handle("heif") is True
         assert heif_handler.can_handle("heic") is True
@@ -177,7 +177,7 @@ class TestHeifHandler:
         assert heif_handler.can_handle("hevc") is True
         assert heif_handler.can_handle("jpeg") is False
 
-    def test_validate_heif_magic_bytes(self, heif_handler):
+    def test_validate_heif_magic_bytes(self, heif_handler) -> None:
         """Test validation of HEIF magic bytes."""
         # Create minimal HEIF header with ftyp box
         heif_header = b"\x00\x00\x00\x18ftyp" + b"heic" + b"\x00" * 12
@@ -195,14 +195,14 @@ class TestBmpHandler:
     """Test suite for BMP format handler."""
 
     @pytest.fixture
-    def bmp_handler(self):
+    def bmp_handler(self) -> None:
         """Create a BMP handler instance."""
         from app.core.conversion.formats.bmp_handler import BmpHandler
 
         return BmpHandler()
 
     @pytest.fixture
-    def sample_bmp_image(self):
+    def sample_bmp_image(self) -> None:
         """Create a sample BMP image."""
         img = Image.new("RGB", (50, 50), color="yellow")
         buffer = BytesIO()
@@ -210,29 +210,29 @@ class TestBmpHandler:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def test_can_handle_bmp_formats(self, bmp_handler):
+    def test_can_handle_bmp_formats(self, bmp_handler) -> None:
         """Test BMP handler recognizes BMP formats."""
         assert bmp_handler.can_handle("bmp") is True
         assert bmp_handler.can_handle("dib") is True
         assert bmp_handler.can_handle("png") is False
 
-    def test_validate_valid_bmp(self, bmp_handler, sample_bmp_image):
+    def test_validate_valid_bmp(self, bmp_handler, sample_bmp_image) -> None:
         """Test validation of valid BMP data."""
         assert bmp_handler.validate_image(sample_bmp_image) is True
 
-    def test_validate_invalid_bmp(self, bmp_handler):
+    def test_validate_invalid_bmp(self, bmp_handler) -> None:
         """Test validation of invalid BMP data."""
         assert bmp_handler.validate_image(b"not a bmp") is False
         assert bmp_handler.validate_image(b"") is False
 
-    def test_load_bmp_image(self, bmp_handler, sample_bmp_image):
+    def test_load_bmp_image(self, bmp_handler, sample_bmp_image) -> None:
         """Test loading BMP image."""
         img = bmp_handler.load_image(sample_bmp_image)
         assert isinstance(img, Image.Image)
         assert img.mode == "RGB"
         assert img.size == (50, 50)
 
-    def test_save_bmp_from_rgba(self, bmp_handler):
+    def test_save_bmp_from_rgba(self, bmp_handler) -> None:
         """Test saving RGBA image as BMP (no transparency support)."""
         rgba_img = Image.new("RGBA", (30, 30), (255, 0, 0, 128))
         output_buffer = BytesIO()
@@ -250,14 +250,14 @@ class TestTiffHandler:
     """Test suite for TIFF format handler."""
 
     @pytest.fixture
-    def tiff_handler(self):
+    def tiff_handler(self) -> None:
         """Create a TIFF handler instance."""
         from app.core.conversion.formats.tiff_handler import TiffHandler
 
         return TiffHandler()
 
     @pytest.fixture
-    def sample_tiff_image(self):
+    def sample_tiff_image(self) -> None:
         """Create a sample TIFF image."""
         img = Image.new("RGB", (60, 60), color="purple")
         buffer = BytesIO()
@@ -265,17 +265,17 @@ class TestTiffHandler:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def test_can_handle_tiff_formats(self, tiff_handler):
+    def test_can_handle_tiff_formats(self, tiff_handler) -> None:
         """Test TIFF handler recognizes TIFF formats."""
         assert tiff_handler.can_handle("tiff") is True
         assert tiff_handler.can_handle("tif") is True
         assert tiff_handler.can_handle("jpeg") is False
 
-    def test_validate_valid_tiff(self, tiff_handler, sample_tiff_image):
+    def test_validate_valid_tiff(self, tiff_handler, sample_tiff_image) -> None:
         """Test validation of valid TIFF data."""
         assert tiff_handler.validate_image(sample_tiff_image) is True
 
-    def test_validate_tiff_magic_bytes(self, tiff_handler):
+    def test_validate_tiff_magic_bytes(self, tiff_handler) -> None:
         """Test validation of TIFF magic bytes."""
         # Little-endian TIFF
         assert (
@@ -288,14 +288,14 @@ class TestTiffHandler:
         # Invalid
         assert tiff_handler.validate_image(b"XXXX") is False
 
-    def test_load_tiff_image(self, tiff_handler, sample_tiff_image):
+    def test_load_tiff_image(self, tiff_handler, sample_tiff_image) -> None:
         """Test loading TIFF image."""
         img = tiff_handler.load_image(sample_tiff_image)
         assert isinstance(img, Image.Image)
         assert img.mode == "RGB"
         assert img.size == (60, 60)
 
-    def test_save_tiff_with_compression(self, tiff_handler):
+    def test_save_tiff_with_compression(self, tiff_handler) -> None:
         """Test saving TIFF with compression."""
         img = Image.new("RGB", (100, 100), color="cyan")
         output_buffer = BytesIO()
@@ -312,14 +312,14 @@ class TestGifHandler:
     """Test suite for GIF format handler."""
 
     @pytest.fixture
-    def gif_handler(self):
+    def gif_handler(self) -> None:
         """Create a GIF handler instance."""
         from app.core.conversion.formats.gif_handler import GifHandler
 
         return GifHandler()
 
     @pytest.fixture
-    def sample_gif_image(self):
+    def sample_gif_image(self) -> None:
         """Create a sample GIF image."""
         img = Image.new("P", (40, 40))
         img.putpalette([i // 3 for i in range(768)])  # Create palette
@@ -328,12 +328,12 @@ class TestGifHandler:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def test_can_handle_gif_format(self, gif_handler):
+    def test_can_handle_gif_format(self, gif_handler) -> None:
         """Test GIF handler recognizes GIF format."""
         assert gif_handler.can_handle("gif") is True
         assert gif_handler.can_handle("png") is False
 
-    def test_validate_gif_magic_bytes(self, gif_handler):
+    def test_validate_gif_magic_bytes(self, gif_handler) -> None:
         """Test validation of GIF magic bytes."""
         assert (
             gif_handler.validate_image(b"GIF87a" + b"\x00" * 10) is False
@@ -343,13 +343,13 @@ class TestGifHandler:
         )  # Has header but invalid
         assert gif_handler.validate_image(b"NOTGIF") is False
 
-    def test_load_gif_image(self, gif_handler, sample_gif_image):
+    def test_load_gif_image(self, gif_handler, sample_gif_image) -> None:
         """Test loading GIF image."""
         img = gif_handler.load_image(sample_gif_image)
         assert isinstance(img, Image.Image)
         assert img.mode in ("RGB", "RGBA")  # Converted from P mode
 
-    def test_save_gif_from_rgb(self, gif_handler):
+    def test_save_gif_from_rgb(self, gif_handler) -> None:
         """Test saving RGB image as GIF."""
         rgb_img = Image.new("RGB", (50, 50), color="orange")
         output_buffer = BytesIO()
@@ -367,12 +367,12 @@ class TestPNGHandler:
     """Test suite for PNG format handler."""
 
     @pytest.fixture
-    def png_handler(self):
+    def png_handler(self) -> None:
         """Create a PNG handler instance."""
         return PNGHandler()
 
     @pytest.fixture
-    def sample_png_image(self):
+    def sample_png_image(self) -> None:
         """Create a sample PNG image."""
         img = Image.new("RGBA", (100, 100), (0, 255, 0, 200))
         buffer = BytesIO()
@@ -380,21 +380,21 @@ class TestPNGHandler:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def test_can_handle_png_format(self, png_handler):
+    def test_can_handle_png_format(self, png_handler) -> None:
         """Test PNG handler recognizes PNG format."""
         assert png_handler.can_handle("png") is True
         assert png_handler.can_handle("jpeg") is False
 
-    def test_validate_valid_png(self, png_handler, sample_png_image):
+    def test_validate_valid_png(self, png_handler, sample_png_image) -> None:
         """Test validation of valid PNG data."""
         assert png_handler.validate_image(sample_png_image) is True
 
-    def test_validate_invalid_png(self, png_handler):
+    def test_validate_invalid_png(self, png_handler) -> None:
         """Test validation of invalid PNG data."""
         assert png_handler.validate_image(b"not a png") is False
         assert png_handler.validate_image(b"") is False
 
-    def test_load_png_image(self, png_handler, sample_png_image):
+    def test_load_png_image(self, png_handler, sample_png_image) -> None:
         """Test loading PNG image."""
         # Act
         img = png_handler.load_image(sample_png_image)
@@ -404,7 +404,7 @@ class TestPNGHandler:
         assert img.mode == "RGBA"
         assert img.size == (100, 100)
 
-    def test_save_png_with_transparency(self, png_handler):
+    def test_save_png_with_transparency(self, png_handler) -> None:
         """Test saving PNG preserves transparency."""
         # Arrange
         img = Image.new("RGBA", (50, 50), (255, 0, 0, 128))
@@ -419,7 +419,7 @@ class TestPNGHandler:
         saved_img = Image.open(output_buffer)
         assert saved_img.mode == "RGBA"
 
-    def test_save_png_with_optimization(self, png_handler):
+    def test_save_png_with_optimization(self, png_handler) -> None:
         """Test saving PNG with optimization."""
         # Arrange
         img = Image.new("RGB", (100, 100), color="blue")
@@ -434,7 +434,7 @@ class TestPNGHandler:
         saved_img = Image.open(output_buffer)
         assert saved_img.format == "PNG"
 
-    def test_compression_level_mapping(self, png_handler):
+    def test_compression_level_mapping(self, png_handler) -> None:
         """Test PNG compression level mapping."""
         # High quality = low compression
         params_high = png_handler.get_quality_param(ConversionSettings(quality=100))
@@ -450,16 +450,16 @@ class TestWebPHandler:
     """Test suite for WebP format handler."""
 
     @pytest.fixture
-    def webp_handler(self):
+    def webp_handler(self) -> None:
         """Create a WebP handler instance."""
         return WebPHandler()
 
-    def test_can_handle_webp_format(self, webp_handler):
+    def test_can_handle_webp_format(self, webp_handler) -> None:
         """Test WebP handler recognizes WebP format."""
         assert webp_handler.can_handle("webp") is True
         assert webp_handler.can_handle("jpeg") is False
 
-    def test_validate_valid_webp(self, webp_handler):
+    def test_validate_valid_webp(self, webp_handler) -> None:
         """Test validation of valid WebP data."""
         # Create valid WebP
         img = Image.new("RGB", (10, 10))
@@ -469,7 +469,7 @@ class TestWebPHandler:
 
         assert webp_handler.validate_image(webp_data) is True
 
-    def test_save_webp_with_quality(self, webp_handler):
+    def test_save_webp_with_quality(self, webp_handler) -> None:
         """Test saving WebP with quality settings."""
         # Arrange
         img = Image.new("RGB", (100, 100), color="red")
@@ -484,7 +484,7 @@ class TestWebPHandler:
         saved_img = Image.open(output_buffer)
         assert saved_img.format == "WEBP"
 
-    def test_save_webp_with_transparency(self, webp_handler):
+    def test_save_webp_with_transparency(self, webp_handler) -> None:
         """Test saving WebP with transparency."""
         # Arrange
         img = Image.new("RGBA", (50, 50), (0, 255, 0, 100))
@@ -499,7 +499,7 @@ class TestWebPHandler:
         saved_img = Image.open(output_buffer)
         assert saved_img.mode == "RGBA"
 
-    def test_save_webp_with_optimization(self, webp_handler):
+    def test_save_webp_with_optimization(self, webp_handler) -> None:
         """Test saving WebP with different optimization levels."""
         # Arrange
         img = Image.new("RGB", (100, 100), color="blue")
@@ -523,19 +523,19 @@ class TestAVIFHandler:
     """Test suite for AVIF format handler."""
 
     @pytest.fixture
-    def avif_handler(self):
+    def avif_handler(self) -> None:
         """Create an AVIF handler instance."""
         try:
             return AVIFHandler()
         except Exception:
             pytest.skip("AVIF support not available")
 
-    def test_can_handle_avif_format(self, avif_handler):
+    def test_can_handle_avif_format(self, avif_handler) -> None:
         """Test AVIF handler recognizes AVIF format."""
         assert avif_handler.can_handle("avif") is True
         assert avif_handler.can_handle("jpeg") is False
 
-    def test_save_avif_with_quality(self, avif_handler):
+    def test_save_avif_with_quality(self, avif_handler) -> None:
         """Test saving AVIF with quality settings."""
         # Arrange
         img = Image.new("RGB", (50, 50), color="purple")
@@ -550,7 +550,7 @@ class TestAVIFHandler:
         # Verify it's not empty
         assert len(output_buffer.getvalue()) > 0
 
-    def test_save_avif_with_transparency(self, avif_handler):
+    def test_save_avif_with_transparency(self, avif_handler) -> None:
         """Test saving AVIF with transparency."""
         # Arrange
         img = Image.new("RGBA", (30, 30), (255, 255, 0, 150))
@@ -564,7 +564,7 @@ class TestAVIFHandler:
         output_buffer.seek(0)
         assert len(output_buffer.getvalue()) > 0
 
-    def test_quality_parameter_mapping(self, avif_handler):
+    def test_quality_parameter_mapping(self, avif_handler) -> None:
         """Test AVIF quality parameter mapping."""
         # Test high quality
         params_high = avif_handler.get_quality_param(ConversionSettings(quality=95))
@@ -576,7 +576,7 @@ class TestAVIFHandler:
         assert params_low["quality"] == 70
         assert params_low["subsampling"] == "4:2:0"
 
-    def test_validate_avif_image(self, avif_handler):
+    def test_validate_avif_image(self, avif_handler) -> None:
         """Test AVIF validation logic."""
         # Test too small data
         assert avif_handler.validate_image(b"short") is False
@@ -588,7 +588,7 @@ class TestAVIFHandler:
         fake_data = b"\x00\x00\x00\x20ftypisom\x00\x00\x00\x00"
         assert avif_handler.validate_image(fake_data) is False
 
-    def test_avif_handler_mode_conversion(self, avif_handler):
+    def test_avif_handler_mode_conversion(self, avif_handler) -> None:
         """Test AVIF handler converts different color modes correctly."""
         # Test grayscale conversion
         img_gray = Image.new("L", (20, 20), color=128)
@@ -604,7 +604,7 @@ class TestAVIFHandler:
         avif_handler.save_image(img_p, buffer, settings)
         assert len(buffer.getvalue()) > 0
 
-    def test_avif_save_with_optimization(self, avif_handler):
+    def test_avif_save_with_optimization(self, avif_handler) -> None:
         """Test AVIF saving with optimization enabled/disabled."""
         img = Image.new("RGB", (50, 50), color="green")
 
@@ -627,34 +627,34 @@ class TestFormatHandlerErrors:
     """Test error handling across format handlers."""
 
     @pytest.fixture
-    def jpeg_handler(self):
+    def jpeg_handler(self) -> None:
         """Create a JPEG handler instance."""
         return JPEGHandler()
 
     @pytest.fixture
-    def png_handler(self):
+    def png_handler(self) -> None:
         """Create a PNG handler instance."""
         return PNGHandler()
 
     @pytest.fixture
-    def webp_handler(self):
+    def webp_handler(self) -> None:
         """Create a WebP handler instance."""
         return WebPHandler()
 
     @pytest.fixture
-    def avif_handler(self):
+    def avif_handler(self) -> None:
         """Create an AVIF handler instance."""
         try:
             return AVIFHandler()
         except Exception:
             pytest.skip("AVIF support not available")
 
-    def test_jpeg_handler_load_error(self, jpeg_handler):
+    def test_jpeg_handler_load_error(self, jpeg_handler) -> None:
         """Test JPEG handler handles load errors."""
         with pytest.raises(ConversionFailedError, match="Failed to load JPEG"):
             jpeg_handler.load_image(b"invalid jpeg data")
 
-    def test_png_handler_save_error(self, png_handler):
+    def test_png_handler_save_error(self, png_handler) -> None:
         """Test PNG handler handles save errors."""
         # Create a mock file object that raises on write
         mock_buffer = Mock()
@@ -666,7 +666,7 @@ class TestFormatHandlerErrors:
         with pytest.raises(ConversionFailedError, match="Failed to save image as PNG"):
             png_handler.save_image(img, mock_buffer, settings)
 
-    def test_webp_handler_invalid_mode(self, webp_handler):
+    def test_webp_handler_invalid_mode(self, webp_handler) -> None:
         """Test WebP handler converts unsupported modes."""
         # Arrange
         img = Image.new("LAB", (20, 20))  # LAB mode not directly supported
@@ -681,12 +681,12 @@ class TestFormatHandlerErrors:
         saved_img = Image.open(output_buffer)
         assert saved_img.mode == "RGB"
 
-    def test_avif_handler_load_error(self, avif_handler):
+    def test_avif_handler_load_error(self, avif_handler) -> None:
         """Test AVIF handler handles load errors."""
         with pytest.raises(ConversionFailedError, match="Failed to load AVIF"):
             avif_handler.load_image(b"invalid avif data")
 
-    def test_avif_handler_save_error(self, avif_handler):
+    def test_avif_handler_save_error(self, avif_handler) -> None:
         """Test AVIF handler handles save errors."""
         # Create a mock file object that raises on write
         mock_buffer = Mock()
@@ -703,7 +703,7 @@ class TestJxlHandler:
     """Test suite for JPEG XL format handler."""
 
     @pytest.fixture
-    def jxl_handler(self):
+    def jxl_handler(self) -> None:
         """Create a JPEG XL handler instance."""
         try:
             return JxlHandler()
@@ -711,16 +711,16 @@ class TestJxlHandler:
             pytest.skip("JPEG XL support not available")
 
     @pytest.fixture
-    def sample_rgb_image(self):
+    def sample_rgb_image(self) -> None:
         """Create a sample RGB image."""
         return Image.new("RGB", (100, 100), color="red")
 
     @pytest.fixture
-    def sample_rgba_image(self):
+    def sample_rgba_image(self) -> None:
         """Create a sample RGBA image with transparency."""
         return Image.new("RGBA", (100, 100), (255, 0, 0, 128))
 
-    def test_can_handle_jxl_formats(self, jxl_handler):
+    def test_can_handle_jxl_formats(self, jxl_handler) -> None:
         """Test JPEG XL handler recognizes JXL formats."""
         assert jxl_handler.can_handle("jxl") is True
         assert jxl_handler.can_handle("jpegxl") is True
@@ -729,25 +729,25 @@ class TestJxlHandler:
         assert jxl_handler.can_handle("png") is False
         assert jxl_handler.can_handle("jpeg") is False
 
-    def test_validate_jxl_codestream(self, jxl_handler):
+    def test_validate_jxl_codestream(self, jxl_handler) -> None:
         """Test validation of JXL codestream magic bytes."""
         # Valid JXL codestream starts with 0xFF0A
         valid_jxl = b"\xff\x0a" + b"\x00" * 100
         assert jxl_handler.validate_image(valid_jxl) is True
 
-    def test_validate_jxl_container(self, jxl_handler):
+    def test_validate_jxl_container(self, jxl_handler) -> None:
         """Test validation of JXL ISO container."""
         # Valid JXL container has "JXL " at offset 4-8
         valid_jxl = b"\x00\x00\x00\x0cJXL " + b"\x00" * 100
         assert jxl_handler.validate_image(valid_jxl) is True
 
-    def test_validate_invalid_jxl(self, jxl_handler):
+    def test_validate_invalid_jxl(self, jxl_handler) -> None:
         """Test validation of invalid JXL data."""
         assert jxl_handler.validate_image(b"not a jxl") is False
         assert jxl_handler.validate_image(b"") is False
         assert jxl_handler.validate_image(b"x" * 10) is False
 
-    def test_save_rgb_image_lossless(self, jxl_handler, sample_rgb_image):
+    def test_save_rgb_image_lossless(self, jxl_handler, sample_rgb_image) -> None:
         """Test saving RGB image as lossless JPEG XL."""
         # Arrange
         output_buffer = BytesIO()
@@ -760,7 +760,7 @@ class TestJxlHandler:
         output_buffer.seek(0)
         assert len(output_buffer.getvalue()) > 0
 
-    def test_save_rgb_image_lossy(self, jxl_handler, sample_rgb_image):
+    def test_save_rgb_image_lossy(self, jxl_handler, sample_rgb_image) -> None:
         """Test saving RGB image as lossy JPEG XL."""
         # Arrange
         output_buffer = BytesIO()
@@ -773,7 +773,7 @@ class TestJxlHandler:
         output_buffer.seek(0)
         assert len(output_buffer.getvalue()) > 0
 
-    def test_save_rgba_image(self, jxl_handler, sample_rgba_image):
+    def test_save_rgba_image(self, jxl_handler, sample_rgba_image) -> None:
         """Test saving RGBA image with transparency."""
         # Arrange
         output_buffer = BytesIO()
@@ -786,7 +786,7 @@ class TestJxlHandler:
         output_buffer.seek(0)
         assert len(output_buffer.getvalue()) > 0
 
-    def test_save_with_optimization(self, jxl_handler, sample_rgb_image):
+    def test_save_with_optimization(self, jxl_handler, sample_rgb_image) -> None:
         """Test saving with optimization enabled."""
         # Arrange
         buffer_opt = BytesIO()
@@ -802,7 +802,7 @@ class TestJxlHandler:
         assert len(buffer_opt.getvalue()) > 0
         assert len(buffer_no_opt.getvalue()) > 0
 
-    def test_quality_to_distance_mapping(self, jxl_handler):
+    def test_quality_to_distance_mapping(self, jxl_handler) -> None:
         """Test quality parameter mapping to JXL distance."""
         # Quality 100 should be lossless (distance 0)
         opts = jxl_handler._get_encode_options(ConversionSettings(quality=100))
@@ -818,11 +818,11 @@ class TestJxlHandler:
         opts = jxl_handler._get_encode_options(ConversionSettings(quality=50))
         assert 7.0 < opts["distance"] < 8.0
 
-    def test_supports_transparency(self, jxl_handler):
+    def test_supports_transparency(self, jxl_handler) -> None:
         """Test that JPEG XL reports transparency support."""
         assert jxl_handler._supports_transparency() is True
 
-    def test_supports_modes(self, jxl_handler):
+    def test_supports_modes(self, jxl_handler) -> None:
         """Test supported color modes."""
         assert jxl_handler._supports_mode("RGB") is True
         assert jxl_handler._supports_mode("RGBA") is True
@@ -834,7 +834,7 @@ class TestHeifHandler:
     """Test suite for HEIF format handler with enhanced encoding."""
 
     @pytest.fixture
-    def heif_handler(self):
+    def heif_handler(self) -> None:
         """Create a HEIF handler instance."""
         try:
             return HeifHandler()
@@ -842,16 +842,16 @@ class TestHeifHandler:
             pytest.skip("HEIF support not available")
 
     @pytest.fixture
-    def sample_rgb_image(self):
+    def sample_rgb_image(self) -> None:
         """Create a sample RGB image."""
         return Image.new("RGB", (100, 100), color="blue")
 
     @pytest.fixture
-    def sample_rgba_image(self):
+    def sample_rgba_image(self) -> None:
         """Create a sample RGBA image with transparency."""
         return Image.new("RGBA", (100, 100), (0, 0, 255, 128))
 
-    def test_can_handle_heif_formats(self, heif_handler):
+    def test_can_handle_heif_formats(self, heif_handler) -> None:
         """Test HEIF handler recognizes HEIF/HEIC formats."""
         assert heif_handler.can_handle("heif") is True
         assert heif_handler.can_handle("heic") is True
@@ -860,7 +860,7 @@ class TestHeifHandler:
         assert heif_handler.can_handle("HEIC") is True
         assert heif_handler.can_handle("jpeg") is False
 
-    def test_save_heif_with_quality(self, heif_handler, sample_rgb_image):
+    def test_save_heif_with_quality(self, heif_handler, sample_rgb_image) -> None:
         """Test saving HEIF with different quality settings."""
         # Test regular quality
         buffer = BytesIO()
@@ -868,7 +868,7 @@ class TestHeifHandler:
         heif_handler.save_image(sample_rgb_image, buffer, settings)
         assert len(buffer.getvalue()) > 0
 
-    def test_save_heif_lossless(self, heif_handler, sample_rgb_image):
+    def test_save_heif_lossless(self, heif_handler, sample_rgb_image) -> None:
         """Test saving HEIF in lossless mode."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=100)
@@ -879,7 +879,7 @@ class TestHeifHandler:
         assert quality_params.get("lossless") is True
         assert len(buffer.getvalue()) > 0
 
-    def test_save_heif_with_optimization(self, heif_handler, sample_rgb_image):
+    def test_save_heif_with_optimization(self, heif_handler, sample_rgb_image) -> None:
         """Test HEIF encoding with optimization enabled."""
         # Save with optimization
         buffer_opt = BytesIO()
@@ -895,7 +895,7 @@ class TestHeifHandler:
         assert len(buffer_opt.getvalue()) > 0
         assert len(buffer_no_opt.getvalue()) > 0
 
-    def test_compression_level_mapping(self, heif_handler):
+    def test_compression_level_mapping(self, heif_handler) -> None:
         """Test compression level based on quality and optimization."""
         # High quality with optimization
         params = heif_handler.get_quality_param(
@@ -915,14 +915,14 @@ class TestHeifHandler:
         )
         assert params["compression_level"] == 3
 
-    def test_save_rgba_with_transparency(self, heif_handler, sample_rgba_image):
+    def test_save_rgba_with_transparency(self, heif_handler, sample_rgba_image) -> None:
         """Test saving RGBA image preserving transparency."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=90)
         heif_handler.save_image(sample_rgba_image, buffer, settings)
         assert len(buffer.getvalue()) > 0
 
-    def test_metadata_stripping(self, heif_handler, sample_rgb_image):
+    def test_metadata_stripping(self, heif_handler, sample_rgb_image) -> None:
         """Test metadata removal when requested."""
         # Add some fake metadata to image
         image_with_meta = sample_rgb_image.copy()
@@ -933,11 +933,11 @@ class TestHeifHandler:
         heif_handler.save_image(image_with_meta, buffer, settings)
         assert len(buffer.getvalue()) > 0
 
-    def test_supports_transparency(self, heif_handler):
+    def test_supports_transparency(self, heif_handler) -> None:
         """Test that HEIF reports transparency support."""
         assert heif_handler._supports_transparency() is True
 
-    def test_supports_modes(self, heif_handler):
+    def test_supports_modes(self, heif_handler) -> None:
         """Test supported color modes."""
         assert heif_handler._supports_mode("RGB") is True
         assert heif_handler._supports_mode("RGBA") is True
@@ -948,12 +948,12 @@ class TestPNGOptimizedHandler:
     """Test suite for optimized PNG format handler."""
 
     @pytest.fixture
-    def png_opt_handler(self):
+    def png_opt_handler(self) -> None:
         """Create a PNG optimized handler instance."""
         return PNGOptimizedHandler()
 
     @pytest.fixture
-    def sample_image(self):
+    def sample_image(self) -> None:
         """Create a sample image for testing."""
         # Create image with gradient for better compression testing
         img = Image.new("RGB", (200, 200))
@@ -964,7 +964,7 @@ class TestPNGOptimizedHandler:
         return img
 
     @pytest.fixture
-    def sample_image_alpha(self):
+    def sample_image_alpha(self) -> None:
         """Create a sample image with alpha channel."""
         img = Image.new("RGBA", (100, 100))
         pixels = img.load()
@@ -974,14 +974,14 @@ class TestPNGOptimizedHandler:
                 pixels[x, y] = (x * 2, y * 2, 128, min(x + y, 255))
         return img
 
-    def test_can_handle_format(self, png_opt_handler):
+    def test_can_handle_format(self, png_opt_handler) -> None:
         """Test PNG optimized handler recognizes its format."""
         assert png_opt_handler.can_handle("png_optimized") is True
         assert png_opt_handler.can_handle("PNG_OPTIMIZED") is True
         assert png_opt_handler.can_handle("png") is False
         assert png_opt_handler.can_handle("jpeg") is False
 
-    def test_tool_availability_check(self, png_opt_handler):
+    def test_tool_availability_check(self, png_opt_handler) -> None:
         """Test tool availability is checked on init."""
         # Handler should initialize even if tools aren't available
         assert hasattr(png_opt_handler, "pngquant")
@@ -991,7 +991,7 @@ class TestPNGOptimizedHandler:
         assert isinstance(png_opt_handler.pngquant.is_available, bool)
         assert isinstance(png_opt_handler.optipng.is_available, bool)
 
-    def test_save_without_tools(self, png_opt_handler, sample_image):
+    def test_save_without_tools(self, png_opt_handler, sample_image) -> None:
         """Test saving falls back to regular PNG when tools unavailable."""
         # Temporarily disable tools
         original_pngquant = png_opt_handler.pngquant.is_available
@@ -1014,7 +1014,7 @@ class TestPNGOptimizedHandler:
             # This test might affect other tests if run in same session
             pass
 
-    def test_save_optimized(self, png_opt_handler, sample_image):
+    def test_save_optimized(self, png_opt_handler, sample_image) -> None:
         """Test saving with optimization."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=85, optimize=True)
@@ -1026,7 +1026,7 @@ class TestPNGOptimizedHandler:
         assert result_img.format == "PNG"
         assert len(buffer.getvalue()) > 0
 
-    def test_quality_settings(self, png_opt_handler, sample_image):
+    def test_quality_settings(self, png_opt_handler, sample_image) -> None:
         """Test different quality settings produce different results."""
         # High quality
         buffer_high = BytesIO()
@@ -1042,7 +1042,9 @@ class TestPNGOptimizedHandler:
         assert len(buffer_high.getvalue()) > 0
         assert len(buffer_low.getvalue()) > 0
 
-    def test_alpha_channel_preservation(self, png_opt_handler, sample_image_alpha):
+    def test_alpha_channel_preservation(
+        self, png_opt_handler, sample_image_alpha
+    ) -> None:
         """Test that alpha channel is preserved during optimization."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=85)
@@ -1054,14 +1056,14 @@ class TestPNGOptimizedHandler:
         assert result_img.mode == "RGBA"
         assert result_img.format == "PNG"
 
-    def test_optimization_strategies(self, png_opt_handler):
+    def test_optimization_strategies(self, png_opt_handler) -> None:
         """Test that multiple strategies are tried when available."""
         # This test just verifies the internal methods exist
         assert hasattr(png_opt_handler, "_optimize_with_pngquant")
         assert hasattr(png_opt_handler, "_optimize_with_optipng")
         assert hasattr(png_opt_handler, "_optimize_combined")
 
-    def test_get_quality_params(self, png_opt_handler):
+    def test_get_quality_params(self, png_opt_handler) -> None:
         """Test quality parameters include optimization info."""
         settings = ConversionSettings(quality=85)
         params = png_opt_handler.get_quality_param(settings)
@@ -1077,12 +1079,12 @@ class TestJPEGOptimizedHandler:
     """Test suite for optimized JPEG format handler with mozjpeg."""
 
     @pytest.fixture
-    def jpeg_opt_handler(self):
+    def jpeg_opt_handler(self) -> None:
         """Create a JPEG optimized handler instance."""
         return JPEGOptimizedHandler()
 
     @pytest.fixture
-    def sample_rgb_image(self):
+    def sample_rgb_image(self) -> None:
         """Create a sample RGB image."""
         # Create colorful test image for JPEG compression
         img = Image.new("RGB", (200, 200))
@@ -1097,7 +1099,7 @@ class TestJPEGOptimizedHandler:
         return img
 
     @pytest.fixture
-    def sample_rgba_image(self):
+    def sample_rgba_image(self) -> None:
         """Create a sample RGBA image with transparency."""
         img = Image.new("RGBA", (100, 100), (255, 0, 0, 0))
         # Draw a semi-transparent blue square
@@ -1106,7 +1108,7 @@ class TestJPEGOptimizedHandler:
                 img.putpixel((x, y), (0, 0, 255, 128))
         return img
 
-    def test_can_handle_format(self, jpeg_opt_handler):
+    def test_can_handle_format(self, jpeg_opt_handler) -> None:
         """Test JPEG optimized handler recognizes its formats."""
         assert jpeg_opt_handler.can_handle("jpeg_optimized") is True
         assert jpeg_opt_handler.can_handle("jpg_optimized") is True
@@ -1114,7 +1116,7 @@ class TestJPEGOptimizedHandler:
         assert jpeg_opt_handler.can_handle("jpeg") is False
         assert jpeg_opt_handler.can_handle("png") is False
 
-    def test_mozjpeg_availability_check(self, jpeg_opt_handler):
+    def test_mozjpeg_availability_check(self, jpeg_opt_handler) -> None:
         """Test mozjpeg availability is checked on init."""
         assert hasattr(jpeg_opt_handler, "mozjpeg")
         assert hasattr(jpeg_opt_handler.mozjpeg, "is_available")
@@ -1122,7 +1124,7 @@ class TestJPEGOptimizedHandler:
         if jpeg_opt_handler.mozjpeg.is_available:
             assert jpeg_opt_handler.mozjpeg.tool_path is not None
 
-    def test_save_without_mozjpeg(self, jpeg_opt_handler, sample_rgb_image):
+    def test_save_without_mozjpeg(self, jpeg_opt_handler, sample_rgb_image) -> None:
         """Test saving falls back to regular JPEG when mozjpeg unavailable."""
         # Temporarily disable mozjpeg
         original_path = jpeg_opt_handler.mozjpeg.tool_path
@@ -1140,7 +1142,7 @@ class TestJPEGOptimizedHandler:
         finally:
             jpeg_opt_handler.mozjpeg.tool_path = original_path
 
-    def test_save_with_mozjpeg(self, jpeg_opt_handler, sample_rgb_image):
+    def test_save_with_mozjpeg(self, jpeg_opt_handler, sample_rgb_image) -> None:
         """Test saving with mozjpeg optimization."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=85, optimize=True)
@@ -1152,7 +1154,7 @@ class TestJPEGOptimizedHandler:
         assert result_img.format == "JPEG"
         assert len(buffer.getvalue()) > 0
 
-    def test_quality_levels(self, jpeg_opt_handler, sample_rgb_image):
+    def test_quality_levels(self, jpeg_opt_handler, sample_rgb_image) -> None:
         """Test different quality levels produce different results."""
         # High quality
         buffer_high = BytesIO()
@@ -1171,7 +1173,7 @@ class TestJPEGOptimizedHandler:
         assert low_size > 0
         # Note: Can't guarantee high > low due to optimization differences
 
-    def test_rgba_to_rgb_conversion(self, jpeg_opt_handler, sample_rgba_image):
+    def test_rgba_to_rgb_conversion(self, jpeg_opt_handler, sample_rgba_image) -> None:
         """Test RGBA images are converted to RGB with white background."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=85)
@@ -1183,7 +1185,7 @@ class TestJPEGOptimizedHandler:
         assert result_img.format == "JPEG"
         assert result_img.mode == "RGB"
 
-    def test_progressive_encoding(self, jpeg_opt_handler, sample_rgb_image):
+    def test_progressive_encoding(self, jpeg_opt_handler, sample_rgb_image) -> None:
         """Test progressive JPEG encoding for optimized images."""
         buffer = BytesIO()
         settings = ConversionSettings(quality=80, optimize=True)
@@ -1199,7 +1201,7 @@ class TestJPEGOptimizedHandler:
         if jpeg_opt_handler.mozjpeg.is_available:
             assert params.get("progressive") is True
 
-    def test_get_quality_params_with_mozjpeg(self, jpeg_opt_handler):
+    def test_get_quality_params_with_mozjpeg(self, jpeg_opt_handler) -> None:
         """Test quality parameters include mozjpeg-specific settings."""
         # High quality settings
         params_high = jpeg_opt_handler.get_quality_param(
@@ -1222,7 +1224,7 @@ class TestJPEGOptimizedHandler:
             assert params_low["subsampling"] == "4:2:0"  # Lower quality
             assert params_low["trellis_quantization"] is False
 
-    def test_grayscale_image_support(self, jpeg_opt_handler):
+    def test_grayscale_image_support(self, jpeg_opt_handler) -> None:
         """Test grayscale image optimization."""
         # Create grayscale image
         gray_img = Image.new("L", (100, 100))
@@ -1245,20 +1247,20 @@ class TestWebP2Handler:
     """Test WebP2 format handler with fallback."""
 
     @pytest.fixture
-    def webp2_handler(self):
+    def webp2_handler(self) -> None:
         """Create WebP2 handler instance."""
         from app.core.conversion.formats.webp2_handler import WebP2Handler
 
         return WebP2Handler()
 
-    def test_handler_initialization(self, webp2_handler):
+    def test_handler_initialization(self, webp2_handler) -> None:
         """Test WebP2 handler initialization."""
         assert webp2_handler.format_name == "WEBP2"
         assert "webp2" in webp2_handler.supported_formats
         # Should always initialize even if WebP2 not available
         assert webp2_handler is not None
 
-    def test_automatic_fallback_to_webp(self, webp2_handler):
+    def test_automatic_fallback_to_webp(self, webp2_handler) -> None:
         """Test automatic fallback to WebP when WebP2 not available."""
         # WebP2 is not available yet, so it should use WebP
         test_img = Image.new("RGB", (100, 100), color="red")
@@ -1272,7 +1274,7 @@ class TestWebP2Handler:
         result = Image.open(buffer)
         assert result.format == "WEBP"
 
-    def test_transparency_support(self, webp2_handler):
+    def test_transparency_support(self, webp2_handler) -> None:
         """Test transparency preservation in fallback."""
         # Create RGBA image with transparency
         rgba_img = Image.new("RGBA", (50, 50), (255, 0, 0, 128))
@@ -1285,7 +1287,7 @@ class TestWebP2Handler:
         result = Image.open(buffer)
         assert result.mode == "RGBA"
 
-    def test_quality_parameters(self, webp2_handler):
+    def test_quality_parameters(self, webp2_handler) -> None:
         """Test WebP2/WebP quality parameter mapping."""
         settings = ConversionSettings(quality=75)
         params = webp2_handler.get_quality_param(settings)
@@ -1299,20 +1301,20 @@ class TestJpeg2000Handler:
     """Test JPEG 2000 format handler."""
 
     @pytest.fixture
-    def jp2_handler(self):
+    def jp2_handler(self) -> None:
         """Create JPEG 2000 handler instance."""
         from app.core.conversion.formats.jpeg2000_handler import Jpeg2000Handler
 
         return Jpeg2000Handler()
 
-    def test_handler_initialization(self, jp2_handler):
+    def test_handler_initialization(self, jp2_handler) -> None:
         """Test JPEG 2000 handler initialization."""
         assert jp2_handler.format_name == "JPEG2000"
         assert "jp2" in jp2_handler.supported_formats
         assert "jpeg2000" in jp2_handler.supported_formats
         assert "j2k" in jp2_handler.supported_formats
 
-    def test_lossless_mode(self, jp2_handler):
+    def test_lossless_mode(self, jp2_handler) -> None:
         """Test lossless JPEG 2000 encoding."""
         test_img = Image.new("RGB", (50, 50), color="blue")
         buffer = BytesIO()
@@ -1327,7 +1329,7 @@ class TestJpeg2000Handler:
         # JP2 box structure check
         assert magic[4:8] == b"jP  " or magic[:4] == b"\x00\x00\x00\x0c"
 
-    def test_lossy_compression(self, jp2_handler):
+    def test_lossy_compression(self, jp2_handler) -> None:
         """Test lossy JPEG 2000 compression."""
         test_img = Image.new("RGB", (100, 100), color="green")
         buffer = BytesIO()
@@ -1340,7 +1342,7 @@ class TestJpeg2000Handler:
         result = Image.open(buffer)
         assert result.format == "JPEG2000"
 
-    def test_grayscale_support(self, jp2_handler):
+    def test_grayscale_support(self, jp2_handler) -> None:
         """Test grayscale image support."""
         gray_img = Image.new("L", (50, 50))
         for i in range(50):
@@ -1355,7 +1357,7 @@ class TestJpeg2000Handler:
         result = Image.open(buffer)
         assert result.mode == "L"
 
-    def test_quality_parameters(self, jp2_handler):
+    def test_quality_parameters(self, jp2_handler) -> None:
         """Test JPEG 2000 quality parameter mapping."""
         # Test high quality
         settings_high = ConversionSettings(quality=95)

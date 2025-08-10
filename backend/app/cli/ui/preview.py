@@ -3,19 +3,17 @@ Image Preview Module
 ASCII and ANSI art generation for terminal image preview
 """
 
-import sys
-from pathlib import Path
-from typing import Optional, Tuple, List
 from enum import Enum
-from io import BytesIO
+from pathlib import Path
+from typing import Any, List, Optional
 
 from PIL import Image
 from rich.console import Console
-from rich.text import Text
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
-from app.cli.utils.terminal import get_terminal_detector, get_safe_width
+from app.cli.utils.terminal import get_safe_width, get_terminal_detector
 
 
 class PreviewMode(str, Enum):
@@ -44,7 +42,7 @@ class ImagePreview:
     BRAILLE_OFFSET = 0x2800
     BRAILLE_DOTS = [(0x01, 0x08), (0x02, 0x10), (0x04, 0x20), (0x40, 0x80)]
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         """Initialize preview generator"""
         self.console = console or Console()
         self.detector = get_terminal_detector()

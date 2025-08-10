@@ -1,18 +1,17 @@
 """
+from typing import Any
 Tests for P2P and WebRTC protocol blocking.
 """
 
-import pytest
 import subprocess
 import sys
-import socket
 from pathlib import Path
 
 
 class TestP2PBlocking:
     """Test P2P and WebRTC blocking in sandboxed environment."""
 
-    def test_p2p_module_blocking(self):
+    def test_p2p_module_blocking(self) -> None:
         """Test that P2P modules are blocked from import."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -55,7 +54,7 @@ except ImportError as e:
             assert result.returncode == 0, f"Failed to block {module}: {result.stderr}"
             assert "SUCCESS" in result.stdout
 
-    def test_udp_socket_blocking(self):
+    def test_udp_socket_blocking(self) -> None:
         """Test that UDP sockets are blocked (commonly used for P2P)."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -95,7 +94,7 @@ except OSError as e:
         assert result.returncode == 0
         assert "SUCCESS: UDP socket blocked" in result.stdout
 
-    def test_webrtc_submodule_blocking(self):
+    def test_webrtc_submodule_blocking(self) -> None:
         """Test that WebRTC submodules are also blocked."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -133,7 +132,7 @@ except ImportError as e:
         assert result.returncode == 0
         assert "SUCCESS" in result.stdout
 
-    def test_p2p_blocker_in_sys_meta_path(self):
+    def test_p2p_blocker_in_sys_meta_path(self) -> None:
         """Test that P2P blocker is installed in sys.meta_path."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -172,7 +171,7 @@ else:
         assert result.returncode == 0
         assert "SUCCESS: P2P blocker installed" in result.stdout
 
-    def test_comprehensive_p2p_blocking(self):
+    def test_comprehensive_p2p_blocking(self) -> None:
         """Test comprehensive P2P blocking with multiple protocols."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -243,7 +242,7 @@ else:
         assert result.returncode == 0
         assert "SUCCESS" in result.stdout
 
-    def test_asyncio_still_works(self):
+    def test_asyncio_still_works(self) -> None:
         """Test that asyncio still works (but monitored)."""
         script_path = (
             Path(__file__).parent.parent.parent
@@ -289,7 +288,7 @@ except Exception as e:
         assert result.returncode == 0
         assert "SUCCESS: asyncio works" in result.stdout
 
-    def test_raw_sockets_blocked(self):
+    def test_raw_sockets_blocked(self) -> None:
         """Test that raw sockets (used for P2P NAT traversal) are blocked."""
         script_path = (
             Path(__file__).parent.parent.parent

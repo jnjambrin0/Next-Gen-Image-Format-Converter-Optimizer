@@ -1,9 +1,10 @@
 """Process sandbox model for tracking sandboxed executions."""
 
-from typing import Optional, Dict, Any
-from datetime import datetime, timezone
-from pydantic import BaseModel, Field, ConfigDict
 import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProcessSandbox(BaseModel):
@@ -88,7 +89,7 @@ class ProcessSandbox(BaseModel):
             exit_code: Process exit code
             actual_usage: Actual resource usage metrics
             terminated_by_signal: Signal number if process was killed
-            error_message: Optional error message
+            error_message: Optional[Any] error message
         """
         self.end_time = datetime.now(timezone.utc)
         self.exit_code = exit_code

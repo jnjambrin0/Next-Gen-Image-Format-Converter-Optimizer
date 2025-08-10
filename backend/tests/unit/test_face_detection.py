@@ -1,10 +1,11 @@
 """Unit tests for face detection functionality."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from typing import Any
+from unittest.mock import Mock, patch
+
 import numpy as np
+import pytest
 from PIL import Image
-import io
 
 from app.core.intelligence.face_detector import FaceDetector
 from app.models.conversion import BoundingBox
@@ -14,12 +15,12 @@ class TestFaceDetector:
     """Test suite for FaceDetector class."""
 
     @pytest.fixture
-    def face_detector(self):
+    def face_detector(self) -> None:
         """Create a FaceDetector instance for testing."""
         return FaceDetector(model_session=None, input_size=128)
 
     @pytest.fixture
-    def mock_model_session(self):
+    def mock_model_session(self) -> None:
         """Create a mock ONNX model session."""
         mock = Mock()
 
@@ -46,7 +47,7 @@ class TestFaceDetector:
         return mock
 
     @pytest.fixture
-    def portrait_image(self):
+    def portrait_image(self) -> None:
         """Create a portrait-like test image."""
         # Create image with face-like region
         img = Image.new("RGB", (400, 400), color="white")
@@ -66,7 +67,7 @@ class TestFaceDetector:
         return img
 
     @pytest.fixture
-    def multi_face_image(self):
+    def multi_face_image(self) -> None:
         """Create image with multiple face regions."""
         img = Image.new("RGB", (600, 400), color="white")
         pixels = img.load()
@@ -85,7 +86,7 @@ class TestFaceDetector:
 
         return img
 
-    def test_detector_initialization(self, face_detector):
+    def test_detector_initialization(self, face_detector) -> None:
         """Test detector initializes correctly."""
         assert face_detector.input_size == 128
         assert face_detector.confidence_threshold == 0.5
@@ -93,7 +94,7 @@ class TestFaceDetector:
         assert face_detector.model_session is None
         assert len(face_detector.anchors) > 0
 
-    def test_generate_anchors(self, face_detector):
+    def test_generate_anchors(self, face_detector) -> None:
         """Test anchor generation for BlazeFace."""
         anchors = face_detector._generate_anchors()
 
@@ -105,7 +106,9 @@ class TestFaceDetector:
         assert np.all(anchors >= 0)
         assert np.all(anchors <= 1)
 
-    def test_detect_with_heuristics_portrait(self, face_detector, portrait_image):
+    def test_detect_with_heuristics_portrait(
+        self, face_detector, portrait_image
+    ) -> None:
         """Test heuristic face detection on portrait image."""
         faces = face_detector.detect(portrait_image)
 
@@ -121,7 +124,7 @@ class TestFaceDetector:
         assert first_face.height > 20
         assert 0 <= first_face.confidence <= 1.0
 
-    def test_detect_with_heuristics_blank(self, face_detector):
+    def test_detect_with_heuristics_blank(self, face_detector) -> None:
         """Test heuristic face detection on blank image."""
         blank_img = Image.new("RGB", (300, 300), color="white")
         faces = face_detector.detect(blank_img)
@@ -129,7 +132,7 @@ class TestFaceDetector:
         assert isinstance(faces, list)
         assert len(faces) == 0  # No faces in blank image
 
-    def test_detect_with_model(self, mock_model_session, portrait_image):
+    def test_detect_with_model(self, mock_model_session, portrait_image) -> None:
         """Test ML-based face detection."""
         detector = FaceDetector(model_session=mock_model_session, input_size=128)
         faces = detector.detect(portrait_image)
@@ -140,7 +143,7 @@ class TestFaceDetector:
         # Verify model was called
         mock_model_session.run.assert_called_once()
 
-    def test_preprocess_for_model(self, face_detector):
+    def test_preprocess_for_model(self, face_detector) -> None:
         """Test image preprocessing for model."""
         # Create test image
         test_img = Image.new("RGB", (640, 480), color="blue")
@@ -153,7 +156,7 @@ class TestFaceDetector:
         assert preprocessed.shape == (1, 3, 128, 128)  # Batch, channels, H, W
         assert -1.0 <= preprocessed.min() <= preprocessed.max() <= 1.0
 
-    def test_decode_detections(self, face_detector):
+    def test_decode_detections(self, face_detector) -> None:
         """Test decoding of raw model outputs."""
         # Create mock outputs
         raw_outputs = np.zeros((896, 5), dtype=np.float32)
@@ -173,7 +176,7 @@ class TestFaceDetector:
         assert 0 < h <= 1
         assert 0.5 < conf <= 1.0
 
-    def test_non_maximum_suppression(self, face_detector):
+    def test_non_maximum_suppression(self, face_detector) -> None:
         """Test NMS to remove duplicate detections."""
         # Create overlapping detections
         detections = [
@@ -189,7 +192,7 @@ class TestFaceDetector:
         assert filtered[0][4] == 0.9  # Highest confidence kept
         assert filtered[1][4] == 0.85  # Separate face kept
 
-    def test_calculate_iou(self, face_detector):
+    def test_calculate_iou(self, face_detector) -> None:
         """Test Intersection over Union calculation."""
         # Identical boxes
         box1 = (0.1, 0.1, 0.2, 0.2)
@@ -209,7 +212,7 @@ class TestFaceDetector:
         iou = face_detector._calculate_iou(box1, box2)
         assert 0 < iou < 1
 
-    def test_detect_skin_regions(self, face_detector, portrait_image):
+    def test_detect_skin_regions(self, face_detector, portrait_image) -> None:
         """Test skin color detection."""
         img_array = np.array(portrait_image)
         skin_mask = face_detector._detect_skin_regions(img_array)
@@ -221,7 +224,7 @@ class TestFaceDetector:
         # Should detect some skin pixels
         assert np.sum(skin_mask) > 0
 
-    def test_calculate_importance_scores(self, face_detector):
+    def test_calculate_importance_scores(self, face_detector) -> None:
         """Test face importance score calculation."""
         # Create faces with different sizes and positions
         faces = [
@@ -239,7 +242,7 @@ class TestFaceDetector:
         # Center, larger face should have higher importance
         assert scored_faces[0].confidence > scored_faces[1].confidence
 
-    def test_multi_face_detection(self, face_detector, multi_face_image):
+    def test_multi_face_detection(self, face_detector, multi_face_image) -> None:
         """Test detection of multiple faces."""
         faces = face_detector.detect(multi_face_image)
 
@@ -252,7 +255,7 @@ class TestFaceDetector:
             distance = abs(face1.x - face2.x) + abs(face1.y - face2.y)
             assert distance > 100  # Faces should be separated
 
-    def test_face_limit(self, face_detector):
+    def test_face_limit(self, face_detector) -> None:
         """Test that face detection is limited to reasonable number."""
         # Create mock with many detections
         mock_detections = [(0.1 * i, 0.1 * i, 0.05, 0.05, 0.6) for i in range(20)]
@@ -268,7 +271,7 @@ class TestFaceDetector:
                 # Should be limited
                 assert len(faces) <= 10
 
-    def test_privacy_preservation(self, face_detector):
+    def test_privacy_preservation(self, face_detector) -> None:
         """Test that only bounding boxes are returned (no identity info)."""
         faces = face_detector.detect(Image.new("RGB", (200, 200)))
 
@@ -284,7 +287,7 @@ class TestFaceDetector:
             assert not hasattr(face, "features")
             assert not hasattr(face, "identity")
 
-    def test_detection_error_handling(self, face_detector):
+    def test_detection_error_handling(self, face_detector) -> None:
         """Test error handling in detection."""
         # Mock an error during detection
         with patch.object(
@@ -297,7 +300,7 @@ class TestFaceDetector:
             # Should return empty list on error
             assert faces == []
 
-    def test_clear_sensitive_data(self, face_detector):
+    def test_clear_sensitive_data(self, face_detector) -> None:
         """Test that sensitive data clearing method exists."""
         # Should not raise error
         face_detector._clear_sensitive_data()

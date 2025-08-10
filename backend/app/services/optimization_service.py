@@ -1,27 +1,27 @@
 """Service for advanced image optimization."""
 
-import uuid
 import time
-from typing import Optional, Any, Dict, Tuple
+import uuid
+from typing import Any, Dict, Optional, Tuple
 
+from app.core.intelligence.engine import IntelligenceEngine
 from app.core.optimization import (
-    QualityAnalyzer,
-    OptimizationEngine,
-    RegionOptimizer,
     AlphaOptimizer,
     EncodingOptions,
     LosslessCompressor,
-    ChromaSubsampling,
+    OptimizationEngine,
+    QualityAnalyzer,
+    RegionOptimizer,
 )
-from app.core.intelligence.engine import IntelligenceEngine
 from app.core.security.errors_simplified import SecurityErrorHandler
+from app.models.optimization import (
+    AlphaChannelInfo,
+)
+from app.models.optimization import OptimizationPass as OptimizationPassModel
 from app.models.optimization import (
     OptimizationRequest,
     OptimizationResponse,
     QualityMetrics,
-    RegionInfo,
-    AlphaChannelInfo,
-    OptimizationPass as OptimizationPassModel,
 )
 from app.utils.logging import get_logger
 
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 class OptimizationService:
     """Handles advanced optimization operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the optimization service."""
         self.quality_analyzer = QualityAnalyzer(enable_caching=True)
         self.optimization_engine = OptimizationEngine(

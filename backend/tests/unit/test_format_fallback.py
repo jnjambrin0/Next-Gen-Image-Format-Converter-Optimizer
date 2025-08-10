@@ -1,24 +1,24 @@
 """Unit tests for format fallback system."""
 
-import pytest
-from unittest.mock import Mock, patch
-from typing import Set
-
 # Import fixtures
 import sys
 from pathlib import Path
+from typing import Any
+from unittest.mock import Mock
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from app.core.conversion.manager import ConversionManager
 from app.core.conversion.formats.base import BaseFormatHandler
+from app.core.conversion.manager import ConversionManager
 from app.core.exceptions import UnsupportedFormatError
 
 
 class MockHandler(BaseFormatHandler):
     """Mock format handler for testing."""
 
-    def __init__(self, format_name: str):
+    def __init__(self, format_name: str) -> None:
         super().__init__()
         self.format_name = format_name
         self.supported_formats = [format_name]
@@ -29,10 +29,10 @@ class MockHandler(BaseFormatHandler):
     def validate_image(self, image_data: bytes) -> bool:
         return True
 
-    def load_image(self, image_data: bytes):
+    def load_image(self, image_data: bytes) -> None:
         return Mock()
 
-    def save_image(self, image, output_buffer, settings):
+    def save_image(self, image, output_buffer, settings) -> None:
         output_buffer.write(b"mock output")
 
 
@@ -40,7 +40,7 @@ class TestFormatFallback:
     """Test suite for format fallback functionality."""
 
     @pytest.fixture
-    def conversion_manager(self):
+    def conversion_manager(self) -> None:
         """Create a conversion manager with mock handlers."""
         manager = ConversionManager()
         # Clear default handlers
@@ -48,7 +48,7 @@ class TestFormatFallback:
         manager.available_formats.clear()
         return manager
 
-    def test_direct_format_available(self, conversion_manager):
+    def test_direct_format_available(self, conversion_manager) -> None:
         """Test when requested format is directly available."""
         # Register handler
         conversion_manager.register_handler("webp", lambda: MockHandler("webp"))
@@ -59,7 +59,7 @@ class TestFormatFallback:
         assert format_to_use == "webp"
         assert is_fallback is False
 
-    def test_fallback_to_first_available(self, conversion_manager):
+    def test_fallback_to_first_available(self, conversion_manager) -> None:
         """Test fallback to first available format in chain."""
         # Register only PNG handler
         conversion_manager.register_handler("png", lambda: MockHandler("png"))
@@ -72,7 +72,7 @@ class TestFormatFallback:
         assert format_to_use == "png"
         assert is_fallback is True
 
-    def test_fallback_chain_order(self, conversion_manager):
+    def test_fallback_chain_order(self, conversion_manager) -> None:
         """Test that fallback follows the defined chain order."""
         # WebP2 fallback chain is ["webp", "png"]
         # Register both, should pick webp first
@@ -86,7 +86,7 @@ class TestFormatFallback:
         assert format_to_use == "webp"
         assert is_fallback is True
 
-    def test_no_fallback_available(self, conversion_manager):
+    def test_no_fallback_available(self, conversion_manager) -> None:
         """Test when no fallback is available."""
         # Don't register any handlers
 
@@ -96,7 +96,7 @@ class TestFormatFallback:
         assert "webp2" in str(exc_info.value)
         assert "no fallback found" in str(exc_info.value)
 
-    def test_format_without_fallback_definition(self, conversion_manager):
+    def test_format_without_fallback_definition(self, conversion_manager) -> None:
         """Test format that has no fallback defined."""
         # Request a format not in fallback mapping
         with pytest.raises(UnsupportedFormatError) as exc_info:
@@ -104,14 +104,14 @@ class TestFormatFallback:
 
         assert "unknown_format" in str(exc_info.value)
 
-    def test_is_format_available_direct(self, conversion_manager):
+    def test_is_format_available_direct(self, conversion_manager) -> None:
         """Test is_format_available for directly available format."""
         conversion_manager.register_handler("jpeg", lambda: MockHandler("jpeg"))
 
         assert conversion_manager.is_format_available("jpeg") is True
         assert conversion_manager.is_format_available("png") is False
 
-    def test_is_format_available_via_fallback(self, conversion_manager):
+    def test_is_format_available_via_fallback(self, conversion_manager) -> None:
         """Test is_format_available for format available via fallback."""
         # Register PNG which is a fallback for jpeg_xl
         conversion_manager.register_handler("png", lambda: MockHandler("png"))
@@ -124,7 +124,7 @@ class TestFormatFallback:
         # Test format with no fallback available
         assert conversion_manager.is_format_available("unknown_format") is False
 
-    def test_get_available_formats_includes_fallbacks(self, conversion_manager):
+    def test_get_available_formats_includes_fallbacks(self, conversion_manager) -> None:
         """Test that get_available_formats includes formats with working fallbacks."""
         # Register some handlers
         conversion_manager.register_handler("jpeg", lambda: MockHandler("jpeg"))
@@ -146,7 +146,7 @@ class TestFormatFallback:
         # Should be sorted
         assert available == sorted(available)
 
-    def test_optimized_format_fallback(self, conversion_manager):
+    def test_optimized_format_fallback(self, conversion_manager) -> None:
         """Test optimized format fallback to regular format."""
         # Register regular JPEG handler
         conversion_manager.register_handler("jpeg", lambda: MockHandler("jpeg"))
@@ -159,7 +159,7 @@ class TestFormatFallback:
         assert format_to_use == "jpeg"
         assert is_fallback is True
 
-    def test_case_insensitive_format_lookup(self, conversion_manager):
+    def test_case_insensitive_format_lookup(self, conversion_manager) -> None:
         """Test that format lookup is case-insensitive."""
         conversion_manager.register_handler("JPEG", lambda: MockHandler("jpeg"))
 
@@ -168,7 +168,7 @@ class TestFormatFallback:
         assert conversion_manager.is_format_available("JPEG") is True
         assert conversion_manager.is_format_available("Jpeg") is True
 
-    def test_fallback_mapping_completeness(self, conversion_manager):
+    def test_fallback_mapping_completeness(self, conversion_manager) -> None:
         """Test that all fallback formats are valid."""
         # Verify all formats in fallback chains are recognized format names
         all_formats = set()
@@ -193,6 +193,6 @@ class TestFormatFallback:
     )
     def test_specific_fallback_chains(
         self, conversion_manager, format_name, expected_fallbacks
-    ):
+    ) -> None:
         """Test specific fallback chains are correctly defined."""
         assert conversion_manager.format_fallbacks[format_name] == expected_fallbacks

@@ -4,11 +4,11 @@ import asyncio
 import os
 import tempfile
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Any
+
 import pytest
 
 from app.services.batch_history_service import BatchHistoryService
-from app.core.batch.models import BatchJobStatus, BatchResult
 
 
 @pytest.fixture

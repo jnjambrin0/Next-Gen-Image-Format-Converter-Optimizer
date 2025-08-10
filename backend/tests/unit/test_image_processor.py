@@ -1,20 +1,20 @@
 """Unit tests for the Image Processor module."""
 
-import pytest
-from unittest.mock import Mock, patch
-from io import BytesIO
-from PIL import Image
-
 # Import fixtures
 import sys
+from io import BytesIO
 from pathlib import Path
+from typing import Any
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.image_processor import ImageProcessor
 from app.core.exceptions import (
-    InvalidImageError,
     ConversionFailedError,
+    InvalidImageError,
 )
 
 
@@ -22,32 +22,34 @@ class TestImageProcessor:
     """Test suite for ImageProcessor class."""
 
     @pytest.fixture
-    def image_processor(self):
+    def image_processor(self) -> None:
         """Create an ImageProcessor instance for testing."""
         return ImageProcessor()
 
     @pytest.fixture
-    def valid_jpeg_data(self, image_generator):
+    def valid_jpeg_data(self, image_generator) -> None:
         """Generate valid JPEG data."""
         return image_generator(width=100, height=100, format="JPEG")
 
     @pytest.fixture
-    def valid_png_data(self, image_generator):
+    def valid_png_data(self, image_generator) -> None:
         """Generate valid PNG data."""
         return image_generator(width=100, height=100, format="PNG")
 
-    def test_validate_image_data_success(self, image_processor, valid_jpeg_data):
+    def test_validate_image_data_success(
+        self, image_processor, valid_jpeg_data
+    ) -> None:
         """Test successful image validation."""
         # Act & Assert
         assert image_processor.validate_image_data(valid_jpeg_data) is True
 
-    def test_validate_empty_data_raises_error(self, image_processor):
+    def test_validate_empty_data_raises_error(self, image_processor) -> None:
         """Test validation of empty data."""
         # Act & Assert
         with pytest.raises(InvalidImageError, match="Empty image data"):
             image_processor.validate_image_data(b"")
 
-    def test_validate_invalid_data_raises_error(self, image_processor):
+    def test_validate_invalid_data_raises_error(self, image_processor) -> None:
         """Test validation of invalid image data."""
         # Arrange
         invalid_data = b"This is not an image"
@@ -56,7 +58,7 @@ class TestImageProcessor:
         with pytest.raises(InvalidImageError, match="Invalid image data"):
             image_processor.validate_image_data(invalid_data)
 
-    def test_validate_oversized_dimensions_raises_error(self, image_processor):
+    def test_validate_oversized_dimensions_raises_error(self, image_processor) -> None:
         """Test validation of images exceeding dimension limits."""
         # Arrange
         # Create image exceeding max dimension
@@ -69,7 +71,7 @@ class TestImageProcessor:
         with pytest.raises(InvalidImageError, match="dimensions exceed maximum"):
             image_processor.validate_image_data(oversized_data)
 
-    def test_validate_too_many_pixels_raises_error(self, image_processor):
+    def test_validate_too_many_pixels_raises_error(self, image_processor) -> None:
         """Test validation of images exceeding pixel count limit."""
         # Arrange
         # Create image with too many pixels
@@ -82,7 +84,7 @@ class TestImageProcessor:
         with pytest.raises(InvalidImageError, match="exceed"):
             image_processor.validate_image_data(large_data)
 
-    def test_detect_format_jpeg(self, image_processor, valid_jpeg_data):
+    def test_detect_format_jpeg(self, image_processor, valid_jpeg_data) -> None:
         """Test JPEG format detection."""
         # Act
         format_name = image_processor.detect_format(valid_jpeg_data)
@@ -90,7 +92,7 @@ class TestImageProcessor:
         # Assert
         assert format_name == "jpeg"
 
-    def test_detect_format_png(self, image_processor, valid_png_data):
+    def test_detect_format_png(self, image_processor, valid_png_data) -> None:
         """Test PNG format detection."""
         # Act
         format_name = image_processor.detect_format(valid_png_data)
@@ -98,7 +100,7 @@ class TestImageProcessor:
         # Assert
         assert format_name == "png"
 
-    def test_detect_format_invalid_data_raises_error(self, image_processor):
+    def test_detect_format_invalid_data_raises_error(self, image_processor) -> None:
         """Test format detection with invalid data."""
         # Arrange
         invalid_data = b"Not an image"
@@ -107,7 +109,7 @@ class TestImageProcessor:
         with pytest.raises(InvalidImageError, match="Failed to detect image format"):
             image_processor.detect_format(invalid_data)
 
-    def test_get_image_info_success(self, image_processor, sample_image_bytes):
+    def test_get_image_info_success(self, image_processor, sample_image_bytes) -> None:
         """Test getting image information."""
         # Act
         info = image_processor.get_image_info(sample_image_bytes)
@@ -121,7 +123,7 @@ class TestImageProcessor:
         assert "has_animation" in info
         assert "has_exif" in info
 
-    def test_get_image_info_with_transparency(self, image_processor):
+    def test_get_image_info_with_transparency(self, image_processor) -> None:
         """Test getting info for image with transparency."""
         # Arrange
         img = Image.new("RGBA", (100, 100), (255, 0, 0, 128))
@@ -138,7 +140,9 @@ class TestImageProcessor:
         # RGBA mode alone doesn't guarantee transparency info is preserved
         assert info["mode"] == "RGBA"
 
-    def test_get_image_info_animated_gif(self, image_processor, all_test_images):
+    def test_get_image_info_animated_gif(
+        self, image_processor, all_test_images
+    ) -> None:
         """Test getting info for animated GIF."""
         # Arrange
         gif_path = all_test_images["animated_gif"]["path"]
@@ -152,7 +156,7 @@ class TestImageProcessor:
         assert info["format"] == "GIF"
         assert info["has_animation"] is True
 
-    def test_get_image_info_invalid_data_raises_error(self, image_processor):
+    def test_get_image_info_invalid_data_raises_error(self, image_processor) -> None:
         """Test getting info from invalid data."""
         # Arrange
         invalid_data = b"Not an image"
@@ -161,7 +165,7 @@ class TestImageProcessor:
         with pytest.raises(ConversionFailedError, match="Failed to get image info"):
             image_processor.get_image_info(invalid_data)
 
-    def test_estimate_memory_usage_rgb(self, image_processor):
+    def test_estimate_memory_usage_rgb(self, image_processor) -> None:
         """Test memory usage estimation for RGB image."""
         # Act
         memory = image_processor.estimate_memory_usage(1920, 1080, "RGB")
@@ -171,7 +175,7 @@ class TestImageProcessor:
         expected_with_overhead = expected_base * 1.2
         assert memory == int(expected_with_overhead)
 
-    def test_estimate_memory_usage_rgba(self, image_processor):
+    def test_estimate_memory_usage_rgba(self, image_processor) -> None:
         """Test memory usage estimation for RGBA image."""
         # Act
         memory = image_processor.estimate_memory_usage(1000, 1000, "RGBA")
@@ -181,7 +185,7 @@ class TestImageProcessor:
         expected_with_overhead = expected_base * 1.2
         assert memory == int(expected_with_overhead)
 
-    def test_estimate_memory_usage_grayscale(self, image_processor):
+    def test_estimate_memory_usage_grayscale(self, image_processor) -> None:
         """Test memory usage estimation for grayscale image."""
         # Act
         memory = image_processor.estimate_memory_usage(500, 500, "L")
@@ -191,7 +195,7 @@ class TestImageProcessor:
         expected_with_overhead = expected_base * 1.2
         assert memory == int(expected_with_overhead)
 
-    def test_strip_metadata(self, image_processor, sample_image_path):
+    def test_strip_metadata(self, image_processor, sample_image_path) -> None:
         """Test metadata stripping."""
         # Arrange
         with Image.open(sample_image_path) as img:
@@ -206,7 +210,7 @@ class TestImageProcessor:
             if hasattr(stripped_img, "_getexif"):
                 assert stripped_img._getexif() is None
 
-    def test_strip_metadata_preserves_transparency(self, image_processor):
+    def test_strip_metadata_preserves_transparency(self, image_processor) -> None:
         """Test that transparency is preserved when stripping metadata."""
         # Arrange
         img = Image.new("RGBA", (100, 100), (255, 0, 0, 128))
@@ -219,7 +223,7 @@ class TestImageProcessor:
         assert "transparency" in stripped_img.info
         assert stripped_img.info["transparency"] == 128
 
-    def test_optimize_for_web_resizes_large_image(self, image_processor):
+    def test_optimize_for_web_resizes_large_image(self, image_processor) -> None:
         """Test web optimization resizes large images."""
         # Arrange
         large_img = Image.new("RGB", (4000, 3000))
@@ -235,7 +239,7 @@ class TestImageProcessor:
         # Should maintain aspect ratio
         assert abs((optimized.width / optimized.height) - (4000 / 3000)) < 0.01
 
-    def test_optimize_for_web_keeps_small_image(self, image_processor):
+    def test_optimize_for_web_keeps_small_image(self, image_processor) -> None:
         """Test web optimization doesn't resize small images."""
         # Arrange
         small_img = Image.new("RGB", (800, 600))
@@ -247,7 +251,7 @@ class TestImageProcessor:
         assert optimized.width == 800
         assert optimized.height == 600
 
-    def test_optimize_for_web_converts_cmyk(self, image_processor):
+    def test_optimize_for_web_converts_cmyk(self, image_processor) -> None:
         """Test web optimization converts CMYK to RGB."""
         # Arrange
         cmyk_img = Image.new("CMYK", (100, 100))
@@ -275,7 +279,9 @@ class TestImageProcessor:
             ("UNKNOWN", 4),  # Unknown mode defaults to 4
         ],
     )
-    def test_estimate_memory_usage_modes(self, image_processor, mode, expected_bytes):
+    def test_estimate_memory_usage_modes(
+        self, image_processor, mode, expected_bytes
+    ) -> None:
         """Test memory estimation for different color modes."""
         # Act
         memory = image_processor.estimate_memory_usage(100, 100, mode)

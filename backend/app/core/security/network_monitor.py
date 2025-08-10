@@ -8,14 +8,15 @@ simply verifies that no connections exist.
 import asyncio
 import os
 import subprocess
-import structlog
-from typing import Optional
 from datetime import datetime
+from typing import Any, Optional
 
+import structlog
+
+from app.core.constants import CONNECTION_CHECK_TIMEOUT, DEFAULT_MONITORING_INTERVAL
 from app.core.monitoring.security_events import SecurityEventTracker
-from app.models.security_event import SecurityEventType, SecuritySeverity
 from app.core.security.parsers import check_network_isolation
-from app.core.constants import DEFAULT_MONITORING_INTERVAL, CONNECTION_CHECK_TIMEOUT
+from app.models.security_event import SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()
 
@@ -32,7 +33,7 @@ class NetworkMonitor:
         security_tracker: Optional[SecurityEventTracker] = None,
         check_interval: float = DEFAULT_MONITORING_INTERVAL,
         enabled: bool = True,
-    ):
+    ) -> None:
         """Initialize network monitor."""
         self.security_tracker = security_tracker
         self.check_interval = check_interval

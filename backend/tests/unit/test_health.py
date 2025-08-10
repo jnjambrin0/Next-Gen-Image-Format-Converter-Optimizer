@@ -1,7 +1,9 @@
+import os
+import sys
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
-import sys
-import os
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
@@ -13,18 +15,18 @@ class TestHealthEndpoint:
     """Test health check endpoint functionality."""
 
     @pytest.fixture
-    def client(self):
+    def client(self) -> None:
         """Create test client."""
         return TestClient(app)
 
-    def test_health_endpoint_success(self, client):
+    def test_health_endpoint_success(self, client) -> None:
         """Test successful health check."""
         response = client.get("/api/health")
 
         assert response.status_code == 200
         assert response.json() == {"status": "healthy"}
 
-    def test_health_endpoint_headers(self, client):
+    def test_health_endpoint_headers(self, client) -> None:
         """Test health endpoint response headers."""
         response = client.get("/api/health")
 
@@ -35,7 +37,7 @@ class TestHealthEndpoint:
         # Check content type
         assert response.headers["content-type"] == "application/json"
 
-    def test_health_endpoint_methods(self, client):
+    def test_health_endpoint_methods(self, client) -> None:
         """Test that only GET method is allowed."""
         # Test POST - should fail
         response = client.post("/api/health")
@@ -53,14 +55,14 @@ class TestHealthEndpoint:
         response = client.get("/api/health")
         assert response.status_code == 200
 
-    def test_health_endpoint_with_query_params(self, client):
+    def test_health_endpoint_with_query_params(self, client) -> None:
         """Test health endpoint ignores query parameters."""
         response = client.get("/api/health?test=123&foo=bar")
 
         assert response.status_code == 200
         assert response.json() == {"status": "healthy"}
 
-    def test_health_endpoint_cors(self, client):
+    def test_health_endpoint_cors(self, client) -> None:
         """Test CORS headers on health endpoint."""
         response = client.get(
             "/api/health", headers={"Origin": "http://localhost:5173"}
@@ -69,7 +71,7 @@ class TestHealthEndpoint:
         assert response.status_code == 200
         assert "access-control-allow-origin" in response.headers
 
-    def test_health_endpoint_logging(self, client, caplog):
+    def test_health_endpoint_logging(self, client, caplog) -> None:
         """Test that health endpoint requests are logged."""
         import logging
 
@@ -82,7 +84,7 @@ class TestHealthEndpoint:
             # Just check that some logging occurred
             assert len(caplog.records) > 0
 
-    def test_health_endpoint_performance(self, client):
+    def test_health_endpoint_performance(self, client) -> None:
         """Test health endpoint response time."""
         import time
 

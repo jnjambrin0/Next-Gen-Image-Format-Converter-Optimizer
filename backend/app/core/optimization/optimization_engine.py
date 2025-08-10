@@ -2,13 +2,11 @@
 
 import asyncio
 import time
-from typing import Dict, Any, Optional, Callable, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Optional, Tuple
 
-from app.core.constants import INTELLIGENCE_TIMEOUT_MS
 from app.core.security.errors_simplified import create_file_error
-from app.core.security.memory import secure_clear
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -63,7 +61,7 @@ class OptimizationEngine:
         quality_analyzer: Optional[Any] = None,
         max_passes: int = MAX_OPTIMIZATION_PASSES,
         size_tolerance_percent: float = SIZE_TOLERANCE_PERCENT,
-    ):
+    ) -> None:
         """Initialize the optimization engine.
 
         Args:

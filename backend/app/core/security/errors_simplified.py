@@ -6,8 +6,8 @@ security-related errors with privacy-aware messaging.
 """
 
 import asyncio
-from typing import Optional, Dict, Any
-import traceback
+from typing import Any, Dict, Optional
+
 import structlog
 
 logger = structlog.get_logger()
@@ -29,14 +29,14 @@ class SecurityError(Exception):
         category: str,
         details: Optional[Dict[str, Any]] = None,
         message: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize security error.
 
         Args:
             category: Error category (network, sandbox, rate_limit, verification, file)
-            details: Optional context details (no PII allowed)
-            message: Optional custom message (defaults to category description)
+            details: Optional[Any] context details (no PII allowed)
+            message: Optional[Any] custom message (defaults to category description)
         """
         self.category = category
         self.details = details or {}
@@ -90,8 +90,7 @@ class SecurityErrorHandler:
         Args:
             error: The exception to handle
 
-        Returns:
-            Dict with error details (no PII)
+        Returns: Dict[str, Any] with error details (no PII)
         """
         if isinstance(error, SecurityError):
             return {
@@ -129,7 +128,7 @@ class SecurityErrorHandler:
         }
 
 
-def handle_security_errors(func):
+def handle_security_errors(func) -> None:
     """
     Decorator to handle security errors consistently.
 

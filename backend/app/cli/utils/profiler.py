@@ -3,26 +3,25 @@ CLI profiling utilities for performance tracking.
 Provides decorators and context managers for profiling CLI operations.
 """
 
-import time
-import json
 import functools
-from pathlib import Path
-from typing import Optional, Dict, Any, Callable
+import json
+import time
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional
 
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 from rich import box
+from rich.panel import Panel
+from rich.table import Table
 
-from app.core.monitoring.performance import (
-    performance_profiler,
-    ConversionMetrics,
-    BatchMetrics,
-)
-from app.cli.utils.emoji import get_emoji, should_use_emoji
 from app.cli.ui.themes import get_theme_manager
+from app.cli.utils.emoji import get_emoji, should_use_emoji
+from app.core.monitoring.performance import (
+    BatchMetrics,
+    ConversionMetrics,
+    performance_profiler,
+)
 
 # Initialize themed console
 theme_manager = get_theme_manager()
@@ -34,32 +33,34 @@ class CLIProfiler:
     CLI-specific profiler for tracking command performance.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CLI profiler."""
         self.enabled = False
         self.output_path: Optional[Path] = None
         self.show_summary = True
         self.current_metrics = None
 
-    def enable(self, output_path: Optional[Path] = None, show_summary: bool = True):
+    def enable(
+        self, output_path: Optional[Path] = None, show_summary: bool = True
+    ) -> None:
         """
         Enable profiling for CLI commands.
 
         Args:
-            output_path: Optional path to save profile JSON
+            output_path: Optional[Any] path to save profile JSON
             show_summary: Whether to show summary after command
         """
         self.enabled = True
         self.output_path = output_path
         self.show_summary = show_summary
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable profiling."""
         self.enabled = False
         self.output_path = None
 
     @contextmanager
-    def profile_operation(self, operation_name: str):
+    def profile_operation(self, operation_name: str) -> None:
         """
         Context manager for profiling an operation.
 
@@ -94,7 +95,7 @@ class CLIProfiler:
         input_format: str = "",
         output_format: str = "",
         memory_used: int = 0,
-    ):
+    ) -> None:
         """
         Track metrics for a single conversion.
 
@@ -126,7 +127,7 @@ class CLIProfiler:
             compression_ratio=input_size / output_size if output_size > 0 else 0,
         )
 
-    def display_profile_summary(self, profile_data: Dict[str, Any]):
+    def display_profile_summary(self, profile_data: Dict[str, Any]) -> None:
         """
         Display a formatted summary of profile data.
 
@@ -248,7 +249,7 @@ class CLIProfiler:
             console.print("\n")
             console.print(conversion_table)
 
-    def save_profile(self, profile_data: Dict[str, Any]):
+    def save_profile(self, profile_data: Dict[str, Any]) -> None:
         """
         Save profile data to JSON file.
 
@@ -276,7 +277,7 @@ class CLIProfiler:
         except Exception as e:
             console.print(f"[error]Failed to save profile: {e}[/error]")
 
-    def display_batch_metrics(self, batch_metrics: BatchMetrics):
+    def display_batch_metrics(self, batch_metrics: BatchMetrics) -> None:
         """
         Display formatted batch processing metrics.
 
@@ -354,12 +355,12 @@ def profile_command(func: Callable) -> Callable:
 
     Usage:
         @profile_command
-        def my_command(args):
+        def my_command(args) -> None:
             ...
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> None:
         # Check if profiling is enabled via kwargs
         profile = kwargs.pop("profile", False)
         profile_output = kwargs.pop("profile_output", None)

@@ -1,32 +1,31 @@
 """Tests for metadata stripping functionality."""
 
-import pytest
-import asyncio
-from PIL import Image
-from PIL.ExifTags import TAGS
-import piexif
 import io
-from pathlib import Path
+from typing import Any
 
-from app.core.security.metadata import MetadataStripper
+import piexif
+import pytest
+from PIL import Image
+
 from app.core.security.engine import SecurityEngine
+from app.core.security.metadata import MetadataStripper
 
 
 class TestMetadataStripper:
     """Test metadata stripping functionality."""
 
     @pytest.fixture
-    def metadata_stripper(self):
+    def metadata_stripper(self) -> None:
         """Create metadata stripper instance."""
         return MetadataStripper()
 
     @pytest.fixture
-    def security_engine(self):
+    def security_engine(self) -> None:
         """Create security engine instance."""
         return SecurityEngine()
 
     @pytest.fixture
-    def sample_image_with_exif(self):
+    def sample_image_with_exif(self) -> None:
         """Create a sample JPEG image with EXIF data."""
         # Create a simple image
         img = Image.new("RGB", (100, 100), color="red")
@@ -76,7 +75,7 @@ class TestMetadataStripper:
         return output.read()
 
     @pytest.fixture
-    def sample_png_with_metadata(self):
+    def sample_png_with_metadata(self) -> None:
         """Create a sample PNG image with metadata."""
         img = Image.new("RGBA", (100, 100), color="green")
 

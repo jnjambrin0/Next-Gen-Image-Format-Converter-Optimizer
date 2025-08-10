@@ -3,9 +3,9 @@ Security metrics collection for network monitoring.
 """
 
 import time
-from typing import Dict, Any, Optional
 from datetime import datetime
 from threading import Lock
+from typing import Any, Dict, Optional
 
 from app.core.security.types import SecurityMetrics
 
@@ -13,7 +13,7 @@ from app.core.security.types import SecurityMetrics
 class SecurityMetricsCollector:
     """Collects metrics for security monitoring performance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics collector."""
         self._metrics: SecurityMetrics = {
             "verification_time_ms": 0.0,

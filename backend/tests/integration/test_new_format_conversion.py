@@ -1,31 +1,31 @@
 """Integration tests for new format conversion support."""
 
-import pytest
-from io import BytesIO
-from PIL import Image
-import asyncio
-
 # Import fixtures
 import sys
+from io import BytesIO
 from pathlib import Path
+from typing import Any
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import ConversionFailedError
 from app.models.conversion import ConversionRequest, InputFormat, OutputFormat
-from app.core.exceptions import ConversionFailedError, UnsupportedFormatError
 
 
 class TestNewFormatConversion:
     """Test suite for new format conversion integration."""
 
     @pytest.fixture
-    def conversion_manager(self):
+    def conversion_manager(self) -> None:
         """Create a ConversionManager instance."""
         return ConversionManager()
 
     @pytest.fixture
-    def create_test_image(self):
+    def create_test_image(self) -> None:
         """Factory to create test images in various formats."""
 
         def _create(format_name: str, size=(100, 100), color="red"):
@@ -137,7 +137,7 @@ class TestNewFormatConversion:
         """Test AVIF to JPEG conversion."""
         # Skip if AVIF support not available
         try:
-            import pillow_avif_plugin
+            pass
         except ImportError:
             pytest.skip("AVIF support not available")
 

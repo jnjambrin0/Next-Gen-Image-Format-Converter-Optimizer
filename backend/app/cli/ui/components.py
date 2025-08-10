@@ -3,28 +3,24 @@ TUI Components
 Reusable components for Terminal UI
 """
 
-from pathlib import Path
-from typing import List, Optional, Dict, Any, Callable
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, List, Optional
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
+from textual.reactive import reactive
 from textual.widgets import (
     Button,
-    Static,
-    Input,
     Label,
-    Select,
-    ListView,
     ListItem,
+    ListView,
     ProgressBar,
-    Switch,
     RadioButton,
     RadioSet,
-    Tree,
+    Static,
+    Switch,
 )
-from textual.reactive import reactive
-from textual.message import Message
 
 from app.cli.utils.emoji import get_emoji, get_format_emoji
 
@@ -53,7 +49,7 @@ class FormatSelector(Container):
         default: str = "webp",
         on_change: Optional[Callable[[str], None]] = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.formats = formats or self.DEFAULT_FORMATS
         self.default = default
@@ -90,7 +86,7 @@ class QualitySlider(Container):
         default: int = 85,
         on_change: Optional[Callable[[int], None]] = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.min_value = min_value
         self.max_value = max_value
@@ -168,7 +164,9 @@ class PresetPicker(Container):
         },
     }
 
-    def __init__(self, on_select: Optional[Callable[[str], None]] = None, **kwargs):
+    def __init__(
+        self, on_select: Optional[Callable[[str], None]] = None, **kwargs
+    ) -> None:
         super().__init__(**kwargs)
         self.on_select = on_select
         self.selected_preset = reactive("none")
@@ -205,7 +203,7 @@ class PresetPicker(Container):
 class FileList(Container):
     """Component for displaying selected files"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.files: List[Path] = []
 
@@ -263,7 +261,7 @@ class StatusIndicator(Static):
         "warning": ("warning", "Warning", "yellow"),
     }
 
-    def __init__(self, initial_status: str = "idle", **kwargs):
+    def __init__(self, initial_status: str = "idle", **kwargs) -> None:
         super().__init__("", **kwargs)
         self.set_status(initial_status)
 
@@ -281,7 +279,7 @@ class StatusIndicator(Static):
 class ConversionForm(Container):
     """Complete form for conversion settings"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.options = ConversionOptions(output_format="webp", quality=85)
 
@@ -335,7 +333,7 @@ class ConversionForm(Container):
 class BatchProgressDisplay(Container):
     """Component for displaying batch conversion progress"""
 
-    def __init__(self, total_files: int = 0, **kwargs):
+    def __init__(self, total_files: int = 0, **kwargs) -> None:
         super().__init__(**kwargs)
         self.total_files = total_files
         self.completed_files = 0

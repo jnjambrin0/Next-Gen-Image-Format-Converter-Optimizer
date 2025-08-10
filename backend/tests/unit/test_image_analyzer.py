@@ -1,10 +1,12 @@
 """Unit tests for the Image Analyzer module (ML content detection)."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import numpy as np
-from PIL import Image
 import io
+from typing import Any
+from unittest.mock import Mock, patch
+
+import numpy as np
+import pytest
+from PIL import Image
 
 # Import fixtures - these will be available when conftest.py is in tests/ directory
 # The fixtures are automatically discovered by pytest
@@ -14,7 +16,7 @@ class TestImageAnalyzer:
     """Test suite for ImageAnalyzer class with ML content detection."""
 
     @pytest.fixture
-    def image_analyzer(self):
+    def image_analyzer(self) -> None:
         """Create an ImageAnalyzer instance for testing."""
         # TODO: Uncomment when ImageAnalyzer is implemented
         # from app.core.intelligence.analyzer import ImageAnalyzer
@@ -42,7 +44,7 @@ class TestImageAnalyzer:
         return mock_analyzer
 
     @pytest.fixture
-    def mock_onnx_model(self):
+    def mock_onnx_model(self) -> None:
         """Mock ONNX Runtime model."""
         with patch("onnxruntime.InferenceSession") as mock_session:
             mock_instance = Mock()
@@ -56,7 +58,7 @@ class TestImageAnalyzer:
 
             yield mock_instance
 
-    def test_analyzer_initialization(self, image_analyzer):
+    def test_analyzer_initialization(self, image_analyzer) -> None:
         """Test analyzer initializes with models loaded."""
         # TODO: Enable when ImageAnalyzer is implemented
         pytest.skip("Waiting for ImageAnalyzer implementation")
@@ -68,7 +70,7 @@ class TestImageAnalyzer:
 
     def test_detect_photograph_content(
         self, image_analyzer, all_test_images, mock_ml_model_response
-    ):
+    ) -> None:
         """Test detection of photograph content type."""
         # Arrange
         photo_path = all_test_images["sample_photo"]["path"]
@@ -88,7 +90,7 @@ class TestImageAnalyzer:
             assert "has_faces" in result["characteristics"]
             assert len(result["optimization_suggestions"]["recommended_formats"]) > 0
 
-    def test_detect_screenshot_content(self, image_analyzer, all_test_images):
+    def test_detect_screenshot_content(self, image_analyzer, all_test_images) -> None:
         """Test detection of screenshot content type."""
         # Arrange
         screenshot_path = all_test_images["screenshot"]["path"]
@@ -116,7 +118,7 @@ class TestImageAnalyzer:
             assert result["characteristics"]["has_ui_elements"] is True
             assert "png" in result["optimization_suggestions"]["recommended_formats"]
 
-    def test_detect_illustration_content(self, image_analyzer, all_test_images):
+    def test_detect_illustration_content(self, image_analyzer, all_test_images) -> None:
         """Test detection of illustration/graphic content type."""
         # Arrange
         illustration_path = all_test_images["illustration"]["path"]
@@ -143,7 +145,7 @@ class TestImageAnalyzer:
             assert result["characteristics"]["has_transparency"] is True
             assert result["optimization_suggestions"]["preserve_transparency"] is True
 
-    def test_detect_document_content(self, image_analyzer, all_test_images):
+    def test_detect_document_content(self, image_analyzer, all_test_images) -> None:
         """Test detection of document/scan content type."""
         # Arrange
         document_path = all_test_images["document_scan"]["path"]
@@ -170,7 +172,7 @@ class TestImageAnalyzer:
             assert result["characteristics"]["has_text"] is True
             assert result["optimization_suggestions"]["preserve_text_clarity"] is True
 
-    def test_quality_prediction(self, image_analyzer, image_generator):
+    def test_quality_prediction(self, image_analyzer, image_generator) -> None:
         """Test quality prediction for different compression levels."""
         # Arrange
         test_image = image_generator(width=800, height=600)
@@ -184,7 +186,7 @@ class TestImageAnalyzer:
         assert 70 <= quality_predictions["optimal_quality"] <= 95
         assert len(quality_predictions["file_size_estimates"]) > 0
 
-    def test_face_detection(self, image_analyzer, mock_onnx_model):
+    def test_face_detection(self, image_analyzer, mock_onnx_model) -> None:
         """Test face detection in images."""
         # Arrange
         # Create test image with face-like features
@@ -203,7 +205,7 @@ class TestImageAnalyzer:
         assert faces[0]["confidence"] > 0.9
         assert "bbox" in faces[0]
 
-    def test_dominant_colors_extraction(self, image_analyzer, all_test_images):
+    def test_dominant_colors_extraction(self, image_analyzer, all_test_images) -> None:
         """Test extraction of dominant colors from image."""
         # Arrange
         photo_path = all_test_images["sample_photo"]["path"]
@@ -218,7 +220,7 @@ class TestImageAnalyzer:
         assert all(isinstance(color, str) and color.startswith("#") for color in colors)
         assert all(len(color) == 7 for color in colors)  # #RRGGBB format
 
-    def test_optimization_suggestions(self, image_analyzer, all_test_images):
+    def test_optimization_suggestions(self, image_analyzer, all_test_images) -> None:
         """Test generation of optimization suggestions based on content."""
         # Test different content types
         test_cases = [
@@ -244,7 +246,7 @@ class TestImageAnalyzer:
             )
             assert suggestions["recommended_quality"] >= min_quality
 
-    def test_batch_analysis(self, image_analyzer, all_test_images):
+    def test_batch_analysis(self, image_analyzer, all_test_images) -> None:
         """Test batch analysis of multiple images."""
         # Arrange
         image_paths = [
@@ -269,7 +271,7 @@ class TestImageAnalyzer:
         assert results[2]["content_type"] == "illustration"
 
     @patch("onnxruntime.InferenceSession")
-    def test_model_loading_failure(self, mock_session):
+    def test_model_loading_failure(self, mock_session) -> None:
         """Test graceful handling of model loading failure."""
         # Arrange
         mock_session.side_effect = Exception("Model file not found")
@@ -283,7 +285,7 @@ class TestImageAnalyzer:
         assert analyzer.model_loaded is False
         assert analyzer.fallback_mode is True
 
-    def test_heuristic_fallback(self, image_analyzer):
+    def test_heuristic_fallback(self, image_analyzer) -> None:
         """Test heuristic analysis when ML model unavailable."""
         # Arrange
         image_analyzer.model_loaded = False
@@ -304,7 +306,7 @@ class TestImageAnalyzer:
         assert result["confidence"] < 0.8  # Lower confidence for heuristic
         assert "optimization_suggestions" in result
 
-    def test_image_complexity_analysis(self, image_analyzer, image_generator):
+    def test_image_complexity_analysis(self, image_analyzer, image_generator) -> None:
         """Test image complexity analysis for optimization."""
         # Arrange
         # Simple image (solid color)
@@ -324,7 +326,7 @@ class TestImageAnalyzer:
         assert simple_complexity["edge_density"] < complex_complexity["edge_density"]
         assert simple_complexity["color_variety"] < complex_complexity["color_variety"]
 
-    def test_transparency_detection(self, image_analyzer):
+    def test_transparency_detection(self, image_analyzer) -> None:
         """Test detection of transparency in images."""
         # Arrange
         # Image with transparency

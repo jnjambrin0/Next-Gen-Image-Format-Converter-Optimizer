@@ -1,31 +1,30 @@
 """
+from typing import Any
 Comprehensive tests for dry-run simulation functionality
 Tests estimation algorithms, validation, and preview features
 """
 
-import pytest
 import json
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
-import time
-from datetime import datetime, timedelta
 import os
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from app.cli.productivity.dry_run import (
-    DryRunSimulator,
-    ConversionEstimate,
     BatchEstimate,
-    ValidationResult,
+    ConversionEstimate,
+    DryRunSimulator,
     ResourceEstimate,
     SimulationMode,
+    ValidationResult,
 )
 
 
 class TestConversionEstimate:
     """Test ConversionEstimate dataclass and calculations"""
 
-    def test_estimate_creation_with_defaults(self):
+    def test_estimate_creation_with_defaults(self) -> None:
         """Test creating estimate with default values"""
         estimate = ConversionEstimate(
             input_file="test.jpg",
@@ -41,7 +40,7 @@ class TestConversionEstimate:
         assert estimate.success_probability == 0.95
         assert estimate.warnings == []
 
-    def test_estimate_with_warnings(self):
+    def test_estimate_with_warnings(self) -> None:
         """Test estimate with warning conditions"""
         estimate = ConversionEstimate(
             input_file="large.png",
@@ -55,7 +54,7 @@ class TestConversionEstimate:
         assert len(estimate.warnings) == 2
         assert "Large file" in estimate.warnings[0]
 
-    def test_compression_ratio_calculation(self):
+    def test_compression_ratio_calculation(self) -> None:
         """Test automatic compression ratio calculation"""
         estimate = ConversionEstimate(
             input_file="test.bmp",
@@ -66,7 +65,7 @@ class TestConversionEstimate:
 
         assert estimate.compression_ratio == 0.1
 
-    def test_resource_requirements(self):
+    def test_resource_requirements(self) -> None:
         """Test resource requirement estimates"""
         estimate = ConversionEstimate(
             input_file="huge.tiff",
@@ -82,7 +81,7 @@ class TestConversionEstimate:
         assert estimate.estimated_cpu_percent == 85
         assert estimate.estimated_time_seconds == 120
 
-    def test_format_conversion_matrix(self):
+    def test_format_conversion_matrix(self) -> None:
         """Test format compatibility and success probability"""
         # Test known good conversions
         good_conversion = ConversionEstimate(
@@ -110,7 +109,7 @@ class TestConversionEstimate:
 class TestBatchEstimate:
     """Test batch processing estimates"""
 
-    def test_batch_estimate_aggregation(self):
+    def test_batch_estimate_aggregation(self) -> None:
         """Test aggregating individual estimates into batch"""
         estimates = [
             ConversionEstimate(
@@ -136,7 +135,7 @@ class TestBatchEstimate:
         assert batch.average_compression_ratio == 0.5
         assert batch.estimated_completion_time is not None
 
-    def test_batch_parallelization_estimate(self):
+    def test_batch_parallelization_estimate(self) -> None:
         """Test time estimation with parallel processing"""
         estimates = [
             ConversionEstimate(
@@ -162,7 +161,7 @@ class TestBatchEstimate:
         assert batch.parallel_workers == 4
         assert batch.estimated_total_time_seconds < 200  # Much less than sequential
 
-    def test_batch_failure_probability(self):
+    def test_batch_failure_probability(self) -> None:
         """Test calculating overall batch success probability"""
         estimates = [
             ConversionEstimate(
@@ -192,7 +191,7 @@ class TestBatchEstimate:
 class TestValidationResult:
     """Test validation result reporting"""
 
-    def test_validation_success(self):
+    def test_validation_success(self) -> None:
         """Test successful validation result"""
         result = ValidationResult(
             is_valid=True,
@@ -210,7 +209,7 @@ class TestValidationResult:
         assert len(result.errors) == 0
         assert len(result.checks_performed) == 4
 
-    def test_validation_with_errors(self):
+    def test_validation_with_errors(self) -> None:
         """Test validation with errors"""
         result = ValidationResult(
             is_valid=False,
@@ -223,7 +222,7 @@ class TestValidationResult:
         assert len(result.errors) == 2
         assert len(result.warnings) == 1
 
-    def test_validation_error_categories(self):
+    def test_validation_error_categories(self) -> None:
         """Test different error categories"""
         result = ValidationResult(
             is_valid=False,
@@ -246,14 +245,14 @@ class TestDryRunSimulator:
     """Test DryRunSimulator functionality"""
 
     @pytest.fixture
-    def simulator(self):
+    def simulator(self) -> None:
         """Create simulator instance"""
         return DryRunSimulator(
             verbose=True, estimate_resources=True, validate_only=False
         )
 
     @pytest.fixture
-    def temp_files(self, tmp_path):
+    def temp_files(self, tmp_path) -> None:
         """Create temporary test files"""
         files = []
         for i in range(5):
@@ -263,7 +262,7 @@ class TestDryRunSimulator:
             files.append(file)
         return files
 
-    def test_simulator_initialization(self, simulator):
+    def test_simulator_initialization(self, simulator) -> None:
         """Test simulator initializes correctly"""
         assert simulator.verbose is True
         assert simulator.estimate_resources is True
@@ -271,7 +270,7 @@ class TestDryRunSimulator:
         assert hasattr(simulator, "format_characteristics")
         assert hasattr(simulator, "preset_modifiers")
 
-    def test_estimate_single_conversion(self, simulator, temp_files):
+    def test_estimate_single_conversion(self, simulator, temp_files) -> None:
         """Test estimating single file conversion"""
         estimate = simulator.estimate_conversion(
             input_file=temp_files[0], output_format="webp", quality=85, preset=None
@@ -283,7 +282,7 @@ class TestDryRunSimulator:
         assert estimate.estimated_output_size > 0
         assert estimate.estimated_time_seconds > 0
 
-    def test_estimate_with_preset(self, simulator, temp_files):
+    def test_estimate_with_preset(self, simulator, temp_files) -> None:
         """Test estimation with optimization preset"""
         estimate = simulator.estimate_conversion(
             input_file=temp_files[1],
@@ -296,7 +295,7 @@ class TestDryRunSimulator:
         assert estimate.compression_ratio < 0.5
         assert "web-optimized" in estimate.optimization_notes
 
-    def test_estimate_batch_conversion(self, simulator, temp_files):
+    def test_estimate_batch_conversion(self, simulator, temp_files) -> None:
         """Test estimating batch conversion"""
         batch_estimate = simulator.estimate_batch(
             input_files=temp_files, output_format="avif", quality=90, parallel_workers=4
@@ -313,7 +312,7 @@ class TestDryRunSimulator:
         )
         assert batch_estimate.estimated_total_time_seconds < sequential_time
 
-    def test_validate_input_files(self, simulator, temp_files, tmp_path):
+    def test_validate_input_files(self, simulator, temp_files, tmp_path) -> None:
         """Test input file validation"""
         # Add non-existent file
         non_existent = tmp_path / "missing.jpg"
@@ -333,7 +332,7 @@ class TestDryRunSimulator:
         assert any("not found" in e.lower() for e in validation.errors)
         assert any("unsupported" in e.lower() for e in validation.errors)
 
-    def test_validate_output_permissions(self, simulator, temp_files, tmp_path):
+    def test_validate_output_permissions(self, simulator, temp_files, tmp_path) -> None:
         """Test output directory permission validation"""
         # Create read-only directory
         readonly_dir = tmp_path / "readonly"
@@ -353,7 +352,7 @@ class TestDryRunSimulator:
             # Restore permissions for cleanup
             os.chmod(readonly_dir, 0o755)
 
-    def test_estimate_resource_usage(self, simulator, temp_files):
+    def test_estimate_resource_usage(self, simulator, temp_files) -> None:
         """Test resource usage estimation"""
         resource_estimate = simulator.estimate_resources(
             input_files=temp_files, output_format="jxl", parallel_workers=4
@@ -365,7 +364,7 @@ class TestDryRunSimulator:
         assert resource_estimate.total_disk_space_mb > 0
         assert resource_estimate.temp_space_mb >= 0
 
-    def test_format_specific_estimates(self, simulator, temp_files):
+    def test_format_specific_estimates(self, simulator, temp_files) -> None:
         """Test format-specific estimation characteristics"""
         # AVIF should be slow but small
         avif_estimate = simulator.estimate_conversion(
@@ -395,7 +394,7 @@ class TestDryRunSimulator:
         # WebP should have good compression
         assert webp_estimate.compression_ratio < 0.7
 
-    def test_quality_impact_on_size(self, simulator, temp_files):
+    def test_quality_impact_on_size(self, simulator, temp_files) -> None:
         """Test how quality affects size estimates"""
         high_quality = simulator.estimate_conversion(
             input_file=temp_files[2], output_format="jpeg", quality=95
@@ -416,7 +415,7 @@ class TestDryRunSimulator:
         # Compression ratio should increase (smaller output)
         assert high_quality.compression_ratio > low_quality.compression_ratio
 
-    def test_simulation_modes(self, simulator, temp_files):
+    def test_simulation_modes(self, simulator, temp_files) -> None:
         """Test different simulation modes"""
         # Quick mode - fast estimates
         simulator.mode = SimulationMode.QUICK
@@ -439,7 +438,7 @@ class TestDryRunSimulator:
         # Full mode should provide more information
         assert len(full_estimate.analysis_notes) > len(quick_estimate.analysis_notes)
 
-    def test_warning_generation(self, simulator, tmp_path):
+    def test_warning_generation(self, simulator, tmp_path) -> None:
         """Test warning generation for edge cases"""
         # Create a very large file
         large_file = tmp_path / "huge.bmp"
@@ -456,7 +455,7 @@ class TestDryRunSimulator:
             "time" in w.lower() or "slow" in w.lower() for w in estimate.warnings
         )
 
-    def test_validation_only_mode(self, simulator, temp_files):
+    def test_validation_only_mode(self, simulator, temp_files) -> None:
         """Test validation-only mode without estimation"""
         simulator.validate_only = True
 
@@ -469,7 +468,7 @@ class TestDryRunSimulator:
         assert result.validation.is_valid is True
         assert result.estimate is None  # No estimation in validate-only mode
 
-    def test_verbose_output_detail(self, simulator, temp_files, capsys):
+    def test_verbose_output_detail(self, simulator, temp_files, capsys) -> None:
         """Test verbose output provides detailed information"""
         simulator.verbose = True
 
@@ -486,7 +485,7 @@ class TestDryRunSimulator:
         assert "Estimated size" in captured.out
         assert "Estimated time" in captured.out
 
-    def test_preset_modifier_effects(self, simulator, temp_files):
+    def test_preset_modifier_effects(self, simulator, temp_files) -> None:
         """Test how presets modify estimates"""
         # No preset
         base_estimate = simulator.estimate_conversion(
@@ -516,7 +515,7 @@ class TestDryRunSimulator:
             archive_estimate.estimated_output_size < base_estimate.estimated_output_size
         )
 
-    def test_disk_space_validation(self, simulator, temp_files):
+    def test_disk_space_validation(self, simulator, temp_files) -> None:
         """Test disk space availability validation"""
         with patch("shutil.disk_usage") as mock_disk:
             # Simulate low disk space
@@ -529,7 +528,7 @@ class TestDryRunSimulator:
             assert validation.is_valid is False
             assert any("disk space" in e.lower() for e in validation.errors)
 
-    def test_parallel_efficiency_calculation(self, simulator, temp_files):
+    def test_parallel_efficiency_calculation(self, simulator, temp_files) -> None:
         """Test parallel processing efficiency calculations"""
         # Test with varying worker counts
         estimates = []
@@ -552,7 +551,7 @@ class TestDryRunSimulator:
             worker_ratio = workers2 / workers1
             assert speedup < worker_ratio  # Sublinear speedup
 
-    def test_memory_estimation_accuracy(self, simulator, temp_files):
+    def test_memory_estimation_accuracy(self, simulator, temp_files) -> None:
         """Test memory usage estimation for different scenarios"""
         # Small file
         small_estimate = simulator.estimate_resources(
@@ -572,7 +571,7 @@ class TestDryRunSimulator:
         # AVIF needs more memory than WebP
         assert large_estimate.peak_memory_mb > small_estimate.peak_memory_mb * 10
 
-    def test_edge_case_handling(self, simulator, tmp_path):
+    def test_edge_case_handling(self, simulator, tmp_path) -> None:
         """Test handling of edge cases"""
         # Empty file
         empty_file = tmp_path / "empty.jpg"
@@ -599,7 +598,7 @@ class TestDryRunIntegration:
     """Integration tests for dry-run simulation"""
 
     @pytest.fixture
-    def full_simulator(self):
+    def full_simulator(self) -> None:
         """Create fully configured simulator"""
         return DryRunSimulator(
             verbose=True,
@@ -608,7 +607,7 @@ class TestDryRunIntegration:
             mode=SimulationMode.DETAILED,
         )
 
-    def test_complete_dry_run_workflow(self, full_simulator, tmp_path):
+    def test_complete_dry_run_workflow(self, full_simulator, tmp_path) -> None:
         """Test complete dry-run workflow"""
         # Create test files
         input_dir = tmp_path / "input"
@@ -654,7 +653,7 @@ class TestDryRunIntegration:
         assert "Peak memory" in summary
         assert "Success" in summary
 
-    def test_dry_run_with_mixed_formats(self, full_simulator, tmp_path):
+    def test_dry_run_with_mixed_formats(self, full_simulator, tmp_path) -> None:
         """Test dry-run with multiple input formats"""
         files = []
 
@@ -685,7 +684,7 @@ class TestDryRunIntegration:
             elif output_fmt == "webp":
                 assert batch_estimate.estimated_total_time_seconds < 10
 
-    def test_dry_run_json_output(self, full_simulator, tmp_path):
+    def test_dry_run_json_output(self, full_simulator, tmp_path) -> None:
         """Test JSON output format for dry-run results"""
         file = tmp_path / "test.jpg"
         file.write_bytes(b"JPEG" + b"\x00" * 10000)
@@ -705,7 +704,7 @@ class TestDryRunIntegration:
         assert "compression_ratio" in data
         assert "success_probability" in data
 
-    def test_dry_run_comparison_mode(self, full_simulator, tmp_path):
+    def test_dry_run_comparison_mode(self, full_simulator, tmp_path) -> None:
         """Test comparing multiple conversion options"""
         file = tmp_path / "test.jpg"
         file.write_bytes(b"JPEG" + b"\x00" * 100000)
@@ -725,7 +724,7 @@ class TestDryRunIntegration:
         fastest = min(comparisons, key=lambda x: x.estimated_time_seconds)
         assert fastest.output_format in ["webp", "png"]  # Usually fastest
 
-    def test_dry_run_abort_conditions(self, full_simulator, tmp_path):
+    def test_dry_run_abort_conditions(self, full_simulator, tmp_path) -> None:
         """Test conditions that should abort dry-run"""
         # Create problematic scenarios
 

@@ -1,6 +1,8 @@
 """Batch processing module for handling multiple image conversions."""
 
-from .models import BatchJob, BatchItem, BatchProgress, BatchStatus, BatchItemStatus
+from typing import Any
+
+from .models import BatchItem, BatchItemStatus, BatchJob, BatchProgress, BatchStatus
 
 __all__ = [
     "BatchJob",

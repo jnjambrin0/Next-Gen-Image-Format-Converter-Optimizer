@@ -3,13 +3,12 @@ Enhanced Help Command
 Context-aware help with examples and search functionality
 """
 
-from typing import Optional, Annotated
+from typing import Annotated, Any, Optional
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.columns import Columns
-from rich.markdown import Markdown
 
 from app.cli.documentation.help_context import HelpContextAnalyzer
 from app.cli.ui.themes import get_theme_manager
@@ -97,7 +96,7 @@ def help_command(
         help_analyzer.display_context_help(context, verbose)
 
 
-def _search_help(query: str):
+def _search_help(query: str) -> None:
     """Search all help topics"""
     results = help_analyzer.search_help(query)
 
@@ -132,7 +131,7 @@ def _search_help(query: str):
 
 def _show_command_help(
     command: str, verbose: bool, examples_only: bool, errors_only: bool
-):
+) -> None:
     """Show help for a specific command"""
     # Resolve alias
     resolved = help_analyzer._resolve_alias(command)
@@ -246,7 +245,7 @@ def _show_command_help(
         )
 
 
-def _show_all_errors():
+def _show_all_errors() -> None:
     """Show all documented error codes"""
     console.print("\n[bold cyan]All Documented Error Codes:[/bold cyan]\n")
 

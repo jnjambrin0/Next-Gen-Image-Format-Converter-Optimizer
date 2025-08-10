@@ -1,22 +1,24 @@
 """
+from typing import Any
 Security tests for documentation components
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
 import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
 
+import pytest
+
+from app.cli.documentation.examples import CommandExample
 from app.cli.documentation.tutorial_engine import TutorialEngine
-from app.cli.documentation.examples import CommandExample, ExampleDatabase
 
 
 class TestTutorialSandboxSecurity:
     """Test tutorial sandbox security restrictions"""
 
     @pytest.fixture
-    def tutorial_engine(self):
+    def tutorial_engine(self) -> None:
         """Create tutorial engine with temp directory"""
         engine = TutorialEngine()
         engine.sandbox_dir = Path(tempfile.mkdtemp())
@@ -111,7 +113,7 @@ class TestTutorialSandboxSecurity:
 class TestExamplePIISanitization:
     """Test PII sanitization in examples"""
 
-    def test_sanitizes_user_directories(self):
+    def test_sanitizes_user_directories(self) -> None:
         """Test that user directories are sanitized"""
         example = CommandExample(
             id="test",
@@ -124,7 +126,7 @@ class TestExamplePIISanitization:
         assert "johndoe" not in sanitized
         assert "/home/user/" in sanitized
 
-    def test_sanitizes_email_addresses(self):
+    def test_sanitizes_email_addresses(self) -> None:
         """Test that email addresses are sanitized"""
         example = CommandExample(
             id="test",
@@ -137,7 +139,7 @@ class TestExamplePIISanitization:
         assert "john.doe@company.com" not in sanitized
         assert "user@example.com" in sanitized
 
-    def test_sanitizes_ip_addresses(self):
+    def test_sanitizes_ip_addresses(self) -> None:
         """Test that IP addresses are sanitized"""
         example = CommandExample(
             id="test",
@@ -150,7 +152,7 @@ class TestExamplePIISanitization:
         assert "192.168.1.100" not in sanitized
         assert "127.0.0.1" in sanitized
 
-    def test_sanitizes_api_keys(self):
+    def test_sanitizes_api_keys(self) -> None:
         """Test that API keys are sanitized"""
         example = CommandExample(
             id="test",
@@ -163,7 +165,7 @@ class TestExamplePIISanitization:
         assert "sk_live_abcd1234efgh5678ijkl9012mnop3456" not in sanitized
         assert "REDACTED" in sanitized
 
-    def test_sanitizes_phone_numbers(self):
+    def test_sanitizes_phone_numbers(self) -> None:
         """Test that phone numbers are sanitized"""
         example = CommandExample(
             id="test",
@@ -176,7 +178,7 @@ class TestExamplePIISanitization:
         assert "555-123-4567" not in sanitized
         assert "555-0100" in sanitized
 
-    def test_sanitizes_social_security_numbers(self):
+    def test_sanitizes_social_security_numbers(self) -> None:
         """Test that SSNs are sanitized"""
         example = CommandExample(
             id="test",
@@ -189,7 +191,7 @@ class TestExamplePIISanitization:
         assert "123-45-6789" not in sanitized
         assert "XXX-XX-XXXX" in sanitized
 
-    def test_sanitizes_credit_card_numbers(self):
+    def test_sanitizes_credit_card_numbers(self) -> None:
         """Test that credit card numbers are sanitized"""
         example = CommandExample(
             id="test",
@@ -202,7 +204,7 @@ class TestExamplePIISanitization:
         assert "4111-1111-1111-1111" not in sanitized
         assert "XXXX-XXXX-XXXX-XXXX" in sanitized
 
-    def test_sanitizes_personal_paths(self):
+    def test_sanitizes_personal_paths(self) -> None:
         """Test that personal file paths are sanitized"""
         example = CommandExample(
             id="test",
@@ -219,7 +221,7 @@ class TestExamplePIISanitization:
 class TestDocumentationOfflineOperation:
     """Test that documentation works completely offline"""
 
-    def test_no_network_calls_in_help(self):
+    def test_no_network_calls_in_help(self) -> None:
         """Test that help system makes no network calls"""
         from app.cli.documentation.help_context import HelpContextAnalyzer
 
@@ -233,7 +235,7 @@ class TestDocumentationOfflineOperation:
                     mock_requests.assert_not_called()
                     mock_httpx.assert_not_called()
 
-    def test_no_network_calls_in_tutorials(self):
+    def test_no_network_calls_in_tutorials(self) -> None:
         """Test that tutorial system makes no network calls"""
         with patch("urllib.request.urlopen") as mock_urlopen:
             with patch("requests.get") as mock_requests:
@@ -245,7 +247,7 @@ class TestDocumentationOfflineOperation:
                     mock_requests.assert_not_called()
                     mock_httpx.assert_not_called()
 
-    def test_no_telemetry_in_documentation(self):
+    def test_no_telemetry_in_documentation(self) -> None:
         """Test that no telemetry is sent"""
         from app.cli.documentation.knowledge_base import KnowledgeBase
 

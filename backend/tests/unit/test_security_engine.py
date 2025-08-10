@@ -1,20 +1,20 @@
 """Unit tests for the SecurityEngine."""
 
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, MagicMock
 import io
+from typing import Any
+from unittest.mock import MagicMock, patch
+
+import pytest
 from PIL import Image
 
 from app.core.security.engine import SecurityEngine
-from app.core.exceptions import ConversionError
 
 
 class TestSecurityEngine:
     """Test cases for SecurityEngine."""
 
     @pytest.fixture
-    def security_engine(self):
+    def security_engine(self) -> None:
         """Create SecurityEngine instance."""
         return SecurityEngine()
 

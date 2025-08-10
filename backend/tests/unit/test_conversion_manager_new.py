@@ -1,30 +1,29 @@
 """Unit tests for the Conversion Manager module."""
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from pathlib import Path
-import io
-from PIL import Image
 import asyncio
+import io
 
 # Import fixtures
 import sys
 from pathlib import Path
+from typing import Any
+from unittest.mock import patch
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import (
+    ConversionFailedError,
+    InvalidImageError,
+)
 from app.models.conversion import (
     ConversionRequest,
-    ConversionResult,
-    ConversionStatus,
     ConversionSettings,
+    ConversionStatus,
     OutputFormat,
-)
-from app.core.exceptions import (
-    InvalidImageError,
-    UnsupportedFormatError,
-    ConversionFailedError,
 )
 
 
@@ -32,17 +31,17 @@ class TestConversionManager:
     """Test suite for ConversionManager class."""
 
     @pytest.fixture
-    def conversion_manager(self):
+    def conversion_manager(self) -> None:
         """Create a ConversionManager instance for testing."""
         return ConversionManager()
 
     @pytest.fixture
-    def sample_jpeg_bytes(self, image_generator):
+    def sample_jpeg_bytes(self, image_generator) -> None:
         """Generate sample JPEG bytes."""
         return image_generator(width=100, height=100, format="JPEG")
 
     @pytest.fixture
-    def sample_png_bytes(self, image_generator):
+    def sample_png_bytes(self, image_generator) -> None:
         """Generate sample PNG bytes."""
         return image_generator(width=100, height=100, format="PNG")
 

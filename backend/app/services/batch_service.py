@@ -1,15 +1,12 @@
 """Batch processing service for managing multiple image conversions."""
 
-from typing import Dict, Optional, Any, List
-from uuid import UUID
-import asyncio
 import logging
+from typing import Any, Dict, List, Optional
 
-from app.core.batch.manager import BatchManager
-from app.core.batch.models import BatchJob, BatchProgress, BatchResult, BatchItemStatus
-from app.core.batch.results import BatchResultCollector
-from app.services.conversion_service import conversion_service
 from app.api.websockets.progress import connection_manager
+from app.core.batch.manager import BatchManager
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchProgress, BatchResult
+from app.core.batch.results import BatchResultCollector
 from app.services.batch_history_service import batch_history_service
 
 logger = logging.getLogger(__name__)
@@ -18,14 +15,14 @@ logger = logging.getLogger(__name__)
 class BatchService:
     """Service for managing batch image conversions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the batch service."""
         self.batch_manager = BatchManager()
         self.result_collector = BatchResultCollector()
         self.conversion_service = None  # Will be injected
         self._results_storage: Dict[str, BatchResult] = {}
 
-    def set_conversion_service(self, service):
+    def set_conversion_service(self, service) -> None:
         """Inject the conversion service dependency."""
         self.conversion_service = service
         # Also inject into BatchManager
@@ -42,6 +39,7 @@ class BatchService:
         # Create the batch job
         import uuid
         from datetime import datetime
+
         from app.core.batch.models import BatchItem, BatchItemStatus
 
         job_id = str(uuid.uuid4())
@@ -200,7 +198,6 @@ class BatchService:
         """Clean up old batch results from memory."""
         # This would be called periodically to free memory
         # For now, we'll keep it simple - in production, you'd check timestamps
-        pass
 
     async def get_download_zip(self, job_id: str) -> Optional[bytes]:
         """Get ZIP file with batch results.

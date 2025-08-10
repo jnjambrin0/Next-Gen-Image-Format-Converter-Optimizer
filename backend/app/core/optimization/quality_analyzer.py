@@ -1,16 +1,15 @@
 """Quality analyzer with real SSIM/PSNR calculations without scikit-image."""
 
 import asyncio
-import io
 import hashlib
-from typing import Optional, Dict, Any, Tuple
-from functools import lru_cache
+import io
+from typing import Any, Dict
+
 import numpy as np
 from PIL import Image
 
 from app.core.constants import IMAGE_MAX_PIXELS
 from app.core.security.errors_simplified import create_file_error
-from app.core.security.memory import secure_clear
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -31,7 +30,7 @@ CACHE_MAX_SIZE = 100
 class QualityAnalyzer:
     """Analyzes image quality metrics including SSIM and PSNR."""
 
-    def __init__(self, enable_caching: bool = True):
+    def __init__(self, enable_caching: bool = True) -> None:
         """Initialize the quality analyzer.
 
         Args:

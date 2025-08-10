@@ -4,23 +4,21 @@ Command chaining and piping support
 """
 
 import sys
-import io
 from pathlib import Path
-from typing import List, Optional, Annotated
-import asyncio
+from typing import Annotated, Any, List, Optional
 
 import typer
 from rich.console import Console
 
 from app.cli.config import get_config
-from app.cli.utils.errors import handle_api_error
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
 
 setup_sdk_path()
 from image_converter.client import ImageConverterClient
-from image_converter.models import ConversionRequest, OutputFormat as SDKOutputFormat
+from image_converter.models import ConversionRequest
+from image_converter.models import OutputFormat as SDKOutputFormat
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -175,6 +173,5 @@ def pipe(
 
 
 @app.callback()
-def chain_callback():
+def chain_callback() -> None:
     """Command chaining and piping"""
-    pass

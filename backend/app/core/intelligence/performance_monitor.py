@@ -8,14 +8,15 @@ Provides real-time monitoring of:
 - Resource utilization
 """
 
-import time
 import asyncio
-import psutil
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
-from datetime import datetime
 import logging
 import statistics
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Monitor and track Intelligence Engine performance."""
 
-    def __init__(self, window_size: int = 100):
+    def __init__(self, window_size: int = 100) -> None:
         """Initialize performance monitor.
 
         Args:

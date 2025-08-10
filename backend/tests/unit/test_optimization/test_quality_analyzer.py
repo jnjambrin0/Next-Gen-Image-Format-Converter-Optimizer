@@ -1,10 +1,11 @@
 """Unit tests for the QualityAnalyzer."""
 
-import pytest
 import asyncio
 import io
+from typing import Any
+
+import pytest
 from PIL import Image
-import numpy as np
 
 from app.core.optimization import QualityAnalyzer
 from app.core.security.errors_simplified import SecurityError
@@ -14,12 +15,12 @@ class TestQualityAnalyzer:
     """Test cases for QualityAnalyzer."""
 
     @pytest.fixture
-    def analyzer(self):
+    def analyzer(self) -> None:
         """Create a QualityAnalyzer instance."""
         return QualityAnalyzer(enable_caching=True)
 
     @pytest.fixture
-    def test_image_rgb(self):
+    def test_image_rgb(self) -> None:
         """Create a test RGB image."""
         img = Image.new("RGB", (100, 100), color="red")
         buffer = io.BytesIO()
@@ -27,7 +28,7 @@ class TestQualityAnalyzer:
         return buffer.getvalue()
 
     @pytest.fixture
-    def test_image_rgba(self):
+    def test_image_rgba(self) -> None:
         """Create a test RGBA image with transparency."""
         img = Image.new("RGBA", (100, 100), color=(255, 0, 0, 128))
         buffer = io.BytesIO()
@@ -35,7 +36,7 @@ class TestQualityAnalyzer:
         return buffer.getvalue()
 
     @pytest.fixture
-    def compressed_image(self):
+    def compressed_image(self) -> None:
         """Create a compressed version of the test image."""
         img = Image.new("RGB", (100, 100), color="red")
         # Add some noise to make it different
@@ -143,7 +144,7 @@ class TestQualityAnalyzer:
         reduction = await analyzer.calculate_file_size_reduction(0, 100)
         assert reduction == 0.0  # Handle zero original size
 
-    def test_visual_quality_rating(self, analyzer):
+    def test_visual_quality_rating(self, analyzer) -> None:
         """Test visual quality rating."""
         assert analyzer.get_visual_quality_rating(0.98) == "high"
         assert analyzer.get_visual_quality_rating(0.90) == "medium"

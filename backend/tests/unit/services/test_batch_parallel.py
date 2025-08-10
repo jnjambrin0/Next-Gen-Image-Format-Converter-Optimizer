@@ -1,28 +1,29 @@
 """
+from typing import Any
 Unit tests for parallel batch processing functionality.
 Tests worker pool scaling, efficiency, and resource management.
 """
 
 import asyncio
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import time
 import uuid
 from datetime import datetime
+from unittest.mock import AsyncMock, patch
 
-from app.core.batch.manager import BatchManager, BatchWorkerTask
+import pytest
+
+from app.core.batch.manager import BatchManager
 from app.core.batch.models import (
-    BatchJob,
     BatchItem,
-    BatchStatus,
     BatchItemStatus,
-    BatchProgress,
+    BatchJob,
+    BatchStatus,
 )
-from app.models import ConversionApiRequest, ConversionResult
+from app.models import ConversionResult
 
 
 @pytest.fixture
-def batch_manager():
+def batch_manager() -> None:
     """Create a BatchManager instance for testing."""
     manager = BatchManager()
     # Mock conversion service
@@ -44,7 +45,7 @@ def batch_manager():
 
 
 @pytest.fixture
-def sample_batch_job():
+def sample_batch_job() -> None:
     """Create a sample batch job for testing."""
     items = [
         BatchItem(
@@ -66,7 +67,7 @@ def sample_batch_job():
 class TestBatchManagerParallel:
     """Test parallel processing functionality in BatchManager."""
 
-    def test_worker_count_calculation(self, batch_manager):
+    def test_worker_count_calculation(self, batch_manager) -> None:
         """Test that worker count is calculated correctly based on CPU cores."""
         with patch("multiprocessing.cpu_count", return_value=8):
             worker_count = batch_manager._calculate_worker_count()
@@ -328,7 +329,7 @@ class TestBatchManagerParallel:
         for job in jobs:
             await batch_manager.cancel_job(job.job_id)
 
-    def test_get_job_metrics_calculation(self, batch_manager, sample_batch_job):
+    def test_get_job_metrics_calculation(self, batch_manager, sample_batch_job) -> None:
         """Test job metrics calculation and reporting."""
         job_id = sample_batch_job.job_id
 

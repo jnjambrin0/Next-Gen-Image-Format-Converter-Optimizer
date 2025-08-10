@@ -1,14 +1,13 @@
 """Alpha channel optimization for transparent images."""
 
 import io
-from typing import Tuple, Optional, Dict, Any
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 from PIL import Image
 
 from app.core.constants import IMAGE_MAX_PIXELS
 from app.core.security.errors_simplified import create_file_error
-from app.core.security.memory import secure_clear
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -21,9 +20,8 @@ MIN_TRANSPARENT_PIXELS = 100  # Minimum transparent pixels to keep alpha
 class AlphaOptimizer:
     """Optimizes alpha channel in transparent images."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the alpha optimizer."""
-        pass
 
     async def optimize_alpha(
         self,

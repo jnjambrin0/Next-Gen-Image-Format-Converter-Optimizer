@@ -3,31 +3,27 @@ Watch Mode Command
 Monitor directories and automatically convert images
 """
 
-import asyncio
 import signal
 import sys
 from pathlib import Path
-from typing import List, Optional, Annotated
-import tempfile
+from typing import Annotated, Any, List, Optional
 
 import typer
 from rich.console import Console
-from rich.table import Table
+from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from rich.layout import Layout
-from rich.text import Text
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
+from app.cli.config import get_config
 from app.cli.productivity.watcher import (
     DirectoryWatcher,
+    FileEvent,
     ResourceLimits,
     WatcherStatus,
-    FileEvent,
 )
-from app.cli.config import get_config
 from app.cli.utils.errors import handle_error
-from app.cli.utils.terminal import get_terminal_detector
 
 # Import SDK for conversions
 try:
@@ -61,7 +57,7 @@ class WatchModeProcessor:
         output_dir: Optional[Path] = None,
         quality: int = 85,
         preset: Optional[str] = None,
-    ):
+    ) -> None:
         self.output_format = output_format
         self.output_dir = output_dir
         self.quality = quality
@@ -87,7 +83,7 @@ class WatchModeProcessor:
             except Exception as e:
                 self.client_error = f"Failed to initialize SDK client: {e}"
 
-    def process_file(self, file_event: FileEvent):
+    def process_file(self, file_event: FileEvent) -> None:
         """Process a file event"""
         if not self.client:
             error_msg = self.client_error or "Image converter client not available"
@@ -133,7 +129,7 @@ class WatchModeProcessor:
 class WatchDisplay:
     """Display for watch mode status"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.layout = self._create_layout()
         self.status_table = Table(show_header=False, box=None)
         self.progress = Progress(
@@ -154,7 +150,7 @@ class WatchDisplay:
         )
         return layout
 
-    def update(self, watcher: DirectoryWatcher):
+    def update(self, watcher: DirectoryWatcher) -> None:
         """Update display with current status"""
         status = watcher.get_status()
 
@@ -297,7 +293,7 @@ def start(
     )
 
     # Set up signal handlers
-    def signal_handler(sig, frame):
+    def signal_handler(sig, frame) -> None:
         console.print("\n[yellow]Stopping watch mode...[/yellow]")
         watcher.stop()
         sys.exit(0)

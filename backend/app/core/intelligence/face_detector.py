@@ -1,10 +1,11 @@
 """Face detection module for privacy-aware photo analysis."""
 
-import numpy as np
-from PIL import Image
-from typing import List, Optional, Tuple, Dict, Any
 import logging
 import time
+from typing import Any, List, Optional, Tuple
+
+import numpy as np
+from PIL import Image
 
 from app.models.conversion import BoundingBox
 
@@ -55,8 +56,7 @@ class FaceDetector:
         Args:
             image: PIL Image to process
 
-        Returns:
-            List of BoundingBox objects for face regions (no identity info)
+        Returns: List[Any] of BoundingBox objects for face regions (no identity info)
         """
         start_time = time.time()
 
@@ -322,8 +322,7 @@ class FaceDetector:
         Args:
             raw_outputs: Shape [num_anchors, 5] with [score, dcx, dcy, dw, dh]
 
-        Returns:
-            List of (x, y, w, h, confidence) tuples in normalized coordinates
+        Returns: List[Any] of (x, y, w, h, confidence) tuples in normalized coordinates
         """
         detections = []
 

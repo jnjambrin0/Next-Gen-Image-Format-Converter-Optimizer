@@ -1,25 +1,23 @@
 """Pytest fixtures for image converter tests."""
 
-import pytest
-import tempfile
-import shutil
-from pathlib import Path
-from PIL import Image
 import io
-import json
-from datetime import datetime
-from typing import Dict, List, Tuple, Any
-import os
+import shutil
+import tempfile
+from pathlib import Path
+from typing import Any, Tuple
+
+import pytest
+from PIL import Image
 
 
 @pytest.fixture
-def test_images_dir():
+def test_images_dir() -> None:
     """Path to test images directory."""
     return Path(__file__).parent / "images"
 
 
 @pytest.fixture
-def temp_dir():
+def temp_dir() -> None:
     """Create a temporary directory for test outputs."""
     temp_path = tempfile.mkdtemp()
     yield Path(temp_path)
@@ -28,20 +26,20 @@ def temp_dir():
 
 
 @pytest.fixture
-def sample_image_path(test_images_dir):
+def sample_image_path(test_images_dir) -> None:
     """Path to sample photo with EXIF data."""
     return test_images_dir / "sample_photo.jpg"
 
 
 @pytest.fixture
-def sample_image_bytes(sample_image_path):
+def sample_image_bytes(sample_image_path) -> None:
     """Sample image as bytes."""
     with open(sample_image_path, "rb") as f:
         return f.read()
 
 
 @pytest.fixture
-def all_test_images(test_images_dir):
+def all_test_images(test_images_dir) -> None:
     """Dictionary of all test images with metadata."""
     return {
         "sample_photo": {
@@ -118,19 +116,19 @@ def all_test_images(test_images_dir):
 
 
 @pytest.fixture
-def corrupted_image_path(test_images_dir):
+def corrupted_image_path(test_images_dir) -> None:
     """Path to corrupted image for error testing."""
     return test_images_dir / "corrupted.jpg"
 
 
 @pytest.fixture
-def empty_image_path(test_images_dir):
+def empty_image_path(test_images_dir) -> None:
     """Path to empty file for validation testing."""
     return test_images_dir / "empty.png"
 
 
 @pytest.fixture
-def mock_conversion_request():
+def mock_conversion_request() -> None:
     """Sample conversion request data."""
     return {
         "output_format": "webp",
@@ -142,7 +140,7 @@ def mock_conversion_request():
 
 
 @pytest.fixture
-def mock_batch_request():
+def mock_batch_request() -> None:
     """Sample batch conversion request."""
     return {
         "files": ["photo1.jpg", "photo2.png", "document.pdf"],
@@ -154,7 +152,7 @@ def mock_batch_request():
 
 
 @pytest.fixture
-def conversion_presets():
+def conversion_presets() -> None:
     """Sample conversion presets."""
     return {
         "web_optimized": {
@@ -194,10 +192,12 @@ def conversion_presets():
 
 
 @pytest.fixture
-def mock_file_upload():
+def mock_file_upload() -> None:
     """Create a mock file upload object."""
 
-    def _create_upload(filename: str, content: bytes, content_type: str = "image/jpeg"):
+    def _create_upload(
+        filename: str, content: bytes, content_type: str = "image/jpeg"
+    ) -> None:
         return {
             "filename": filename,
             "content": content,
@@ -209,7 +209,7 @@ def mock_file_upload():
 
 
 @pytest.fixture
-def image_generator():
+def image_generator() -> None:
     """Generate test images on the fly."""
 
     def _generate(
@@ -227,7 +227,7 @@ def image_generator():
 
 
 @pytest.fixture
-def mock_image_metadata():
+def mock_image_metadata() -> None:
     """Sample image metadata response."""
     return {
         "format": "JPEG",
@@ -250,7 +250,7 @@ def mock_image_metadata():
 
 
 @pytest.fixture
-def expected_api_responses():
+def expected_api_responses() -> None:
     """Expected API response structures."""
     return {
         "conversion_success": {
@@ -280,7 +280,7 @@ def expected_api_responses():
 
 
 @pytest.fixture
-def performance_test_config():
+def performance_test_config() -> None:
     """Configuration for performance tests."""
     return {
         "small_image": {"size": (640, 480), "max_time": 0.5},
@@ -292,7 +292,7 @@ def performance_test_config():
 
 
 @pytest.fixture
-def security_test_payloads():
+def security_test_payloads() -> None:
     """Security test payloads."""
     return {
         "path_traversal": ["../../../etc/passwd", "..\\..\\..\\windows\\system.ini"],
@@ -307,7 +307,7 @@ def security_test_payloads():
 
 
 @pytest.fixture(autouse=True)
-def cleanup_temp_files():
+def cleanup_temp_files() -> None:
     """Automatically cleanup any temporary files after each test."""
     yield
     # Cleanup code here if needed
@@ -321,7 +321,7 @@ def cleanup_temp_files():
 
 
 @pytest.fixture
-def mock_ml_model_response():
+def mock_ml_model_response() -> None:
     """Mock response from ML content detection model."""
     return {
         "content_type": "photograph",

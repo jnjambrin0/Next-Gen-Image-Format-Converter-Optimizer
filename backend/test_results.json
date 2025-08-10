@@ -1,0 +1,58 @@
+{
+  "timestamp": 1754663647.292064,
+  "duration": 0.7036800384521484,
+  "suites": {
+    "Suite 1: Core Functionality": {
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": [
+        {
+          "module": "test_format_conversions_matrix.py",
+          "error": "ERROR: file or directory not found: suite_1_core_functionality/test_format_conversions_matrix.py\n\n"
+        },
+        {
+          "module": "test_ml_classification_quality.py",
+          "error": "ERROR: file or directory not found: suite_1_core_functionality/test_ml_classification_quality.py\n\n"
+        }
+      ],
+      "duration": 0.2780628204345703
+    },
+    "Suite 2: Security & Privacy": {
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": [
+        {
+          "module": "test_security_sandboxing_malicious.py",
+          "error": "ERROR: file or directory not found: suite_2_security_privacy/test_security_sandboxing_malicious.py\n\n"
+        }
+      ],
+      "duration": 0.1381239891052246
+    },
+    "Suite 3: Concurrency & Performance": {
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": [
+        {
+          "module": "test_batch_websocket_stress.py",
+          "error": "ERROR: file or directory not found: suite_3_concurrency_performance/test_batch_websocket_stress.py\n\n"
+        }
+      ],
+      "duration": 0.1452329158782959
+    },
+    "Suite 4: Integration & Edge Cases": {
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "errors": [
+        {
+          "module": "test_e2e_edge_cases.py",
+          "error": "ERROR: file or directory not found: suite_4_integration_edge/test_e2e_edge_cases.py\n\n"
+        }
+      ],
+      "duration": 0.1420278549194336
+    }
+  }
+}

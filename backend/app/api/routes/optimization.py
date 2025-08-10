@@ -1,23 +1,22 @@
 """API routes for advanced optimization features."""
 
 import asyncio
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, BackgroundTasks
-from fastapi.responses import Response, StreamingResponse
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 from sse_starlette.sse import EventSourceResponse
 
+from app.core.optimization.encoding_options import ChromaSubsampling
+from app.core.security.errors_simplified import SecurityErrorHandler
 from app.models.optimization import (
+    OptimizationMode,
     OptimizationRequest,
     OptimizationResponse,
-    OptimizationProgressUpdate,
-    OptimizationMode,
 )
-from app.core.optimization.encoding_options import ChromaSubsampling
-from app.services.optimization_service import optimization_service
 from app.services.format_detection_service import format_detection_service
-from app.core.security.errors_simplified import SecurityErrorHandler
+from app.services.optimization_service import optimization_service
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

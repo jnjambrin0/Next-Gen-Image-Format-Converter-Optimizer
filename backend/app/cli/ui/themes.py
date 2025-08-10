@@ -5,14 +5,14 @@ Customizable color themes for terminal output
 
 import json
 import os
-from pathlib import Path
-from typing import Dict, Optional, Any
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 from rich.console import Console
-from rich.theme import Theme as RichTheme
 from rich.style import Style
+from rich.theme import Theme as RichTheme
 
 
 class ThemeType(str, Enum):
@@ -274,7 +274,7 @@ class ThemeManager:
         ),
     }
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Optional[Path] = None) -> None:
         """Initialize theme manager"""
         self.config_dir = config_dir or Path.home() / ".image-converter"
         self.themes_dir = self.config_dir / "themes"
@@ -286,7 +286,7 @@ class ThemeManager:
         # Load custom themes
         self._load_custom_themes()
 
-    def _load_custom_themes(self):
+    def _load_custom_themes(self) -> None:
         """Load custom themes from configuration directory"""
         for theme_file in self.themes_dir.glob("*.json"):
             try:

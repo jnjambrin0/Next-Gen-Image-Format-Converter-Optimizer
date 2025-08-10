@@ -1,20 +1,21 @@
 """API routes for image intelligence and analysis."""
 
-from fastapi import APIRouter, File, UploadFile, Query, HTTPException, Body
-from fastapi.responses import JSONResponse
-from typing import Optional, List
 import logging
+from typing import Any, List, Optional
 
-from app.services.intelligence_service import intelligence_service
-from app.services.recommendation_service import recommendation_service
+from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
+from fastapi.responses import JSONResponse
+
+from app.core.constants import MAX_FILE_SIZE
 from app.models.conversion import (
-    ContentType,
     ContentClassification,
-    OutputFormat,
+    ContentType,
     InputFormat,
+    OutputFormat,
 )
 from app.models.recommendation import RecommendationRequest, UseCaseType
-from app.core.constants import MAX_FILE_SIZE
+from app.services.intelligence_service import intelligence_service
+from app.services.recommendation_service import recommendation_service
 
 logger = logging.getLogger(__name__)
 
@@ -216,10 +217,10 @@ async def get_format_recommendations(
         content_classification: Classification result from /analyze endpoint
         original_format: Format of the source image
         original_size_kb: Size of the source image in KB
-        use_case: Optional use case (web/print/archive)
-        prioritize: Optional priority (size/quality/compatibility)
-        exclude_formats: Optional list of formats to exclude
-        override_format: Optional user-selected format override
+        use_case: Optional[Any] use case (web/print/archive)
+        prioritize: Optional[Any] priority (size/quality/compatibility)
+        exclude_formats: Optional[Any] list of formats to exclude
+        override_format: Optional[Any] user-selected format override
 
     Returns:
         JSON response with format recommendations
@@ -284,7 +285,7 @@ async def record_format_preference(
     Args:
         content_type: Type of content
         chosen_format: Format chosen by user
-        use_case: Optional use case context
+        use_case: Optional[Any] use case context
         was_override: Whether user overrode recommendations
 
     Returns:
@@ -315,7 +316,7 @@ async def get_format_preferences(
 
     Args:
         content_type: Type of content
-        use_case: Optional use case filter
+        use_case: Optional[Any] use case filter
 
     Returns:
         JSON response with format preferences
@@ -349,8 +350,8 @@ async def reset_format_preferences(
     """Reset user format preferences.
 
     Args:
-        content_type: Optional content type to reset (all if None)
-        format_option: Optional format to reset (all if None)
+        content_type: Optional[Any] content type to reset (all if None)
+        format_option: Optional[Any] format to reset (all if None)
 
     Returns:
         JSON response with reset count

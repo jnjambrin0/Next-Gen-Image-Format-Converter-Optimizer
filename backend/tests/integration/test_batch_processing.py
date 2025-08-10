@@ -1,11 +1,11 @@
 """Integration tests for batch image processing functionality."""
 
-import pytest
-from unittest.mock import Mock, patch
-import asyncio
 import time
-from pathlib import Path
-import concurrent.futures
+from typing import Any
+from unittest.mock import Mock
+
+import pytest
+
 from tests.fixtures.generators import ImageGenerator
 
 # Fixtures are automatically discovered by pytest from conftest.py
@@ -15,7 +15,7 @@ class TestBatchProcessing:
     """Integration tests for batch image processing."""
 
     @pytest.fixture
-    def batch_processor(self):
+    def batch_processor(self) -> None:
         """Create a BatchProcessor instance."""
         # TODO: Uncomment when BatchProcessor is implemented
         # from app.core.processing.batch import BatchProcessor
@@ -30,7 +30,7 @@ class TestBatchProcessing:
         return mock_processor
 
     @pytest.fixture
-    def test_batch_images(self, temp_dir, image_generator):
+    def test_batch_images(self, temp_dir, image_generator) -> None:
         """Generate a batch of test images."""
         images = []
         for i in range(10):
@@ -45,7 +45,7 @@ class TestBatchProcessing:
 
     def test_batch_conversion_success(
         self, batch_processor, test_batch_images, temp_dir
-    ):
+    ) -> None:
         """Test successful batch conversion of multiple images."""
         # TODO: Enable when BatchProcessor is implemented
         pytest.skip("Waiting for BatchProcessor implementation")
@@ -73,7 +73,7 @@ class TestBatchProcessing:
 
     def test_parallel_batch_processing(
         self, batch_processor, test_batch_images, temp_dir
-    ):
+    ) -> None:
         """Test parallel processing improves performance."""
         # Arrange
         input_files = [img["path"] for img in test_batch_images]
@@ -113,7 +113,7 @@ class TestBatchProcessing:
         assert results_seq["total_processed"] == results_par["total_processed"]
         assert time_parallel < time_sequential * 0.7  # At least 30% faster
 
-    def test_batch_with_mixed_formats(self, batch_processor, temp_dir):
+    def test_batch_with_mixed_formats(self, batch_processor, temp_dir) -> None:
         """Test batch processing with different input formats."""
         # Arrange
         formats = ["JPEG", "PNG", "GIF", "BMP"]
@@ -143,7 +143,9 @@ class TestBatchProcessing:
         assert len(results["completed"]) == 4
         assert all((output_dir / f"mixed_{i}.webp").exists() for i in range(4))
 
-    def test_batch_error_handling(self, batch_processor, test_batch_images, temp_dir):
+    def test_batch_error_handling(
+        self, batch_processor, test_batch_images, temp_dir
+    ) -> None:
         """Test batch processing continues on individual failures."""
         # Arrange
         input_files = [img["path"] for img in test_batch_images]
@@ -176,7 +178,7 @@ class TestBatchProcessing:
 
     def test_batch_progress_callback(
         self, batch_processor, test_batch_images, temp_dir
-    ):
+    ) -> None:
         """Test progress callback during batch processing."""
         # Arrange
         input_files = [img["path"] for img in test_batch_images[:5]]
@@ -185,7 +187,7 @@ class TestBatchProcessing:
 
         progress_updates = []
 
-        def progress_callback(update):
+        def progress_callback(update) -> None:
             progress_updates.append(update)
 
         # Act
@@ -212,7 +214,7 @@ class TestBatchProcessing:
         ]
         assert progress_percentages == sorted(progress_percentages)  # Increasing
 
-    def test_batch_memory_management(self, batch_processor, temp_dir):
+    def test_batch_memory_management(self, batch_processor, temp_dir) -> None:
         """Test memory is properly managed during large batch processing."""
         # Arrange
         # Create 50 medium-sized images
@@ -253,7 +255,9 @@ class TestBatchProcessing:
         assert results["total_processed"] == 50
         assert (peak_memory - initial_memory) < 1000  # Less than 1GB increase
 
-    def test_batch_with_presets(self, batch_processor, test_batch_images, temp_dir):
+    def test_batch_with_presets(
+        self, batch_processor, test_batch_images, temp_dir
+    ) -> None:
         """Test batch processing using predefined presets."""
         # Arrange
         input_files = [img["path"] for img in test_batch_images[:3]]
@@ -279,7 +283,9 @@ class TestBatchProcessing:
             assert result["quality"] == 85
             assert result["metadata_stripped"] is True
 
-    def test_batch_cancellation(self, batch_processor, test_batch_images, temp_dir):
+    def test_batch_cancellation(
+        self, batch_processor, test_batch_images, temp_dir
+    ) -> None:
         """Test cancellation of batch processing."""
         # Arrange
         input_files = [img["path"] for img in test_batch_images]
@@ -291,7 +297,7 @@ class TestBatchProcessing:
 
         results_container = {"results": None}
 
-        def run_batch():
+        def run_batch() -> None:
             results_container["results"] = batch_processor.process_batch(
                 {
                     "files": input_files,
@@ -314,7 +320,7 @@ class TestBatchProcessing:
         assert results["cancelled"] is True
         assert results["total_processed"] < 10  # Not all processed
 
-    def test_batch_with_different_sizes(self, batch_processor, temp_dir):
+    def test_batch_with_different_sizes(self, batch_processor, temp_dir) -> None:
         """Test batch processing handles images of vastly different sizes."""
         # Arrange
         sizes = [(100, 100), (1000, 1000), (4000, 3000), (50, 50), (2000, 1000)]

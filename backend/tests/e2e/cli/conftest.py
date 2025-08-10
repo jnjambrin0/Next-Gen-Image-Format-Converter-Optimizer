@@ -2,18 +2,18 @@
 Shared fixtures and configuration for CLI E2E tests
 """
 
-import pytest
+import os
+import shutil
 import subprocess
 import sys
-import os
-import time
 import tempfile
-import shutil
+import time
 from pathlib import Path
-from typing import Generator, Dict, Any, Optional
+from typing import Any, Dict, Generator, Optional
+
+import pytest
 import requests
 from PIL import Image
-import io
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -22,19 +22,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 class CLIRunner:
     """Helper class to run CLI commands with real execution"""
 
-    def __init__(self, backend_url: str = "http://localhost:8000"):
+    def __init__(self, backend_url: str = "http://localhost:8000") -> None:
         self.backend_url = backend_url
         self.cli_path = (
             Path(__file__).parent.parent.parent.parent / "app" / "cli" / "main.py"
         )
         self.temp_dir = None
 
-    def setup(self):
+    def setup(self) -> None:
         """Create temporary directory for test outputs"""
         self.temp_dir = tempfile.mkdtemp(prefix="cli_test_")
         return self.temp_dir
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up temporary directory"""
         if self.temp_dir and os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
@@ -140,7 +140,7 @@ class CLIRunner:
 
 
 @pytest.fixture(scope="session")
-def backend_server():
+def backend_server() -> None:
     """Ensure backend server is running"""
     # Check if backend is running
     max_retries = 5
@@ -260,7 +260,7 @@ def terminal_configs() -> list:
 
 
 @pytest.fixture
-def ansi_parser():
+def ansi_parser() -> None:
     """Helper to parse ANSI escape codes from output"""
     import re
 
@@ -312,7 +312,7 @@ def ansi_parser():
 
 
 @pytest.fixture
-def progress_validator():
+def progress_validator() -> None:
     """Helper to validate progress output"""
 
     class ProgressValidator:
@@ -354,7 +354,7 @@ def progress_validator():
 
 
 @pytest.fixture
-def theme_validator():
+def theme_validator() -> None:
     """Helper to validate theme application"""
 
     class ThemeValidator:
@@ -405,7 +405,7 @@ def wait_for_file(filepath: Path, timeout: int = 10) -> bool:
     return False
 
 
-def capture_screenshot(output_text: str, filename: str):
+def capture_screenshot(output_text: str, filename: str) -> None:
     """Save colored output as HTML for visual verification"""
     # This would convert ANSI to HTML for visual inspection
     # Simplified version - real implementation would use ansi2html

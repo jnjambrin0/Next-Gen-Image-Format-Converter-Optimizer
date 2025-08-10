@@ -1,11 +1,11 @@
 """
+from typing import Any
 Analyze Command
 Image analysis and information extraction
 """
 
 import typer
 from rich.console import Console
-from rich.table import Table
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -14,7 +14,7 @@ console = Console()
 @app.command(name="info")
 def analyze_info(
     input_path: str,
-):
+) -> None:
     """
     Show detailed image information
 
@@ -29,7 +29,7 @@ def analyze_info(
 def analyze_preview(
     input_path: str,
     mode: str = "ansi",
-):
+) -> None:
     """
     Preview image in terminal
 
@@ -39,8 +39,9 @@ def analyze_preview(
     """
     console.print(f"[cyan]Generating preview for {input_path}...[/cyan]")
     # Implementation will use the preview module
-    from app.cli.ui.preview import create_ascii_preview
     from pathlib import Path
+
+    from app.cli.ui.preview import create_ascii_preview
 
     try:
         preview = create_ascii_preview(Path(input_path), mode=mode)
@@ -50,6 +51,5 @@ def analyze_preview(
 
 
 @app.callback()
-def analyze_callback():
+def analyze_callback() -> None:
     """Analyze image properties"""
-    pass

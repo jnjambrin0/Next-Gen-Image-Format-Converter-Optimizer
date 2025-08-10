@@ -1,16 +1,15 @@
 """Lossless compression algorithms for various image formats."""
 
-import io
 import asyncio
-from typing import Dict, Any, Optional, Tuple
+import io
 from enum import Enum
+from typing import Any, Dict, Tuple
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 
 from app.core.constants import IMAGE_MAX_PIXELS
 from app.core.security.errors_simplified import create_file_error
-from app.core.security.memory import secure_clear
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -63,7 +62,7 @@ class LosslessCompressor:
         },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the lossless compressor."""
         self._compression_semaphore = asyncio.Semaphore(
             3

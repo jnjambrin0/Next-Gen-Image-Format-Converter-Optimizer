@@ -1,28 +1,27 @@
 """Integration tests for the complete conversion pipeline."""
 
-import pytest
 import asyncio
-from pathlib import Path
 import io
-from PIL import Image
 
 # Import fixtures
 import sys
 from pathlib import Path
+from typing import Any
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import (
+    ConversionFailedError,
+)
 from app.models.conversion import (
     ConversionRequest,
     ConversionSettings,
     ConversionStatus,
     OutputFormat,
-)
-from app.core.exceptions import (
-    InvalidImageError,
-    UnsupportedFormatError,
-    ConversionFailedError,
 )
 
 
@@ -30,7 +29,7 @@ class TestConversionPipeline:
     """Integration tests for the full conversion pipeline."""
 
     @pytest.fixture
-    def conversion_manager(self):
+    def conversion_manager(self) -> None:
         """Create a ConversionManager instance."""
         return ConversionManager()
 

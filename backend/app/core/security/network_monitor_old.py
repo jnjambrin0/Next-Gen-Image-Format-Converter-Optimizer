@@ -4,31 +4,27 @@ Real-time network connection monitoring for security enforcement.
 
 import asyncio
 import os
+import random
 import signal
 import subprocess
-import time
-import random
-from datetime import datetime
-from typing import Dict, List, Set, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Set
+
 import structlog
 
-from app.core.monitoring.security_events import SecurityEventTracker
-from app.models.security_event import SecurityEventType, SecuritySeverity
 from app.core.constants import (
-    NETWORK_VIOLATION_THRESHOLD,
-    PROCESS_TERMINATION_GRACE_PERIOD,
     DEFAULT_MONITORING_INTERVAL,
     MONITORING_JITTER_PERCENT,
     NETWORK_BASELINE_MAX_CONNECTIONS,
+    NETWORK_VIOLATION_THRESHOLD,
+    PROCESS_TERMINATION_GRACE_PERIOD,
 )
-from app.core.security.types import ConnectionInfo, ViolationStats
+from app.core.monitoring.security_events import SecurityEventTracker
 from app.core.security.metrics import SecurityMetricsCollector
 from app.core.security.parsers import (
     parse_connections,
-    validate_no_network_activity,
-    get_active_connections_count,
-    check_network_isolation,
 )
+from app.core.security.types import ViolationStats
+from app.models.security_event import SecurityEventType, SecuritySeverity
 
 logger = structlog.get_logger()
 
@@ -43,12 +39,12 @@ class NetworkMonitor:
         security_tracker: Optional[SecurityEventTracker] = None,
         check_interval: int = DEFAULT_MONITORING_INTERVAL,
         terminate_on_violation: bool = False,
-    ):
+    ) -> None:
         """
         Initialize network monitor.
 
         Args:
-            security_tracker: Optional security event tracker
+            security_tracker: Optional[Any] security event tracker
             check_interval: Seconds between connection checks
             terminate_on_violation: Whether to terminate violating processes
         """
@@ -344,7 +340,7 @@ async def create_network_monitor(
     Factory function to create and start a network monitor.
 
     Args:
-        security_tracker: Optional security event tracker
+        security_tracker: Optional[Any] security event tracker
         check_interval: Seconds between checks
         terminate_on_violation: Whether to terminate violating processes
 

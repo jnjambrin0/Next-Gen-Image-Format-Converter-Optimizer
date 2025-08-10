@@ -1,31 +1,30 @@
 """Security tests for memory management."""
 
-import asyncio
 import gc
 import os
-import pytest
 import resource
 import tempfile
 import time
-from unittest.mock import patch, MagicMock
+from typing import Any
+from unittest.mock import patch
 
+import pytest
+
+from app.core.conversion.manager import ConversionManager
+from app.core.security.memory import MemoryError as SecureMemoryError
 from app.core.security.memory import (
     SecureMemoryManager,
-    MemoryError as SecureMemoryError,
-    secure_memory_context,
-    secure_allocate,
-    secure_clear,
     get_system_memory_info,
+    secure_memory_context,
 )
-from app.core.security.sandbox import SecuritySandbox, SandboxConfig
-from app.core.conversion.manager import ConversionManager
+from app.core.security.sandbox import SandboxConfig, SecuritySandbox
 from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
 class TestSecureMemoryManager:
     """Test secure memory management functionality."""
 
-    def test_memory_manager_initialization(self):
+    def test_memory_manager_initialization(self) -> None:
         """Test memory manager initializes correctly."""
         manager = SecureMemoryManager(max_memory_mb=256)
 
@@ -34,7 +33,7 @@ class TestSecureMemoryManager:
         assert len(manager._allocated_buffers) == 0
         assert len(manager._locked_pages) == 0
 
-    def test_secure_allocate_basic(self):
+    def test_secure_allocate_basic(self) -> None:
         """Test basic secure memory allocation."""
         manager = SecureMemoryManager(max_memory_mb=64)
 
@@ -45,7 +44,7 @@ class TestSecureMemoryManager:
         assert len(buffer) == 1024
         assert len(manager._allocated_buffers) == 1
 
-    def test_secure_allocate_exceeds_limit(self):
+    def test_secure_allocate_exceeds_limit(self) -> None:
         """Test allocation fails when exceeding limits."""
         manager = SecureMemoryManager(max_memory_mb=1)  # 1MB limit
 
@@ -53,7 +52,7 @@ class TestSecureMemoryManager:
         with pytest.raises(SecureMemoryError, match="exceeds maximum"):
             manager.secure_allocate(2 * 1024 * 1024)  # 2MB
 
-    def test_secure_allocate_invalid_size(self):
+    def test_secure_allocate_invalid_size(self) -> None:
         """Test allocation fails with invalid size."""
         manager = SecureMemoryManager()
 
@@ -63,7 +62,7 @@ class TestSecureMemoryManager:
         with pytest.raises(SecureMemoryError, match="Invalid allocation size"):
             manager.secure_allocate(-100)
 
-    def test_secure_clear_bytearray(self):
+    def test_secure_clear_bytearray(self) -> None:
         """Test secure clearing of bytearray."""
         manager = SecureMemoryManager()
 
@@ -78,7 +77,7 @@ class TestSecureMemoryManager:
         assert len(buffer) == original_length
         assert all(b == 0 for b in buffer)
 
-    def test_secure_clear_bytes(self):
+    def test_secure_clear_bytes(self) -> None:
         """Test secure clearing of bytes (should warn but not crash)."""
         manager = SecureMemoryManager()
 
@@ -86,7 +85,7 @@ class TestSecureMemoryManager:
         buffer = b"immutable data"
         manager.secure_clear(buffer)  # Should log warning but not crash
 
-    def test_memory_context_manager(self):
+    def test_memory_context_manager(self) -> None:
         """Test memory manager context manager."""
         with SecureMemoryManager(max_memory_mb=64) as manager:
             buffer = manager.secure_allocate(1024, lock_memory=False)
@@ -95,14 +94,14 @@ class TestSecureMemoryManager:
         # After exit, should be cleaned up
         assert len(manager._allocated_buffers) == 0
 
-    def test_secure_memory_context_function(self):
+    def test_secure_memory_context_function(self) -> None:
         """Test secure_memory_context function."""
         with secure_memory_context(max_memory_mb=32) as manager:
             buffer = manager.secure_allocate(512, lock_memory=False)
             assert isinstance(buffer, bytearray)
             assert len(buffer) == 512
 
-    def test_memory_stats(self):
+    def test_memory_stats(self) -> None:
         """Test memory statistics reporting."""
         manager = SecureMemoryManager(max_memory_mb=128)
 
@@ -114,7 +113,7 @@ class TestSecureMemoryManager:
         assert "allocated_buffers" in stats
         assert "memory_utilization_percent" in stats
 
-    def test_cleanup_all(self):
+    def test_cleanup_all(self) -> None:
         """Test cleanup of all resources."""
         manager = SecureMemoryManager()
 
@@ -132,7 +131,7 @@ class TestSecureMemoryManager:
     @pytest.mark.skipif(
         os.name != "posix", reason="Memory locking only on POSIX systems"
     )
-    def test_memory_locking_posix(self):
+    def test_memory_locking_posix(self) -> None:
         """Test memory page locking on POSIX systems."""
         manager = SecureMemoryManager()
 
@@ -149,7 +148,7 @@ class TestSecureMemoryManager:
 class TestSecuritySandboxMemory:
     """Test memory features in SecuritySandbox."""
 
-    def test_sandbox_memory_config(self):
+    def test_sandbox_memory_config(self) -> None:
         """Test sandbox memory configuration."""
         config = SandboxConfig(
             max_memory_mb=256,
@@ -165,7 +164,7 @@ class TestSecuritySandboxMemory:
         assert sandbox.config.enable_memory_locking is True
         assert sandbox.config.memory_violation_threshold == 5
 
-    def test_memory_stats_tracking(self):
+    def test_memory_stats_tracking(self) -> None:
         """Test memory statistics tracking."""
         config = SandboxConfig(enable_memory_tracking=True)
         sandbox = SecuritySandbox(config)
@@ -177,7 +176,7 @@ class TestSecuritySandboxMemory:
         assert "memory_limit_mb" in stats
         assert "memory_tracking_enabled" in stats
 
-    def test_memory_violation_detection(self):
+    def test_memory_violation_detection(self) -> None:
         """Test memory violation detection."""
         config = SandboxConfig(max_memory_mb=100, memory_violation_threshold=3)
         sandbox = SecuritySandbox(config)
@@ -196,7 +195,7 @@ class TestSecuritySandboxMemory:
         with pytest.raises(SecureMemoryError, match="exceeded threshold"):
             sandbox._check_memory_violation(250.0)
 
-    def test_memory_cleanup(self):
+    def test_memory_cleanup(self) -> None:
         """Test memory cleanup in sandbox."""
         config = SandboxConfig(enable_memory_tracking=True)
         sandbox = SecuritySandbox(config)
@@ -214,11 +213,12 @@ class TestMemoryInProcessing:
     """Test memory management in image processing pipeline."""
 
     @pytest.fixture
-    def sample_image_data(self):
+    def sample_image_data(self) -> None:
         """Create sample image data for testing."""
         # Create a small PNG image in memory
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         # Create a small test image
         img = Image.new("RGB", (100, 100), color="red")
@@ -226,7 +226,7 @@ class TestMemoryInProcessing:
         img.save(buffer, format="PNG")
         return buffer.getvalue()
 
-    def test_conversion_manager_memory_estimation(self, sample_image_data):
+    def test_conversion_manager_memory_estimation(self, sample_image_data) -> None:
         """Test memory requirement estimation."""
         manager = ConversionManager()
 
@@ -258,7 +258,7 @@ class TestMemoryInProcessing:
             # Memory manager should be cleaned up
             assert manager._memory_manager is None
 
-    def test_get_system_memory_info(self):
+    def test_get_system_memory_info(self) -> None:
         """Test system memory information gathering."""
         info = get_system_memory_info()
 
@@ -271,7 +271,7 @@ class TestMemoryInProcessing:
 class TestMemorySecurityIntegration:
     """Integration tests for memory security features."""
 
-    def test_no_memory_leaks_after_operations(self):
+    def test_no_memory_leaks_after_operations(self) -> None:
         """Test that memory is properly cleaned up after operations."""
         initial_objects = len(gc.get_objects())
 
@@ -289,7 +289,7 @@ class TestMemorySecurityIntegration:
         # Allow some variance for test framework objects
         assert final_objects - initial_objects < 100
 
-    def test_memory_isolation_between_operations(self):
+    def test_memory_isolation_between_operations(self) -> None:
         """Test memory isolation between different operations."""
         manager1 = SecureMemoryManager(max_memory_mb=64)
         manager2 = SecureMemoryManager(max_memory_mb=64)
@@ -313,7 +313,7 @@ class TestMemorySecurityIntegration:
     @pytest.mark.skipif(
         not hasattr(resource, "RLIMIT_AS"), reason="Memory limits not supported"
     )
-    def test_resource_limit_enforcement(self):
+    def test_resource_limit_enforcement(self) -> None:
         """Test that resource limits are enforced."""
         # This test requires running in a controlled environment
         # In practice, resource limits are set by the sandbox
@@ -327,7 +327,7 @@ class TestMemorySecurityIntegration:
 class TestMemoryStressScenarios:
     """Stress tests for memory management."""
 
-    def test_rapid_allocation_deallocation(self):
+    def test_rapid_allocation_deallocation(self) -> None:
         """Test rapid memory allocation and deallocation."""
         manager = SecureMemoryManager(max_memory_mb=128)
 
@@ -339,7 +339,7 @@ class TestMemoryStressScenarios:
 
         manager.cleanup_all()
 
-    def test_memory_fragmentation_resistance(self):
+    def test_memory_fragmentation_resistance(self) -> None:
         """Test resistance to memory fragmentation."""
         manager = SecureMemoryManager(max_memory_mb=64)
 
@@ -360,7 +360,7 @@ class TestMemoryStressScenarios:
 
         manager.cleanup_all()
 
-    def test_concurrent_memory_operations(self):
+    def test_concurrent_memory_operations(self) -> None:
         """Test concurrent memory operations."""
         import threading
 
@@ -368,7 +368,7 @@ class TestMemoryStressScenarios:
         results = []
         errors = []
 
-        def worker():
+        def worker() -> None:
             try:
                 buffer = manager.secure_allocate(1024, lock_memory=False)
                 time.sleep(0.01)  # Simulate some work
@@ -396,7 +396,7 @@ class TestMemoryStressScenarios:
 class TestMemorySecurityValidation:
     """Test memory security validation and compliance."""
 
-    def test_memory_overwrite_patterns(self):
+    def test_memory_overwrite_patterns(self) -> None:
         """Test that memory is properly overwritten with security patterns."""
         manager = SecureMemoryManager()
 
@@ -411,7 +411,7 @@ class TestMemorySecurityValidation:
         assert all(b == 0 for b in buffer)
         assert buffer != test_data
 
-    def test_no_temporary_files_created(self):
+    def test_no_temporary_files_created(self) -> None:
         """Test that no temporary files are created during memory operations."""
         temp_dir = tempfile.gettempdir()
         initial_files = set()
@@ -441,7 +441,7 @@ class TestMemorySecurityValidation:
             # If we can't check, that's OK - the test is still valid
             pass
 
-    def test_memory_limit_compliance(self):
+    def test_memory_limit_compliance(self) -> None:
         """Test compliance with memory limits."""
         limit_mb = 32
         manager = SecureMemoryManager(max_memory_mb=limit_mb)

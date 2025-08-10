@@ -2,30 +2,28 @@
 Local-only error reporting system for privacy-focused monitoring.
 """
 
-import asyncio
-import sqlite3
+import hashlib
 import json
-from collections import defaultdict, Counter
+import os
+import sqlite3
+import traceback
+from collections import Counter
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
 from threading import Lock
-import hashlib
-import traceback
-import os
+from typing import Any, Dict, List, Optional
 
-from app.utils.logging import get_logger, filter_sensitive_data
 from app.core.constants import (
-    ERROR_MESSAGE_MAX_LENGTH,
-    ERROR_SIGNATURE_HASH_LENGTH,
-    DEFAULT_MONITORING_HOURS,
-    ERROR_RETENTION_DAYS,
-    MAX_TOP_ERRORS_DISPLAY,
-    MAX_CATEGORY_ERRORS_DISPLAY,
     DB_CHECK_SAME_THREAD,
-    ERROR_EVENT_TABLE_NAME,
+    DEFAULT_MONITORING_HOURS,
+    ERROR_MESSAGE_MAX_LENGTH,
+    ERROR_RETENTION_DAYS,
+    ERROR_SIGNATURE_HASH_LENGTH,
+    MAX_CATEGORY_ERRORS_DISPLAY,
+    MAX_TOP_ERRORS_DISPLAY,
 )
+from app.utils.logging import filter_sensitive_data, get_logger
 
 logger = get_logger(__name__)
 
@@ -65,7 +63,7 @@ class ErrorReporter:
     Stores errors in SQLite with no PII.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """
         Initialize the error reporter.
 
@@ -79,7 +77,7 @@ class ErrorReporter:
 
         self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for error storage."""
         if self.db_path != ":memory:":
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -115,7 +113,7 @@ class ErrorReporter:
             )
 
     @contextmanager
-    def _get_db(self):
+    def _get_db(self) -> None:
         """Get database connection context manager."""
         conn = sqlite3.connect(self.db_path, check_same_thread=DB_CHECK_SAME_THREAD)
         conn.row_factory = sqlite3.Row
@@ -229,7 +227,7 @@ class ErrorReporter:
 
         Args:
             error: The exception to record
-            context: Optional context (will be sanitized)
+            context: Optional[Any] context (will be sanitized)
 
         Returns:
             Error ID for reference

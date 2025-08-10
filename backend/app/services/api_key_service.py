@@ -1,16 +1,17 @@
 """API Key service for managing authentication keys."""
 
 import hashlib
-import secrets
 import json
-from typing import Dict, List, Optional, Tuple
+import secrets
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, select, update
-from sqlalchemy.orm import sessionmaker, Session
+from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.database import Base, ApiKey, ApiUsageStats
-from app.utils.logging import get_logger
+from sqlalchemy import create_engine, select, update
+from sqlalchemy.orm import sessionmaker
+
 from app.config import settings
+from app.models.database import ApiKey, ApiUsageStats, Base
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -18,7 +19,7 @@ logger = get_logger(__name__)
 class ApiKeyService:
     """Service for managing API keys."""
 
-    def __init__(self, db_path: str = "./data/api_keys.db"):
+    def __init__(self, db_path: str = "./data/api_keys.db") -> None:
         """Initialize the API key service.
 
         Args:
@@ -60,10 +61,10 @@ class ApiKeyService:
         """Create a new API key.
 
         Args:
-            name: Optional name for the API key
-            permissions: Optional permissions dict (for future use)
-            rate_limit_override: Optional custom rate limit per minute
-            expires_days: Optional expiration in days from now
+            name: Optional[Any] name for the API key
+            permissions: Optional[Any] permissions dict (for future use)
+            rate_limit_override: Optional[Any] custom rate limit per minute
+            expires_days: Optional[Any] expiration in days from now
 
         Returns:
             Tuple of (ApiKey model, raw API key string)
@@ -156,8 +157,7 @@ class ApiKeyService:
         Args:
             include_inactive: Whether to include inactive keys
 
-        Returns:
-            List of ApiKey records
+        Returns: List[Any] of ApiKey records
         """
         with self.SessionLocal() as session:
             query = select(ApiKey)

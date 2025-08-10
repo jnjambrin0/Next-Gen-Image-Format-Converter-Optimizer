@@ -1,16 +1,14 @@
 """Integration tests for batch processing API."""
 
-import pytest
 import asyncio
-import io
-import zipfile
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from httpx import AsyncClient
-from unittest.mock import patch, AsyncMock, MagicMock
-from datetime import datetime
 
 from app.main import app
 from app.models.conversion import ConversionResult
-from app.core.batch.models import BatchStatus, BatchItemStatus
 
 
 @pytest.mark.asyncio

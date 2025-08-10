@@ -2,17 +2,16 @@
 
 import os
 import tempfile
-from typing import BinaryIO, Dict, Any, Optional, Tuple
 from io import BytesIO
-from PIL import Image
-import structlog
+from typing import Any, BinaryIO, Dict
 
-from app.models.conversion import ConversionSettings
+import structlog
+from PIL import Image
+
 from app.core.conversion.formats.png_handler import PNGHandler
-from app.core.exceptions import ConversionFailedError
 from app.core.conversion.tools import ExternalToolExecutor
-from app.core.monitoring import metrics_collector
-from app.config import settings
+from app.core.exceptions import ConversionFailedError
+from app.models.conversion import ConversionSettings
 
 logger = structlog.get_logger()
 
@@ -20,7 +19,7 @@ logger = structlog.get_logger()
 class PNGOptimizedHandler(PNGHandler):
     """Handler for optimized PNG format using external tools."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize optimized PNG handler."""
         super().__init__()
         self.supported_formats = ["png_opt", "png_optimized"]

@@ -1,10 +1,11 @@
-from fastapi import Request
-from time import time
 import uuid
-from typing import Callable
+from time import time
+from typing import Any, Callable
 
-from ...utils.logging import get_logger, LoggingContext
+from fastapi import Request
+
 from ...services.api_key_service import api_key_service
+from ...utils.logging import LoggingContext, get_logger
 
 logger = get_logger(__name__)
 
