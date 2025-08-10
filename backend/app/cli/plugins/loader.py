@@ -3,11 +3,10 @@ Plugin Loader
 Discovers and loads CLI plugins
 """
 
-import importlib.util
 import json
+import importlib.util
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
+from typing import List, Dict, Optional, Any
 import typer
 
 from app.cli.config import get_plugins_dir

@@ -6,14 +6,14 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID
 
-from app.core.batch.models import BatchJobStatus, BatchProgress, BatchResult
 from app.core.constants import (
-    BATCH_JOB_RETENTION_DAYS,
     DB_CHECK_SAME_THREAD,
+    BATCH_JOB_RETENTION_DAYS,
 )
+from app.core.batch.models import BatchJobStatus, BatchProgress, BatchResult
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

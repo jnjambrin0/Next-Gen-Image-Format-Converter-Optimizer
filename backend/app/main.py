@@ -1,22 +1,21 @@
-from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import Any, Dict
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Dict, Any
 
+from .config import settings
+from .api.routes import api_router, api_v1_router
 from .api.middleware import (
-    auth_middleware,
     error_handler_middleware,
-    logging_middleware,
     setup_exception_handlers,
+    logging_middleware,
+    auth_middleware,
 )
 from .api.middleware.validation import validation_middleware
-from .api.routes import api_router, api_v1_router
-from .config import settings
 from .utils.logging import setup_logging
 
 
@@ -47,14 +46,11 @@ async def lifespan(app: FastAPI):
     await intelligence_service.initialize()
 
     # Initialize recommendation service (CRITICAL: Must be initialized for Story 3.4)
-    import app.services.recommendation_service as rec_module
-
-    from .services.recommendation_service import (
-        RecommendationService,
-    )
     from .services.recommendation_service import (
         recommendation_service as rec_service_import,
+        RecommendationService,
     )
+    import app.services.recommendation_service as rec_module
 
     rec_module.recommendation_service = RecommendationService()
 
@@ -80,20 +76,20 @@ async def lifespan(app: FastAPI):
     conversion_service.set_preset_service(preset_service)
 
     # Initialize API key service (Story 5.2)
+    from .services.api_key_service import api_key_service
+
     # Ensure data directory exists for database files
     import os
-
-    from .services.api_key_service import api_key_service
 
     os.makedirs("./data", exist_ok=True)
 
     # Run enhanced network isolation verification
     if settings.network_verification_enabled:
-        from .core.monitoring.security_events import SecurityEventTracker
         from .core.security.network_verifier import (
             NetworkStrictness,
             verify_network_at_startup,
         )
+        from .core.monitoring.security_events import SecurityEventTracker
 
         # Map string to enum
         strictness_map = {
@@ -139,7 +135,6 @@ async def lifespan(app: FastAPI):
     # Schedule periodic log cleanup
     if getattr(settings, "logging_enabled", True):
         import asyncio
-
         from .utils.logging import cleanup_old_logs
 
         async def periodic_log_cleanup():

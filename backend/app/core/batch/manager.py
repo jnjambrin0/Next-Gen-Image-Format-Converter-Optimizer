@@ -1,28 +1,27 @@
 """Batch processing manager for handling multiple image conversions."""
 
 import asyncio
-import logging
 import multiprocessing
+import psutil
 import time
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Callable, Any, Tuple, Set
 from uuid import UUID
+import logging
 
-import psutil
-
-from app.api.websockets import send_job_status_update
-from app.config import settings
 from app.core.batch.models import (
-    BatchItem,
-    BatchItemStatus,
     BatchJob,
-    BatchProgress,
+    BatchItem,
     BatchStatus,
+    BatchItemStatus,
+    BatchProgress,
 )
-from app.core.constants import BATCH_CHUNK_SIZE, MAX_BATCH_WORKERS
-from app.core.exceptions import ValidationError
-from app.models import ConversionApiRequest, ConversionResult, ConversionSettings
+from app.core.constants import MAX_BATCH_WORKERS, BATCH_CHUNK_SIZE
+from app.config import settings
 from app.utils.logging import get_logger
+from app.models import ConversionApiRequest, ConversionResult, ConversionSettings
+from app.core.exceptions import ValidationError
+from app.api.websockets import send_job_status_update
 
 logger = get_logger(__name__)
 
@@ -533,9 +532,8 @@ class BatchManager:
                 processing_time = None
 
             # Import here to avoid circular dependency
-            import asyncio
-
             from app.services.batch_history_service import batch_history_service
+            import asyncio
 
             # Schedule database update (fire and forget)
             asyncio.create_task(

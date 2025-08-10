@@ -4,20 +4,19 @@ Tests worker pool scaling, efficiency, and resource management.
 """
 
 import asyncio
+import pytest
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import time
 import uuid
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
-import pytest
 
 from app.core.batch.manager import BatchManager, BatchWorkerTask
 from app.core.batch.models import (
-    BatchItem,
-    BatchItemStatus,
     BatchJob,
-    BatchProgress,
+    BatchItem,
     BatchStatus,
+    BatchItemStatus,
+    BatchProgress,
 )
 from app.models import ConversionApiRequest, ConversionResult
 

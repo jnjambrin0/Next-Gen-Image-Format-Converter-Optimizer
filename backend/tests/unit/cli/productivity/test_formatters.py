@@ -3,26 +3,25 @@ Comprehensive tests for output format consistency
 Tests JSON, CSV, YAML, XML, and Markdown formatters
 """
 
-import csv
+import pytest
 import json
-import tempfile
+import yaml
+import csv
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
-from decimal import Decimal
 from io import StringIO
 from pathlib import Path
-
-import pytest
-import yaml
+from datetime import datetime, timedelta
+from decimal import Decimal
+import tempfile
 
 from app.cli.productivity.formatters import (
-    ErrorFormatter,
-    FormatterOptions,
-    FormatType,
     OutputFormatter,
-    ProgressFormatter,
+    FormatType,
     ResultFormatter,
+    ErrorFormatter,
+    ProgressFormatter,
     TableFormatter,
+    FormatterOptions,
 )
 
 

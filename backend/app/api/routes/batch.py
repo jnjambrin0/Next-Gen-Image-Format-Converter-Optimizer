@@ -1,42 +1,41 @@
 """Batch processing API endpoints."""
 
-import asyncio
-import json
 import os
 import uuid
+import json
+import asyncio
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, List, Optional
-
+from typing import List, Dict, Any, Optional, AsyncGenerator
 from fastapi import (
     APIRouter,
-    Depends,
     File,
+    UploadFile,
     Form,
     HTTPException,
     Request,
-    UploadFile,
+    Depends,
     status,
 )
 from fastapi.responses import JSONResponse, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
-from app.api.utils.error_handling import EndpointErrorHandler
-from app.config import settings
 from app.core.batch.models import (
     BatchCreateRequest,
     BatchCreateResponse,
+    BatchStatusResponse,
+    BatchStatus,
+    BatchJob,
     BatchItem,
     BatchItemStatus,
-    BatchJob,
     BatchJobStatus,
     BatchResult,
-    BatchStatus,
-    BatchStatusResponse,
 )
 from app.core.exceptions import ValidationError
 from app.models import ErrorResponse
-from app.services.batch_service import batch_service
+from app.config import settings
 from app.utils.logging import get_logger
+from app.services.batch_service import batch_service
+from app.api.utils.error_handling import EndpointErrorHandler
 
 logger = get_logger(__name__)
 
@@ -644,8 +643,8 @@ async def get_batch_results(job_id: str, request: Request) -> BatchResult:
     """
     try:
         # Import here to avoid circular dependency
-        from app.core.batch.models import BatchResult
         from app.services.batch_history_service import batch_history_service
+        from app.core.batch.models import BatchResult
 
         # Try to get from history service first
         result = await batch_history_service.get_job_results(job_id)

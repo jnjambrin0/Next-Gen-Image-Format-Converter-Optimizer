@@ -1,20 +1,20 @@
 """Unit tests for the Image Processor module."""
 
+import pytest
+from unittest.mock import Mock, patch
+from io import BytesIO
+from PIL import Image
+
 # Import fixtures
 import sys
-from io import BytesIO
 from pathlib import Path
-from unittest.mock import Mock, patch
-
-import pytest
-from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.image_processor import ImageProcessor
 from app.core.exceptions import (
-    ConversionFailedError,
     InvalidImageError,
+    ConversionFailedError,
 )
 
 

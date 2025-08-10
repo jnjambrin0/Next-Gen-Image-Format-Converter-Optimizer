@@ -1,13 +1,12 @@
 """Unit tests for sandboxed_convert.py script."""
 
-import io
-import json
-import os
+import pytest
 import subprocess
 import sys
-
-import pytest
+import json
+import os
 from PIL import Image
+import io
 
 
 class TestSandboxedConvert:

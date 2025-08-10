@@ -1,15 +1,14 @@
 """Unit tests for the Security Sandbox module."""
 
+import pytest
+from unittest.mock import Mock, patch, MagicMock, call
 import os
-import resource
 import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
+import resource
 
-import pytest
-
-from app.core.security.sandbox import SandboxConfig, SecurityError, SecuritySandbox
+from app.core.security.sandbox import SecuritySandbox, SandboxConfig, SecurityError
 
 
 class TestSecuritySandbox:

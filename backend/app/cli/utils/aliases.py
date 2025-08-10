@@ -6,7 +6,6 @@ Handles user-defined command aliases
 import json
 from pathlib import Path
 from typing import Dict, Optional
-
 import typer
 
 from app.cli.config import get_aliases_file

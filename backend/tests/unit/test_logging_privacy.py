@@ -1,10 +1,8 @@
+import pytest
+from app.utils.logging import filter_sensitive_data, cleanup_old_logs
 import os
 import tempfile
 from datetime import datetime, timedelta
-
-import pytest
-
-from app.utils.logging import cleanup_old_logs, filter_sensitive_data
 
 
 class TestPrivacyFiltering:

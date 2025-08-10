@@ -1,11 +1,11 @@
 """Intelligence service for ML-based image analysis."""
 
 import asyncio
+from typing import Optional, Dict, Any
 import logging
-from typing import Any, Dict, Optional
 
 from app.core.intelligence import IntelligenceEngine
-from app.models.conversion import ContentClassification, ContentType
+from app.models.conversion import ContentType, ContentClassification
 
 logger = logging.getLogger(__name__)
 

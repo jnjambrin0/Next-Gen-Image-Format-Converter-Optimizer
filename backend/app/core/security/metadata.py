@@ -3,12 +3,11 @@
 import asyncio
 import io
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-import piexif
-import structlog
+from typing import Dict, Any, List, Optional, Set, Tuple
 from PIL import Image
-from PIL.ExifTags import GPSTAGS, TAGS
+from PIL.ExifTags import TAGS, GPSTAGS
+import structlog
+import piexif
 
 logger = structlog.get_logger()
 

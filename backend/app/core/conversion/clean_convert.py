@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Clean conversion wrapper to ensure no logging pollution."""
 
-import os
 import subprocess
 import sys
+import os
 
 # Get the sandboxed_convert.py path
 script_dir = os.path.dirname(os.path.abspath(__file__))

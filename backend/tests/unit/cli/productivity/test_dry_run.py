@@ -3,23 +3,22 @@ Comprehensive tests for dry-run simulation functionality
 Tests estimation algorithms, validation, and preview features
 """
 
+import pytest
 import json
-import os
 import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, patch, PropertyMock
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock, patch
-
-import pytest
+import os
 
 from app.cli.productivity.dry_run import (
-    BatchEstimate,
-    ConversionEstimate,
     DryRunSimulator,
+    ConversionEstimate,
+    BatchEstimate,
+    ValidationResult,
     ResourceEstimate,
     SimulationMode,
-    ValidationResult,
 )
 
 

@@ -1,13 +1,12 @@
 """Secure memory management for image processing."""
 
+import os
 import ctypes
 import gc
-import os
 import resource
 import threading
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Tuple, Union
-
+from typing import Optional, Dict, Any, Union, List, Tuple
 import structlog
 
 from app.core.security.errors import SecurityError

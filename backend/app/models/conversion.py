@@ -1,11 +1,10 @@
 """Data models for image conversion."""
 
-import uuid
-from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List, Tuple
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from datetime import datetime, timezone
+import uuid
 
 
 class InputFormat(str, Enum):

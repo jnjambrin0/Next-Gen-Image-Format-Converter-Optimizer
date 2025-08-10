@@ -2,19 +2,18 @@
 Shared fixtures and configuration for CLI E2E tests
 """
 
-import io
-import os
-import shutil
+import pytest
 import subprocess
 import sys
-import tempfile
+import os
 import time
+import tempfile
+import shutil
 from pathlib import Path
-from typing import Any, Dict, Generator, Optional
-
-import pytest
+from typing import Generator, Dict, Any, Optional
 import requests
 from PIL import Image
+import io
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))

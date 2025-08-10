@@ -2,14 +2,13 @@
 Unit tests for command history
 """
 
+import pytest
+from unittest.mock import Mock, patch, mock_open
+from pathlib import Path
 import json
 import tempfile
-from collections import deque
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
-
-import pytest
+from collections import deque
 
 from app.cli.utils.history import HistoryManager
 

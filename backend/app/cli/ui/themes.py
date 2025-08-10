@@ -5,14 +5,14 @@ Customizable color themes for terminal output
 
 import json
 import os
-from dataclasses import asdict, dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional, Any
+from dataclasses import dataclass, asdict
+from enum import Enum
 
 from rich.console import Console
-from rich.style import Style
 from rich.theme import Theme as RichTheme
+from rich.style import Style
 
 
 class ThemeType(str, Enum):

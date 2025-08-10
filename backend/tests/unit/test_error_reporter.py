@@ -1,9 +1,7 @@
+import pytest
 import asyncio
 from datetime import datetime, timedelta
-
-import pytest
-
-from app.core.monitoring.errors import ErrorReport, ErrorReporter
+from app.core.monitoring.errors import ErrorReporter, ErrorReport
 
 
 class TestErrorReporter:

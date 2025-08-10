@@ -2,16 +2,15 @@
 Unit tests for fuzzy search functionality
 """
 
+import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.cli.productivity.fuzzy_search import (
-    FuzzySearcher,
     HistoryEntry,
-    HistoryExporter,
+    FuzzySearcher,
     InteractiveHistoryBrowser,
+    HistoryExporter,
 )
 
 

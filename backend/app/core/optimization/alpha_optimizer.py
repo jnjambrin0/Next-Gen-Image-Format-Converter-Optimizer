@@ -1,7 +1,7 @@
 """Alpha channel optimization for transparent images."""
 
 import io
-from typing import Any, Dict, Optional, Tuple
+from typing import Tuple, Optional, Dict, Any
 
 import numpy as np
 from PIL import Image

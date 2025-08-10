@@ -1,29 +1,27 @@
 """Service for advanced image optimization."""
 
-import time
 import uuid
-from typing import Any, Dict, Optional, Tuple
+import time
+from typing import Optional, Any, Dict, Tuple
 
-from app.core.intelligence.engine import IntelligenceEngine
 from app.core.optimization import (
+    QualityAnalyzer,
+    OptimizationEngine,
+    RegionOptimizer,
     AlphaOptimizer,
-    ChromaSubsampling,
     EncodingOptions,
     LosslessCompressor,
-    OptimizationEngine,
-    QualityAnalyzer,
-    RegionOptimizer,
+    ChromaSubsampling,
 )
+from app.core.intelligence.engine import IntelligenceEngine
 from app.core.security.errors_simplified import SecurityErrorHandler
-from app.models.optimization import (
-    AlphaChannelInfo,
-)
-from app.models.optimization import OptimizationPass as OptimizationPassModel
 from app.models.optimization import (
     OptimizationRequest,
     OptimizationResponse,
     QualityMetrics,
     RegionInfo,
+    AlphaChannelInfo,
+    OptimizationPass as OptimizationPassModel,
 )
 from app.utils.logging import get_logger
 

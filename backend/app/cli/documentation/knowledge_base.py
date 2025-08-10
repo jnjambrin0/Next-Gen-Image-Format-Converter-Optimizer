@@ -3,24 +3,24 @@ Q&A Knowledge Base
 Offline knowledge base with search and troubleshooting
 """
 
-import json
 import sqlite3
+import json
+from pathlib import Path
 from dataclasses import dataclass, field
+from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
 from rich.table import Table
+from rich.panel import Panel
+from rich.markdown import Markdown
 
 # Optional import for full-text search
 try:
-    from whoosh import fields, index, qparser
-    from whoosh.analysis import StemmingAnalyzer
+    from whoosh import index, fields, qparser
     from whoosh.filedb.filestore import RamStorage
+    from whoosh.analysis import StemmingAnalyzer
 
     WHOOSH_AVAILABLE = True
 except ImportError:

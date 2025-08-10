@@ -2,10 +2,9 @@
 Unit tests for internationalization
 """
 
-import locale
-from unittest.mock import Mock, patch
-
 import pytest
+from unittest.mock import Mock, patch
+import locale
 
 from app.cli.utils.i18n import I18nManager
 

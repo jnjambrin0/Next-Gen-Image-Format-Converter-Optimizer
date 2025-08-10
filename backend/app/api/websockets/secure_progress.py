@@ -1,26 +1,25 @@
 """Secure WebSocket endpoint for batch processing progress updates with authentication."""
 
 import asyncio
-import hashlib
 import json
 import secrets
+import hashlib
+from typing import Dict, Set, Optional, Tuple
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Set, Tuple
-
 from fastapi import (
-    HTTPException,
-    Query,
     WebSocket,
     WebSocketDisconnect,
     WebSocketException,
     status,
+    Query,
+    HTTPException,
 )
 from fastapi.routing import APIRouter
 
-from app.config import settings
 from app.core.batch.models import BatchProgress, BatchStatus
-from app.services.batch_service import batch_service
 from app.utils.logging import get_logger
+from app.config import settings
+from app.services.batch_service import batch_service
 
 logger = get_logger(__name__)
 

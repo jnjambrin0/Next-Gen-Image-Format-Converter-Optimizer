@@ -1,38 +1,38 @@
 """Format detection and analysis API endpoints."""
 
 import asyncio
-from pathlib import Path
 from typing import Optional
+from pathlib import Path
 
-import structlog
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from fastapi.responses import JSONResponse
+import structlog
 
-from app.api.utils.error_handling import EndpointErrorHandler
-from app.api.utils.validation import (
-    SemaphoreContextManager,
-    secure_memory_clear,
-    validate_content_type,
-    validate_uploaded_file,
+from app.models.responses import (
+    FormatDetectionResponse,
+    FormatRecommendationResponse,
+    FormatCompatibilityResponse,
+    FormatCompatibilityMatrix,
+    FormatRecommendation,
+    ErrorResponse,
 )
+from app.services.format_detection_service import format_detection_service
+from app.services.recommendation_service import recommendation_service
+from app.services.intelligence_service import intelligence_service
 from app.config import settings
+from app.core.exceptions import ValidationError, SecurityError
+from app.api.utils.validation import (
+    validate_uploaded_file,
+    secure_memory_clear,
+    SemaphoreContextManager,
+    validate_content_type,
+)
+from app.api.utils.error_handling import EndpointErrorHandler
 from app.core.constants import (
     FORMAT_TO_MIME_TYPE,
     SUPPORTED_INPUT_FORMATS,
     SUPPORTED_OUTPUT_FORMATS,
 )
-from app.core.exceptions import SecurityError, ValidationError
-from app.models.responses import (
-    ErrorResponse,
-    FormatCompatibilityMatrix,
-    FormatCompatibilityResponse,
-    FormatDetectionResponse,
-    FormatRecommendation,
-    FormatRecommendationResponse,
-)
-from app.services.format_detection_service import format_detection_service
-from app.services.intelligence_service import intelligence_service
-from app.services.recommendation_service import recommendation_service
 
 logger = structlog.get_logger()
 
@@ -125,9 +125,8 @@ async def detect_format(
             format_details = {}
             try:
                 # Import PIL here to avoid import errors and improve startup time
-                from io import BytesIO
-
                 from PIL import Image
+                from io import BytesIO
 
                 # Try to get more detailed format information
                 with Image.open(BytesIO(contents)) as img:

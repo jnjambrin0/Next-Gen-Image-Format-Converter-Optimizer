@@ -3,12 +3,12 @@ Memory-efficient image processing using libvips for large files.
 Provides streaming operations for files > 100MB to minimize memory usage.
 """
 
-import io
-import logging
 import os
+import io
 import tempfile
+from typing import Optional, Tuple, Dict, Any, BinaryIO
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Optional, Tuple
+import logging
 
 try:
     import pyvips
@@ -18,11 +18,11 @@ except ImportError:
     VIPS_AVAILABLE = False
     pyvips = None
 
-import psutil
 from PIL import Image
+import psutil
 
-from app.core.exceptions import ConversionError
 from app.utils.logging import get_logger
+from app.core.exceptions import ConversionError
 
 logger = get_logger(__name__)
 

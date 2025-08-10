@@ -1,18 +1,17 @@
 """Performance tests for optimization features."""
 
-import asyncio
-import io
-import time
-
 import pytest
+import asyncio
+import time
+import io
 from PIL import Image
 
 from app.core.optimization import (
-    CompressionLevel,
-    LosslessCompressor,
+    QualityAnalyzer,
     OptimizationEngine,
     OptimizationMode,
-    QualityAnalyzer,
+    LosslessCompressor,
+    CompressionLevel,
 )
 
 
@@ -199,9 +198,8 @@ class TestOptimizationPerformance:
     @pytest.mark.asyncio
     async def test_memory_efficiency(self, typical_image):
         """Test memory usage remains reasonable."""
-        import os
-
         import psutil
+        import os
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

@@ -2,18 +2,17 @@
 Security tests for privacy compliance in CLI productivity features
 """
 
+import pytest
 import json
-import re
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch, MagicMock
+import re
 
 from app.cli.productivity.autocomplete import (
-    AutocompleteEngine,
-    CommandLearner,
     PrivacySanitizer,
+    CommandLearner,
+    AutocompleteEngine,
 )
 
 

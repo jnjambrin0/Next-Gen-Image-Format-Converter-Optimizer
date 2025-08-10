@@ -3,14 +3,13 @@ Enhanced Help Command
 Context-aware help with examples and search functionality
 """
 
-from typing import Annotated, Optional
-
+from typing import Optional, Annotated
 import typer
-from rich.columns import Columns
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
+from rich.columns import Columns
+from rich.markdown import Markdown
 
 from app.cli.documentation.help_context import HelpContextAnalyzer
 from app.cli.ui.themes import get_theme_manager

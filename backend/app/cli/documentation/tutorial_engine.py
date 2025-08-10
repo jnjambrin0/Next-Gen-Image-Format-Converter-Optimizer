@@ -3,23 +3,23 @@ Tutorial Engine Framework
 Interactive tutorial system with progress tracking
 """
 
-import asyncio
 import json
+import time
 import re
+from pathlib import Path
+from dataclasses import dataclass, field, asdict
+from typing import List, Dict, Optional, Any, Callable
+from enum import Enum
+import asyncio
+import tempfile
 import subprocess
 import sys
-import tempfile
-import time
-from dataclasses import asdict, dataclass, field
-from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.prompt import Confirm, Prompt
+from rich.prompt import Prompt, Confirm
+from rich.markdown import Markdown
 from rich.syntax import Syntax
 from rich.table import Table
 

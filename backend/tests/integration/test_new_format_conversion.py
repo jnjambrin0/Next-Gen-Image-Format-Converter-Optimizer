@@ -1,20 +1,19 @@
 """Integration tests for new format conversion support."""
 
+import pytest
+from io import BytesIO
+from PIL import Image
 import asyncio
 
 # Import fixtures
 import sys
-from io import BytesIO
 from pathlib import Path
-
-import pytest
-from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.manager import ConversionManager
-from app.core.exceptions import ConversionFailedError, UnsupportedFormatError
 from app.models.conversion import ConversionRequest, InputFormat, OutputFormat
+from app.core.exceptions import ConversionFailedError, UnsupportedFormatError
 
 
 class TestNewFormatConversion:

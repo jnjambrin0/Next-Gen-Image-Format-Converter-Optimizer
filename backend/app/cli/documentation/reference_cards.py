@@ -3,32 +3,30 @@ Quick Reference Card Generator
 Creates PDF and Markdown reference cards for commands
 """
 
-import json
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+import json
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.table import Table
+from rich.markdown import Markdown
 
 # Optional import for PDF generation
 try:
-    from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    from reportlab.lib.pagesizes import A4, letter
-    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     from reportlab.platypus import (
-        PageBreak,
-        Paragraph,
         SimpleDocTemplate,
-        Spacer,
-    )
-    from reportlab.platypus import Table as RLTable
-    from reportlab.platypus import (
+        Table as RLTable,
         TableStyle,
+        Paragraph,
+        Spacer,
+        PageBreak,
     )
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
     REPORTLAB_AVAILABLE = True
 except ImportError:

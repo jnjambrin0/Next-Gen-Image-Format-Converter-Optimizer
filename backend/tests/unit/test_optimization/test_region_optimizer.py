@@ -1,14 +1,13 @@
 """Unit tests for the RegionOptimizer."""
 
+import pytest
 import io
+from PIL import Image
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
-from PIL import Image
-
-from app.core.optimization.region_optimizer import Region, RegionOptimizer, RegionType
-from app.core.security.errors_simplified import SecurityError
+from app.core.optimization.region_optimizer import RegionOptimizer, RegionType, Region
 from app.models.conversion import BoundingBox, ContentClassification
+from app.core.security.errors_simplified import SecurityError
 
 
 class TestRegionOptimizer:

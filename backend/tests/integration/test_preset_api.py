@@ -1,11 +1,9 @@
 """Integration tests for preset API endpoints."""
 
+import pytest
 import asyncio
 from contextlib import asynccontextmanager
-
-import pytest
 from fastapi.testclient import TestClient
-
 from app.main import app
 from app.models.schemas import PresetSettings
 

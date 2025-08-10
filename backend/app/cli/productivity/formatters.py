@@ -3,16 +3,16 @@ Output Formatters for Scriptable Output
 Support JSON, CSV, YAML and other structured output formats
 """
 
+import json
 import csv
 import io
-import json
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 
 import yaml
+from dataclasses import dataclass, field
 
 
 class OutputFormat(Enum):

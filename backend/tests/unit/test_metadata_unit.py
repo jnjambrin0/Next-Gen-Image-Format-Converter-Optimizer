@@ -1,9 +1,8 @@
 """Unit tests for metadata functionality without sandboxing."""
 
-import io
-
 import pytest
 from PIL import Image
+import io
 
 from app.core.security.metadata import MetadataStripper
 

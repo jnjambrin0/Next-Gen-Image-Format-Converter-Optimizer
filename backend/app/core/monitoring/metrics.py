@@ -1,9 +1,9 @@
 """Conversion-specific metrics collection for performance tracking."""
 
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Dict, Any
+import time
 
 from app.utils.logging import get_logger
 

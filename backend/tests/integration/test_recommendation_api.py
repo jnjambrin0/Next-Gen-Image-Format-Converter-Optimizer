@@ -1,16 +1,15 @@
 """Integration tests for recommendation API endpoints."""
 
-from unittest.mock import AsyncMock, patch
-
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch, AsyncMock
 
 from app.main import app
 from app.models.conversion import (
-    ContentClassification,
     ContentType,
-    InputFormat,
     OutputFormat,
+    InputFormat,
+    ContentClassification,
 )
 from app.models.recommendation import UseCaseType
 

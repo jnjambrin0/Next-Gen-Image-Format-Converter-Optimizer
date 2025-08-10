@@ -1,11 +1,10 @@
 """Quality analyzer with real SSIM/PSNR calculations without scikit-image."""
 
 import asyncio
-import hashlib
 import io
+import hashlib
+from typing import Optional, Dict, Any, Tuple
 from functools import lru_cache
-from typing import Any, Dict, Optional, Tuple
-
 import numpy as np
 from PIL import Image
 

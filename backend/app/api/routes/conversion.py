@@ -1,28 +1,28 @@
 """Conversion API endpoints."""
 
 import asyncio
-import os
-from pathlib import Path
 from typing import Optional
+from pathlib import Path
+import os
 
-import structlog
-from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Response, Request
 from fastapi.responses import StreamingResponse
+import structlog
 
-from app.api.utils.error_handling import EndpointErrorHandler
-from app.api.utils.validation import secure_memory_clear, validate_content_type
-from app.config import settings
-from app.core.constants import FORMAT_TO_CONTENT_TYPE
 from app.core.exceptions import (
     ConversionError,
-    ConversionFailedError,
     InvalidImageError,
     UnsupportedFormatError,
+    ConversionFailedError,
 )
-from app.models.conversion import ConversionSettings, OptimizationSettings, OutputFormat
+from app.models.conversion import OutputFormat, ConversionSettings, OptimizationSettings
 from app.models.requests import ConversionApiRequest
 from app.models.responses import ConversionApiResponse, ErrorResponse
 from app.services.conversion_service import conversion_service
+from app.config import settings
+from app.api.utils.validation import validate_content_type, secure_memory_clear
+from app.api.utils.error_handling import EndpointErrorHandler
+from app.core.constants import FORMAT_TO_CONTENT_TYPE
 
 logger = structlog.get_logger()
 

@@ -1,38 +1,37 @@
 """Conversion manager for orchestrating image conversions."""
 
 import asyncio
-import os
-import sys
-import tempfile
 import time
-from datetime import datetime, timezone
+import sys
+from typing import Dict, Type, Optional, Any, Tuple, List, Set
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Set, Tuple, Type
-
+from datetime import datetime, timezone
+import tempfile
+import os
 import structlog
 
-from app.config import settings
-from app.core.constants import CANONICAL_FORMATS, FORMAT_ALIASES
-from app.core.conversion.formats.base import BaseFormatHandler
-from app.core.conversion.image_processor import ImageProcessor
-from app.core.exceptions import (
-    ConversionError,
-    ConversionFailedError,
-    InvalidImageError,
-    UnsupportedFormatError,
-    ValidationError,
-)
-from app.core.monitoring import metrics_collector, stats_collector
-from app.core.security.engine import SecurityEngine
-from app.core.security.memory import SecureMemoryManager, secure_memory_context
 from app.models.conversion import (
     ConversionRequest,
     ConversionResult,
-    ConversionSettings,
     ConversionStatus,
+    ConversionSettings,
     InputFormat,
     OutputFormat,
 )
+from app.core.exceptions import (
+    ConversionError,
+    ValidationError,
+    InvalidImageError,
+    UnsupportedFormatError,
+    ConversionFailedError,
+)
+from app.core.conversion.formats.base import BaseFormatHandler
+from app.core.conversion.image_processor import ImageProcessor
+from app.core.security.engine import SecurityEngine
+from app.core.security.memory import SecureMemoryManager, secure_memory_context
+from app.config import settings
+from app.core.constants import FORMAT_ALIASES, CANONICAL_FORMATS
+from app.core.monitoring import metrics_collector, stats_collector
 
 logger = structlog.get_logger()
 
@@ -69,23 +68,23 @@ class ConversionManager:
     def _initialize_handlers(self) -> None:
         """Initialize format handlers."""
         # Import handlers here to avoid circular imports
-        from app.core.conversion.formats.avif_handler import AVIFHandler
-        from app.core.conversion.formats.bmp_handler import BmpHandler
-        from app.core.conversion.formats.gif_handler import GifHandler
-        from app.core.conversion.formats.heif_handler import HeifHandler
-        from app.core.conversion.formats.jpeg2000_handler import Jpeg2000Handler
         from app.core.conversion.formats.jpeg_handler import JPEGHandler
-        from app.core.conversion.formats.jpeg_optimized_handler import (
-            JPEGOptimizedHandler,
-        )
-        from app.core.conversion.formats.jxl_handler import JxlHandler
         from app.core.conversion.formats.png_handler import PNGHandler
+        from app.core.conversion.formats.webp_handler import WebPHandler
+        from app.core.conversion.formats.avif_handler import AVIFHandler
+        from app.core.conversion.formats.heif_handler import HeifHandler
+        from app.core.conversion.formats.bmp_handler import BmpHandler
+        from app.core.conversion.formats.tiff_handler import TiffHandler
+        from app.core.conversion.formats.gif_handler import GifHandler
+        from app.core.conversion.formats.jxl_handler import JxlHandler
         from app.core.conversion.formats.png_optimized_handler import (
             PNGOptimizedHandler,
         )
-        from app.core.conversion.formats.tiff_handler import TiffHandler
+        from app.core.conversion.formats.jpeg_optimized_handler import (
+            JPEGOptimizedHandler,
+        )
         from app.core.conversion.formats.webp2_handler import WebP2Handler
-        from app.core.conversion.formats.webp_handler import WebPHandler
+        from app.core.conversion.formats.jpeg2000_handler import Jpeg2000Handler
 
         # Register core handlers (all handlers support both input and output)
         self.register_handler("jpeg", JPEGHandler)  # Also registers jpg via alias

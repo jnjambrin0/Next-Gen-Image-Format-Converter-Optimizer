@@ -1,16 +1,15 @@
 """Integration tests for API authentication flow."""
 
+import pytest
 import json
 from datetime import datetime, timedelta
-
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from app.main import app
-from app.models.database import Base
 from app.services.api_key_service import api_key_service
+from app.models.database import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 class TestAuthenticationFlow:

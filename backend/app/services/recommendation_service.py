@@ -1,27 +1,27 @@
 """Service for format recommendations."""
 
-import asyncio
-import copy
-import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Dict, Any
+import asyncio
+import os
+import copy
 
-from app.core.intelligence.format_analyzer import FormatAnalyzer
-from app.core.intelligence.recommendation_engine import RecommendationEngine
-from app.core.intelligence.user_preferences import UserPreferenceTracker
-from app.core.security.errors_simplified import (
-    create_file_error,
-    create_rate_limit_error,
-    create_verification_error,
-)
-from app.models.conversion import ContentType, InputFormat, OutputFormat
+from app.models.conversion import ContentType, OutputFormat, InputFormat
 from app.models.recommendation import (
-    FormatRecommendation,
     RecommendationRequest,
     RecommendationResponse,
+    FormatRecommendation,
     UseCaseType,
 )
+from app.core.intelligence.recommendation_engine import RecommendationEngine
+from app.core.intelligence.format_analyzer import FormatAnalyzer
+from app.core.intelligence.user_preferences import UserPreferenceTracker
 from app.utils.logging import get_logger
+from app.core.security.errors_simplified import (
+    create_file_error,
+    create_verification_error,
+    create_rate_limit_error,
+)
 
 logger = get_logger(__name__)
 

@@ -4,18 +4,18 @@ ASCII and ANSI art generation for terminal image preview
 """
 
 import sys
+from pathlib import Path
+from typing import Optional, Tuple, List
 from enum import Enum
 from io import BytesIO
-from pathlib import Path
-from typing import List, Optional, Tuple
 
 from PIL import Image
 from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
+from rich.table import Table
+from rich.panel import Panel
 
-from app.cli.utils.terminal import get_safe_width, get_terminal_detector
+from app.cli.utils.terminal import get_terminal_detector, get_safe_width
 
 
 class PreviewMode(str, Enum):

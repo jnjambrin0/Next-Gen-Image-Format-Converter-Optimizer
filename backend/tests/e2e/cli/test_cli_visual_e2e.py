@@ -3,13 +3,12 @@ End-to-End tests for CLI visual features
 Tests run against real backend and verify all visual enhancements
 """
 
-import json
-import os
-import re
-import time
-from pathlib import Path
-
 import pytest
+import time
+import os
+from pathlib import Path
+import json
+import re
 
 
 class TestCLIVisualFeatures:

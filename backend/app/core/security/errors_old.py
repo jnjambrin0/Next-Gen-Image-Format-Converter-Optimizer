@@ -6,10 +6,9 @@ security-related errors with privacy-aware messaging.
 """
 
 import asyncio
-import traceback
 from enum import Enum
-from typing import Any, Dict, Optional, Type
-
+from typing import Optional, Dict, Any, Type
+import traceback
 import structlog
 
 logger = structlog.get_logger()

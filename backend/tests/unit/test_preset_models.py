@@ -1,19 +1,18 @@
 """Unit tests for preset data models."""
 
-from datetime import datetime
-
 import pytest
+from datetime import datetime
 from pydantic import ValidationError
 
 from app.models.schemas import (
+    PresetSettings,
     PresetBase,
     PresetCreate,
-    PresetExport,
-    PresetImport,
-    PresetListResponse,
-    PresetResponse,
-    PresetSettings,
     PresetUpdate,
+    PresetResponse,
+    PresetImport,
+    PresetExport,
+    PresetListResponse,
 )
 
 

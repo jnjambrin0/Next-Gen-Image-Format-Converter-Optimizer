@@ -3,54 +3,54 @@ Terminal UI (TUI) Interface
 Interactive terminal interface using Textual framework
 """
 
-import asyncio
-import os
-import threading
 import time
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Dict, Any
+import asyncio
+import threading
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
-from textual.message import Message
-from textual.reactive import reactive
-from textual.validation import Number, ValidationResult, Validator
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.widgets import (
-    Button,
-    Checkbox,
-    DataTable,
-    DirectoryTree,
-    Footer,
     Header,
+    Footer,
+    Button,
+    Static,
     Input,
     Label,
-    ListItem,
+    Select,
+    DirectoryTree,
     ListView,
+    ListItem,
     ProgressBar,
+    DataTable,
+    RichLog,
+    Tabs,
+    Tab,
     RadioButton,
     RadioSet,
-    RichLog,
-    Select,
-    Static,
+    Checkbox,
     Switch,
-    Tab,
-    Tabs,
 )
+from textual.reactive import reactive
+from textual.message import Message
+from textual.validation import Number, ValidationResult, Validator
 
+from app.cli.utils.emoji import get_emoji, get_format_emoji
 from app.cli.config import get_config
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
-from app.cli.utils.emoji import get_emoji, get_format_emoji
 
 setup_sdk_path()
 try:
     from image_converter.client import ImageConverterClient
     from image_converter.models import (
         ConversionRequest,
+        OutputFormat as SDKOutputFormat,
     )
-    from image_converter.models import OutputFormat as SDKOutputFormat
 
     SDK_AVAILABLE = True
 except ImportError:

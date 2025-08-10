@@ -1,11 +1,10 @@
 """Text detection module for document and screenshot analysis."""
 
-import logging
-import time
-from typing import Any, Dict, List, Optional, Tuple
-
 import numpy as np
 from PIL import Image
+from typing import List, Optional, Tuple, Dict, Any
+import logging
+import time
 
 from app.models.conversion import BoundingBox
 

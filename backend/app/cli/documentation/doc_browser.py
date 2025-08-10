@@ -4,21 +4,21 @@ Browse and search documentation with full-text search
 """
 
 import json
+from pathlib import Path
+from typing import List, Dict, Optional, Any, Set
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.prompt import Prompt
-from rich.table import Table
+from rich.markdown import Markdown
 from rich.tree import Tree
+from rich.table import Table
+from rich.prompt import Prompt
 
 # Optional import for search
 try:
-    from whoosh import fields, index, qparser
+    from whoosh import index, fields, qparser
     from whoosh.filedb.filestore import RamStorage
     from whoosh.highlight import UppercaseFormatter
 

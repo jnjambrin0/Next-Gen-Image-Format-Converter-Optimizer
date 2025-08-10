@@ -1,12 +1,11 @@
+import structlog
 import logging
+import sys
+from typing import Dict, Any, Optional
+import uuid
 import logging.handlers
 import os
-import sys
-import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
-
-import structlog
 
 
 def filter_sensitive_data(_, __, event_dict: Dict[str, Any]) -> Dict[str, Any]:

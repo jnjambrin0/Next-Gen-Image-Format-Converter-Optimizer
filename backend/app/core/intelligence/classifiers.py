@@ -1,15 +1,14 @@
 """Image classification algorithms and implementations."""
 
-import logging
 import time
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
-
 import numpy as np
 from PIL import Image
+from typing import Dict, Tuple, Optional, List
+from dataclasses import dataclass
+import logging
 
-from app.core.intelligence.preprocessors import ImagePreprocessor
 from app.models.conversion import ContentType
+from app.core.intelligence.preprocessors import ImagePreprocessor
 
 logger = logging.getLogger(__name__)
 

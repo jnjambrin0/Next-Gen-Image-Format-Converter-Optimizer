@@ -8,22 +8,21 @@ Tests specifically designed to validate security measures including:
 - Secure error handling
 """
 
+import pytest
 import asyncio
-import hashlib
 import io
 import os
-import struct
 import tempfile
 import time
-from unittest.mock import MagicMock, Mock, patch
-
+import hashlib
+import struct
+from unittest.mock import Mock, patch, MagicMock
 import numpy as np
-import pytest
 from PIL import Image
 
 from app.core.intelligence.engine import IntelligenceEngine
 from app.core.security.errors_simplified import SecurityError
-from app.models.conversion import ContentClassification, ContentType
+from app.models.conversion import ContentType, ContentClassification
 
 
 class TestIntelligenceEngineSecurity:

@@ -1,21 +1,22 @@
 """Main Intelligence Engine for ML-based image content detection."""
 
-import asyncio
-import hashlib
-import io
 import os
 import time
-from collections import OrderedDict
+import hashlib
+import asyncio
+from typing import Optional, Dict, Any, List, Tuple
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from collections import OrderedDict
 
 import numpy as np
 from PIL import Image
+import io
 
+from app.models.conversion import ContentType, ContentClassification, BoundingBox
 from app.core.constants import (
-    IMAGE_MAX_PIXELS,
     INTELLIGENCE_MODEL_MAX_SIZE,
     INTELLIGENCE_TIMEOUT_MS,
+    IMAGE_MAX_PIXELS,
 )
 from app.core.security.errors_simplified import (
     SecurityError,
@@ -24,13 +25,11 @@ from app.core.security.errors_simplified import (
     handle_security_errors,
 )
 from app.core.security.memory import secure_clear
-from app.models.conversion import BoundingBox, ContentClassification, ContentType
 from app.utils.logging import get_logger
-
-from .classifiers import ClassificationResult, MLClassifier, QuickClassifier
-from .face_detector import FaceDetector
-from .performance_monitor import PerformanceMetrics, performance_monitor
+from .classifiers import QuickClassifier, MLClassifier, ClassificationResult
 from .text_detector import TextDetector
+from .face_detector import FaceDetector
+from .performance_monitor import performance_monitor, PerformanceMetrics
 
 logger = get_logger(__name__)
 
@@ -281,8 +280,7 @@ class IntelligenceEngine:
 
         # Check cache if enabled
         if self.enable_caching:
-            # Use SHA256 for security (MD5 is deprecated for security purposes)
-            image_hash = hashlib.sha256(image_data).hexdigest()
+            image_hash = hashlib.md5(image_data).hexdigest()
             async with self._cache_lock:
                 if image_hash in self._cache:
                     # Move to end for LRU

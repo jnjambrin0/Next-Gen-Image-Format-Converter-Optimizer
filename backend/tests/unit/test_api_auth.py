@@ -1,18 +1,17 @@
 """Unit tests for API authentication and key management."""
 
+import pytest
 import hashlib
 import secrets
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
-
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.models.database import Base, ApiKey, ApiUsageStats
+from app.services.api_key_service import ApiKeyService
 from app.api.middleware.auth import OptionalAPIKeyAuth, RequiredAPIKeyAuth
 from app.core.security.rate_limiter import ApiRateLimiter, SecurityEventRateLimiter
-from app.models.database import ApiKey, ApiUsageStats, Base
-from app.services.api_key_service import ApiKeyService
 
 
 class TestApiKeyService:

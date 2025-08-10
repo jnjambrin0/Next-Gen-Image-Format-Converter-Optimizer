@@ -1,15 +1,14 @@
 from fastapi import APIRouter
-
-from .auth import router as auth_router
-from .batch import router as batch_router
-from .conversion import router as conversion_router
-from .detection import router as detection_router
 from .health import router as health_router
-from .intelligence import router as intelligence_router
+from .conversion import router as conversion_router
 from .monitoring import router as monitoring_router
-from .optimization import router as optimization_router
-from .presets import router as presets_router
 from .security import router as security_router
+from .intelligence import router as intelligence_router
+from .optimization import router as optimization_router
+from .batch import router as batch_router
+from .presets import router as presets_router
+from .detection import router as detection_router
+from .auth import router as auth_router
 
 # Legacy API router (backward compatibility)
 api_router = APIRouter(prefix="/api")

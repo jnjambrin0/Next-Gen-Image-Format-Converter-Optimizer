@@ -1,9 +1,8 @@
 """Base format handler interface."""
 
 from abc import ABC, abstractmethod
+from typing import BinaryIO, Optional, Dict, Any
 from io import BytesIO
-from typing import Any, BinaryIO, Dict, Optional
-
 from PIL import Image
 
 from app.models.conversion import ConversionSettings, ImageMetadata

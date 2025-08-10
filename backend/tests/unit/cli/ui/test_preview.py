@@ -2,12 +2,11 @@
 Unit tests for image preview generation
 """
 
-import io
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
+from pathlib import Path
+from unittest.mock import Mock, patch, MagicMock
 from PIL import Image
+import io
 
 from app.cli.ui.preview import (
     ImagePreview,

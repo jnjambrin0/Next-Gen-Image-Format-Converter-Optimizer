@@ -1,18 +1,17 @@
 """Integration tests for sandboxed image conversions."""
 
+import pytest
 import asyncio
 import os
+from unittest.mock import Mock, patch, AsyncMock
 import tempfile
 from io import BytesIO
-from unittest.mock import AsyncMock, Mock, patch
-
-import pytest
 from PIL import Image
 
-from app.config import settings
 from app.core.conversion.manager import ConversionManager
-from app.core.exceptions import ConversionError, SecurityError
 from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
+from app.core.exceptions import ConversionError, SecurityError
+from app.config import settings
 
 
 class TestSandboxedConversion:

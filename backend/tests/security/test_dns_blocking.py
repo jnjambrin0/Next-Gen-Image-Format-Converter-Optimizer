@@ -2,13 +2,12 @@
 Tests for DNS resolution blocking in sandboxed environments.
 """
 
-import os
+import pytest
 import socket
 import subprocess
 import sys
+import os
 from pathlib import Path
-
-import pytest
 
 
 class TestDNSBlocking:

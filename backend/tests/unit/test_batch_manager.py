@@ -1,21 +1,20 @@
 """Unit tests for the BatchManager class."""
 
-import asyncio
-import uuid
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
+import asyncio
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from datetime import datetime
+import uuid
 
 from app.core.batch.manager import BatchManager, BatchWorkerTask
 from app.core.batch.models import (
-    BatchItem,
-    BatchItemStatus,
     BatchJob,
-    BatchProgress,
+    BatchItem,
     BatchStatus,
+    BatchItemStatus,
+    BatchProgress,
 )
-from app.models.conversion import ConversionRequest, ConversionResult
+from app.models.schemas import ConversionRequest, ConversionResult
 
 
 class TestBatchManager:
@@ -28,8 +27,6 @@ class TestBatchManager:
         service.convert.return_value = (
             ConversionResult(
                 status="completed",
-                input_format="jpeg",  # Added required field
-                input_size=2000,  # Added required field
                 output_format="webp",
                 output_size=1000,
                 processing_time=0.5,

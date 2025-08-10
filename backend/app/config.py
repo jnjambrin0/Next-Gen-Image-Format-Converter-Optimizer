@@ -1,22 +1,19 @@
-import os
-from typing import Any, Dict, List, Optional, Union
-
-from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from typing import List, Optional, Dict, Any, Union
+import os
 
 # Import constants to avoid magic numbers
 try:
     from app.core.constants import (
-        DEFAULT_MONITORING_INTERVAL,
-        ERROR_RETENTION_DAYS,
-    )
-    from app.core.constants import MAX_BATCH_SIZE as DEFAULT_MAX_BATCH_SIZE
-    from app.core.constants import (
-        MONITORING_INTERVAL_SECONDS,
-        SANDBOX_CPU_LIMITS,
         SANDBOX_MEMORY_LIMITS,
-        SANDBOX_OUTPUT_LIMITS,
+        SANDBOX_CPU_LIMITS,
         SANDBOX_TIMEOUTS,
+        SANDBOX_OUTPUT_LIMITS,
+        ERROR_RETENTION_DAYS,
+        DEFAULT_MONITORING_INTERVAL,
+        MONITORING_INTERVAL_SECONDS,
+        MAX_BATCH_SIZE as DEFAULT_MAX_BATCH_SIZE,
     )
 except ImportError:
     # Fallback values if constants can't be imported (e.g., during initial setup)

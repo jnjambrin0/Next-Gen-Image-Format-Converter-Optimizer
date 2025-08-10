@@ -2,15 +2,14 @@
 Unit tests for main CLI application
 """
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
 from typer.testing import CliRunner
+from unittest.mock import Mock, patch, MagicMock
+import json
+from pathlib import Path
 
-from app.cli.config import CLIConfig
 from app.cli.main import app
+from app.cli.config import CLIConfig
 
 
 @pytest.fixture

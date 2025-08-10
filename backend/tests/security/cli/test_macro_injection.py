@@ -3,27 +3,26 @@ Comprehensive tests for macro security and injection prevention
 Tests command validation, sandboxing, and signature verification
 """
 
+import pytest
+import json
+import tempfile
+from pathlib import Path
 import hashlib
 import hmac
-import json
 import os
-import shlex
 import subprocess
-import tempfile
+import shlex
+from unittest.mock import MagicMock, patch, call
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import MagicMock, call, patch
-
-import pytest
 
 from app.cli.productivity.macros import (
-    CommandValidator,
-    ExecutionPolicy,
-    Macro,
     MacroManager,
+    Macro,
+    CommandValidator,
     MacroSandbox,
     SignatureVerifier,
+    ExecutionPolicy,
 )
 
 

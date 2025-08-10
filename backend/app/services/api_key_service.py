@@ -1,17 +1,16 @@
 """API Key service for managing authentication keys."""
 
 import hashlib
-import json
 import secrets
-from datetime import datetime, timedelta
+import json
 from typing import Dict, List, Optional, Tuple
-
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, select, update
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
-from app.config import settings
-from app.models.database import ApiKey, ApiUsageStats, Base
+from app.models.database import Base, ApiKey, ApiUsageStats
 from app.utils.logging import get_logger
+from app.config import settings
 
 logger = get_logger(__name__)
 

@@ -2,12 +2,11 @@
 Tests for P2P and WebRTC protocol blocking.
 """
 
-import socket
+import pytest
 import subprocess
 import sys
+import socket
 from pathlib import Path
-
-import pytest
 
 
 class TestP2PBlocking:

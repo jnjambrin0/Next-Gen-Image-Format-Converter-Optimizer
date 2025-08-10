@@ -1,3 +1,0 @@
-[2025-08-07 12:12:11] Iniciando script de limpieza (DRY_RUN=false)
-[2025-08-07 12:12:22] Contenedores eliminados completamente
-[2025-08-07 12:12:35] Script finalizado exitosamente

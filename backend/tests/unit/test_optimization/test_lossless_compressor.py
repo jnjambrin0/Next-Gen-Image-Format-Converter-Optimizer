@@ -1,9 +1,8 @@
 """Unit tests for the LosslessCompressor."""
 
-import hashlib
-import io
-
 import pytest
+import io
+import hashlib
 from PIL import Image
 
 from app.core.optimization.lossless_compressor import LosslessCompressor

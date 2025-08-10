@@ -1,8 +1,7 @@
 """Simplified quality analyzer without scikit-image dependency."""
 
 import asyncio
-from typing import Any, Dict, Optional
-
+from typing import Optional, Dict, Any
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

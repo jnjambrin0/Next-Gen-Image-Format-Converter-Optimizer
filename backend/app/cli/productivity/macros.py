@@ -3,19 +3,19 @@ Macro Recording and Playback System
 Secure macro management with command validation and sandboxing
 """
 
+import json
 import hashlib
 import hmac
-import json
-import re
-import secrets
 import shlex
-import subprocess
-import sys
-from dataclasses import asdict, dataclass, field
+import re
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+import secrets
+import subprocess
+import sys
 
 from app.cli.config import get_config_dir
 from app.cli.productivity.autocomplete import PrivacySanitizer

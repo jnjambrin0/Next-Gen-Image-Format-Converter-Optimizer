@@ -3,29 +3,29 @@ Local-only error reporting system for privacy-focused monitoring.
 """
 
 import asyncio
-import hashlib
-import json
-import os
 import sqlite3
-import traceback
-from collections import Counter, defaultdict
+import json
+from collections import defaultdict, Counter
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Tuple
 from threading import Lock
-from typing import Any, Dict, List, Optional, Tuple
+import hashlib
+import traceback
+import os
 
+from app.utils.logging import get_logger, filter_sensitive_data
 from app.core.constants import (
-    DB_CHECK_SAME_THREAD,
-    DEFAULT_MONITORING_HOURS,
-    ERROR_EVENT_TABLE_NAME,
     ERROR_MESSAGE_MAX_LENGTH,
-    ERROR_RETENTION_DAYS,
     ERROR_SIGNATURE_HASH_LENGTH,
-    MAX_CATEGORY_ERRORS_DISPLAY,
+    DEFAULT_MONITORING_HOURS,
+    ERROR_RETENTION_DAYS,
     MAX_TOP_ERRORS_DISPLAY,
+    MAX_CATEGORY_ERRORS_DISPLAY,
+    DB_CHECK_SAME_THREAD,
+    ERROR_EVENT_TABLE_NAME,
 )
-from app.utils.logging import filter_sensitive_data, get_logger
 
 logger = get_logger(__name__)
 

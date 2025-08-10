@@ -2,8 +2,8 @@
 
 import pytest
 
+from app.models.conversion import ContentType, OutputFormat, InputFormat
 from app.core.intelligence.format_analyzer import FormatAnalyzer, FormatCompatibility
-from app.models.conversion import ContentType, InputFormat, OutputFormat
 
 
 class TestFormatAnalyzer:

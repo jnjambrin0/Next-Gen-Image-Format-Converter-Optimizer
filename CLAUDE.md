@@ -49,12 +49,11 @@ uvicorn app.main:app --reload --port 8000
 cd backend
 pytest
 
-# Format code (MUST run from backend/ directory)
-black app/ tests/ --line-length 88
-isort app/ tests/ --profile black
+# Format code
+black .
 
-# Type checking with strict mode (REQUIRED before merge)
-mypy app/ --strict
+# Type checking (if mypy configured)
+mypy .
 ```
 
 ### Frontend Development
@@ -189,40 +188,6 @@ img optimize auto photo.jpg --preset web
 ├── ml_models/         # Local ML models
 └── scripts/           # Utility scripts
 ```
-
-## CI/CD Quality Gates
-
-**CRITICAL**: The project enforces a strict 5-gate CI/CD pipeline. All gates must pass before merge.
-
-### Gate Structure and Common Blockers
-
-1. **Gate 1: Code Quality**
-   - **Requirements**: Type hints on all functions, code complexity ≤ 10, proper formatting
-   - **Common Blockers**: Missing type annotations, functions exceeding complexity limit
-   - **Fix**: Add type hints, refactor complex functions, run Black/isort
-
-2. **Gate 2: Security**
-   - **Requirements**: No vulnerabilities, no hardcoded secrets, no unsafe operations
-   - **Common Blockers**: Outdated dependencies with CVEs, MD5 usage, hardcoded API keys
-   - **Fix**: Update dependencies, use SHA256 instead of MD5, move secrets to environment
-
-3. **Gate 3: Testing**
-   - **Requirements**: 80% code coverage minimum, all tests passing
-   - **Common Blockers**: Import errors, missing test fixtures, low coverage
-   - **Fix**: Update imports to match actual module exports, add missing fields to test models
-
-4. **Gate 4: Build**
-   - **Requirements**: Bundle size < 500KB, Docker images build successfully
-   - **Common Blockers**: Large dependencies, build failures
-   - **Fix**: Remove unused dependencies, optimize imports
-
-5. **Gate 5: Production Readiness**
-   - **Requirements**: Performance benchmarks met, no memory leaks
-   - **Common Blockers**: Slow response times, resource exhaustion
-   - **Fix**: Add caching, implement semaphores for concurrency
-
-### Resolution Priority
-Always fix in this order: Security BLOCKERS → Type Errors → Test Failures → Complexity → Other issues
 
 ## Security Architecture
 
@@ -523,25 +488,11 @@ sandbox.validate_path("output/file.jpg")  # OK
 - Network tools: `curl`, `wget`, `nc`, `netcat`, `telnet`, `ssh`, `ftp`
 - Dangerous commands: `rm`, `dd`, `format`, `fdisk`, `mkfs`
 
-#### Simplified Error System (MIGRATION COMPLETE)
+#### Simplified Error System
 
-**CRITICAL**: The project has migrated to a simplified category-based error system. Old error classes no longer exist.
+**CRITICAL**: Use only 5 error categories, never expose PII:
 
 ```python
-# CURRENT SYSTEM - Use these:
-from app.core.security.errors import (
-    SecurityError,  # Base class with category
-    create_network_error,
-    create_sandbox_error,
-    create_rate_limit_error,
-    create_verification_error,
-    create_file_error,
-)
-
-# DEPRECATED - These classes NO LONGER EXIST:
-# NetworkSecurityError, SandboxSecurityError, RateLimitError, 
-# VerificationError, MemorySecurityError, SecurityErrorCode
-
 # CORRECT: Category-based errors without PII
 raise create_sandbox_error(reason="timeout", timeout=30)
 raise create_file_error(operation="access", reason="permission_denied")
@@ -687,12 +638,10 @@ All API errors follow consistent structure with proper error codes:
 
 1. Follow security-first principles - assume all input is potentially malicious
 2. Write tests for all new functionality (80% coverage minimum)
-3. Use type hints for all Python code (enforced with mypy --strict)
-4. Keep function complexity ≤ 10 (enforced by flake8)
-5. Document all API endpoints with OpenAPI
-6. Keep dependencies minimal and audit regularly
-7. Performance target: <2 seconds for 10MB images
-8. Run Black and isort before committing code
+3. Use type hints for all Python code
+4. Document all API endpoints with OpenAPI
+5. Keep dependencies minimal and audit regularly
+6. Performance target: <2 seconds for 10MB images
 
 ## Code Quality and Formatting
 
@@ -1158,18 +1107,6 @@ class PrivacySanitizer:
 ```
 
 **Why**: All test imports use `from app.` which requires backend/ as working directory. Running from project root will cause ModuleNotFoundError.
-
-**Test Import Pattern**: When modules are refactored, tests MUST be updated to match actual exports:
-
-```python
-# WRONG: Assuming classes/functions exist
-from app.core.security.parsers import NetstatParser  # May not exist!
-
-# CORRECT: Verify actual module exports first
-# Check what's actually exported:
-# grep "^def\|^class" app/core/security/parsers.py
-from app.core.security.parsers import validate_no_network_activity  # Actual function
-```
 
 ### 21. Performance Monitoring Implementation Details
 

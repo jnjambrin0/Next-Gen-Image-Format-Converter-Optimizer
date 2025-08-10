@@ -3,28 +3,28 @@ Optimize Command
 Intelligent image optimization with presets and auto-detection
 """
 
-import asyncio
 import time
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Optional, Annotated
+import asyncio
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from app.cli.config import get_config
-from app.cli.ui.preview import show_image_comparison
+from app.cli.utils.validation import validate_input_file, validate_output_path
+from app.cli.utils.errors import handle_api_error
+from app.cli.utils.history import record_command
 from app.cli.ui.themes import get_theme_manager
+from app.cli.ui.preview import show_image_comparison
+from app.cli.utils.emoji import get_emoji, format_with_emoji, get_quality_stars
+from app.cli.utils.terminal import should_use_emoji
+from app.cli.utils.progress import InterruptableProgress, SpinnerStyle
+from app.cli.utils.profiler import cli_profiler
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
-from app.cli.utils.emoji import format_with_emoji, get_emoji, get_quality_stars
-from app.cli.utils.errors import handle_api_error
-from app.cli.utils.history import record_command
-from app.cli.utils.profiler import cli_profiler
-from app.cli.utils.progress import InterruptableProgress, SpinnerStyle
-from app.cli.utils.terminal import should_use_emoji
-from app.cli.utils.validation import validate_input_file, validate_output_path
 
 setup_sdk_path()
 from image_converter.client import ImageConverterClient

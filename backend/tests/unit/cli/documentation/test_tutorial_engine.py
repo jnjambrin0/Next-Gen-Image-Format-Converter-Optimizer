@@ -2,18 +2,17 @@
 Unit tests for Tutorial Engine
 """
 
+import pytest
 import asyncio
 import json
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
-import pytest
+from unittest.mock import Mock, MagicMock, patch
+from datetime import datetime
 
 from app.cli.documentation.tutorial_engine import (
     TutorialEngine,
-    TutorialProgress,
     TutorialStep,
+    TutorialProgress,
     TutorialStepType,
 )
 

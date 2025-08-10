@@ -1,17 +1,16 @@
 """Unit tests for the OptimizationEngine."""
 
+import pytest
 import asyncio
 import io
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
 from PIL import Image
+from unittest.mock import AsyncMock, MagicMock
 
 from app.core.optimization.optimization_engine import (
     OptimizationEngine,
     OptimizationMode,
-    OptimizationPass,
     OptimizationResult,
+    OptimizationPass,
 )
 from app.core.security.errors_simplified import SecurityError
 

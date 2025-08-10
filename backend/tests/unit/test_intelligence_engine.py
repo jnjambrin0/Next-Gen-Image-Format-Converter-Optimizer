@@ -1,15 +1,14 @@
 """Unit tests for the Intelligence Engine module."""
 
-import asyncio
-import io
-from unittest.mock import MagicMock, Mock, patch
-
-import numpy as np
 import pytest
+from unittest.mock import Mock, patch, MagicMock
+import numpy as np
 from PIL import Image
+import io
+import asyncio
 
 from app.core.intelligence.engine import IntelligenceEngine
-from app.models.conversion import BoundingBox, ContentClassification, ContentType
+from app.models.conversion import ContentType, ContentClassification, BoundingBox
 
 
 class TestIntelligenceEngine:

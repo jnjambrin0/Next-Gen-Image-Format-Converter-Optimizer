@@ -1,11 +1,10 @@
 """Unit tests for the Image Analyzer module (ML content detection)."""
 
-import io
-from unittest.mock import MagicMock, Mock, patch
-
-import numpy as np
 import pytest
+from unittest.mock import Mock, patch, MagicMock
+import numpy as np
 from PIL import Image
+import io
 
 # Import fixtures - these will be available when conftest.py is in tests/ directory
 # The fixtures are automatically discovered by pytest

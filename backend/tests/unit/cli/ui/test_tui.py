@@ -2,20 +2,19 @@
 Unit tests for Terminal UI components
 """
 
+import pytest
 import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
-import pytest
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from textual.pilot import Pilot
 
 from app.cli.ui.tui import (
-    ConversionProgress,
+    ImageConverterTUI,
     ConversionSettings,
     FileBrowser,
-    ImageConverterTUI,
-    QualityValidator,
+    ConversionProgress,
     ResultsTable,
+    QualityValidator,
 )
 
 

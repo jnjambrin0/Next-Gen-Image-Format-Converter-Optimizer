@@ -2,11 +2,10 @@
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
-
-import structlog
+from typing import Dict, Any, Optional
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
+import structlog
 
 from app.models.responses import ErrorResponse
 

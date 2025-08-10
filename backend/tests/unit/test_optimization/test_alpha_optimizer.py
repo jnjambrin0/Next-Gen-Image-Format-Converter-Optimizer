@@ -1,9 +1,8 @@
 """Unit tests for the AlphaOptimizer."""
 
-import io
-
-import numpy as np
 import pytest
+import io
+import numpy as np
 from PIL import Image
 
 from app.core.optimization.alpha_optimizer import AlphaOptimizer

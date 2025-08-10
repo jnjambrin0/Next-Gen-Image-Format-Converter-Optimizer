@@ -6,17 +6,16 @@ to extract connection information in a structured format.
 """
 
 import re
+from typing import List, Protocol, Optional, Tuple, Dict
 from datetime import datetime
-from typing import Dict, List, Optional, Protocol, Tuple
-
 import structlog
 
+from app.core.security.types import ConnectionInfo
 from app.core.constants import (
+    MIN_CONNECTION_PARTS,
     CONNECTION_PID_PARSE_START_INDEX,
     LOCALHOST_VARIANTS,
-    MIN_CONNECTION_PARTS,
 )
-from app.core.security.types import ConnectionInfo
 
 logger = structlog.get_logger()
 

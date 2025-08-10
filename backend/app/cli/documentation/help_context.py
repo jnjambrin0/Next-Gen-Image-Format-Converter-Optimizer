@@ -3,19 +3,19 @@ Help Context Analyzer
 Provides context-aware help based on current command state
 """
 
-import json
 import time
 from dataclasses import dataclass, field
-from functools import lru_cache
+from typing import List, Dict, Optional, Any, Set
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+import json
+from functools import lru_cache
 
 import typer
-from rich.columns import Columns
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.markdown import Markdown
 from rich.table import Table
+from rich.columns import Columns
 
 from app.cli.productivity.fuzzy_search import FuzzySearcher
 

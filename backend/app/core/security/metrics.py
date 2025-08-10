@@ -3,9 +3,9 @@ Security metrics collection for network monitoring.
 """
 
 import time
+from typing import Dict, Any, Optional
 from datetime import datetime
 from threading import Lock
-from typing import Any, Dict, Optional
 
 from app.core.security.types import SecurityMetrics
 

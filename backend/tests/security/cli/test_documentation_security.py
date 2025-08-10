@@ -2,15 +2,14 @@
 Security tests for documentation components
 """
 
-import asyncio
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
+import asyncio
+from unittest.mock import Mock, patch, MagicMock
+from pathlib import Path
+import tempfile
 
-from app.cli.documentation.examples import CommandExample, ExampleDatabase
 from app.cli.documentation.tutorial_engine import TutorialEngine
+from app.cli.documentation.examples import CommandExample, ExampleDatabase
 
 
 class TestTutorialSandboxSecurity:

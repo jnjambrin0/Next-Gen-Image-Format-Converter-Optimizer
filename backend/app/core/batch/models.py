@@ -2,10 +2,9 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Dict, Any, Optional, List
 from uuid import UUID
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class BatchStatus(str, Enum):

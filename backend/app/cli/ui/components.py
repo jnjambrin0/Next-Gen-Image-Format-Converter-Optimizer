@@ -3,28 +3,28 @@ TUI Components
 Reusable components for Terminal UI
 """
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import List, Optional, Dict, Any, Callable
+from dataclasses import dataclass
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.message import Message
-from textual.reactive import reactive
 from textual.widgets import (
     Button,
+    Static,
     Input,
     Label,
-    ListItem,
+    Select,
     ListView,
+    ListItem,
     ProgressBar,
+    Switch,
     RadioButton,
     RadioSet,
-    Select,
-    Static,
-    Switch,
     Tree,
 )
+from textual.reactive import reactive
+from textual.message import Message
 
 from app.cli.utils.emoji import get_emoji, get_format_emoji
 

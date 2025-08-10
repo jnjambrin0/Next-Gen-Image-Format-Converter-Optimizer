@@ -1,18 +1,17 @@
-import json
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import traceback
 import uuid
+import json
+from typing import Dict, Any
 from datetime import datetime
-from typing import Any, Dict
-
 import structlog
-from fastapi import Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ...core.exceptions import ImageConverterError
-from ...models.responses import ErrorResponse
 from ..routes.monitoring import error_reporter
+from ...models.responses import ErrorResponse
 
 logger = structlog.get_logger()
 

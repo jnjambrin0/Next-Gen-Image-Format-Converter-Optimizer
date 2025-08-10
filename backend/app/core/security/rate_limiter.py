@@ -3,17 +3,17 @@ Token bucket rate limiter for security events and API requests.
 """
 
 import time
-from threading import Lock
 from typing import Dict, Optional, Tuple
+from threading import Lock
 
+from app.core.security.types import RateLimitConfig
 from app.core.constants import (
-    RATE_LIMIT_BURST_SIZE,
-    RATE_LIMIT_EVENTS_PER_HOUR,
     RATE_LIMIT_EVENTS_PER_MINUTE,
+    RATE_LIMIT_EVENTS_PER_HOUR,
+    RATE_LIMIT_BURST_SIZE,
     RATE_LIMIT_HOUR_BURST_DIVISOR,
     RATE_LIMIT_TOKEN_REFILL_AMOUNT,
 )
-from app.core.security.types import RateLimitConfig
 
 
 class TokenBucket:
@@ -77,9 +77,9 @@ class SecurityEventRateLimiter:
         if config is None:
             # Default configuration
             config = {
-                "max_events_per_minute": int(RATE_LIMIT_EVENTS_PER_MINUTE),
-                "max_events_per_hour": int(RATE_LIMIT_EVENTS_PER_HOUR),
-                "burst_size": int(RATE_LIMIT_BURST_SIZE),
+                "max_events_per_minute": RATE_LIMIT_EVENTS_PER_MINUTE,
+                "max_events_per_hour": RATE_LIMIT_EVENTS_PER_HOUR,
+                "burst_size": RATE_LIMIT_BURST_SIZE,
                 "enabled": True,
             }
 
@@ -94,9 +94,8 @@ class SecurityEventRateLimiter:
 
         self.hour_bucket = TokenBucket(
             rate=config["max_events_per_hour"] / 3600.0,  # tokens per second
-            capacity=int(
-                config["max_events_per_hour"] // RATE_LIMIT_HOUR_BURST_DIVISOR
-            ),  # 10% burst capacity
+            capacity=config["max_events_per_hour"]
+            // RATE_LIMIT_HOUR_BURST_DIVISOR,  # 10% burst capacity
         )
 
         # Track rate limit violations
@@ -104,7 +103,7 @@ class SecurityEventRateLimiter:
         self.last_violation_time = None
         self.lock = Lock()
 
-    def should_allow_event(self, event_type: Optional[str] = None) -> bool:
+    def should_allow_event(self, event_type: str = None) -> bool:
         """
         Check if event should be allowed based on rate limits.
 

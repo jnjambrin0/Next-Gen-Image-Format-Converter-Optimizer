@@ -2,8 +2,8 @@
 Type definitions for security module.
 """
 
+from typing import TypedDict, List, Dict, Any, Optional
 from enum import Enum
-from typing import Any, Dict, List, Optional, TypedDict
 
 
 class NetworkStatus(TypedDict):

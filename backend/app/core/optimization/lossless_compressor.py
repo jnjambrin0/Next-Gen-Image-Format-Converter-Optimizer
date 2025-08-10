@@ -1,12 +1,12 @@
 """Lossless compression algorithms for various image formats."""
 
-import asyncio
 import io
+import asyncio
+from typing import Dict, Any, Optional, Tuple
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple
 
-import numpy as np
 from PIL import Image
+import numpy as np
 
 from app.core.constants import IMAGE_MAX_PIXELS
 from app.core.security.errors_simplified import create_file_error

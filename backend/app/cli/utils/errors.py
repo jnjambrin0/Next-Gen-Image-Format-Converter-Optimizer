@@ -3,9 +3,8 @@ Error Handling Utilities
 Smart error handling with suggestions
 """
 
+from typing import Optional, List
 from difflib import get_close_matches
-from typing import List, Optional
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text

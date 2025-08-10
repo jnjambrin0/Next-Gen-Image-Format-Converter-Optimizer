@@ -8,25 +8,24 @@ These tests validate the engine's behavior under realistic conditions including:
 - Performance under load
 """
 
+import pytest
 import asyncio
-import gc
 import io
 import os
-import resource
 import tempfile
 import threading
 import time
+import gc
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from unittest.mock import MagicMock, Mock, patch
-
+from unittest.mock import Mock, patch, MagicMock
 import numpy as np
-import psutil
-import pytest
 from PIL import Image
+import psutil
+import resource
 
 from app.core.intelligence.engine import IntelligenceEngine
+from app.models.conversion import ContentType, ContentClassification, BoundingBox
 from app.core.security.errors_simplified import SecurityError
-from app.models.conversion import BoundingBox, ContentClassification, ContentType
 from app.services.intelligence_service import intelligence_service
 
 

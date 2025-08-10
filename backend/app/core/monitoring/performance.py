@@ -3,16 +3,15 @@ Performance monitoring and metrics collection for image conversions.
 Provides detailed timing, memory, and throughput metrics.
 """
 
-import json
-import threading
 import time
-from collections import deque
-from dataclasses import asdict, dataclass, field
+import json
+import psutil
+from dataclasses import dataclass, field, asdict
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-import psutil
+import threading
+from collections import deque
 
 from app.utils.logging import get_logger
 

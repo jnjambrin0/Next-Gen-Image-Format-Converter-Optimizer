@@ -2,17 +2,16 @@
 Unit tests for the autocomplete engine
 """
 
+import pytest
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
+from unittest.mock import MagicMock, patch, mock_open
 
 from app.cli.productivity.autocomplete import (
-    AutocompleteEngine,
-    CommandLearner,
     PrivacySanitizer,
+    CommandLearner,
+    AutocompleteEngine,
 )
 
 

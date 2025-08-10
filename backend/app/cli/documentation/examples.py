@@ -3,20 +3,20 @@ Example Database System
 Manages command examples with safe execution and validation
 """
 
-import hashlib
-import json
 import re
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass, field
+from typing import List, Dict, Optional, Any, Callable
+from enum import Enum
+import json
+import hashlib
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.syntax import Syntax
+from rich.panel import Panel
 from rich.table import Table
 
 # Optional clipboard support

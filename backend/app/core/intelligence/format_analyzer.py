@@ -1,9 +1,9 @@
 """Format analysis for quality prediction and compatibility assessment."""
 
-from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
-from app.models.conversion import ContentType, InputFormat, OutputFormat
+from app.models.conversion import ContentType, OutputFormat, InputFormat
 from app.models.recommendation import FormatCharacteristics, FormatComparisonMetric
 from app.utils.logging import get_logger
 

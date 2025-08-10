@@ -2,21 +2,19 @@
 Integration tests for CLI-to-API communication
 """
 
-import asyncio
-import sys
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
-
 import pytest
+from unittest.mock import Mock, patch, AsyncMock
+from pathlib import Path
+import sys
+import asyncio
 
 # Add SDK path for imports
 sys.path.insert(
     0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python")
 )
 
-from image_converter.models import BatchStatus, ConversionResult, OutputFormat
-
-from app.cli.commands import batch, convert
+from app.cli.commands import convert, batch
+from image_converter.models import ConversionResult, BatchStatus, OutputFormat
 
 
 class TestCLIAPIIntegration:

@@ -3,27 +3,26 @@ Comprehensive integration tests for watch mode
 Tests file monitoring, resource limits, and DoS prevention
 """
 
-import asyncio
-import os
-import shutil
-import tempfile
-import threading
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import MagicMock, call, patch
-
-import psutil
 import pytest
+import asyncio
+import tempfile
+import time
+import threading
+import os
+from pathlib import Path
+from unittest.mock import MagicMock, patch, call
+import shutil
+from datetime import datetime, timedelta
+import psutil
 
 from app.cli.productivity.watcher import (
-    Debouncer,
     DirectoryWatcher,
-    FileEvent,
-    RateLimiter,
-    ResourceLimits,
-    ResourceMonitor,
     WatcherStatus,
+    ResourceLimits,
+    RateLimiter,
+    Debouncer,
+    FileEvent,
+    ResourceMonitor,
 )
 
 

@@ -2,13 +2,12 @@
 Unit tests for theme management system
 """
 
+import pytest
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
-import pytest
-
-from app.cli.ui.themes import Theme, ThemeManager, ThemeType, get_theme_manager
+from app.cli.ui.themes import ThemeManager, Theme, ThemeType, get_theme_manager
 
 
 class TestTheme:

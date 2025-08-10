@@ -2,13 +2,11 @@
 Tests for real-time network connection monitoring.
 """
 
+import pytest
 import asyncio
 import os
 import shutil
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-
+from unittest.mock import patch, MagicMock, AsyncMock
 from app.core.security.network_monitor import (
     NetworkConnection,
     NetworkMonitor,

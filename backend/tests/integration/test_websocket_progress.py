@@ -1,27 +1,25 @@
 """Integration tests for WebSocket progress updates."""
 
+import pytest
 import asyncio
 import json
 import uuid
 from datetime import datetime
 from unittest.mock import AsyncMock, patch
-
-import pytest
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from websocket import WebSocket as WSClient
-from websocket import create_connection
+from fastapi import FastAPI
+from websocket import create_connection, WebSocket as WSClient
 
 from app.api.websockets.progress import (
-    connection_manager,
     router,
+    connection_manager,
     send_batch_progress,
     send_job_status_update,
 )
 from app.core.batch.models import (
-    BatchItemStatus,
     BatchProgress,
     BatchStatus,
+    BatchItemStatus,
 )
 
 

@@ -4,11 +4,11 @@ Generate and manage shell completion scripts for various shells
 """
 
 import os
-import shlex
-import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional, Dict
+import subprocess
+import shlex
 
 
 class ShellIntegrator:

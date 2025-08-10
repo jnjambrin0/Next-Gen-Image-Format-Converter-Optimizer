@@ -1,10 +1,9 @@
 """Unit tests for face detection with real images."""
 
-import os
-from pathlib import Path
-
 import pytest
+from pathlib import Path
 from PIL import Image
+import os
 
 from app.core.intelligence.face_detector import FaceDetector
 from app.models.conversion import BoundingBox

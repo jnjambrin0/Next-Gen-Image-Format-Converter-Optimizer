@@ -1,10 +1,8 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
 from fastapi.testclient import TestClient
-
-from app.config import settings
+from unittest.mock import patch, MagicMock
 from app.main import app
+from app.config import settings
 
 
 class TestParanoiaMode:
@@ -118,7 +116,6 @@ class TestParanoiaMode:
     def test_paranoia_mode_environment_variable(self):
         """Test that paranoia mode can be set via environment variable."""
         import os
-
         from app.config import Settings
 
         # Set environment variable

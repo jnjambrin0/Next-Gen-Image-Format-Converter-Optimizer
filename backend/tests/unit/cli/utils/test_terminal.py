@@ -2,21 +2,20 @@
 Unit tests for terminal capability detection
 """
 
-import os
-import sys
-import time
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
+import sys
+import os
+import time
+from unittest.mock import Mock, patch, MagicMock
 
 from app.cli.utils.terminal import (
-    TerminalCapability,
     TerminalDetector,
-    adapt_output,
-    get_safe_width,
+    TerminalCapability,
     get_terminal_detector,
-    should_use_color,
+    adapt_output,
     should_use_emoji,
+    should_use_color,
+    get_safe_width,
 )
 
 
@@ -254,8 +253,8 @@ class TestTerminalDetector:
 
     def test_cache_thread_safety(self, detector):
         """Test cache thread safety"""
-        import random
         import threading
+        import random
 
         results = []
         errors = []
