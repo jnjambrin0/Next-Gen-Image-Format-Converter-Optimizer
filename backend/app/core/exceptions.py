@@ -195,3 +195,12 @@ class AvifDecodingError(FormatError):
         super().__init__(
             message=message, error_code="CONV206", status_code=422, details=details
         )
+
+
+class NetworkError(ImageConverterError):
+    """Raised when network operations fail or are blocked."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message, error_code="NET001", status_code=403, details=details
+        )

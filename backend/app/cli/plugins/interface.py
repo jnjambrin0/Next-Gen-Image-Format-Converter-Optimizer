@@ -5,6 +5,7 @@ Base interface for CLI plugins
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any
+from pathlib import Path
 import typer
 
 

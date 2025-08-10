@@ -5,6 +5,7 @@ Manages command examples with safe execution and validation
 
 import re
 import subprocess
+import shlex
 import sys
 import tempfile
 from pathlib import Path
@@ -582,9 +583,10 @@ class ExampleDatabase:
             }
 
             # Execute in sandbox with restricted environment
+            # Use shlex.split for security (avoid shell injection)
             result = subprocess.run(
-                command,
-                shell=True,
+                shlex.split(command),
+                shell=False,
                 cwd=self.sandbox_dir,
                 capture_output=True,
                 text=True,

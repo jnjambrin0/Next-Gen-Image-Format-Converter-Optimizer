@@ -14,7 +14,7 @@ from app.core.batch.models import (
     BatchItemStatus,
     BatchProgress,
 )
-from app.models.schemas import ConversionRequest, ConversionResult
+from app.models.conversion import ConversionRequest, ConversionResult
 
 
 class TestBatchManager:

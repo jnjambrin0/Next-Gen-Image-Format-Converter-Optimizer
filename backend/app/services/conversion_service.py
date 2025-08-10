@@ -293,12 +293,13 @@ class ConversionService:
         except Exception:
             return None
 
-    async def validate_image(self, image_data: bytes) -> bool:
+    async def validate_image(self, image_data: bytes, format_hint: Optional[str] = None) -> bool:
         """
         Validate that image data is a valid image.
 
         Args:
             image_data: Raw image data
+            format_hint: Optional expected format for validation
 
         Returns:
             True if valid image, False otherwise
@@ -311,6 +312,26 @@ class ConversionService:
             detected_format, _ = await format_detection_service.detect_format(
                 image_data
             )
+            
+            # If format hint provided, check if it matches
+            if format_hint:
+                normalized_detected = detected_format.lower()
+                normalized_hint = format_hint.lower()
+                
+                # Handle common aliases
+                if normalized_hint == "jpg":
+                    normalized_hint = "jpeg"
+                if normalized_detected == "jpg":
+                    normalized_detected = "jpeg"
+                    
+                if normalized_detected != normalized_hint:
+                    logger.debug(
+                        "Format mismatch during validation",
+                        expected=format_hint,
+                        detected=detected_format,
+                    )
+                    return False
+            
             logger.debug(
                 "Image validation successful",
                 detected_format=detected_format,

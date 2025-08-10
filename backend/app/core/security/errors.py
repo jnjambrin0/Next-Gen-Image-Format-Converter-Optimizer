@@ -7,10 +7,20 @@ security-related errors with privacy-aware messaging.
 
 import asyncio
 from typing import Optional, Dict, Any
+from enum import Enum
 import traceback
 import structlog
 
 logger = structlog.get_logger()
+
+
+class SecurityErrorCode(Enum):
+    """Security error codes for compatibility."""
+    NETWORK_BLOCKED = "NETWORK_BLOCKED"
+    SANDBOX_VIOLATION = "SANDBOX_VIOLATION"
+    RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
+    VERIFICATION_FAILED = "VERIFICATION_FAILED"
+    MEMORY_VIOLATION = "MEMORY_VIOLATION"
 
 
 class SecurityError(Exception):
@@ -150,3 +160,55 @@ def handle_security_errors(func):
             )
 
     return wrapper
+
+
+# Compatibility classes for existing tests
+class NetworkSecurityError(SecurityError):
+    """Network security error for compatibility."""
+    def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
+        super().__init__("network", message=message)
+        self.code = code or SecurityErrorCode.NETWORK_BLOCKED
+
+
+class SandboxSecurityError(SecurityError):
+    """Sandbox security error for compatibility."""
+    def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
+        super().__init__("sandbox", message=message)
+        self.code = code or SecurityErrorCode.SANDBOX_VIOLATION
+
+
+class RateLimitError(SecurityError):
+    """Rate limit error for compatibility."""
+    def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
+        super().__init__("rate_limit", message=message)
+        self.code = code or SecurityErrorCode.RATE_LIMIT_EXCEEDED
+
+
+class VerificationError(SecurityError):
+    """Verification error for compatibility."""
+    def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
+        super().__init__("verification", message=message)
+        self.code = code or SecurityErrorCode.VERIFICATION_FAILED
+
+
+class MemorySecurityError(SecurityError):
+    """Memory security error for compatibility."""
+    def __init__(self, message: str, code: Optional[SecurityErrorCode] = None):
+        super().__init__("sandbox", {"reason": "memory_violation"}, message=message)
+        self.code = code or SecurityErrorCode.MEMORY_VIOLATION
+
+
+# Helper functions for creating errors
+def create_network_error(reason: str, **kwargs) -> NetworkSecurityError:
+    """Create network security error."""
+    return NetworkSecurityError(f"Network error: {reason}")
+
+
+def create_sandbox_error(reason: str, **kwargs) -> SandboxSecurityError:
+    """Create sandbox security error."""
+    return SandboxSecurityError(f"Sandbox error: {reason}")
+
+
+def create_verification_error(reason: str, **kwargs) -> VerificationError:
+    """Create verification error."""
+    return VerificationError(f"Verification error: {reason}")

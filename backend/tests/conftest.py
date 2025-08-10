@@ -341,3 +341,335 @@ def mock_ml_model_response():
             "suggested_max_dimension": 2048,
         },
     }
+
+
+@pytest.fixture
+def realistic_image_generator():
+    """Generate realistic test images with proper content."""
+    import numpy as np
+
+    try:
+        import piexif
+    except ImportError:
+        piexif = None
+
+    def _generate_realistic(
+        width: int = 1920,
+        height: int = 1080,
+        content_type: str = "photo",
+        has_metadata: bool = True,
+        format: str = "JPEG",
+    ) -> bytes:
+        # Create realistic content based on type
+        if content_type == "photo":
+            # Simulate photo with gradient and noise
+            img = Image.new("RGB", (width, height))
+            pixels = img.load()
+            for i in range(width):
+                for j in range(height):
+                    # Natural gradient with noise
+                    r = min(255, int(i * 255 / width + np.random.randint(-20, 20)))
+                    g = min(255, int(j * 255 / height + np.random.randint(-20, 20)))
+                    b = min(
+                        255,
+                        int(
+                            (i + j) * 128 / (width + height)
+                            + np.random.randint(-20, 20)
+                        ),
+                    )
+                    pixels[i, j] = (max(0, r), max(0, g), max(0, b))
+
+        elif content_type == "screenshot":
+            # Simulate screenshot with UI elements
+            img = Image.new("RGB", (width, height), color=(245, 245, 245))
+            # Add toolbar
+            for i in range(width):
+                for j in range(60):
+                    img.putpixel((i, j), (230, 230, 230))
+
+        elif content_type == "document":
+            # Simulate document with text lines
+            img = Image.new("RGB", (width, height), color=(255, 255, 255))
+            # Add text lines
+            for y in range(100, height - 100, 30):
+                for x in range(100, width - 100, 1):
+                    if x % 15 < 10:  # Simulate text
+                        img.putpixel((x, y), (0, 0, 0))
+
+        else:  # illustration
+            # Geometric patterns
+            img = Image.new("RGBA", (width, height), color=(255, 255, 255, 0))
+            for i in range(0, width, 50):
+                for j in range(0, height, 50):
+                    color = ((i * 255 // width), (j * 255 // height), 128, 200)
+                    for x in range(i, min(i + 40, width)):
+                        for y in range(j, min(j + 40, height)):
+                            img.putpixel((x, y), color)
+
+        # Add metadata if requested
+        buffer = io.BytesIO()
+        exif_bytes = b""
+
+        if has_metadata and format in ["JPEG", "JPG"] and piexif:
+            exif_dict = {
+                "0th": {
+                    piexif.ImageIFD.Make: b"TestCamera",
+                    piexif.ImageIFD.Model: b"TestModel X1",
+                    piexif.ImageIFD.DateTime: b"2025:01:15 14:30:00",
+                },
+                "GPS": {
+                    piexif.GPSIFD.GPSLatitude: ((37, 1), (46, 1), (30, 1)),
+                    piexif.GPSIFD.GPSLongitude: ((122, 1), (25, 1), (0, 1)),
+                },
+            }
+            exif_bytes = piexif.dump(exif_dict)
+
+        if exif_bytes:
+            img.save(buffer, format=format, quality=95, exif=exif_bytes)
+        else:
+            img.save(
+                buffer, format=format, quality=95 if format in ["JPEG", "JPG"] else None
+            )
+
+        return buffer.getvalue()
+
+    return _generate_realistic
+
+
+@pytest.fixture
+def create_malicious_image():
+    """Create various types of malicious images for security testing."""
+
+    def _create_malicious(attack_type: str) -> bytes:
+        if attack_type == "zip_bomb":
+            # PNG with fake huge dimensions
+            png_header = b"\x89PNG\r\n\x1a\n"
+            # IHDR chunk claiming 65535x65535 size
+            import struct
+
+            ihdr_data = struct.pack(">II", 65535, 65535) + b"\x08\x02\x00\x00\x00"
+            ihdr_crc = struct.pack(">I", 0)
+            ihdr_chunk = struct.pack(">I", 13) + b"IHDR" + ihdr_data + ihdr_crc
+            idat_chunk = struct.pack(">I", 0) + b"IDAT" + struct.pack(">I", 0)
+            iend_chunk = struct.pack(">I", 0) + b"IEND" + struct.pack(">I", 0)
+            return png_header + ihdr_chunk + idat_chunk + iend_chunk
+
+        elif attack_type == "polyglot":
+            # File that's both valid JPEG and contains embedded code
+            jpeg_header = (
+                b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+            )
+            payload = b'<script>alert("XSS")</script>'
+            jpeg_data = (
+                jpeg_header
+                + b"\xff\xfe"
+                + struct.pack(">H", len(payload) + 2)
+                + payload
+            )
+            jpeg_data += b"\xff\xd9"  # End of JPEG
+            return jpeg_data
+
+        elif attack_type == "infinite_loop":
+            # GIF with circular frame references
+            gif_header = b"GIF89a" + struct.pack("<HH", 1, 1) + b"\x00\x00\x00"
+            gif_data = gif_header + b"\x21\xff\x0bNETSCAPE2.0\x03\x01\xff\xff\x00"
+            gif_data += b"\x21\xf9\x04\x00\x00\x00\x00\x00"  # Graphics control
+            gif_data += b"\x2c" + struct.pack("<HHHH", 0, 0, 1, 1) + b"\x00"
+            gif_data += b"\x02\x02\x44\x01\x00"  # Image data
+            gif_data += b"\x3b"  # Trailer
+            return gif_data
+
+        elif attack_type == "buffer_overflow":
+            # TIFF with oversized tag
+            import struct
+
+            tiff_header = b"II*\x00" + struct.pack("<I", 8)  # Little-endian TIFF
+            # IFD with malicious tag
+            ifd = struct.pack("<H", 1)  # 1 entry
+            # Tag with huge count
+            ifd += struct.pack(
+                "<HHII", 256, 1, 0xFFFFFFFF, 0
+            )  # ImageWidth with huge count
+            ifd += struct.pack("<I", 0)  # Next IFD offset
+            return tiff_header + ifd
+
+        else:  # corrupted
+            # Partially valid JPEG that becomes corrupted
+            jpeg_start = (
+                b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+            )
+            corrupted_data = b"\xff\xff" * 100 + b"CORRUPTED" * 50
+            return jpeg_start + corrupted_data + b"\xff\xd9"
+
+    return _create_malicious
+
+
+@pytest.fixture
+def simulate_network_conditions():
+    """Simulate various network conditions for testing."""
+    import asyncio
+
+    class NetworkSimulator:
+        def __init__(self):
+            self.latency = 0
+            self.packet_loss = 0
+            self.bandwidth_limit = float("inf")
+
+        async def slow_network(self, latency_ms: int = 100):
+            """Simulate slow network with latency."""
+            self.latency = latency_ms / 1000
+            await asyncio.sleep(self.latency)
+
+        async def unreliable_network(self, loss_rate: float = 0.1):
+            """Simulate packet loss."""
+            import random
+
+            if random.random() < loss_rate:
+                raise ConnectionError("Simulated packet loss")
+
+        async def limited_bandwidth(self, bytes_per_sec: int):
+            """Simulate bandwidth limitation."""
+            self.bandwidth_limit = bytes_per_sec
+
+    return NetworkSimulator()
+
+
+@pytest.fixture
+def batch_test_files():
+    """Generate a batch of diverse test files."""
+
+    def _generate_batch(count: int = 100) -> List[Dict[str, Any]]:
+        files = []
+        categories = ["photo", "screenshot", "document", "illustration"]
+        formats = ["jpeg", "png", "gif", "bmp", "tiff"]
+
+        for i in range(count):
+            category = categories[i % len(categories)]
+            format_idx = i % len(formats)
+
+            # Vary dimensions
+            if category == "photo":
+                width = 1920 + (i * 100) % 2000
+                height = 1080 + (i * 100) % 1500
+            elif category == "screenshot":
+                width = 1366 + (i * 50) % 500
+                height = 768 + (i * 50) % 300
+            elif category == "document":
+                width = 2480
+                height = 3508
+            else:  # illustration
+                width = 500 + (i * 100) % 1000
+                height = 500 + (i * 100) % 1000
+
+            files.append(
+                {
+                    "index": i,
+                    "filename": f"test_{category}_{i:04d}.{formats[format_idx]}",
+                    "category": category,
+                    "format": formats[format_idx],
+                    "width": width,
+                    "height": height,
+                    "has_metadata": i % 3 == 0,  # Every 3rd file has metadata
+                    "size_estimate": width * height * 3 // 10,  # Rough estimate
+                }
+            )
+
+        return files
+
+    return _generate_batch
+
+
+@pytest.fixture
+def websocket_test_client():
+    """Create a WebSocket test client."""
+    import websockets
+    import json
+
+    class WebSocketTestClient:
+        def __init__(self):
+            self.connection = None
+            self.messages = []
+
+        async def connect(self, url: str, token: str = None):
+            """Connect to WebSocket endpoint."""
+            if token:
+                url = f"{url}?token={token}"
+            self.connection = await websockets.connect(url)
+
+        async def send_json(self, data: Dict):
+            """Send JSON message."""
+            if self.connection:
+                await self.connection.send(json.dumps(data))
+
+        async def receive_json(self) -> Dict:
+            """Receive and parse JSON message."""
+            if self.connection:
+                message = await self.connection.recv()
+                data = json.loads(message)
+                self.messages.append(data)
+                return data
+
+        async def close(self):
+            """Close connection."""
+            if self.connection:
+                await self.connection.close()
+
+    return WebSocketTestClient()
+
+
+@pytest.fixture
+def memory_monitor():
+    """Monitor memory usage during tests."""
+    import psutil
+    import time
+
+    class MemoryMonitor:
+        def __init__(self):
+            self.process = psutil.Process()
+            self.initial_memory = None
+            self.peak_memory = 0
+            self.samples = []
+
+        def start(self):
+            """Start monitoring."""
+            self.initial_memory = self.process.memory_info().rss / 1024 / 1024  # MB
+            self.peak_memory = self.initial_memory
+            self.samples = [(0, self.initial_memory)]
+
+        def sample(self):
+            """Take a memory sample."""
+            current = self.process.memory_info().rss / 1024 / 1024
+            elapsed = time.time() if self.samples else 0
+            self.samples.append((elapsed, current))
+            self.peak_memory = max(self.peak_memory, current)
+            return current
+
+        def get_growth(self) -> float:
+            """Get memory growth since start."""
+            if not self.initial_memory:
+                return 0
+            current = self.process.memory_info().rss / 1024 / 1024
+            return current - self.initial_memory
+
+        def assert_stable(self, max_growth_mb: float = 100):
+            """Assert memory growth is within limits."""
+            growth = self.get_growth()
+            assert (
+                growth < max_growth_mb
+            ), f"Memory grew by {growth:.2f}MB (limit: {max_growth_mb}MB)"
+
+    return MemoryMonitor()
+
+
+# Test markers for categorizing tests
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
+    config.addinivalue_line("markers", "security: security-related tests")
+    config.addinivalue_line("markers", "performance: performance tests")
+    config.addinivalue_line("markers", "integration: integration tests")
+    config.addinivalue_line("markers", "critical: critical functionality tests")
+    config.addinivalue_line("markers", "network: tests requiring network")
+    config.addinivalue_line("markers", "ml: machine learning tests")

@@ -39,11 +39,11 @@ export class WebSocketService {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       // Use backend port 8000, not frontend port 5173
       const host = `${window.location.hostname}:8000`
-      
+
       // Parse any query parameters
       const urlObj = new URL(wsUrl, `http://${host}`)
       this.authToken = urlObj.searchParams.get('token')
-      
+
       // Build the full WebSocket URL
       this.url = `${protocol}//${host}${urlObj.pathname}`
       if (this.authToken) {

@@ -77,9 +77,9 @@ class SecurityEventRateLimiter:
         if config is None:
             # Default configuration
             config = {
-                "max_events_per_minute": RATE_LIMIT_EVENTS_PER_MINUTE,
-                "max_events_per_hour": RATE_LIMIT_EVENTS_PER_HOUR,
-                "burst_size": RATE_LIMIT_BURST_SIZE,
+                "max_events_per_minute": int(RATE_LIMIT_EVENTS_PER_MINUTE),
+                "max_events_per_hour": int(RATE_LIMIT_EVENTS_PER_HOUR),
+                "burst_size": int(RATE_LIMIT_BURST_SIZE),
                 "enabled": True,
             }
 
@@ -94,8 +94,8 @@ class SecurityEventRateLimiter:
 
         self.hour_bucket = TokenBucket(
             rate=config["max_events_per_hour"] / 3600.0,  # tokens per second
-            capacity=config["max_events_per_hour"]
-            // RATE_LIMIT_HOUR_BURST_DIVISOR,  # 10% burst capacity
+            capacity=int(config["max_events_per_hour"]
+            // RATE_LIMIT_HOUR_BURST_DIVISOR),  # 10% burst capacity
         )
 
         # Track rate limit violations

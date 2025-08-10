@@ -280,7 +280,7 @@ class IntelligenceEngine:
 
         # Check cache if enabled
         if self.enable_caching:
-            image_hash = hashlib.md5(image_data).hexdigest()
+            image_hash = hashlib.md5(image_data, usedforsecurity=False).hexdigest()
             async with self._cache_lock:
                 if image_hash in self._cache:
                     # Move to end for LRU

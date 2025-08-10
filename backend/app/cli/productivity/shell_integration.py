@@ -7,8 +7,18 @@ import os
 import sys
 from pathlib import Path
 from typing import Optional, Dict
+from enum import Enum
 import subprocess
 import shlex
+
+
+class ShellType(Enum):
+    """Supported shell types."""
+    BASH = "bash"
+    ZSH = "zsh"
+    FISH = "fish"
+    POWERSHELL = "powershell"
+    UNKNOWN = "unknown"
 
 
 class ShellIntegrator:
@@ -715,3 +725,62 @@ function imgwatch {
 }
 """,
         }
+
+
+class CompletionScript:
+    """Shell completion script generation."""
+    
+    def __init__(self, shell_type: ShellType):
+        self.shell_type = shell_type
+        
+    def generate(self) -> str:
+        """Generate completion script for the shell."""
+        if self.shell_type == ShellType.BASH:
+            return ShellIntegrator.generate_bash_completion()
+        elif self.shell_type == ShellType.ZSH:
+            return ShellIntegrator.generate_zsh_completion()
+        elif self.shell_type == ShellType.FISH:
+            return ShellIntegrator.generate_fish_completion()
+        elif self.shell_type == ShellType.POWERSHELL:
+            return ShellIntegrator.generate_powershell_completion()
+        return ""
+
+
+class ShellHelper:
+    """Helper functions for shell integration."""
+    
+    @staticmethod
+    def get_helper_functions(shell_type: ShellType) -> str:
+        """Get helper functions for the shell."""
+        helpers = ShellIntegrator.generate_helper_functions()
+        return helpers.get(shell_type.value, "")
+
+
+class ShellDetector:
+    """Detect the current shell."""
+    
+    @staticmethod
+    def detect() -> ShellType:
+        """Detect and return the current shell type."""
+        shell_name = ShellIntegrator.detect_shell()
+        if shell_name == "bash":
+            return ShellType.BASH
+        elif shell_name == "zsh":
+            return ShellType.ZSH
+        elif shell_name == "fish":
+            return ShellType.FISH
+        elif shell_name == "powershell":
+            return ShellType.POWERSHELL
+        return ShellType.UNKNOWN
+
+
+class FunctionLibrary:
+    """Library of shell helper functions."""
+    
+    def __init__(self, shell_type: ShellType):
+        self.shell_type = shell_type
+        self.functions = ShellIntegrator.generate_helper_functions()
+        
+    def get_functions(self) -> str:
+        """Get all helper functions for the shell."""
+        return self.functions.get(self.shell_type.value, "")
