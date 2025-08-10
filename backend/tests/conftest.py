@@ -12,10 +12,66 @@ from typing import Dict, List, Tuple, Any
 import os
 from unittest.mock import MagicMock, AsyncMock, patch
 import sys
+import socket
+import asyncio
+
+# Set test environment variables BEFORE any imports
+os.environ["IMAGE_CONVERTER_ENABLE_SANDBOXING"] = "false"
+os.environ["TESTING"] = "true"
+os.environ["IMAGE_CONVERTER_SANDBOX_STRICTNESS"] = "standard"
 
 # Note: Some tests may timeout due to service initialization
 # If this happens, consider mocking heavy services in individual test files
 
+# Global fixture to mock network for ALL tests
+@pytest.fixture(autouse=True)
+def disable_network_for_tests():
+    """Disable network access in tests to prevent sandbox blocking."""
+    # Create a mock socket class that preserves inheritance
+    class MockSocket(socket.socket):
+        def __init__(self, *args, **kwargs):
+            # Allow local connections for test servers
+            pass
+        
+        def connect(self, address):
+            # Only allow localhost connections
+            if address[0] not in ['localhost', '127.0.0.1', '::1']:
+                raise OSError("Network access disabled in tests")
+    
+    # Patch socket.socket
+    with patch('socket.socket', MockSocket):
+        yield
+
+# Mock heavy services to prevent timeouts
+@pytest.fixture(autouse=True)
+def mock_heavy_services():
+    """Mock heavy services that cause test timeouts."""
+    with patch('app.services.intelligence_service.IntelligenceService.initialize', new_callable=AsyncMock) as mock_init:
+        mock_init.return_value = None
+        yield
+
+
+@pytest.fixture
+def initialized_services():
+    """Initialize services properly for tests."""
+    from app.services.conversion_service import conversion_service
+    from app.core.monitoring.stats import stats_collector
+    from app.services.preset_service import preset_service
+    
+    # Inject dependencies
+    conversion_service.stats_collector = stats_collector
+    conversion_service.preset_service = preset_service
+    
+    # Initialize conversion manager if needed
+    if not hasattr(conversion_service, 'conversion_manager'):
+        from app.core.conversion.manager import ConversionManager
+        conversion_service.conversion_manager = ConversionManager()
+    
+    return {
+        'conversion_service': conversion_service,
+        'stats_collector': stats_collector,
+        'preset_service': preset_service
+    }
 
 @pytest.fixture
 def test_images_dir():

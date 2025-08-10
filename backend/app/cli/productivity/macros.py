@@ -738,39 +738,43 @@ class MacroSandbox:
 
     def _execute_sandboxed(self, command: str) -> Tuple[bool, str]:
         """Execute command in sandboxed environment"""
-        # Create minimal environment
-        env = {
-            "PATH": "/usr/bin:/bin",
-            "HOME": "/tmp",
-            "USER": "sandbox",
-        }
+        import tempfile
+        import shlex
+        
+        # Create secure temp directory for sandbox
+        with tempfile.TemporaryDirectory(prefix="img_sandbox_") as sandbox_dir:
+            # Create minimal environment with secure temp paths
+            env = {
+                "PATH": "/usr/bin:/bin",
+                "HOME": sandbox_dir,
+                "USER": "sandbox",
+                "TMPDIR": sandbox_dir,
+            }
 
-        try:
-            import shlex
+            try:
+                args = shlex.split(command)
 
-            args = shlex.split(command)
-
-            # Run with restrictions
-            result = subprocess.run(
-                args,
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-                env=env,
-                cwd="/tmp",
-            )
-
-            if result.returncode == 0:
-                return True, result.stdout
-            else:
-                return (
-                    False,
-                    result.stderr or f"Command failed with code {result.returncode}",
+                # Run with restrictions using secure temp directory
+                result = subprocess.run(
+                    args,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                    env=env,
+                    cwd=sandbox_dir,  # Use secure sandbox directory instead of /tmp
                 )
 
-        except Exception as e:
-            return False, f"Sandboxed execution error: {e}"
+                if result.returncode == 0:
+                    return True, result.stdout
+                else:
+                    return (
+                        False,
+                        result.stderr or f"Command failed with code {result.returncode}",
+                    )
+
+            except Exception as e:
+                return False, f"Sandboxed execution error: {e}"
 
     def get_macro(self, name: str) -> Optional[Macro]:
         """Get a specific macro"""

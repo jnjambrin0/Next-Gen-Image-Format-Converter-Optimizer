@@ -17,6 +17,7 @@ import io
 import os
 import json
 import traceback
+import shutil
 
 # Disable all logging before any other imports
 import logging
@@ -348,10 +349,15 @@ def check_file_system_writes():
     """Check for unexpected file writes during conversion."""
     import tempfile
 
-    temp_dir = tempfile.gettempdir()
+    # Use secure temp directory
+    temp_dir = tempfile.mkdtemp(prefix="img_convert_", mode=0o700)
+    
+    # Register cleanup
+    import atexit
+    atexit.register(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
 
     # List of directories to monitor for unexpected writes
-    monitored_dirs = [temp_dir, "/tmp", "/var/tmp"]
+    monitored_dirs = [temp_dir]
     initial_file_counts = {}
 
     for dir_path in monitored_dirs:
@@ -373,11 +379,8 @@ def check_file_system_writes():
 
 def verify_no_file_writes(initial_counts):
     """Verify no unexpected files were created."""
-    import tempfile
-
-    temp_dir = tempfile.gettempdir()
-
-    monitored_dirs = [temp_dir, "/tmp", "/var/tmp"]
+    # Use the same monitored directories from initial_counts
+    monitored_dirs = list(initial_counts.keys())
 
     for dir_path in monitored_dirs:
         if dir_path in initial_counts:

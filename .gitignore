@@ -146,18 +146,31 @@ backend/comprehensive_*.py
 backend/*_verification.py
 backend/*_SUMMARY.md
 backend/test.txt
+backend/test_fixes.py
 
 # Test HTML files
 frontend/test_*.html
 
 # Debug and test outputs
-debug_output/
+backend/debug_output/
+backend/htmlcov*/
 test_results/
 *_debug.*
 *_test_output/
+
+# Development reports and logs
+backend/bandit-report.json
+backend/coverage.json
+backend/server*.log
+backend/logs/
+frontend/logs/
 
 # Temporary analysis files
 FILE_CLEAN.md
 FILES_TO_REMOVE.md
 list_all_files.py
 cleanup_repo.sh
+
+# Internal documentation (moved to .github/docs/)
+docs/stories/
+docs/prd/

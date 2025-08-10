@@ -11,6 +11,18 @@ from typing import Dict, List, Tuple
 from PIL import Image
 import io
 import hashlib
+import sys
+import os
+
+# Add tests directory to path for helpers
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from helpers.format_helpers import (
+    create_test_image_for_format,
+    prepare_image_for_conversion,
+    validate_conversion_result,
+    get_format_capabilities
+)
 
 from app.services.conversion_service import conversion_service
 from app.models.conversion import ConversionRequest
@@ -44,11 +56,12 @@ class TestFormatMatrixRealistic:
     }
 
     @pytest.fixture(autouse=True)
-    def setup(self, realistic_image_generator):
+    def setup(self, realistic_image_generator, initialized_services):
         """Setup test environment with realistic images."""
         self.image_generator = realistic_image_generator
         self.conversion_times = {}
         self.quality_metrics = {}
+        self.conversion_service = initialized_services['conversion_service']
 
     def create_test_image(self, format: str, content_type: str = "photo") -> bytes:
         """Create a realistic test image for the given format."""
@@ -145,7 +158,15 @@ class TestFormatMatrixRealistic:
             )
 
         # Create realistic test image
-        test_image = self.create_test_image(input_format)
+        try:
+            test_image = self.create_test_image(input_format)
+        except Exception:
+            # Fallback to helper function if custom generator fails
+            test_image = create_test_image_for_format(input_format)
+        
+        # Prepare image for conversion if needed
+        if (input_format, output_format) in self.SPECIAL_CONVERSIONS:
+            test_image = prepare_image_for_conversion(test_image, output_format)
 
         # Setup conversion request
         request = ConversionRequest(

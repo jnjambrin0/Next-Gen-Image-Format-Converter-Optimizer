@@ -185,15 +185,23 @@
 </tr>
 <tr>
 <td><b>JPEG XL</b></td>
-<td>✅</td>
+<td>❌</td>
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
 <td>Future-proof, lossless</td>
 </tr>
 <tr>
-<td><b>WebP2</b></td>
+<td><b>JPEG 2000</b></td>
+<td>❌</td>
 <td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>Professional imaging</td>
+</tr>
+<tr>
+<td><b>WebP2</b></td>
+<td>❌</td>
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
@@ -256,13 +264,13 @@ cd backend
 pip install -e .
 
 # Convert a single image
-img convert photo.jpg -f webp -o photo.webp
+img convert file photo.jpg -f webp -o photo.webp
 
 # Batch conversion
-img batch "*.png" -f avif --quality 85
+img batch convert "*.png" -f avif --quality 85
 
 # AI-powered optimization
-img optimize photo.jpg --preset web
+img optimize auto photo.jpg --preset web
 ```
 
 ### 🔧 API
@@ -380,13 +388,13 @@ docker run -p 8000:8000 -p 5173:5173 image-converter
 
 ```bash
 # Simple conversion
-img convert input.jpg -f webp -o output.webp
+img convert file input.jpg -f webp -o output.webp
 
 # With quality setting
-img convert photo.png -f avif --quality 90 -o photo.avif
+img convert file photo.png -f avif --quality 90 -o photo.avif
 
 # Preserve metadata
-img convert image.jpg -f webp --preserve-metadata -o image.webp
+img convert file image.jpg -f webp --preserve-metadata -o image.webp
 ```
 
 </details>
@@ -396,13 +404,13 @@ img convert image.jpg -f webp --preserve-metadata -o image.webp
 
 ```bash
 # Convert all PNG files to WebP
-img batch "*.png" -f webp --quality 85
+img batch convert "*.png" -f webp --quality 85
 
 # Recursive conversion with pattern
-img batch "**/*.jpg" -f avif --recursive
+img batch convert "**/*.jpg" -f avif --recursive
 
 # With custom output directory
-img batch "*.heic" -f jpeg --output-dir converted/
+img batch convert "*.heic" -f jpeg --output-dir converted/
 ```
 
 </details>
@@ -412,13 +420,13 @@ img batch "*.heic" -f jpeg --output-dir converted/
 
 ```bash
 # Auto-optimize for web
-img optimize photo.jpg --preset web
+img optimize auto photo.jpg --preset web
 
 # Optimize for print
-img optimize image.png --preset print
+img optimize auto image.png --preset print
 
 # Custom optimization
-img optimize pic.jpg --mode balanced --target-size 500KB
+img optimize auto pic.jpg --mode balanced --target-size 500KB
 ```
 
 </details>
@@ -936,7 +944,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ```
 MIT License
 
-Copyright (c) 2025 jnjambrin0
+Copyright (c) 2025 Image Converter Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
