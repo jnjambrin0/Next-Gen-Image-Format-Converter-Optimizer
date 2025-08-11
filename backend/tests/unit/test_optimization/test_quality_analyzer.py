@@ -1,10 +1,11 @@
 """Unit tests for the QualityAnalyzer."""
 
-import pytest
 import asyncio
 import io
-from PIL import Image
+
 import numpy as np
+import pytest
+from PIL import Image
 
 from app.core.optimization import QualityAnalyzer
 from app.core.security.errors_simplified import SecurityError

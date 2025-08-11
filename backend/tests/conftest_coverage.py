@@ -2,9 +2,10 @@
 Conftest for coverage tests - disables sandboxing and network blocking.
 """
 
-import pytest
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture(autouse=True, scope="session")

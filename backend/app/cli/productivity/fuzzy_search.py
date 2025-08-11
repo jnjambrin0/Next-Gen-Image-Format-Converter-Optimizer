@@ -4,9 +4,10 @@ Provides intelligent fuzzy matching for command history search
 """
 
 import re
-from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
 from rapidfuzz import fuzz, process
 from rapidfuzz.distance import Levenshtein
 
@@ -392,6 +393,7 @@ class HistoryExporter:
             Success status
         """
         import json
+
         from app.cli.productivity.autocomplete import PrivacySanitizer
 
         try:

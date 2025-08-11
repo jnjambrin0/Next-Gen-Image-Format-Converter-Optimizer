@@ -4,9 +4,9 @@ Multi-language support for CLI interface
 """
 
 import json
+import locale
 from pathlib import Path
 from typing import Dict, Optional
-import locale
 
 
 class I18nManager:

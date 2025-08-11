@@ -7,8 +7,8 @@ import os
 from enum import Enum
 from typing import Dict, Optional
 
-from app.cli.utils.terminal import should_use_emoji
 from app.cli.config import get_config
+from app.cli.utils.terminal import should_use_emoji
 
 
 class EmojiCategory(str, Enum):

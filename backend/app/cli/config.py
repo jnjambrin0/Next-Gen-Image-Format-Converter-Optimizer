@@ -5,7 +5,8 @@ Handles CLI-specific configuration with local storage
 
 import json
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
 
 

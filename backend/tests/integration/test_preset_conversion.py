@@ -1,14 +1,15 @@
 """Integration tests for preset system with conversion pipeline."""
 
+import os
+import tempfile
+
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
-import tempfile
-import os
 
 from app.main import app
-from app.services.preset_service import preset_service
 from app.services.conversion_service import conversion_service
+from app.services.preset_service import preset_service
 
 
 @pytest.fixture
@@ -44,8 +45,9 @@ async def test_preset():
 def create_test_image():
     """Create a simple test PNG image."""
     # Create a 100x100 red square
-    from PIL import Image
     import io
+
+    from PIL import Image
 
     img = Image.new("RGB", (100, 100), color="red")
     img_buffer = io.BytesIO()

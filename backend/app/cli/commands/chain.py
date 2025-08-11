@@ -3,24 +3,25 @@ Chain Command
 Command chaining and piping support
 """
 
-import sys
-import io
-from pathlib import Path
-from typing import List, Optional, Annotated
 import asyncio
+import io
+import sys
+from pathlib import Path
+from typing import Annotated, List, Optional
 
 import typer
 from rich.console import Console
 
 from app.cli.config import get_config
-from app.cli.utils.errors import handle_api_error
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
+from app.cli.utils.errors import handle_api_error
 
 setup_sdk_path()
 from image_converter.client import ImageConverterClient
-from image_converter.models import ConversionRequest, OutputFormat as SDKOutputFormat
+from image_converter.models import ConversionRequest
+from image_converter.models import OutputFormat as SDKOutputFormat
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()

@@ -1,16 +1,16 @@
 """Batch processing service for managing multiple image conversions."""
 
-from typing import Dict, Optional, Any, List
-from uuid import UUID
 import asyncio
 import logging
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from app.core.batch.manager import BatchManager
-from app.core.batch.models import BatchJob, BatchProgress, BatchResult, BatchItemStatus
-from app.core.batch.results import BatchResultCollector
-from app.services.conversion_service import conversion_service
 from app.api.websockets.progress import connection_manager
+from app.core.batch.manager import BatchManager
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchProgress, BatchResult
+from app.core.batch.results import BatchResultCollector
 from app.services.batch_history_service import batch_history_service
+from app.services.conversion_service import conversion_service
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ class BatchService:
         # Create the batch job
         import uuid
         from datetime import datetime
+
         from app.core.batch.models import BatchItem, BatchItemStatus
 
         job_id = str(uuid.uuid4())

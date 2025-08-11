@@ -201,7 +201,7 @@ jobs:
       run: |
         cd backend
         echo "Scanning dependencies for known vulnerabilities..."
-        if ! safety check --json --output safety-report.json; then
+        if ! safety scan --json --output safety-report.json; then
           echo ""
           echo "❌ VULNERABLE DEPENDENCIES FOUND - SECURITY GATE FAILED"
           echo "🔧 Update vulnerable dependencies immediately"

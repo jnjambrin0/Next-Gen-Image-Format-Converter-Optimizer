@@ -3,23 +3,24 @@ Ultra-realistic network blocking tests.
 Tests localhost-only enforcement, SSRF prevention, and network isolation.
 """
 
-import pytest
 import asyncio
+import platform
 import socket
 import ssl
-import urllib.parse
-from unittest.mock import patch, MagicMock, AsyncMock
-import aiohttp
-import requests
-from typing import List, Dict, Any
 import subprocess
-import platform
+import urllib.parse
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.security.sandbox import SecuritySandbox
+import aiohttp
+import pytest
+import requests
+
+from app.core.exceptions import NetworkError, SecurityError
 from app.core.security.engine import SecurityEngine
-from app.services.conversion_service import conversion_service
+from app.core.security.sandbox import SecuritySandbox
 from app.models.conversion import ConversionRequest
-from app.core.exceptions import SecurityError, NetworkError
+from app.services.conversion_service import conversion_service
 
 
 class TestNetworkBlockingReal:
@@ -303,8 +304,9 @@ class TestNetworkBlockingReal:
         Prevents data exfiltration via image metadata.
         """
         # Create image with URL in metadata
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         img = Image.new("RGB", (100, 100), color="red")
 
@@ -490,8 +492,9 @@ class TestNetworkBlockingReal:
         Ensures blocking isn't bypassed during processing.
         """
         # Create test image
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         img = Image.new("RGB", (100, 100))
         buffer = io.BytesIO()

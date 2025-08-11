@@ -3,18 +3,19 @@ Intelligent Autocomplete Engine
 Privacy-aware command learning and suggestion system
 """
 
-import json
-import hashlib
-import re
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Set
-from datetime import datetime, timedelta
-from collections import Counter, defaultdict
 import base64
+import hashlib
+import json
+import re
+from collections import Counter, defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
 from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
 
 from app.cli.config import get_config_dir
 

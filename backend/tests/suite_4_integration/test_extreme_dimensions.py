@@ -3,18 +3,19 @@ Ultra-realistic tests for extreme image dimensions.
 Tests edge cases from 1x1 pixels to gigapixel images.
 """
 
-import pytest
 import asyncio
-import struct
 import io
-from PIL import Image
-import numpy as np
+import struct
 from typing import Tuple
-import psutil
 
-from app.services.conversion_service import conversion_service
+import numpy as np
+import psutil
+import pytest
+from PIL import Image
+
+from app.core.exceptions import ConversionFailedError, ValidationError
 from app.models.conversion import ConversionRequest
-from app.core.exceptions import ValidationError, ConversionFailedError
+from app.services.conversion_service import conversion_service
 
 
 class TestExtremeDimensions:

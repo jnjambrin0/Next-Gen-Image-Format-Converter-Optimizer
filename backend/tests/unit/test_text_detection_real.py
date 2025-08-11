@@ -1,9 +1,10 @@
 """Unit tests for text detection with real images."""
 
-import pytest
-from pathlib import Path
-from PIL import Image
 import os
+from pathlib import Path
+
+import pytest
+from PIL import Image
 
 from app.core.intelligence.text_detector import TextDetector
 from app.models.conversion import BoundingBox

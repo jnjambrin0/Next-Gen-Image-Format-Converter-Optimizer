@@ -1,15 +1,16 @@
 """Integration tests for metadata stripping in the conversion pipeline."""
 
-import pytest
 import asyncio
-from PIL import Image
-import piexif
 import io
 from pathlib import Path
 
+import piexif
+import pytest
+from PIL import Image
+
 from app.core.conversion.manager import ConversionManager
-from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 from app.core.security.engine import SecurityEngine
+from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
 class TestMetadataIntegration:

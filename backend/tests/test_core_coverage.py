@@ -3,31 +3,33 @@ Comprehensive test suite to maximize core module coverage.
 Focused on achieving 85%+ coverage efficiently.
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
 import io
+import json
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 from PIL import Image
-import json
+
+from app.api.routes import conversion, health, monitoring, security
 
 # Import all core modules to test
 from app.core.conversion.manager import ConversionManager
 from app.core.conversion.sandboxed_convert import main as sandboxed_main
 from app.core.intelligence.engine import IntelligenceEngine
-from app.core.security.engine import SecurityEngine
-from app.core.security.sandbox import SecuritySandbox
 from app.core.monitoring.stats import StatsCollector
 from app.core.optimization.optimization_engine import OptimizationEngine
+from app.core.security.engine import SecurityEngine
+from app.core.security.sandbox import SecuritySandbox
+from app.main import app, lifespan
+from app.models.conversion import ConversionRequest, ConversionResult
+from app.models.intelligence import ContentClassification, ContentType
 from app.services.conversion_service import conversion_service
 from app.services.format_detection_service import format_detection_service
 from app.services.intelligence_service import intelligence_service
-from app.models.conversion import ConversionRequest, ConversionResult
-from app.models.intelligence import ContentType, ContentClassification
-from app.api.routes import conversion, health, monitoring, security
-from app.main import app, lifespan
 
 
 @pytest.fixture

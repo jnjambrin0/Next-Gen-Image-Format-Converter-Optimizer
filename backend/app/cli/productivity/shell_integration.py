@@ -4,12 +4,12 @@ Generate and manage shell completion scripts for various shells
 """
 
 import os
-import sys
-from pathlib import Path
-from typing import Optional, Dict
-from enum import Enum
-import subprocess
 import shlex
+import subprocess
+import sys
+from enum import Enum
+from pathlib import Path
+from typing import Dict, Optional
 
 
 class ShellType(Enum):

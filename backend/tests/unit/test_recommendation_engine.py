@@ -1,20 +1,21 @@
 """Unit tests for recommendation engine."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
+import pytest
+
+from app.core.intelligence.recommendation_engine import RecommendationEngine
 from app.models.conversion import (
-    ContentType,
-    OutputFormat,
-    InputFormat,
     ContentClassification,
+    ContentType,
+    InputFormat,
+    OutputFormat,
 )
 from app.models.recommendation import (
+    FormatRecommendation,
     RecommendationRequest,
     UseCaseType,
-    FormatRecommendation,
 )
-from app.core.intelligence.recommendation_engine import RecommendationEngine
 
 
 class TestRecommendationEngine:

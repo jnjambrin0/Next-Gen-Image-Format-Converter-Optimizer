@@ -2,18 +2,19 @@
 Unit tests for CLI commands
 """
 
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
 import pytest
 from typer.testing import CliRunner
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from pathlib import Path
-import sys
 
 # Add SDK path for imports
 sys.path.insert(
     0, str(Path(__file__).parent.parent.parent.parent.parent / "sdks" / "python")
 )
 
-from app.cli.commands import convert, batch, optimize, analyze, formats, presets
+from app.cli.commands import analyze, batch, convert, formats, optimize, presets
 
 
 @pytest.fixture

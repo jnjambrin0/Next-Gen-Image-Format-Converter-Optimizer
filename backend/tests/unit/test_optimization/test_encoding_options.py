@@ -3,8 +3,8 @@
 import pytest
 
 from app.core.optimization.encoding_options import (
-    EncodingOptions,
     ChromaSubsampling,
+    EncodingOptions,
     QuantizationTable,
 )
 from app.core.security.errors_simplified import SecurityError

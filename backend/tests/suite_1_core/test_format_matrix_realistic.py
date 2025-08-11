@@ -3,30 +3,31 @@ Ultra-realistic test suite for comprehensive format conversion matrix.
 Tests all 121 combinations of format conversions with real image data.
 """
 
-import pytest
 import asyncio
+import hashlib
+import io
+import os
+import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
+
+import pytest
 from PIL import Image
-import io
-import hashlib
-import sys
-import os
 
 # Add tests directory to path for helpers
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from helpers.format_helpers import (
     create_test_image_for_format,
+    get_format_capabilities,
     prepare_image_for_conversion,
     validate_conversion_result,
-    get_format_capabilities
 )
 
-from app.services.conversion_service import conversion_service
-from app.models.conversion import ConversionRequest
 from app.core.constants import SUPPORTED_INPUT_FORMATS, SUPPORTED_OUTPUT_FORMATS
+from app.models.conversion import ConversionRequest
+from app.services.conversion_service import conversion_service
 
 
 class TestFormatMatrixRealistic:
@@ -61,7 +62,7 @@ class TestFormatMatrixRealistic:
         self.image_generator = realistic_image_generator
         self.conversion_times = {}
         self.quality_metrics = {}
-        self.conversion_service = initialized_services['conversion_service']
+        self.conversion_service = initialized_services["conversion_service"]
 
     def create_test_image(self, format: str, content_type: str = "photo") -> bytes:
         """Create a realistic test image for the given format."""
@@ -163,7 +164,7 @@ class TestFormatMatrixRealistic:
         except Exception:
             # Fallback to helper function if custom generator fails
             test_image = create_test_image_for_format(input_format)
-        
+
         # Prepare image for conversion if needed
         if (input_format, output_format) in self.SPECIAL_CONVERSIONS:
             test_image = prepare_image_for_conversion(test_image, output_format)

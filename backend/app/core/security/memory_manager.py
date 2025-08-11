@@ -3,8 +3,8 @@ Memory Manager for secure memory operations.
 Stub implementation for testing.
 """
 
-from typing import Optional, Any
 import gc
+from typing import Any, Optional
 
 
 class MemoryManager:

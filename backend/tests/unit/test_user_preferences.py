@@ -1,14 +1,15 @@
 """Unit tests for user preference tracking."""
 
-import pytest
-import tempfile
 import os
+import tempfile
 import time
 from datetime import datetime, timedelta
 
+import pytest
+
+from app.core.intelligence.user_preferences import UserPreferenceTracker
 from app.models.conversion import ContentType, OutputFormat
 from app.models.recommendation import UseCaseType, UserFormatPreference
-from app.core.intelligence.user_preferences import UserPreferenceTracker
 
 
 class TestUserPreferenceTracker:

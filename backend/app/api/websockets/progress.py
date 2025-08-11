@@ -2,14 +2,15 @@
 
 import asyncio
 import json
-from typing import Dict, Set, Optional
 from datetime import datetime
-from fastapi import WebSocket, WebSocketDisconnect, WebSocketException, status, Query
+from typing import Dict, Optional, Set
+
+from fastapi import Query, WebSocket, WebSocketDisconnect, WebSocketException, status
 from fastapi.routing import APIRouter
 
+from app.config import settings
 from app.core.batch.models import BatchProgress, BatchStatus
 from app.utils.logging import get_logger
-from app.config import settings
 
 logger = get_logger(__name__)
 

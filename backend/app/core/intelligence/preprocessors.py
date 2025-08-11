@@ -1,13 +1,14 @@
 """Image preprocessing utilities for ML models."""
 
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 from PIL import Image
-from typing import Tuple, Optional, List, Dict, Any
-import logging
 
 # Try to import optional dependencies
 try:
-    from scipy import signal, ndimage
+    from scipy import ndimage, signal
 
     SCIPY_AVAILABLE = True
 except ImportError:

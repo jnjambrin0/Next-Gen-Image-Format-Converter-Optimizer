@@ -1,20 +1,21 @@
 """API routes for image intelligence and analysis."""
 
-from fastapi import APIRouter, File, UploadFile, Query, HTTPException, Body
-from fastapi.responses import JSONResponse
-from typing import Optional, List
 import logging
+from typing import List, Optional
 
-from app.services.intelligence_service import intelligence_service
-from app.services.recommendation_service import recommendation_service
+from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
+from fastapi.responses import JSONResponse
+
+from app.core.constants import MAX_FILE_SIZE
 from app.models.conversion import (
-    ContentType,
     ContentClassification,
-    OutputFormat,
+    ContentType,
     InputFormat,
+    OutputFormat,
 )
 from app.models.recommendation import RecommendationRequest, UseCaseType
-from app.core.constants import MAX_FILE_SIZE
+from app.services.intelligence_service import intelligence_service
+from app.services.recommendation_service import recommendation_service
 
 logger = logging.getLogger(__name__)
 

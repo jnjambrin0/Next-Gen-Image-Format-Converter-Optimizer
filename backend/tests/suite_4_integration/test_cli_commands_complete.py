@@ -3,16 +3,17 @@ Ultra-realistic CLI command tests.
 Tests all CLI commands with real-world usage patterns.
 """
 
-import pytest
+import base64
+import json
+import os
+import shutil
 import subprocess
 import tempfile
-import os
-import json
-from pathlib import Path
-from typing import List, Dict, Any
-import shutil
 import time
-import base64
+from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
 
 from app.services.conversion_service import conversion_service
 

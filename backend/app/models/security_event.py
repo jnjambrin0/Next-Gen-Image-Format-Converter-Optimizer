@@ -2,11 +2,12 @@
 Security event model for privacy-compliant audit logging.
 """
 
+import json
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field, field_validator
-import json
 
 
 class SecurityEventType(str, Enum):

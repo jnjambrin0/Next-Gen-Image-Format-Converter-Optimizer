@@ -2,10 +2,11 @@
 Intelligence models for ML-based content analysis.
 """
 
-from enum import Enum
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class ContentType(str, Enum):

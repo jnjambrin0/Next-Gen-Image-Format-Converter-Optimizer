@@ -68,7 +68,7 @@ export class ImageConverterClient {
     // Try to get API key from various sources
     this.apiKey = apiKey || 
                   process.env.IMAGE_CONVERTER_API_KEY || 
-                  this.keyManager.retrieve('default');
+                  this.keyManager.retrieve('default') || undefined;
   }
 
   /**
@@ -110,7 +110,8 @@ export class ImageConverterClient {
       const response = await fetch(url, {
         ...options,
         headers,
-        signal: controller.signal
+        signal: controller.signal,
+        body: options.body as any  // Type compatibility with node-fetch
       });
 
       clearTimeout(timeoutId);
@@ -363,7 +364,7 @@ export class ImageConverterClient {
   /**
    * Store API key securely
    */
-  storeApiKey(apiKey: string, keyName = 'default'): boolean {
+  async storeApiKey(apiKey: string, keyName = 'default'): Promise<boolean> {
     return this.keyManager.store(keyName, apiKey);
   }
 

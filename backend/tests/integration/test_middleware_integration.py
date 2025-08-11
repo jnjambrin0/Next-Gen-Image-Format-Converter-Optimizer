@@ -3,12 +3,13 @@ Integration tests for API middleware.
 Tests rate limiting, validation, and error handling middleware.
 """
 
-import pytest
 import asyncio
-import time
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 import io
+import time
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 from PIL import Image
 
 from app.main import app

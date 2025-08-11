@@ -3,15 +3,16 @@ Performance tests for large file handling and memory usage.
 Tests streaming, chunked processing, and memory efficiency.
 """
 
-import pytest
 import io
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
-import psutil
+from unittest.mock import MagicMock, Mock, patch
 
-from app.core.processing.vips_ops import VipsOperations, STREAMING_THRESHOLD_MB
-from app.core.monitoring.performance import PerformanceMonitor, ConversionMetrics
+import psutil
+import pytest
+
+from app.core.monitoring.performance import ConversionMetrics, PerformanceMonitor
+from app.core.processing.vips_ops import STREAMING_THRESHOLD_MB, VipsOperations
 
 
 class TestLargeFilePerformance:

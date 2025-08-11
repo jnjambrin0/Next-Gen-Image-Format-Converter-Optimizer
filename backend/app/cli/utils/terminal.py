@@ -4,12 +4,12 @@ Detect terminal features and adapt output accordingly
 """
 
 import os
-import sys
 import shutil
-import time
+import sys
 import threading
-from typing import Optional, Tuple, Dict, Any
+import time
 from enum import Enum
+from typing import Any, Dict, Optional, Tuple
 
 
 class TerminalCapability(str, Enum):

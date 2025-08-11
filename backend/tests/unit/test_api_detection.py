@@ -1,10 +1,11 @@
 """Tests for format detection API endpoints."""
 
 import asyncio
+from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock, AsyncMock
-from io import BytesIO
 
 from app.main import app
 

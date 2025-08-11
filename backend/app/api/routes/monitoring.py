@@ -2,22 +2,25 @@
 API endpoints for privacy-focused monitoring and statistics.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from app.core.monitoring.stats import StatsCollector
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.config import settings
 from app.core.monitoring.errors import ErrorReporter
 from app.core.monitoring.security_events import SecurityEventTracker
+from app.core.monitoring.stats import StatsCollector
 from app.utils.logging import get_logger
-from app.config import settings
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 
+import os
+
 # Import for system info
 import platform
-import os
+
 import psutil
 
 # Global stats collector instance

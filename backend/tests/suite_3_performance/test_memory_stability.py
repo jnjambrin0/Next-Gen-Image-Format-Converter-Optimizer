@@ -3,24 +3,25 @@ Ultra-realistic memory stability tests.
 Tests memory leaks, fragmentation, and long-running stability.
 """
 
-import pytest
 import asyncio
 import gc
-import psutil
+import io
 import time
 import tracemalloc
 import weakref
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
-import numpy as np
-from PIL import Image
-import io
+from typing import Any, Dict, List, Optional
 
-from app.services.conversion_service import conversion_service
-from app.services.batch_service import batch_service
-from app.services.intelligence_service import intelligence_service
-from app.models.conversion import ConversionRequest
+import numpy as np
+import psutil
+import pytest
+from PIL import Image
+
 from app.core.constants import MAX_FILE_SIZE
+from app.models.conversion import ConversionRequest
+from app.services.batch_service import batch_service
+from app.services.conversion_service import conversion_service
+from app.services.intelligence_service import intelligence_service
 
 
 @dataclass

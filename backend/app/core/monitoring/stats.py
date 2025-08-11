@@ -4,26 +4,26 @@ Collects only aggregate data with no user correlation.
 """
 
 import asyncio
-from collections import defaultdict, Counter
+import json
+import os
+import sqlite3
+from collections import Counter, defaultdict
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-import json
-import sqlite3
-from contextlib import contextmanager
 from threading import Lock
-import os
+from typing import Any, Dict, List, Optional
 
-from app.utils.logging import get_logger
 from app.core.constants import (
-    HOURLY_STATS_RETENTION_HOURS,
     DAILY_STATS_RETENTION_DAYS,
-    MAX_PROCESSING_TIMES_MEMORY,
-    FILE_SIZE_CATEGORIES,
-    KB_TO_BYTES_FACTOR,
-    MB_TO_BYTES_FACTOR,
     DB_CHECK_SAME_THREAD,
+    FILE_SIZE_CATEGORIES,
+    HOURLY_STATS_RETENTION_HOURS,
+    KB_TO_BYTES_FACTOR,
+    MAX_PROCESSING_TIMES_MEMORY,
+    MB_TO_BYTES_FACTOR,
 )
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

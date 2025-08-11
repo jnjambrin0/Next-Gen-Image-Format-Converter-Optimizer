@@ -3,19 +3,20 @@ Ultra-realistic WebSocket stress tests with authentication and high concurrency.
 Tests real-world scenarios with 100+ simultaneous connections.
 """
 
-import pytest
 import asyncio
-import websockets
-import json
-import time
-import random
 import hashlib
-from typing import List, Dict, Any
+import json
+import random
+import time
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import psutil
+import pytest
+import websockets
 
 from app.api.websockets.secure_progress import SecureConnectionManager
-from app.core.batch.models import BatchProgress, BatchItemStatus
+from app.core.batch.models import BatchItemStatus, BatchProgress
 
 
 class TestWebSocketStress:

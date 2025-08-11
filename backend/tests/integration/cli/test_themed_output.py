@@ -2,22 +2,25 @@
 Integration tests for themed CLI output
 """
 
-import pytest
+import os
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import os
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add the backend directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from app.cli.ui.themes import ThemeManager, Theme, get_theme_manager
-from app.cli.ui.tables import SmartTable, ColumnType
-from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
-from app.cli.utils.emoji import get_emoji, format_with_emoji
-from rich.console import Console
 import io
+
+from rich.console import Console
+
+from app.cli.ui.tables import ColumnType, SmartTable
+from app.cli.ui.themes import Theme, ThemeManager, get_theme_manager
+from app.cli.utils.emoji import format_with_emoji, get_emoji
+from app.cli.utils.terminal import get_terminal_detector, should_use_emoji
 
 
 class TestThemedOutput:
@@ -210,8 +213,8 @@ class TestThemedOutput:
         # This would test the actual command but requires the CLI to be installed
         # For now, we'll test the component integration
 
-        from app.cli.ui.themes import get_theme_manager
         from app.cli.config import get_config
+        from app.cli.ui.themes import get_theme_manager
 
         # Mock config with theme
         mock_config = MagicMock()
@@ -253,8 +256,9 @@ class TestCachingIntegration:
 
     def test_cache_ttl_integration(self):
         """Test cache TTL in real scenario"""
-        from app.cli.utils.terminal import TerminalDetector
         import time
+
+        from app.cli.utils.terminal import TerminalDetector
 
         detector = TerminalDetector()
         detector.clear_cache()
@@ -298,8 +302,9 @@ class TestRateLimitingIntegration:
 
     def test_rate_limiter_wait(self):
         """Test rate limiter wait functionality"""
-        from app.cli.ui.tui import RateLimiter
         import time
+
+        from app.cli.ui.tui import RateLimiter
 
         limiter = RateLimiter(min_interval=0.05)
 

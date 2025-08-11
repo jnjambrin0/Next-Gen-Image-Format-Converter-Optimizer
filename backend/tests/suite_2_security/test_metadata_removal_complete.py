@@ -3,14 +3,15 @@ Ultra-realistic metadata removal tests covering all metadata types.
 Tests EXIF, GPS, IPTC, XMP, and hidden metadata removal.
 """
 
-import pytest
 import asyncio
-from PIL import Image
-import io
-import struct
-import json
-from typing import Dict, Any, Optional
 import hashlib
+import io
+import json
+import struct
+from typing import Any, Dict, Optional
+
+import pytest
+from PIL import Image
 
 try:
     import piexif
@@ -18,8 +19,8 @@ except ImportError:
     piexif = None
 
 from app.core.security.engine import SecurityEngine
-from app.services.conversion_service import conversion_service
 from app.models.conversion import ConversionRequest
+from app.services.conversion_service import conversion_service
 
 
 class TestMetadataRemovalComplete:

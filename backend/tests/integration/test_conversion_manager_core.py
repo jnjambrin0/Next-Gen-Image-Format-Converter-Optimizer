@@ -3,19 +3,20 @@ Core integration tests for ConversionManager.
 Tests the main conversion pipeline with real images.
 """
 
-import pytest
 import asyncio
-from pathlib import Path
-from PIL import Image
 import io
+from pathlib import Path
 from typing import Tuple
 
-from app.core.conversion.manager import ConversionManager
+import pytest
+from PIL import Image
+
 from app.core.constants import (
+    MAX_FILE_SIZE,
     SUPPORTED_INPUT_FORMATS,
     SUPPORTED_OUTPUT_FORMATS,
-    MAX_FILE_SIZE,
 )
+from app.core.conversion.manager import ConversionManager
 from app.models.conversion import ConversionRequest, ConversionResult
 
 
@@ -259,8 +260,9 @@ class TestConversionManagerCore:
     ):
         """Test that memory is properly cleaned up after conversion."""
         import gc
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

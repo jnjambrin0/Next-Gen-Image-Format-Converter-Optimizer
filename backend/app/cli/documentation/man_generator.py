@@ -4,12 +4,12 @@ Generates man pages from command metadata
 """
 
 import os
+import re
 import subprocess
 import tempfile
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-import re
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 

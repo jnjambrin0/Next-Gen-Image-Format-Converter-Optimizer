@@ -1,13 +1,14 @@
 """JPEG format handler."""
 
-from typing import BinaryIO, Dict, Any
 from io import BytesIO
-from PIL import Image, ImageFile
-import structlog
+from typing import Any, BinaryIO, Dict
 
-from app.models.conversion import ConversionSettings
+import structlog
+from PIL import Image, ImageFile
+
 from app.core.conversion.formats.base import BaseFormatHandler
 from app.core.exceptions import ConversionFailedError
+from app.models.conversion import ConversionSettings
 
 # Enable loading of truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True

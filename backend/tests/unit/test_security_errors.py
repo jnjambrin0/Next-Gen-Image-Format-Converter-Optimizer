@@ -2,22 +2,23 @@
 Unit tests for security error handling.
 """
 
-import pytest
 import asyncio
 from unittest.mock import patch
 
+import pytest
+
 from app.core.security.errors import (
+    MemorySecurityError,
+    NetworkSecurityError,
+    RateLimitError,
+    SandboxSecurityError,
     SecurityError,
     SecurityErrorCode,
-    NetworkSecurityError,
-    SandboxSecurityError,
-    RateLimitError,
+    SecurityErrorHandler,
     VerificationError,
-    MemorySecurityError,
     create_network_error,
     create_sandbox_error,
     create_verification_error,
-    SecurityErrorHandler,
     handle_security_errors,
 )
 

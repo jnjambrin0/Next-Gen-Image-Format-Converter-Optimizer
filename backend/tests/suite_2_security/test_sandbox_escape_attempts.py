@@ -3,19 +3,20 @@ Ultra-realistic sandbox escape attempt tests.
 Tests real-world attack vectors and ensures proper isolation.
 """
 
-import pytest
 import asyncio
-import subprocess
 import os
-import tempfile
 import socket
-import psutil
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 import struct
+import subprocess
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from app.core.security.sandbox import SecuritySandbox, SecurityError
+import psutil
+import pytest
+
 from app.core.security.engine import SecurityEngine
+from app.core.security.sandbox import SecurityError, SecuritySandbox
 
 
 class TestSandboxEscapeAttempts:

@@ -3,22 +3,23 @@
 import asyncio
 import gc
 import os
-import pytest
 import resource
 import tempfile
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from app.core.conversion.manager import ConversionManager
+from app.core.security.memory import MemoryError as SecureMemoryError
 from app.core.security.memory import (
     SecureMemoryManager,
-    MemoryError as SecureMemoryError,
-    secure_memory_context,
+    get_system_memory_info,
     secure_allocate,
     secure_clear,
-    get_system_memory_info,
+    secure_memory_context,
 )
-from app.core.security.sandbox import SecuritySandbox, SandboxConfig
-from app.core.conversion.manager import ConversionManager
+from app.core.security.sandbox import SandboxConfig, SecuritySandbox
 from app.models.conversion import ConversionRequest, ConversionSettings, OutputFormat
 
 
@@ -217,8 +218,9 @@ class TestMemoryInProcessing:
     def sample_image_data(self):
         """Create sample image data for testing."""
         # Create a small PNG image in memory
-        from PIL import Image
         import io
+
+        from PIL import Image
 
         # Create a small test image
         img = Image.new("RGB", (100, 100), color="red")

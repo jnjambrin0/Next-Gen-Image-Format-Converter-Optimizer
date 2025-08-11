@@ -13,11 +13,14 @@ interface StoredKeys {
 }
 
 export class SecureAPIKeyManager {
+  // @ts-ignore - Reserved for future use
   private readonly serviceName = 'image-converter-local';
+  // @ts-ignore - Reserved for future use  
   private readonly keyPrefix = 'IC_API_';
   private readonly fallbackPath: string;
 
-  constructor(appName = 'image-converter') {
+  constructor(_appName = 'image-converter') {
+    // Prefix with _ to indicate intentionally unused parameter
     this.fallbackPath = join(homedir(), '.image-converter', '.keys');
   }
 

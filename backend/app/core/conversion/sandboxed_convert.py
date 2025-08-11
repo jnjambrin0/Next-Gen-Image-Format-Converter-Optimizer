@@ -11,16 +11,17 @@ Usage:
     python sandboxed_convert.py <input_format> <output_format> <quality>
 """
 
-# Standard library imports only - no app imports to avoid logging initialization
-import sys
 import io
-import os
 import json
-import traceback
-import shutil
 
 # Disable all logging before any other imports
 import logging
+import os
+import shutil
+
+# Standard library imports only - no app imports to avoid logging initialization
+import sys
+import traceback
 
 logging.disable(logging.CRITICAL)
 
@@ -201,14 +202,14 @@ from PIL import Image
 # 3. Only specific constants are imported, not executable code
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from app.core.constants import (
+    MAX_FILE_SIZE,
     MAX_IMAGE_PIXELS,
+    MAX_QUALITY,
+    MIN_QUALITY,
+    PNG_COMPRESS_LEVEL,
     SUPPORTED_INPUT_FORMATS,
     SUPPORTED_OUTPUT_FORMATS,
-    MAX_FILE_SIZE,
     WEBP_METHOD,
-    PNG_COMPRESS_LEVEL,
-    MIN_QUALITY,
-    MAX_QUALITY,
 )
 
 # Set decompression bomb protection limit
@@ -351,9 +352,10 @@ def check_file_system_writes():
 
     # Use secure temp directory
     temp_dir = tempfile.mkdtemp(prefix="img_convert_", mode=0o700)
-    
+
     # Register cleanup
     import atexit
+
     atexit.register(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
 
     # List of directories to monitor for unexpected writes

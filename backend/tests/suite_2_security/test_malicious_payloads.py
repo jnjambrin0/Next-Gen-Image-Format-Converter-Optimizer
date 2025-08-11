@@ -3,18 +3,19 @@ Ultra-realistic malicious payload tests.
 Tests zip bombs, polyglot files, embedded scripts, and buffer overflow attempts.
 """
 
-import pytest
+import base64
+import hashlib
+import io
 import struct
 import zlib
-import io
 from typing import List, Tuple
-import hashlib
-import base64
 
-from app.core.security.engine import SecurityEngine
-from app.services.conversion_service import conversion_service
-from app.models.conversion import ConversionRequest
+import pytest
+
 from app.core.exceptions import SecurityError, ValidationError
+from app.core.security.engine import SecurityEngine
+from app.models.conversion import ConversionRequest
+from app.services.conversion_service import conversion_service
 
 
 class TestMaliciousPayloads:

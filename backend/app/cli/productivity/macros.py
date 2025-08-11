@@ -3,19 +3,19 @@ Macro Recording and Playback System
 Secure macro management with command validation and sandboxing
 """
 
-import json
 import hashlib
 import hmac
-import shlex
+import json
 import re
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict, field
-from datetime import datetime
-from enum import Enum
 import secrets
+import shlex
 import subprocess
 import sys
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.cli.config import get_config_dir
 from app.cli.productivity.autocomplete import PrivacySanitizer
@@ -738,9 +738,9 @@ class MacroSandbox:
 
     def _execute_sandboxed(self, command: str) -> Tuple[bool, str]:
         """Execute command in sandboxed environment"""
-        import tempfile
         import shlex
-        
+        import tempfile
+
         # Create secure temp directory for sandbox
         with tempfile.TemporaryDirectory(prefix="img_sandbox_") as sandbox_dir:
             # Create minimal environment with secure temp paths
@@ -770,7 +770,8 @@ class MacroSandbox:
                 else:
                     return (
                         False,
-                        result.stderr or f"Command failed with code {result.returncode}",
+                        result.stderr
+                        or f"Command failed with code {result.returncode}",
                     )
 
             except Exception as e:

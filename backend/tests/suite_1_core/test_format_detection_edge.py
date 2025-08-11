@@ -3,16 +3,17 @@ Ultra-realistic format detection edge cases tests.
 Tests magic bytes vs extensions, polyglot files, and rare formats.
 """
 
-import pytest
-import struct
-import io
-from PIL import Image
-from typing import Tuple, Optional
 import hashlib
+import io
+import struct
+from typing import Optional, Tuple
 
-from app.services.format_detection_service import format_detection_service
-from app.services.conversion_service import conversion_service
+import pytest
+from PIL import Image
+
 from app.models.conversion import ConversionRequest
+from app.services.conversion_service import conversion_service
+from app.services.format_detection_service import format_detection_service
 
 
 class TestFormatDetectionEdge:

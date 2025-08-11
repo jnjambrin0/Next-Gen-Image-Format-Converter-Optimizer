@@ -3,26 +3,26 @@ CLI profiling utilities for performance tracking.
 Provides decorators and context managers for profiling CLI operations.
 """
 
-import time
-import json
 import functools
-from pathlib import Path
-from typing import Optional, Dict, Any, Callable
+import json
+import time
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional
 
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
-from app.core.monitoring.performance import (
-    performance_profiler,
-    ConversionMetrics,
-    BatchMetrics,
-)
-from app.cli.utils.emoji import get_emoji, should_use_emoji
 from app.cli.ui.themes import get_theme_manager
+from app.cli.utils.emoji import get_emoji, should_use_emoji
+from app.core.monitoring.performance import (
+    BatchMetrics,
+    ConversionMetrics,
+    performance_profiler,
+)
 
 # Initialize themed console
 theme_manager = get_theme_manager()

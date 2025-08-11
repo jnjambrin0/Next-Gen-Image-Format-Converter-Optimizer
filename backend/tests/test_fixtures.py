@@ -1,8 +1,9 @@
 """Test that all fixtures work correctly."""
 
-import pytest
-from pathlib import Path
 import json
+from pathlib import Path
+
+import pytest
 from PIL import Image
 
 

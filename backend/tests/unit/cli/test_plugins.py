@@ -2,14 +2,15 @@
 Unit tests for plugin system
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
 import json
 import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from app.cli.plugins.loader import PluginLoader
+import pytest
+
 from app.cli.plugins.interface import CLIPlugin
+from app.cli.plugins.loader import PluginLoader
 
 
 class TestPluginInterface:

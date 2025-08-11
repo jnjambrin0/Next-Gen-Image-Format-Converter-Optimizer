@@ -1,7 +1,9 @@
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-from app.core.monitoring.stats import StatsCollector, ConversionStats
+
+import pytest
+
+from app.core.monitoring.stats import ConversionStats, StatsCollector
 
 
 class TestConversionStats:

@@ -3,16 +3,17 @@ Comprehensive tests for configuration profiles system
 Tests profile switching, inheritance, and all edge cases
 """
 
-import pytest
 import json
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
 import shutil
+import tempfile
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
 
-from app.cli.productivity.profiles import Profile, ProfileManager
+import pytest
+
 from app.cli.config import CLIConfig
+from app.cli.productivity.profiles import Profile, ProfileManager
 
 
 class TestProfile:

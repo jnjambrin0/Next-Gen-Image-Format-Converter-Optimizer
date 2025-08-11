@@ -1,18 +1,19 @@
 """Unit tests for the BatchManager class."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime
 import uuid
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 from app.core.batch.manager import BatchManager, BatchWorkerTask
 from app.core.batch.models import (
-    BatchJob,
     BatchItem,
-    BatchStatus,
     BatchItemStatus,
+    BatchJob,
     BatchProgress,
+    BatchStatus,
 )
 from app.models.conversion import ConversionRequest, ConversionResult
 

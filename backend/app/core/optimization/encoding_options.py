@@ -1,8 +1,8 @@
 """Advanced encoding options for image formats."""
 
-from enum import Enum
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from app.core.security.errors_simplified import create_file_error
 from app.utils.logging import get_logger

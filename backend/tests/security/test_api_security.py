@@ -1,19 +1,20 @@
 """Security tests for API authentication and rate limiting."""
 
-import pytest
-import time
 import hashlib
 import secrets
+import time
 from datetime import datetime, timedelta
-from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from app.main import app
-from app.services.api_key_service import api_key_service
-from app.models.database import Base
-from app.core.security.rate_limiter import api_rate_limiter
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.core.security.rate_limiter import api_rate_limiter
+from app.main import app
+from app.models.database import Base
+from app.services.api_key_service import api_key_service
 
 
 class TestAuthenticationSecurity:
@@ -264,8 +265,8 @@ class TestAuthenticationSecurity:
 
     def test_concurrent_authentication_safety(self, client, sample_api_key):
         """Test thread safety of authentication under concurrent load."""
-        import threading
         import queue
+        import threading
 
         _, raw_key = sample_api_key
         results = queue.Queue()

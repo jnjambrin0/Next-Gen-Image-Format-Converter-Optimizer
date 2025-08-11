@@ -3,15 +3,16 @@ Core integration tests for IntelligenceEngine.
 Tests ML model integration and content classification.
 """
 
-import pytest
 import asyncio
-from PIL import Image
 import io
-import numpy as np
 from typing import Optional
 
+import numpy as np
+import pytest
+from PIL import Image
+
 from app.core.intelligence.engine import IntelligenceEngine
-from app.models.intelligence import ContentType, ContentClassification
+from app.models.intelligence import ContentClassification, ContentType
 
 
 @pytest.fixture
@@ -329,8 +330,9 @@ class TestIntelligenceEngineCore:
     async def test_memory_usage(self, intelligence_engine, create_test_image):
         """Test that memory usage is reasonable."""
         import gc
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

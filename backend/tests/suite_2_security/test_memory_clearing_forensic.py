@@ -3,22 +3,23 @@ Ultra-realistic forensic memory clearing tests.
 Tests 5-pass overwrite, memory locking, and forensic verification.
 """
 
-import pytest
-import mmap
-import struct
-import os
-import tempfile
-import secrets
-import hashlib
-from typing import List, Tuple, Optional, Dict, Type
 import ctypes
-import platform
 import gc
+import hashlib
+import mmap
+import os
+import platform
+import secrets
+import struct
+import tempfile
+from typing import Dict, List, Optional, Tuple, Type
 
-from app.core.security.memory_manager import MemoryManager
+import pytest
+
 from app.core.security.engine import SecurityEngine
-from app.services.conversion_service import conversion_service
+from app.core.security.memory_manager import MemoryManager
 from app.models.conversion import ConversionRequest
+from app.services.conversion_service import conversion_service
 
 
 class TestMemoryClearingForensic:

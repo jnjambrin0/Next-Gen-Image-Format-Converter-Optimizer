@@ -4,8 +4,8 @@ Stub implementation for testing.
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 
 
 @dataclass
@@ -67,8 +67,8 @@ def check_network_isolation() -> bool:
         False otherwise.
     """
     try:
-        import subprocess
         import platform
+        import subprocess
 
         # Use appropriate command based on OS
         if platform.system() == "Darwin":  # macOS

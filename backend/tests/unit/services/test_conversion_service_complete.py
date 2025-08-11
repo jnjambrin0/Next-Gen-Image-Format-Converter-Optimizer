@@ -2,20 +2,21 @@
 Comprehensive unit tests for ConversionService to achieve high coverage.
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from io import BytesIO
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 from PIL import Image
 
-from app.services.conversion_service import ConversionService, conversion_service
 from app.core.exceptions import ConversionError, InvalidImageError
 from app.models.conversion import (
-    ConversionResult,
     ConversionRequest,
+    ConversionResult,
     ConversionSettings,
 )
 from app.models.requests import ConversionApiRequest
+from app.services.conversion_service import ConversionService, conversion_service
 
 
 class TestConversionServiceComprehensive:

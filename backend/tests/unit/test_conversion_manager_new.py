@@ -1,31 +1,31 @@
 """Unit tests for the Conversion Manager module."""
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from pathlib import Path
-import io
-from PIL import Image
 import asyncio
+import io
 
 # Import fixtures
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.core.conversion.manager import ConversionManager
+from app.core.exceptions import (
+    ConversionFailedError,
+    InvalidImageError,
+    SecurityError,
+    UnsupportedFormatError,
+)
 from app.models.conversion import (
     ConversionRequest,
     ConversionResult,
-    ConversionStatus,
     ConversionSettings,
+    ConversionStatus,
     OutputFormat,
-)
-from app.core.exceptions import (
-    InvalidImageError,
-    UnsupportedFormatError,
-    ConversionFailedError,
-    SecurityError,
 )
 
 

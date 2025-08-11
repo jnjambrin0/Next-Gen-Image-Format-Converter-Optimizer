@@ -2,9 +2,10 @@
 Comprehensive unit tests for FormatDetectionService to achieve high coverage.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from io import BytesIO
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from PIL import Image
 
 from app.services.format_detection_service import (

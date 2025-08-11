@@ -2,13 +2,14 @@
 Unit tests for connection parser utility.
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
 from app.core.security.parsers import (
+    NetstatParser,
     NetworkConnection,
     SSParser,
-    NetstatParser,
     get_connection_parser,
     parse_connections,
 )

@@ -2,30 +2,30 @@
 Security event tracking with privacy compliance.
 """
 
-import sqlite3
 import json
 import os
+import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 from threading import Lock
+from typing import Any, Dict, List, Optional
 
-from app.models.security_event import (
-    SecurityEvent,
-    SecurityEventType,
-    SecuritySeverity,
-    SecurityEventSummary,
-)
-from app.utils.logging import get_logger
-from app.core.security.rate_limiter import SecurityEventRateLimiter
-from app.core.security.types import RateLimitConfig
 from app.core.constants import (
-    DEFAULT_MONITORING_HOURS,
-    SECURITY_EVENT_RETENTION_DAYS,
-    MAX_RECENT_EVENTS_DISPLAY,
     DB_CHECK_SAME_THREAD,
+    DEFAULT_MONITORING_HOURS,
+    MAX_RECENT_EVENTS_DISPLAY,
+    SECURITY_EVENT_RETENTION_DAYS,
     SECURITY_EVENT_TABLE_NAME,
 )
+from app.core.security.rate_limiter import SecurityEventRateLimiter
+from app.core.security.types import RateLimitConfig
+from app.models.security_event import (
+    SecurityEvent,
+    SecurityEventSummary,
+    SecurityEventType,
+    SecuritySeverity,
+)
+from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

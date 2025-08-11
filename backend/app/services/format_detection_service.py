@@ -3,12 +3,13 @@ Format Detection Service - Robust image format detection from file content
 Detects actual image format regardless of file extension
 """
 
-from typing import Optional, Tuple
 from io import BytesIO
-from PIL import Image
-import structlog
+from typing import Optional, Tuple
 
-from app.core.constants import IMAGE_MAGIC_BYTES, HEIF_AVIF_BRANDS, FORMAT_ALIASES
+import structlog
+from PIL import Image
+
+from app.core.constants import FORMAT_ALIASES, HEIF_AVIF_BRANDS, IMAGE_MAGIC_BYTES
 
 logger = structlog.get_logger()
 

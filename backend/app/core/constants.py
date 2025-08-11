@@ -1,6 +1,6 @@
 """Constants and configuration values for the image converter."""
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Security and Processing Limits
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB

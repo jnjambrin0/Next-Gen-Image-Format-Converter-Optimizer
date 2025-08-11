@@ -5,39 +5,40 @@ Batch image conversion with parallel processing
 
 import asyncio
 import time
-from pathlib import Path
-from typing import List, Optional, Annotated
 from glob import glob
+from pathlib import Path
+from typing import Annotated, List, Optional
 
 import typer
 from rich.console import Console
 from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
     Progress,
     SpinnerColumn,
-    TextColumn,
-    BarColumn,
     TaskProgressColumn,
-    MofNCompleteColumn,
+    TextColumn,
 )
 from rich.table import Table
 
 from app.cli.config import get_config
-from app.cli.utils.validation import validate_input_file
-from app.cli.utils.errors import handle_api_error
-from app.cli.utils.history import record_command
+from app.cli.ui.tables import ColumnType, SmartTable, create_batch_summary_table
 from app.cli.ui.themes import get_theme_manager
-from app.cli.ui.tables import SmartTable, ColumnType, create_batch_summary_table
-from app.cli.utils.emoji import get_emoji, get_format_emoji, format_with_emoji
-from app.cli.utils.terminal import should_use_emoji
-from app.cli.utils.progress import InterruptableProgress, create_multi_progress
-from app.cli.utils.profiler import cli_profiler, BatchMetrics
 
 # Import SDK client
 from app.cli.utils import setup_sdk_path
+from app.cli.utils.emoji import format_with_emoji, get_emoji, get_format_emoji
+from app.cli.utils.errors import handle_api_error
+from app.cli.utils.history import record_command
+from app.cli.utils.profiler import BatchMetrics, cli_profiler
+from app.cli.utils.progress import InterruptableProgress, create_multi_progress
+from app.cli.utils.terminal import should_use_emoji
+from app.cli.utils.validation import validate_input_file
 
 setup_sdk_path()
 from image_converter.async_client import AsyncImageConverterClient
-from image_converter.models import BatchRequest, OutputFormat as SDKOutputFormat
+from image_converter.models import BatchRequest
+from image_converter.models import OutputFormat as SDKOutputFormat
 
 app = typer.Typer(no_args_is_help=True)
 

@@ -25,6 +25,14 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
   - Intelligence Engine: ML-based content detection (ONNX Runtime)
   - Processing Engine: Image manipulation (Pillow/libvips)
 
+## Git & Version Control
+
+- GitHub CLI (`gh`) is configured and available
+- After each change, organize commits in a logical and coherent manner
+- Multiple commits are encouraged to keep code organized and maintain clear history
+- Each commit should represent a logical unit of work
+- Use descriptive commit messages that explain the changes made
+
 ## Testing Guidelines
 
 **IMPORTANT**: The test images in `images_sample/` may have incorrect extensions to test format detection robustness. Always verify actual format through content detection, not file extension.
@@ -34,6 +42,7 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
 **CRITICAL**: The test suite has specific requirements for successful execution:
 
 1. **Environment Variables for Tests**:
+
 ```bash
 # MUST set these for tests to run properly
 export IMAGE_CONVERTER_ENABLE_SANDBOXING=false  # Sandboxing blocks test execution
@@ -41,11 +50,24 @@ export TESTING=true  # Enables test mode
 ```
 
 2. **Test Collection Issues**:
+
 - Tests expect `app/models/intelligence.py` to exist with ContentClassification model
 - Function `check_network_isolation()` must exist in `app/core/security/parsers.py`
 - Tests MUST be run from `backend/` directory for imports to work
 
-3. **Coverage Target**: 80% minimum, current suite has ~2000 tests when properly configured
+3. **Architectural Test Limitations**:
+
+- **Coverage Ceiling**: ~43% is architectural limit, not a testing problem
+- **Root Cause**: Services initialize at import time (singleton anti-pattern)
+- **File Descriptor Exhaustion**: BatchManager creates 10 workers on import
+- **Circular Dependencies**: Services have interdependencies that make isolated testing difficult
+- **DO NOT** attempt to fix coverage by adding more tests - it requires architectural refactoring
+
+4. **Known Test Issues**:
+
+- Event loop corruption: `ValueError: Invalid file descriptor: -1`
+- Service initialization timeouts due to import-time initialization
+- Network blocking from sandbox affects even unit tests
 
 ## Development Commands
 
@@ -66,6 +88,12 @@ uvicorn app.main:app --reload --port 8000
 # Run tests (MUST be from backend/ directory)
 cd backend
 pytest
+
+# Run specific test suites
+pytest tests/suite_1_core/      # Core functionality tests
+pytest tests/suite_2_security/  # Security tests
+pytest tests/suite_3_performance/  # Performance tests
+pytest tests/suite_4_integration/  # Integration tests
 
 # Format code
 black .
@@ -286,6 +314,7 @@ logger.error(f"Invalid file: {filename}")  # Contains PII!
 **CRITICAL**: These model classes MUST exist for the application to function:
 
 - `app/models/intelligence.py`:
+
   - ContentClassification
   - ContentType (enum)
   - BoundingBox
@@ -1125,7 +1154,32 @@ class PrivacySanitizer:
 4. **Sandboxing**: Execute in restricted environment
 5. **File Permissions**: Store with 0o600 (user read/write only)
 
-### 20. Test Execution Critical Pattern
+### 20. Secure Temporary File Pattern
+
+**CRITICAL**: Never use hardcoded `/tmp` paths - always use Python's tempfile module:
+
+```python
+# WRONG: Hardcoded /tmp is a security vulnerability (Bandit B108)
+temp_path = "/tmp/myfile"
+
+# CORRECT: Use tempfile for secure temporary files
+import tempfile
+
+# For files
+with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
+    temp_path = tmp.name
+
+# For directories
+with tempfile.TemporaryDirectory() as temp_dir:
+    # Use temp_dir
+
+# For secure directories with permissions
+temp_dir = tempfile.mkdtemp(mode=0o700)  # Only owner can read/write/execute
+```
+
+**Why**: Hardcoded `/tmp` paths are vulnerable to symlink attacks and race conditions. The tempfile module creates secure temporary files with proper permissions.
+
+### 21. Test Execution Critical Pattern
 
 **CRITICAL**: Tests MUST be run from backend/ directory for imports to work:
 

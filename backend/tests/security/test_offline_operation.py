@@ -2,17 +2,18 @@
 Comprehensive tests to verify the application works completely offline.
 """
 
-import pytest
 import asyncio
+import base64
+import io
 import socket
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
-import io
-import base64
 
-from app.main import app
 from app.core.conversion.manager import ConversionManager
+from app.main import app
 from app.models.conversion import ConversionRequest, ConversionSettings
 
 
@@ -263,8 +264,8 @@ class TestOfflineOperation:
     def test_network_verification_runs_offline(self):
         """Test network verification itself works offline."""
         from app.core.security.network_verifier import (
-            NetworkVerifier,
             NetworkStrictness,
+            NetworkVerifier,
         )
 
         with NetworkBlocker():
@@ -308,8 +309,8 @@ class TestOfflineOperation:
     def test_different_strictness_levels_offline(self, strictness):
         """Test different network verification strictness levels work offline."""
         from app.core.security.network_verifier import (
-            NetworkVerifier,
             NetworkStrictness,
+            NetworkVerifier,
         )
 
         with NetworkBlocker():

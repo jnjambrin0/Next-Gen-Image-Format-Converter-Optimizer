@@ -3,19 +3,20 @@ Ultra-realistic quality metrics tests with SSIM/PSNR calculations.
 Tests real-world quality assessment and optimization scenarios.
 """
 
-import pytest
 import asyncio
-import numpy as np
-from PIL import Image, ImageFilter, ImageEnhance
 import io
 import math
-from typing import Tuple, Dict, Any
 import time
+from typing import Any, Dict, Tuple
 
+import numpy as np
+import pytest
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
+
+from app.core.optimization.quality_analyzer import QualityAnalyzer
+from app.models.conversion import ConversionRequest
 from app.services.conversion_service import conversion_service
 from app.services.optimization_service import optimization_service
-from app.models.conversion import ConversionRequest
-from app.core.optimization.quality_analyzer import QualityAnalyzer
 
 
 class TestQualityMetricsRealistic:

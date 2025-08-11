@@ -2,8 +2,9 @@
 Unit tests for Help Context Analyzer
 """
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 import typer
 
 from app.cli.documentation.help_context import HelpContext, HelpContextAnalyzer

@@ -12,7 +12,7 @@ WORKDIR /scan
 COPY requirements.txt .
 
 # Security scan of dependencies
-RUN safety check --file requirements.txt --json || true
+RUN safety scan --file requirements.txt --json || true
 RUN echo "Security scan completed"
 
 # ============================================
@@ -211,4 +211,4 @@ COPY --chown=appuser:appuser .bandit .safety-policy.json ./
 USER appuser:appuser
 
 # Run security tests
-CMD ["sh", "-c", "safety check && bandit -r app/ && pip-audit"]
+CMD ["sh", "-c", "safety scan && bandit -r app/ && pip-audit"]

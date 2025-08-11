@@ -1,5 +1,6 @@
+from typing import Any, Dict
+
 from fastapi import APIRouter, Request
-from typing import Dict, Any
 
 router = APIRouter()
 

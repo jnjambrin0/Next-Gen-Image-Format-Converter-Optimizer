@@ -1,13 +1,14 @@
 """Unit tests for the SecurityEngine."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, MagicMock
 import io
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from PIL import Image
 
-from app.core.security.engine import SecurityEngine
 from app.core.exceptions import ConversionError
+from app.core.security.engine import SecurityEngine
 
 
 class TestSecurityEngine:

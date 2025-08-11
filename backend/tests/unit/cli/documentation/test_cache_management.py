@@ -2,9 +2,10 @@
 Unit tests for cache management in documentation components
 """
 
-import pytest
 import time
 from unittest.mock import Mock, patch
+
+import pytest
 import typer
 
 from app.cli.documentation.help_context import HelpContextAnalyzer

@@ -192,7 +192,7 @@ jobs:
         run: |
           pip install safety bandit
           cd sdks/python
-          safety check || true
+          safety scan || true
           bandit -r image_converter/ -ll
       
       - name: JavaScript Security Check

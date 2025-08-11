@@ -5,23 +5,23 @@ Advanced table generation with sorting, statistics, and export
 
 import csv
 import json
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple, Callable
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 from io import StringIO
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from rich.table import Table, Column
-from rich.console import Console
-from rich.text import Text
-from rich.align import Align
 from rich import box
+from rich.align import Align
+from rich.console import Console
+from rich.table import Column, Table
+from rich.text import Text
 
 from app.cli.utils.emoji import (
     get_emoji,
     get_format_emoji,
-    get_status_emoji,
     get_quality_stars,
+    get_status_emoji,
 )
 from app.cli.utils.terminal import get_safe_width
 

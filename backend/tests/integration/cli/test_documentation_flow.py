@@ -2,24 +2,25 @@
 Integration tests for documentation flow
 """
 
-import pytest
 import asyncio
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import tempfile
 import sqlite3
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from app.cli.documentation.help_context import HelpContextAnalyzer
-from app.cli.documentation.tutorial_engine import TutorialEngine, TutorialProgress
-from app.cli.documentation.examples import ExampleDatabase, ExampleCategory
-from app.cli.documentation.knowledge_base import (
-    KnowledgeBase,
-    QuestionCategory,
-    Question,
-)
-from app.cli.documentation.reference_cards import ReferenceCardGenerator
+import pytest
+
 from app.cli.documentation.ascii_demos import AsciiDemoPlayer
 from app.cli.documentation.doc_browser import DocumentationBrowser
+from app.cli.documentation.examples import ExampleCategory, ExampleDatabase
+from app.cli.documentation.help_context import HelpContextAnalyzer
+from app.cli.documentation.knowledge_base import (
+    KnowledgeBase,
+    Question,
+    QuestionCategory,
+)
+from app.cli.documentation.reference_cards import ReferenceCardGenerator
+from app.cli.documentation.tutorial_engine import TutorialEngine, TutorialProgress
 
 
 class TestDocumentationIntegration:

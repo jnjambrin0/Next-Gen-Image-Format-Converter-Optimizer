@@ -3,8 +3,9 @@ File recovery service for handling corrupted images.
 Stub implementation for testing.
 """
 
-from typing import Optional, Tuple, Dict, Any
 import io
+from typing import Any, Dict, Optional, Tuple
+
 from PIL import Image
 
 

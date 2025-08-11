@@ -3,20 +3,21 @@ Ultra-realistic rate limiting tests.
 Tests API throttling, burst handling, and per-user/IP limits.
 """
 
-import pytest
 import asyncio
-import time
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
-from collections import defaultdict
 import hashlib
-from unittest.mock import patch, MagicMock
+import time
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi import HTTPException
 
 from app.api.middleware.rate_limit import RateLimiter, RateLimitExceeded
-from app.services.conversion_service import conversion_service
-from app.services.batch_service import batch_service
 from app.models.conversion import ConversionRequest
-from fastapi import HTTPException
+from app.services.batch_service import batch_service
+from app.services.conversion_service import conversion_service
 
 
 @dataclass

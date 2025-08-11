@@ -1,15 +1,16 @@
 """Tests for metadata stripping functionality."""
 
-import pytest
 import asyncio
-from PIL import Image
-from PIL.ExifTags import TAGS
-import piexif
 import io
 from pathlib import Path
 
-from app.core.security.metadata import MetadataStripper
+import piexif
+import pytest
+from PIL import Image
+from PIL.ExifTags import TAGS
+
 from app.core.security.engine import SecurityEngine
+from app.core.security.metadata import MetadataStripper
 
 
 class TestMetadataStripper:

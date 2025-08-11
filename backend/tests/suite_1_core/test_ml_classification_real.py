@@ -3,16 +3,17 @@ Ultra-realistic ML classification tests using ONNX Runtime.
 Tests content detection with real-world images and edge cases.
 """
 
-import pytest
 import asyncio
-import numpy as np
-from PIL import Image, ImageDraw, ImageFont
 import io
-from typing import Dict, List, Tuple
 import time
+from typing import Dict, List, Tuple
 
-from app.services.intelligence_service import intelligence_service
+import numpy as np
+import pytest
+from PIL import Image, ImageDraw, ImageFont
+
 from app.core.intelligence.classifiers import ContentType
+from app.services.intelligence_service import intelligence_service
 
 
 class TestMLClassificationRealistic:

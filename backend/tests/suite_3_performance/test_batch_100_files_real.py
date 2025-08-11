@@ -3,19 +3,20 @@ Ultra-realistic batch processing tests with 100+ files.
 Tests real-world batch conversion scenarios with progress tracking.
 """
 
-import pytest
 import asyncio
-import time
-import json
-import psutil
-from pathlib import Path
-from typing import List, Dict, Any
 import concurrent.futures
-import numpy as np
+import json
+import time
+from pathlib import Path
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
 
+import numpy as np
+import psutil
+import pytest
+
+from app.core.batch.models import BatchItemStatus, BatchJob, BatchStatus
 from app.services.batch_service import batch_service
-from app.core.batch.models import BatchJob, BatchStatus, BatchItemStatus
 
 
 class TestBatch100FilesRealistic:

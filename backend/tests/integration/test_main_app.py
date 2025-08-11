@@ -3,10 +3,11 @@ Integration tests for main FastAPI application.
 Tests app initialization, middleware, and route registration.
 """
 
+import asyncio
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
-import asyncio
 
 from app.main import app, lifespan
 

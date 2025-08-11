@@ -3,13 +3,14 @@ Security tests for CLI visual features
 Tests PathSanitizer, RateLimiter, and other security features
 """
 
-import pytest
-import time
 import os
-import threading
-from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
 import tempfile
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+import pytest
 
 
 class TestPathSanitizer:
@@ -235,9 +236,11 @@ class TestFileSizeLimits:
 
     def test_preview_dimension_limits(self, cli_runner):
         """Test that preview has dimension limits"""
-        from app.cli.ui.preview import ImagePreview
-        from PIL import Image
         import io
+
+        from PIL import Image
+
+        from app.cli.ui.preview import ImagePreview
 
         # This would require actually creating a huge image, which is memory intensive
         # So we'll just verify the check exists
@@ -274,8 +277,9 @@ class TestMemorySafety:
 
     def test_preview_memory_cleanup(self, cli_runner):
         """Test that preview cleans up memory properly"""
-        from app.cli.ui.preview import ImagePreview
         from PIL import Image
+
+        from app.cli.ui.preview import ImagePreview
 
         # Create test image
         img = Image.new("RGB", (100, 100), "blue")
