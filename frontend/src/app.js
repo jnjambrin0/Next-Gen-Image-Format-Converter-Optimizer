@@ -685,7 +685,7 @@ export function initializeApp() {
       let downloadTriggered = false
 
       // Handle job status updates
-      websocketService.on('job_status', async (data) => {
+      websocketService.on('job_status', (data) => {
         if (data.status === 'completed' && !downloadTriggered) {
           // Don't immediately download - wait for all progress updates
           // The progress handler will trigger download when all files are done

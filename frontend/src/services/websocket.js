@@ -71,12 +71,12 @@ export class WebSocketService {
           this.handleMessage(event)
         }
 
-        this.ws.onerror = (error) => {
+        this.ws.onerror = (_error) => {
           // WebSocket error occurred
           this.notifyConnectionStatus('error')
         }
 
-        this.ws.onclose = (event) => {
+        this.ws.onclose = (_event) => {
           // WebSocket closed
           this.notifyConnectionStatus('disconnected')
 

@@ -367,7 +367,7 @@ class OutputFormatter:
     @staticmethod
     def format_xml(data: Any, root_name: str = "data") -> str:
         """Format as XML"""
-        import xml.etree.ElementTree as ET
+        import defusedxml.ElementTree as ET
         from xml.dom import minidom
 
         def dict_to_xml(tag, d):

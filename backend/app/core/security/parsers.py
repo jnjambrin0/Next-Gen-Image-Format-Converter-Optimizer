@@ -48,8 +48,34 @@ def get_connection_parser(command: str):
         return SSParser()
     elif command == "netstat":
         return NetstatParser()
-    else:
-        raise ValueError(f"Unknown command: {command}")
+
+
+def check_network_isolation() -> bool:
+    """Check if network isolation is properly enabled.
+    
+    Returns:
+        True if network is properly isolated, False otherwise
+    """
+    import socket
+    
+    # Try to check if network connections are blocked
+    try:
+        # Attempt to create a socket (should fail if properly isolated)
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_socket.settimeout(1)
+        
+        # Try to connect to a public DNS server (should fail)
+        test_socket.connect(("8.8.8.8", 53))
+        test_socket.close()
+        
+        # If we got here, network is NOT isolated
+        return False
+    except (OSError, socket.error, socket.timeout):
+        # Network connection failed - this is what we want
+        return True
+    except Exception:
+        # Any other error means we can't determine isolation status
+        return False
 
 
 def parse_connections(output: str, command: str = "ss") -> List[NetworkConnection]:

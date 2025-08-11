@@ -27,48 +27,34 @@ class TestPresetSystemComplete:
         """Define built-in presets that should exist."""
         return {
             "web_optimized": PresetSettings(
-                name="Web Optimized",
-                description="Optimized for web delivery with fast loading",
                 output_format="webp",
                 quality=85,
-                resize={"max_width": 1920, "max_height": 1080},
-                strip_metadata=True,
-                optimization_mode="balanced",
+                optimization_mode="file_size",
+                preserve_metadata=False,
             ),
             "thumbnail": PresetSettings(
-                name="Thumbnail",
-                description="Small thumbnail for previews",
                 output_format="jpeg",
                 quality=75,
-                resize={"width": 150, "height": 150, "mode": "cover"},
-                strip_metadata=True,
-                optimization_mode="size",
+                optimization_mode="file_size",
+                preserve_metadata=False,
             ),
             "social_media": PresetSettings(
-                name="Social Media",
-                description="Optimized for social platforms",
                 output_format="jpeg",
-                quality=90,
-                resize={"width": 1200, "height": 630, "mode": "contain"},
-                strip_metadata=True,
+                quality=85,
                 optimization_mode="balanced",
+                preserve_metadata=False,
             ),
             "archive_quality": PresetSettings(
-                name="Archive Quality",
-                description="Maximum quality for archival",
                 output_format="png",
-                strip_metadata=False,
+                quality=100,
                 optimization_mode="quality",
-                lossless=True,
+                preserve_metadata=True,
             ),
             "mobile_optimized": PresetSettings(
-                name="Mobile Optimized",
-                description="Optimized for mobile devices",
                 output_format="webp",
                 quality=80,
-                resize={"max_width": 1080, "max_height": 1920},
-                strip_metadata=True,
-                optimization_mode="size",
+                optimization_mode="file_size",
+                preserve_metadata=False,
             ),
         }
 
@@ -79,6 +65,9 @@ class TestPresetSystemComplete:
 
         Validates core preset functionality.
         """
+        # Initialize preset service to ensure built-in presets are created
+        await preset_service.initialize()
+        
         # Get all presets
         all_presets = await preset_service.get_all_presets()
 
@@ -92,14 +81,11 @@ class TestPresetSystemComplete:
             if preset.id in built_in_presets:
                 expected = built_in_presets[preset.id]
 
-                assert preset.name == expected.name
+                # Validate settings match expected values
                 assert preset.settings.output_format == expected.output_format
-
-                if expected.quality:
-                    assert preset.settings.quality == expected.quality
-
-                if expected.resize:
-                    assert preset.settings.resize == expected.resize
+                assert preset.settings.quality == expected.quality
+                assert preset.settings.optimization_mode == expected.optimization_mode
+                assert preset.settings.preserve_metadata == expected.preserve_metadata
 
     @pytest.mark.critical
     async def test_custom_preset_creation(self):

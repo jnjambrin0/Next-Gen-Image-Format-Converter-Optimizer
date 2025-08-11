@@ -134,13 +134,14 @@ class SandboxConfig:
 class SecuritySandbox:
     """Secure sandbox for running image conversion processes."""
 
-    def __init__(self, config: Optional[SandboxConfig] = None):
+    def __init__(self, config: Optional[SandboxConfig] = None, enable_network_blocking: bool = False):
         """Initialize security sandbox with configuration."""
         self.config = config or SandboxConfig()
         self._temp_dirs: List[Path] = []
         self._memory_manager: Optional[SecureMemoryManager] = None
         self._memory_violations: int = 0
         self._peak_memory_mb: float = 0.0
+        self._network_blocking_enabled = enable_network_blocking
 
     def __enter__(self):
         """Context manager entry."""

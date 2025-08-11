@@ -646,11 +646,11 @@ class SecurityEngine:
     ) -> Tuple[bool, Optional[str]]:
         """
         Validate image safety by checking for malicious patterns.
-        
+
         Args:
             image_data: Raw image bytes to validate
             format_hint: Optional format hint for better validation
-            
+
         Returns:
             Tuple of (is_safe, error_message)
         """
@@ -658,7 +658,7 @@ class SecurityEngine:
             # Check minimum size
             if len(image_data) < MIN_VALIDATION_FILE_SIZE:
                 return False, "File too small to be a valid image"
-            
+
             # Check for suspicious patterns
             header = image_data[:IMAGE_BUFFER_CHECK_LIMIT]
             for pattern_name, pattern in SUSPICIOUS_PATTERNS.items():
@@ -666,25 +666,25 @@ class SecurityEngine:
                     logger.warning(
                         "Suspicious pattern detected",
                         pattern=pattern_name,
-                        format_hint=format_hint
+                        format_hint=format_hint,
                     )
                     return False, f"Suspicious pattern detected: {pattern_name}"
-            
+
             # Try to open with PIL for validation
             try:
                 with io.BytesIO(image_data) as img_buffer:
                     img = Image.open(img_buffer)
                     img.verify()
-                    
+
                     # Check image dimensions
                     if img.width * img.height > MAX_IMAGE_PIXELS:
                         return False, "Image dimensions exceed safety limits"
-                        
+
             except Exception as e:
                 return False, f"Invalid image format: {str(e)}"
-            
+
             return True, None
-            
+
         except Exception as e:
             logger.error("Error validating image safety", error=str(e))
             return False, f"Validation error: {str(e)}"
@@ -692,28 +692,26 @@ class SecurityEngine:
     def scan_for_urls(self, image_data: bytes) -> List[str]:
         """
         Scan image data for embedded URLs.
-        
+
         Args:
             image_data: Raw image bytes to scan
-            
+
         Returns:
             List of found URLs
         """
         urls = []
         try:
             # Convert bytes to string for pattern matching
-            text_data = image_data.decode('utf-8', errors='ignore')
-            
+            text_data = image_data.decode("utf-8", errors="ignore")
+
             # Simple URL pattern matching
             import re
-            url_pattern = re.compile(
-                r'https?://[^\s<>"{}|\\^`\[\]]+',
-                re.IGNORECASE
-            )
-            
+
+            url_pattern = re.compile(r'https?://[^\s<>"{}|\\^`\[\]]+', re.IGNORECASE)
+
             found_urls = url_pattern.findall(text_data)
             urls.extend(found_urls)
-            
+
             # Also check EXIF data for URLs
             try:
                 with io.BytesIO(image_data) as img_buffer:
@@ -726,43 +724,44 @@ class SecurityEngine:
                                 urls.extend(found_in_exif)
             except Exception:
                 pass  # EXIF extraction failed, continue
-                
+
         except Exception as e:
             logger.debug("Error scanning for URLs", error=str(e))
-            
+
         return list(set(urls))  # Return unique URLs
 
     def is_url_blocked(self, url: str) -> bool:
         """
         Check if a URL is on the blocklist.
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL should be blocked
         """
         # Define blocklist patterns
         blocked_patterns = [
-            r'localhost',
-            r'127\.0\.0\.1',
-            r'0\.0\.0\.0',
-            r'::1',
-            r'\.local$',
-            r'\.internal$',
-            r'169\.254\.',  # Link-local
-            r'10\.',  # Private network
-            r'172\.(1[6-9]|2[0-9]|3[0-1])\.',  # Private network
-            r'192\.168\.',  # Private network
-            r'file://',
-            r'ftp://',
-            r'telnet://',
+            r"localhost",
+            r"127\.0\.0\.1",
+            r"0\.0\.0\.0",
+            r"::1",
+            r"\.local$",
+            r"\.internal$",
+            r"169\.254\.",  # Link-local
+            r"10\.",  # Private network
+            r"172\.(1[6-9]|2[0-9]|3[0-1])\.",  # Private network
+            r"192\.168\.",  # Private network
+            r"file://",
+            r"ftp://",
+            r"telnet://",
         ]
-        
+
         import re
+
         for pattern in blocked_patterns:
             if re.search(pattern, url, re.IGNORECASE):
                 logger.warning("Blocked URL detected", url=url, pattern=pattern)
                 return True
-                
+
         return False

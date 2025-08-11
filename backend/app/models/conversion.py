@@ -230,7 +230,9 @@ class ConversionRequest(BaseModel):
 
     model_config = ConfigDict(use_enum_values=True)
 
-    input_format: Optional[InputFormat] = Field(None, description="Input image format (auto-detected if not provided)")
+    input_format: Optional[InputFormat] = Field(
+        None, description="Input image format (auto-detected if not provided)"
+    )
     output_format: OutputFormat
     settings: Optional[ConversionSettings] = None
     optimization_settings: Optional[OptimizationSettings] = None

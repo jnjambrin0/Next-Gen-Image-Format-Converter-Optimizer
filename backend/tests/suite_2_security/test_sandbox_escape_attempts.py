@@ -8,6 +8,7 @@ import os
 import socket
 import struct
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -203,7 +204,7 @@ print("ATTEMPTS:", attempts)
             # Sandbox should handle safely without crashing
             try:
                 result = await sandbox.execute_sandboxed(
-                    command=["python", "-c", "print('test')"],
+                    command=[sys.executable, "-c", "print('test')"],
                     input_data=malicious_image[:1000],  # Limit size for test
                     timeout=2,
                 )

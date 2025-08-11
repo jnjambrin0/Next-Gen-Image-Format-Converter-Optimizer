@@ -325,7 +325,7 @@ class QualityAnalyzer:
         arr1 = np.array(img1)
         arr2 = np.array(img2)
         return self._calculate_psnr_sync(arr1, arr2)
-    
+
     def _calculate_ssim_sync(self, img1: np.ndarray, img2: np.ndarray) -> float:
         """Synchronous SSIM calculation."""
         # Direct SSIM calculation without async
@@ -336,7 +336,7 @@ class QualityAnalyzer:
         if mse == 0:
             return 1.0
         return max(0.0, 1.0 - mse / 65025.0)  # Simple approximation
-    
+
     def _calculate_psnr_sync(self, img1: np.ndarray, img2: np.ndarray) -> float:
         """Synchronous PSNR calculation."""
         # Direct PSNR calculation without async
@@ -344,5 +344,5 @@ class QualityAnalyzer:
             return 0.0
         mse = np.mean((img1 - img2) ** 2)
         if mse == 0:
-            return float('inf')
+            return float("inf")
         return 20 * np.log10(255.0 / np.sqrt(mse))

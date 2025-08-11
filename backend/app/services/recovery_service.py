@@ -12,7 +12,7 @@ from PIL import Image
 class RecoveryService:
     """Service for recovering corrupted image files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.recovery_attempts = 0
         self.successful_recoveries = 0
 

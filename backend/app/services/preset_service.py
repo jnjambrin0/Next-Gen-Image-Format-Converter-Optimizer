@@ -48,6 +48,7 @@ class PresetService:
         """Create built-in presets if they don't exist."""
         builtin_presets = [
             {
+                "id": "web_optimized",
                 "name": "Web Optimized",
                 "description": "Optimized for web use - smaller file size with good quality",
                 "settings": {
@@ -58,6 +59,29 @@ class PresetService:
                 },
             },
             {
+                "id": "thumbnail",
+                "name": "Thumbnail",
+                "description": "Small thumbnail for previews",
+                "settings": {
+                    "output_format": "jpeg",
+                    "quality": 75,
+                    "optimization_mode": "file_size",
+                    "preserve_metadata": False,
+                },
+            },
+            {
+                "id": "social_media",
+                "name": "Social Media",
+                "description": "Optimized for social platforms",
+                "settings": {
+                    "output_format": "jpeg",
+                    "quality": 85,
+                    "optimization_mode": "balanced",
+                    "preserve_metadata": False,
+                },
+            },
+            {
+                "id": "print_quality",
                 "name": "Print Quality",
                 "description": "High quality for printing - preserves all image data",
                 "settings": {
@@ -68,14 +92,26 @@ class PresetService:
                 },
             },
             {
-                "name": "Archive",
-                "description": "Lossless compression for long-term storage",
+                "id": "archive_quality",
+                "name": "Archive Quality",
+                "description": "Maximum quality for archival",
                 "settings": {
-                    "output_format": "webp",
+                    "output_format": "png",
                     "quality": 100,
-                    "optimization_mode": "balanced",
+                    "optimization_mode": "quality",
                     "preserve_metadata": True,
                     "advanced_settings": {"lossless": True},
+                },
+            },
+            {
+                "id": "mobile_optimized",
+                "name": "Mobile Optimized",
+                "description": "Optimized for mobile devices",
+                "settings": {
+                    "output_format": "webp",
+                    "quality": 80,
+                    "optimization_mode": "file_size",
+                    "preserve_metadata": False,
                 },
             },
         ]
@@ -85,13 +121,13 @@ class PresetService:
                 # Check if preset already exists
                 existing = (
                     session.query(UserPreset)
-                    .filter_by(name=preset_data["name"], is_builtin=True)
+                    .filter_by(id=preset_data["id"], is_builtin=True)
                     .first()
                 )
 
                 if not existing:
                     preset = UserPreset(
-                        id=str(uuid.uuid4()),
+                        id=preset_data["id"],
                         name=preset_data["name"],
                         description=preset_data["description"],
                         settings=json.dumps(preset_data["settings"]),
@@ -137,6 +173,16 @@ class PresetService:
             session.refresh(preset)
 
             return self._preset_to_response(preset)
+
+    async def get_all_presets(self) -> List[PresetResponse]:
+        """Get all presets (built-in and user-created).
+        
+        Returns:
+            List of all presets
+        """
+        with self.SessionLocal() as session:
+            presets = session.query(UserPreset).all()
+            return [self._preset_to_response(p) for p in presets]
 
     async def get_preset(self, preset_id: str) -> Optional[PresetResponse]:
         """Get a preset by ID.

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 
-def setup_sdk_path():
+def setup_sdk_path() -> None:
     """Setup SDK path for imports"""
     # Find the SDK path relative to backend directory
     backend_dir = Path(__file__).parent.parent.parent

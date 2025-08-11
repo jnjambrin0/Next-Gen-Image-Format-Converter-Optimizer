@@ -156,7 +156,7 @@ class TestExtremeDimensions:
         request = ConversionRequest(
             output_format="jpeg",
             quality=75,  # Lower quality for large image
-            optimization_mode="size",  # Optimize for file size
+            optimization_mode="file_size",  # Optimize for file size
         )
 
         # Should handle with appropriate resource management

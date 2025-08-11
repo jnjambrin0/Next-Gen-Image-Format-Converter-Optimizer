@@ -125,11 +125,11 @@ class ConversionManager:
             logger.warning("WebP2 support not available", error=str(e))
 
         # JPEG 2000 handler - Disabled due to low usage and complexity
-        # Legacy format with <1% usage - keeping code but not registering
-        # try:
-        #     self.register_handler("jp2", Jpeg2000Handler)  # Also registers jpeg2000, j2k, etc via aliases
-        # except Exception as e:
-        #     logger.warning("JPEG 2000 support not available", error=str(e))
+        # JPEG 2000 format handler
+        try:
+            self.register_handler("jp2", Jpeg2000Handler)  # Also registers jpeg2000, j2k, etc via aliases
+        except Exception as e:
+            logger.warning("JPEG 2000 support not available", error=str(e))
 
     def _estimate_memory_requirements(
         self, input_size: int, input_format: str, output_format: str
