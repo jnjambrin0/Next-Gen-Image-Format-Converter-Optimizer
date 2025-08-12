@@ -58,7 +58,9 @@ class ExternalToolExecutor:
         self.tool_path = self._find_tool()
 
         # Create secure temporary directory for this executor instance
-        self._temp_dir = tempfile.mkdtemp(prefix=f"img_conv_{tool_name}_", mode=0o700)
+        self._temp_dir = tempfile.mkdtemp(prefix=f"img_conv_{tool_name}_")
+        # Set secure permissions after creation
+        os.chmod(self._temp_dir, 0o700)
 
         # Merge custom environment with defaults
         self.restricted_env = self.DEFAULT_RESTRICTED_ENV.copy()

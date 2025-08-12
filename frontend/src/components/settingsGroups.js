@@ -140,14 +140,75 @@ export class SettingsGroups {
     content.className = 'px-4 py-3 space-y-3'
     content.style.display = group.expanded ? 'block' : 'none'
 
-    // Add elements to content
-    group.elements.forEach((element) => {
-      if (element) {
-        content.appendChild(element)
-      }
-    })
+    // Add elements to content if they exist
+    if (group.elements && group.elements.length > 0) {
+      group.elements.forEach((element) => {
+        if (element) {
+          content.appendChild(element)
+          // Attach change listeners to inputs within the element
+          this.attachInputListeners(element, groupId)
+        }
+      })
+    } else {
+      // Add placeholder if no elements provided
+      const placeholder = document.createElement('p')
+      placeholder.className = 'text-sm text-gray-500 italic'
+      placeholder.textContent = 'No settings available for this group'
+      content.appendChild(placeholder)
+    }
 
     return content
+  }
+
+  /**
+   * Attach change listeners to input elements
+   */
+  attachInputListeners(container, groupId) {
+    // Find all input elements
+    const inputs = container.querySelectorAll('input, select, textarea')
+    
+    inputs.forEach((input) => {
+      const changeHandler = (e) => {
+        if (this.onGroupToggle) {
+          // Collect all settings from this group
+          const groupSettings = this.collectGroupSettings(groupId)
+          this.onGroupToggle(groupId, groupSettings)
+        }
+      }
+      
+      input.addEventListener('change', changeHandler)
+      
+      // Store handler for cleanup
+      const handlerId = `input-${groupId}-${input.id || Math.random()}`
+      this.eventHandlers.set(handlerId, {
+        element: input,
+        event: 'change',
+        handler: changeHandler,
+      })
+    })
+  }
+
+  /**
+   * Collect all settings from a group
+   */
+  collectGroupSettings(groupId) {
+    const settings = {}
+    const content = document.getElementById(`group-content-${groupId}`)
+    
+    if (!content) return settings
+    
+    // Collect values from all inputs
+    const inputs = content.querySelectorAll('input, select')
+    inputs.forEach((input) => {
+      const key = input.id.replace(/-/g, '_')
+      if (input.type === 'checkbox') {
+        settings[key] = input.checked
+      } else {
+        settings[key] = input.value
+      }
+    })
+    
+    return settings
   }
 
   /**

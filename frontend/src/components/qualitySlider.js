@@ -354,4 +354,14 @@ export class QualitySlider {
   getQuality() {
     return this.quality
   }
+
+  /**
+   * Set file information for size estimation
+   * @param {File} file - The file object
+   */
+  setFileInfo(file) {
+    if (file && file.size) {
+      this.setOriginalFileSize(file.size)
+    }
+  }
 }

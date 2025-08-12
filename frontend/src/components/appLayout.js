@@ -186,7 +186,7 @@ function createDropzone() {
     'Image upload area. Drag and drop images here or press Enter to select files'
   )
 
-  // Hidden file input
+  // Hidden file input with folder selection support
   const fileInput = document.createElement('input')
   fileInput.type = 'file'
   fileInput.id = 'fileInput'
@@ -194,6 +194,10 @@ function createDropzone() {
   fileInput.accept = 'image/*'
   fileInput.multiple = true
   fileInput.setAttribute('aria-label', 'File input for image selection')
+  // Enable folder selection
+  fileInput.setAttribute('webkitdirectory', '')
+  fileInput.setAttribute('directory', '')
+  fileInput.setAttribute('mozdirectory', '')
 
   // Upload icon
   const icon = createUploadIcon()
@@ -201,7 +205,7 @@ function createDropzone() {
   // Instructions
   const instructions = document.createElement('p')
   instructions.className = 'text-gray-600 pointer-events-none'
-  instructions.textContent = 'Drag and drop images or folders here, or click to select'
+  instructions.textContent = 'Drag and drop images or folders here, or click to select folder'
 
   const formats = document.createElement('p')
   formats.className = 'text-sm text-gray-500 mt-2 pointer-events-none'
@@ -209,7 +213,7 @@ function createDropzone() {
 
   const limits = document.createElement('p')
   limits.className = 'text-xs text-gray-400 mt-1 pointer-events-none'
-  limits.textContent = 'Maximum: 100 files, 50MB per file'
+  limits.textContent = 'Maximum: 100 files, 50MB per file • Select entire folders supported'
 
   dropzone.appendChild(fileInput)
   dropzone.appendChild(icon)

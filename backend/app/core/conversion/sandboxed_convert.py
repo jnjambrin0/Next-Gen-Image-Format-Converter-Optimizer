@@ -356,7 +356,9 @@ def check_file_system_writes() -> Dict[str, int]:
     import tempfile
 
     # Use secure temp directory
-    temp_dir = tempfile.mkdtemp(prefix="img_convert_", mode=0o700)
+    temp_dir = tempfile.mkdtemp(prefix="img_convert_")
+    # Set secure permissions after creation
+    os.chmod(temp_dir, 0o700)
 
     # Register cleanup
     import atexit

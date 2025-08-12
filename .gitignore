@@ -1,8 +1,6 @@
 .bmad-core
 .claude
 
-docs/
-
 backend/data/
 
 # ML Models - exclude actual model files but keep metadata
@@ -13,8 +11,10 @@ ml_models/**/*.h5
 ml_models/**/*.tflite
 !ml_models/**/*.json
 
-docs/prd
-docs/architecture
+# Internal documentation (not for public)
+docs/prd/
+docs/architecture/
+docs/stories/
 docs/prd.md
 docs/architecture.md
 
@@ -159,8 +159,9 @@ test_results/
 *_test_output/
 
 # Development reports and logs
-backend/bandit-report.json
+backend/bandit-report*.json
 backend/coverage.json
+backend/COVERAGE_REPORT.md
 backend/server*.log
 backend/logs/
 frontend/logs/

@@ -299,6 +299,13 @@ export class PresetSelector {
       return
     }
 
+    // Validate file type
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      showNotification('Please select a valid JSON preset file', 'error')
+      event.target.value = ''
+      return
+    }
+
     try {
       const text = await file.text()
       const data = JSON.parse(text)

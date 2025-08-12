@@ -275,12 +275,156 @@ export class UnifiedConversionSettings {
   initializeAdvancedSettings() {
     const advancedContainer = this.element.querySelector('#advanced-settings')
 
+    // Create settings elements for each group
+    const settingsElements = {
+      quality: this.createQualitySettingsElements(),
+      optimization: this.createOptimizationSettingsElements(),
+      metadata: this.createMetadataSettingsElements(),
+    }
+
     this.settingsGroups = new SettingsGroups()
-    const groupsElement = this.settingsGroups.init((groupId, settings) =>
-      this.handleAdvancedSettingsChange(groupId, settings)
-    )
+    const groupsElement = this.settingsGroups.init({
+      onGroupToggle: (groupId, settings) => this.handleAdvancedSettingsChange(groupId, settings),
+      elements: settingsElements,
+    })
 
     advancedContainer.appendChild(groupsElement)
+  }
+
+  /**
+   * Create quality settings elements
+   */
+  createQualitySettingsElements() {
+    const elements = []
+
+    // Lossless compression toggle
+    const losslessDiv = document.createElement('div')
+    losslessDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded'
+    losslessDiv.innerHTML = `
+      <div class="flex-1">
+        <label for="lossless-compression" class="text-sm font-medium text-gray-700">
+          Lossless Compression
+        </label>
+        <p class="text-xs text-gray-500 mt-1">Use lossless compression when available</p>
+      </div>
+      <input type="checkbox" id="lossless-compression" 
+             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+             ${this.settings.losslessCompression ? 'checked' : ''}>
+    `
+    elements.push(losslessDiv)
+
+    // Compression level selector
+    const compressionDiv = document.createElement('div')
+    compressionDiv.className = 'p-3'
+    compressionDiv.innerHTML = `
+      <label for="compression-level" class="block text-sm font-medium text-gray-700 mb-2">
+        Compression Level
+      </label>
+      <select id="compression-level" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+        <option value="fast">Fast (Lower compression)</option>
+        <option value="balanced" selected>Balanced</option>
+        <option value="best">Best (Higher compression)</option>
+      </select>
+    `
+    elements.push(compressionDiv)
+
+    return elements
+  }
+
+  /**
+   * Create optimization settings elements
+   */
+  createOptimizationSettingsElements() {
+    const elements = []
+
+    // Region optimization toggle
+    const regionDiv = document.createElement('div')
+    regionDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded'
+    regionDiv.innerHTML = `
+      <div class="flex-1">
+        <label for="region-optimization" class="text-sm font-medium text-gray-700">
+          Enable Region Optimization
+        </label>
+        <p class="text-xs text-gray-500 mt-1">Optimize different regions of the image separately</p>
+      </div>
+      <input type="checkbox" id="region-optimization" 
+             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+             ${this.settings.enableRegionOptimization ? 'checked' : ''}>
+    `
+    elements.push(regionDiv)
+
+    // Optimization mode selector
+    const modeDiv = document.createElement('div')
+    modeDiv.className = 'p-3'
+    modeDiv.innerHTML = `
+      <label for="optimization-mode" class="block text-sm font-medium text-gray-700 mb-2">
+        Optimization Mode
+      </label>
+      <select id="optimization-mode" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+        <option value="none">None</option>
+        <option value="balanced" selected>Balanced</option>
+        <option value="quality">Quality Priority</option>
+        <option value="size">Size Priority</option>
+      </select>
+    `
+    elements.push(modeDiv)
+
+    return elements
+  }
+
+  /**
+   * Create metadata settings elements
+   */
+  createMetadataSettingsElements() {
+    const elements = []
+
+    // Remove all metadata toggle
+    const removeAllDiv = document.createElement('div')
+    removeAllDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded'
+    removeAllDiv.innerHTML = `
+      <div class="flex-1">
+        <label for="remove-all-metadata" class="text-sm font-medium text-gray-700">
+          Remove All Metadata
+        </label>
+        <p class="text-xs text-gray-500 mt-1">Strip all metadata including EXIF, IPTC, XMP</p>
+      </div>
+      <input type="checkbox" id="remove-all-metadata" 
+             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+             ${this.settings.removeAllMetadata ? 'checked' : ''}>
+    `
+    elements.push(removeAllDiv)
+
+    // Preserve GPS data toggle
+    const preserveGpsDiv = document.createElement('div')
+    preserveGpsDiv.className = 'flex items-center justify-between p-3'
+    preserveGpsDiv.innerHTML = `
+      <div class="flex-1">
+        <label for="preserve-gps" class="text-sm font-medium text-gray-700">
+          Preserve GPS Data
+        </label>
+        <p class="text-xs text-gray-500 mt-1">Keep location information in metadata</p>
+      </div>
+      <input type="checkbox" id="preserve-gps" 
+             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+    `
+    elements.push(preserveGpsDiv)
+
+    // Preserve copyright toggle
+    const copyrightDiv = document.createElement('div')
+    copyrightDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded'
+    copyrightDiv.innerHTML = `
+      <div class="flex-1">
+        <label for="preserve-copyright" class="text-sm font-medium text-gray-700">
+          Preserve Copyright Info
+        </label>
+        <p class="text-xs text-gray-500 mt-1">Keep author and copyright metadata</p>
+      </div>
+      <input type="checkbox" id="preserve-copyright" 
+             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+    `
+    elements.push(copyrightDiv)
+
+    return elements
   }
 
   /**
@@ -401,7 +545,17 @@ export class UnifiedConversionSettings {
    * Handle quality change
    */
   handleQualityChange(event) {
-    this.updateSetting('quality', event.detail.value)
+    // Check if this is a test convert action
+    if (event.detail && event.detail.action === 'test-convert') {
+      if (this.onTestConvert) {
+        this.onTestConvert({
+          quality: event.detail.quality || this.settings.quality,
+          format: this.settings.outputFormat,
+        })
+      }
+    } else {
+      this.updateSetting('quality', event.detail.value)
+    }
   }
 
   /**
@@ -447,6 +601,29 @@ export class UnifiedConversionSettings {
   updateSetting(key, value) {
     this.settings[key] = value
     this.updateSettingsSummary()
+
+    // If this is a re-rendered component, also update the UI
+    if (this.element && this.element.parentElement) {
+      // Update the actual UI element to ensure sync
+      if (key === 'outputFormat') {
+        const formatSelect = this.element.querySelector('#output-format')
+        if (formatSelect && formatSelect.value !== value) {
+          formatSelect.value = value
+        }
+      } else if (key === 'quality' && this.qualitySlider) {
+        if (this.qualitySlider.setValue) {
+          this.qualitySlider.setValue(value)
+        } else if (this.qualitySlider.updateValue) {
+          this.qualitySlider.updateValue(value)
+        }
+      } else if (key === 'preserveMetadata') {
+        const metadataCheckbox = this.element.querySelector('#preserve-metadata')
+        if (metadataCheckbox && metadataCheckbox.checked !== value) {
+          metadataCheckbox.checked = value
+        }
+      }
+    }
+
     this.notifyChange()
 
     // Save to preferences
@@ -613,18 +790,23 @@ export class UnifiedConversionSettings {
 
     // Store current settings before re-initializing
     const currentSettings = { ...this.settings }
+    const currentOnChange = this.onChange
+    const currentOnTestConvert = this.onTestConvert
 
     // Clean up existing event listeners
     this.destroy()
 
     // Re-initialize with preserved settings
     this.settings = currentSettings
-    this.init(this.onChange, this.onTestConvert, true).then((newElement) => {
+    this.init(currentOnChange, currentOnTestConvert, true).then((newElement) => {
       if (container && this.element && container.contains(this.element)) {
         container.replaceChild(newElement, this.element)
       }
       this.element = newElement
+      // Force UI update to ensure all elements reflect current settings
       this.updateUIFromSettings()
+      // Notify change to ensure parent components are aware
+      this.notifyChange()
     })
   }
 

@@ -135,13 +135,23 @@ class PresetApi {
    * @returns {Promise<Object>} Created preset
    */
   createFromCurrentSettings(name, description, settings) {
+    // Map frontend optimization mode values to backend expected values
+    let optimizationMode = 'balanced'
+    if (settings.optimizationMode === 'size') {
+      optimizationMode = 'file_size'
+    } else if (settings.optimizationMode === 'quality') {
+      optimizationMode = 'quality'
+    } else if (settings.optimizationMode === 'balanced') {
+      optimizationMode = 'balanced'
+    }
+
     const presetData = {
       name,
       description,
       settings: {
         output_format: settings.outputFormat,
         quality: settings.quality,
-        optimization_mode: settings.optimizationMode || 'balanced',
+        optimization_mode: optimizationMode,
         preserve_metadata: settings.preserveMetadata || false,
         resize_options: settings.resizeOptions || null,
         advanced_settings: settings.advancedSettings || null,
@@ -162,10 +172,21 @@ class PresetApi {
     }
 
     const settings = preset.settings
+
+    // Map backend optimization mode values to frontend expected values
+    let optimizationMode = null
+    if (settings.optimization_mode === 'file_size') {
+      optimizationMode = 'size'
+    } else if (settings.optimization_mode === 'quality') {
+      optimizationMode = 'quality'
+    } else if (settings.optimization_mode === 'balanced') {
+      optimizationMode = 'balanced'
+    }
+
     return {
       outputFormat: settings.output_format,
       quality: settings.quality,
-      optimizationMode: settings.optimization_mode || 'balanced',
+      optimizationMode: optimizationMode,
       preserveMetadata: settings.preserve_metadata || false,
       resizeOptions: settings.resize_options || null,
       advancedSettings: settings.advanced_settings || null,

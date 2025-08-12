@@ -495,7 +495,7 @@ async def create_preset(preset_data: PresetCreate, request: Request) -> PresetRe
             )
 
         # Create preset with version tracking
-        preset = await preset_service.create_preset_versioned(preset_data)
+        preset = await preset_service.create_preset(preset_data)
 
         logger.info(
             "Preset created",
