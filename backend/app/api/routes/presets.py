@@ -3,7 +3,6 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from fastapi.responses import JSONResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.core.exceptions import SecurityError, ValidationError

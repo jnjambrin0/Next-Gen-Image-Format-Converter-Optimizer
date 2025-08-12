@@ -180,9 +180,29 @@ class BatchHistoryService:
                 if status in ["completed", "failed", "cancelled"]:
                     updates.append("completed_at = CURRENT_TIMESTAMP")
 
+                # Build parameterized query safely
                 params.append(job_id)
-                query = f"UPDATE batch_jobs SET {', '.join(updates)} WHERE job_id = ?"
-                conn.execute(query, params)
+                # Pre-validate that all updates are safe column assignments
+                safe_updates = []
+                for update in updates:
+                    # Only allow specific safe column updates
+                    if any(
+                        update.startswith(col)
+                        for col in [
+                            "status = ?",
+                            "completed_files = ?",
+                            "failed_files = ?",
+                            "processing_time_seconds = ?",
+                            "completed_at = CURRENT_TIMESTAMP",
+                        ]
+                    ):
+                        safe_updates.append(update)
+
+                if safe_updates:
+                    # Build parameterized query - safe_updates are validated above
+                    # This is not SQL injection as safe_updates contains only literal column names
+                    query = f"UPDATE batch_jobs SET {', '.join(safe_updates)} WHERE job_id = ?"  # nosec B608
+                    conn.execute(query, params)
 
     async def add_file_record(
         self, job_id: str, file_index: int, filename: str, status: str = "pending"
@@ -242,13 +262,33 @@ class BatchHistoryService:
                     updates.append("output_size = ?")
                     params.append(output_size)
 
+                # Build parameterized query safely
                 params.extend([job_id, file_index])
-                query = f"""
-                    UPDATE batch_job_files 
-                    SET {', '.join(updates)} 
-                    WHERE job_id = ? AND file_index = ?
-                """
-                conn.execute(query, params)
+
+                # Pre-validate that all updates are safe column assignments
+                safe_updates = []
+                for update in updates:
+                    # Only allow specific safe column updates
+                    if any(
+                        update.startswith(col)
+                        for col in [
+                            "status = ?",
+                            "error_message = ?",
+                            "processing_time = ?",
+                            "output_size = ?",
+                        ]
+                    ):
+                        safe_updates.append(update)
+
+                if safe_updates:
+                    # Build parameterized query - safe_updates are validated above
+                    # This is not SQL injection as safe_updates contains only literal column names
+                    query = f"""
+                        UPDATE batch_job_files 
+                        SET {', '.join(safe_updates)} 
+                        WHERE job_id = ? AND file_index = ?
+                    """  # nosec B608
+                    conn.execute(query, params)
 
     async def get_job_status(self, job_id: str) -> Optional[BatchJobStatus]:
         """Get batch job status.
@@ -387,12 +427,14 @@ class BatchHistoryService:
                 if deleted_count > 0:
                     # Delete jobs (cascades to files)
                     job_ids = [row["job_id"] for row in old_jobs]
+                    # Create placeholders for parameterized query
                     placeholders = ",".join("?" * len(job_ids))
+                    # This is safe as placeholders only contains "?" characters
                     conn.execute(
                         f"""
                         DELETE FROM batch_jobs 
                         WHERE job_id IN ({placeholders})
-                    """,
+                    """,  # nosec B608
                         job_ids,
                     )
 

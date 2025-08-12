@@ -4,7 +4,7 @@ Filename sanitization utilities for secure file handling.
 
 import os
 import re
-from typing import Optional
+from typing import List, Optional
 
 
 def sanitize_filename(filename: str, max_length: int = 255) -> str:
@@ -88,7 +88,9 @@ def is_safe_filename(filename: str) -> bool:
     return True
 
 
-def get_safe_extension(filename: str, allowed_extensions: Optional[list] = None) -> str:
+def get_safe_extension(
+    filename: str, allowed_extensions: Optional[List[str]] = None
+) -> str:
     """
     Extract and validate file extension.
 

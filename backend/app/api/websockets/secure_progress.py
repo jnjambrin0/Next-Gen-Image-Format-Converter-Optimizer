@@ -12,7 +12,6 @@ from fastapi import (
     Query,
     WebSocket,
     WebSocketDisconnect,
-    WebSocketException,
     status,
 )
 from fastapi.routing import APIRouter

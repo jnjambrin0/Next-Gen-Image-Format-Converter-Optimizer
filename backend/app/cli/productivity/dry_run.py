@@ -76,7 +76,7 @@ class ConversionEstimate:
     estimated_memory_mb: float = 0.0
     estimated_cpu_percent: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate derived values"""
         if self.input_size > 0 and self.compression_ratio == 0:
             self.compression_ratio = self.estimated_output_size / self.input_size
@@ -101,7 +101,7 @@ class BatchEstimate:
     parallel_workers: int = 1
     total_estimated_output_size: int = 0  # Alias for tests
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize aliases and calculated fields"""
         # Sync aliases
         if self.file_estimates and not self.conversions:
@@ -153,6 +153,7 @@ class SimulatedOperation:
     validation_errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     would_succeed: bool = True
+    success_probability: float = 1.0
 
 
 class DryRunSimulator:
@@ -185,7 +186,7 @@ class DryRunSimulator:
     def __init__(
         self,
         verbose: bool = False,
-        estimate_resources: bool = False,
+        enable_resource_estimation: bool = False,
         validate_only: bool = False,
     ):
         """
@@ -193,11 +194,11 @@ class DryRunSimulator:
 
         Args:
             verbose: Enable verbose output
-            estimate_resources: Include resource estimation
+            enable_resource_estimation: Include resource estimation
             validate_only: Only validate without estimation
         """
         self.verbose = verbose
-        self.estimate_resources = estimate_resources
+        self.enable_resource_estimation = enable_resource_estimation
         self.validate_only = validate_only
         self.mode = SimulationMode.NORMAL
         self.operations: List[SimulatedOperation] = []
@@ -214,7 +215,7 @@ class DryRunSimulator:
         quality: int = 85,
         preset: Optional[str] = None,
         preserve_metadata: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> SimulatedOperation:
         """
         Simulate a single image conversion
@@ -346,7 +347,7 @@ class DryRunSimulator:
         output_dir: Optional[Path] = None,
         quality: int = 85,
         workers: int = 4,
-        **kwargs,
+        **kwargs: Any,
     ) -> List[SimulatedOperation]:
         """
         Simulate batch conversion
@@ -414,7 +415,7 @@ class DryRunSimulator:
         target_size: Optional[str] = None,
         max_width: Optional[int] = None,
         max_height: Optional[int] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> SimulatedOperation:
         """
         Simulate image optimization
@@ -743,8 +744,8 @@ class DryRunSimulator:
             input_size=input_size,
             estimated_output_size=estimated_output_size,
             estimated_time_seconds=estimated_time,
-            estimated_memory_mb=memory_mb if self.estimate_resources else 0,
-            estimated_cpu_percent=cpu_percent if self.estimate_resources else 0,
+            estimated_memory_mb=memory_mb if self.enable_resource_estimation else 0,
+            estimated_cpu_percent=cpu_percent if self.enable_resource_estimation else 0,
             compression_ratio=compression_ratio,
             success_probability=0.95 if format_info else 0.8,
         )
@@ -756,7 +757,7 @@ class DryRunSimulator:
         file_estimates = []
         total_input_size = 0
         total_output_size = 0
-        total_time = 0
+        total_time = 0.0
 
         for file in input_files:
             estimate = self.estimate_single_conversion(file, output_format)
@@ -876,7 +877,7 @@ class DryRunSimulator:
         size_factor = 0.3 + (quality_factor**1.5) * 0.7
         return int(base_size * size_factor)
 
-    def set_mode(self, mode: SimulationMode):
+    def set_mode(self, mode: SimulationMode) -> None:
         """Set simulation mode"""
         self.mode = mode
 
@@ -1032,6 +1033,6 @@ class DryRunSimulator:
 
         return operation
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all simulated operations"""
         self.operations.clear()

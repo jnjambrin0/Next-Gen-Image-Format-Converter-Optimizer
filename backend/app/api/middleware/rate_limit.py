@@ -5,7 +5,7 @@ Stub implementation for testing.
 
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Optional
 
 

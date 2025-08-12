@@ -134,7 +134,11 @@ class SandboxConfig:
 class SecuritySandbox:
     """Secure sandbox for running image conversion processes."""
 
-    def __init__(self, config: Optional[SandboxConfig] = None, enable_network_blocking: bool = False):
+    def __init__(
+        self,
+        config: Optional[SandboxConfig] = None,
+        enable_network_blocking: bool = False,
+    ):
         """Initialize security sandbox with configuration."""
         self.config = config or SandboxConfig()
         self._temp_dirs: List[Path] = []

@@ -64,7 +64,7 @@ class BaseFormatHandler(ABC):
             if hasattr(image, "getexif"):
                 exif = image.getexif()
                 if exif:
-                    return dict(exif)
+                    return dict(exif.items())
             # Fallback to private method for older Pillow versions
             elif hasattr(image, "_getexif") and image._getexif():
                 return dict(image._getexif())

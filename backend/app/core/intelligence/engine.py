@@ -309,10 +309,11 @@ class IntelligenceEngine:
 
         # Acquire semaphore for concurrency control
         async with self._classification_semaphore:
-            # Track memory usage
+            # Track memory usage with improved estimation
             async with self._memory_lock:
                 self._active_classifications += 1
-                estimated_memory = len(image_data) * 10  # Estimate 10x expansion
+                # More accurate memory estimation based on image characteristics
+                estimated_memory = self._estimate_classification_memory(image_data)
                 if (
                     self._total_memory_used + estimated_memory
                     > MAX_MEMORY_PER_CLASSIFICATION * MAX_CONCURRENT_CLASSIFICATIONS
@@ -332,6 +333,12 @@ class IntelligenceEngine:
                     self._total_memory_used = max(
                         0, self._total_memory_used - estimated_memory
                     )
+
+                    # Opportunistic garbage collection for large memory use
+                    if estimated_memory > 50 * 1024 * 1024:  # 50MB
+                        import gc
+
+                        gc.collect()
 
     async def _classify_with_protection(
         self,
@@ -1008,6 +1015,38 @@ class IntelligenceEngine:
 
             # Add new item at end
             self._cache[key] = value
+
+    def _estimate_classification_memory(self, image_data: bytes) -> int:
+        """Estimate memory requirements for image classification.
+
+        Args:
+            image_data: Raw image bytes
+
+        Returns:
+            Estimated memory usage in bytes
+        """
+        # Base memory is the image data size
+        base_memory = len(image_data)
+
+        # Estimate decompressed size based on common compression ratios
+        # JPEG typically compresses 10:1, PNG varies widely
+        if image_data.startswith(b"\xff\xd8"):  # JPEG
+            decompressed_factor = 12  # Conservative for JPEG
+        elif image_data.startswith(b"\x89PNG"):  # PNG
+            decompressed_factor = 4  # PNG is less compressed
+        else:
+            decompressed_factor = 8  # Generic estimate
+
+        # Add overhead for PIL operations, numpy arrays, and ML processing
+        processing_overhead = base_memory * 2  # 2x for PIL/numpy overhead
+        ml_overhead = base_memory * 3  # 3x for ML feature extraction
+
+        estimated_total = (
+            base_memory * decompressed_factor + processing_overhead + ml_overhead
+        )
+
+        # Cap at reasonable maximum (500MB per image)
+        return min(estimated_total, 500 * 1024 * 1024)
 
     def _secure_clear_classification(
         self, classification: ContentClassification

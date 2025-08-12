@@ -1,7 +1,7 @@
 """Create user_presets table migration."""
 
-import sqlite3
 import os
+import sqlite3
 from datetime import datetime
 
 

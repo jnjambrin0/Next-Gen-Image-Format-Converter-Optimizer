@@ -3,7 +3,7 @@ Type definitions for security module.
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Dict, List, Optional, TypedDict, Union
 
 
 class NetworkStatus(TypedDict):
@@ -70,5 +70,5 @@ class NetworkEvent(TypedDict):
     event_type: str
     severity: str
     timestamp: str
-    details: Dict[str, Any]
+    details: Dict[str, Union[str, int, float, bool, List[str]]]
     rate_limited: bool

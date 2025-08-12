@@ -2,7 +2,6 @@ import json
 import traceback
 import uuid
 from datetime import datetime
-from typing import Any, Dict
 
 import structlog
 from fastapi import Request, status

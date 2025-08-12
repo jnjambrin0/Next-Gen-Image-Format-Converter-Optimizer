@@ -22,6 +22,7 @@ import shutil
 # Standard library imports only - no app imports to avoid logging initialization
 import sys
 import traceback
+from typing import Any, Dict, Optional
 
 logging.disable(logging.CRITICAL)
 
@@ -51,17 +52,17 @@ UDP_BLOCKED_MSG = "UDP sockets are disabled in sandboxed environment"
 class BlockedSocket(_original_socket):
     """Socket class that blocks all operations."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         raise OSError(NETWORK_BLOCKED_MSG)
 
 
 # Override all DNS and socket functions
-def _blocked_socket(*args, **kwargs):
+def _blocked_socket(*args: Any, **kwargs: Any) -> None:
     """Block all socket creation."""
     raise OSError(NETWORK_BLOCKED_MSG)
 
 
-def _blocked_dns(*args, **kwargs):
+def _blocked_dns(*args: Any, **kwargs: Any) -> None:
     """Block all DNS resolution."""
     raise socket.gaierror(DNS_BLOCKED_MSG)
 
@@ -178,7 +179,9 @@ except ImportError:
 _original_socket_call = _original_socket
 
 
-def _restricted_socket(family=-1, type=-1, proto=-1, fileno=None):
+def _restricted_socket(
+    family: int = -1, type: int = -1, proto: int = -1, fileno: Optional[int] = None
+) -> Any:
     """Restrict socket creation - block UDP which is commonly used for P2P."""
     # Block UDP sockets
     if type == socket.SOCK_DGRAM:
@@ -223,7 +226,7 @@ ALLOWED_OUTPUT_FORMATS = SUPPORTED_OUTPUT_FORMATS
 MAX_INPUT_SIZE = MAX_FILE_SIZE
 
 
-def write_error(error_code, message):
+def write_error(error_code: str, message: str) -> None:
     """Write error to stderr in JSON format for parent process."""
     error_data = {
         "error_code": error_code,
@@ -234,7 +237,7 @@ def write_error(error_code, message):
     sys.stderr.flush()
 
 
-def validate_format(format_str, allowed_formats):
+def validate_format(format_str: str, allowed_formats: list) -> str:
     """Validate format string against whitelist."""
     format_lower = format_str.lower().strip()
     if format_lower not in allowed_formats:
@@ -244,7 +247,7 @@ def validate_format(format_str, allowed_formats):
     return format_lower
 
 
-def validate_quality(quality_str):
+def validate_quality(quality_str: str) -> int:
     """Validate quality parameter."""
     try:
         quality = int(quality_str)
@@ -280,7 +283,9 @@ ALLOWED_ADVANCED_PARAMS = {
 }
 
 
-def validate_advanced_params(params, output_format):
+def validate_advanced_params(
+    params: Dict[str, Any], output_format: str
+) -> Dict[str, Any]:
     """Validate and sanitize advanced parameters for a given format.
 
     Args:
@@ -346,7 +351,7 @@ def validate_advanced_params(params, output_format):
     return validated
 
 
-def check_file_system_writes():
+def check_file_system_writes() -> Dict[str, int]:
     """Check for unexpected file writes during conversion."""
     import tempfile
 
@@ -379,7 +384,7 @@ def check_file_system_writes():
     return initial_file_counts
 
 
-def verify_no_file_writes(initial_counts):
+def verify_no_file_writes(initial_counts: Dict[str, int]) -> None:
     """Verify no unexpected files were created."""
     # Use the same monitored directories from initial_counts
     monitored_dirs = list(initial_counts.keys())
@@ -407,7 +412,7 @@ def verify_no_file_writes(initial_counts):
     return True
 
 
-def main():
+def main() -> None:
     """Main conversion function with security hardening."""
     try:
         # Check initial file system state

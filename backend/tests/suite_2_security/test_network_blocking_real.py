@@ -19,7 +19,7 @@ import requests
 from app.core.exceptions import NetworkError, SecurityError
 from app.core.security.engine import SecurityEngine
 from app.core.security.sandbox import SecuritySandbox
-from app.models.conversion import ConversionRequest
+from app.models.conversion import ConversionRequest, ConversionStatus
 from app.services.conversion_service import conversion_service
 
 
@@ -431,9 +431,10 @@ class TestNetworkBlockingReal:
         with sandbox:
             # WebSocket should be blocked
             import websockets
+            from websockets import exceptions as ws_exceptions
 
             with pytest.raises(
-                (OSError, SecurityError, websockets.exceptions.WebSocketException)
+                (OSError, SecurityError, ws_exceptions.WebSocketException)
             ):
                 async with websockets.connect("ws://echo.websocket.org"):
                     pass
@@ -516,7 +517,7 @@ class TestNetworkBlockingReal:
             )
 
             # Conversion should succeed without network
-            assert result.success
+            assert result.status == ConversionStatus.COMPLETED
 
             # No network attempts should be made
             assert (

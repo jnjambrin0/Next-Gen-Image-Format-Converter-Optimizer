@@ -3,13 +3,11 @@
 import asyncio
 import json
 import os
-import uuid
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import (
     APIRouter,
-    Depends,
     File,
     Form,
     HTTPException,
@@ -17,24 +15,18 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.config import settings
 from app.core.batch.models import (
-    BatchCreateRequest,
     BatchCreateResponse,
-    BatchItem,
     BatchItemStatus,
-    BatchJob,
-    BatchJobStatus,
     BatchResult,
     BatchStatus,
     BatchStatusResponse,
 )
-from app.core.exceptions import ValidationError
-from app.models import ErrorResponse
 from app.services.batch_service import batch_service
 from app.utils.logging import get_logger
 
@@ -110,7 +102,7 @@ def validate_batch_request(
 
     if total_size > max_total_size:
         raise batch_create_error_handler.payload_too_large_error(
-            f"Total batch size exceeds maximum allowed limit",
+            "Total batch size exceeds maximum allowed limit",
             request,
             details={
                 "total_size": total_size,
@@ -131,7 +123,7 @@ def validate_batch_request(
         # Check file size
         if file.size and file.size > settings.max_file_size:
             raise batch_create_error_handler.payload_too_large_error(
-                f"Individual file exceeds size limit",
+                "Individual file exceeds size limit",
                 request,
                 details={
                     "file_index": i,
@@ -229,7 +221,8 @@ async def create_batch_job(
         base_url = str(request.base_url).rstrip("/")
 
         # Generate WebSocket token if authentication is enabled
-        websocket_url = f"ws://{request.headers.get('host', 'localhost')}/ws/batch/{batch_job.job_id}"
+        host = request.headers.get("host", "localhost")
+        websocket_url = f"ws://{host}/ws/batch/{batch_job.job_id}"
         if settings.batch_websocket_auth_enabled:
             # Import here to avoid circular imports
             from app.api.websockets.secure_progress import secure_connection_manager
@@ -255,6 +248,70 @@ async def create_batch_job(
         )
 
 
+def _validate_and_filter_items(
+    items: List, status_filter: Optional[str], request: Request
+) -> List:
+    """Validate status filter and filter items."""
+    if not status_filter:
+        return items
+
+    valid_statuses = ["pending", "processing", "completed", "failed", "cancelled"]
+    if status_filter not in valid_statuses:
+        raise batch_status_error_handler.validation_error(
+            "Invalid status filter",
+            request,
+            details={
+                "provided_status": status_filter,
+                "valid_statuses": valid_statuses,
+            },
+        )
+
+    return [
+        item for item in items if item.status.value.lower() == status_filter.lower()
+    ]
+
+
+def _apply_pagination(items: List, limit: Optional[int], offset: int) -> List:
+    """Apply pagination to items."""
+    if limit is None and offset == 0:
+        return items
+
+    start_idx = max(0, offset)
+    end_idx = start_idx + limit if limit is not None else len(items)
+    return items[start_idx:end_idx]
+
+
+def _build_download_url(batch_job, job_id: str, request: Request) -> Optional[str]:
+    """Build download URL if job is completed."""
+    if batch_job.status != BatchStatus.COMPLETED:
+        return None
+
+    base_url = str(request.base_url).rstrip("/")
+    return f"{base_url}/api/batch/{job_id}/download"
+
+
+def _add_pagination_headers(
+    request: Request,
+    total_items: int,
+    returned_items: int,
+    offset: int,
+    limit: Optional[int],
+    status_filter: Optional[str],
+):
+    """Add pagination metadata headers."""
+    response_headers = {
+        "X-Total-Items": str(total_items),
+        "X-Returned-Items": str(returned_items),
+        "X-Offset": str(offset),
+    }
+    if limit is not None:
+        response_headers["X-Limit"] = str(limit)
+    if status_filter:
+        response_headers["X-Status-Filter"] = status_filter
+
+    request.state.response_headers = response_headers
+
+
 @router.get("/{job_id}/status", response_model=BatchStatusResponse)
 async def get_batch_status(
     job_id: str,
@@ -263,18 +320,7 @@ async def get_batch_status(
     limit: Optional[int] = None,
     offset: Optional[int] = 0,
 ) -> BatchStatusResponse:
-    """Get status of a batch job with optional filtering and pagination.
-
-    Args:
-        job_id: Batch job ID
-        request: FastAPI request object
-        status_filter: Filter items by status (pending, processing, completed, failed, cancelled)
-        limit: Maximum number of items to return
-        offset: Number of items to skip
-
-    Returns:
-        BatchStatusResponse with current job status and filtered items
-    """
+    """Get status of a batch job with optional filtering and pagination."""
     try:
         # Get job from batch service
         batch_job = batch_service.get_job(job_id)
@@ -283,54 +329,20 @@ async def get_batch_status(
                 "Batch job not found", request, details={"job_id": job_id}
             )
 
-        # Filter items if status_filter is provided
-        filtered_items = batch_job.items
-        if status_filter:
-            try:
-                # Validate status filter
-                valid_statuses = [
-                    "pending",
-                    "processing",
-                    "completed",
-                    "failed",
-                    "cancelled",
-                ]
-                if status_filter not in valid_statuses:
-                    raise batch_status_error_handler.validation_error(
-                        "Invalid status filter",
-                        request,
-                        details={
-                            "provided_status": status_filter,
-                            "valid_statuses": valid_statuses,
-                        },
-                    )
+        # Apply filtering and pagination using extracted functions
+        try:
+            filtered_items = _validate_and_filter_items(
+                batch_job.items, status_filter, request
+            )
+        except Exception as e:
+            logger.warning(f"Error filtering by status: {e}")
+            filtered_items = batch_job.items  # Continue with unfiltered items
 
-                # Filter items by status
-                filtered_items = [
-                    item
-                    for item in batch_job.items
-                    if item.status.value.lower() == status_filter.lower()
-                ]
-            except Exception as e:
-                logger.warning(f"Error filtering by status: {e}")
-                # Continue with unfiltered items if filtering fails
-
-        # Apply pagination
         total_items = len(filtered_items)
-        paginated_items = filtered_items
+        paginated_items = _apply_pagination(filtered_items, limit, offset)
+        download_url = _build_download_url(batch_job, job_id, request)
 
-        if limit is not None or offset > 0:
-            start_idx = max(0, offset)
-            end_idx = start_idx + limit if limit is not None else len(filtered_items)
-            paginated_items = filtered_items[start_idx:end_idx]
-
-        # Build download URL if completed
-        download_url = None
-        if batch_job.status == BatchStatus.COMPLETED:
-            base_url = str(request.base_url).rstrip("/")
-            download_url = f"{base_url}/api/batch/{job_id}/download"
-
-        # Create response with pagination metadata
+        # Create response
         response = BatchStatusResponse(
             job_id=batch_job.job_id,
             status=batch_job.status,
@@ -346,21 +358,11 @@ async def get_batch_status(
             download_url=download_url,
         )
 
-        # Add pagination info if filtering/pagination was applied
+        # Add pagination headers if needed
         if status_filter or limit is not None or offset > 0:
-            # Add custom headers for pagination metadata
-            response_headers = {
-                "X-Total-Items": str(total_items),
-                "X-Returned-Items": str(len(paginated_items)),
-                "X-Offset": str(offset),
-            }
-            if limit is not None:
-                response_headers["X-Limit"] = str(limit)
-            if status_filter:
-                response_headers["X-Status-Filter"] = status_filter
-
-            # Store headers in request state for middleware to add
-            request.state.response_headers = response_headers
+            _add_pagination_headers(
+                request, total_items, len(paginated_items), offset, limit, status_filter
+            )
 
         return response
 
@@ -631,17 +633,148 @@ async def download_batch_results(
         )
 
 
+def _validate_job_status_for_results(batch_job, request: Request):
+    """Validate that job status allows results retrieval."""
+    if batch_job.status not in [
+        BatchStatus.COMPLETED,
+        BatchStatus.FAILED,
+        BatchStatus.CANCELLED,
+    ]:
+        raise batch_results_error_handler.validation_error(
+            f"Results not available for job in {batch_job.status.value} status",
+            request,
+            details={
+                "current_status": batch_job.status.value,
+                "required_statuses": ["completed", "failed", "cancelled"],
+            },
+        )
+
+
+def _build_file_results(batch_job):
+    """Build successful and failed file lists from batch job."""
+    successful_files = []
+    failed_files = []
+
+    for idx, item in enumerate(batch_job.items):
+        if item.status == BatchItemStatus.COMPLETED:
+            successful_files.append(
+                {
+                    "filename": item.filename,
+                    "index": idx,
+                    "output_size": 0,  # Not tracked in memory
+                }
+            )
+        elif item.status == BatchItemStatus.FAILED:
+            failed_files.append(
+                {
+                    "filename": item.filename,
+                    "index": idx,
+                    "error": item.error or "Unknown error",
+                }
+            )
+
+    return successful_files, failed_files
+
+
+def _calculate_processing_time(batch_job) -> float:
+    """Calculate total processing time for batch job."""
+    if not batch_job.created_at or not batch_job.completed_at:
+        return 0.0
+
+    return (batch_job.completed_at - batch_job.created_at).total_seconds()
+
+
+def _initialize_sse_stream_data(job_id: str, current_job) -> Dict[str, Any]:
+    """Initialize SSE stream with job data."""
+    return {
+        "job_id": job_id,
+        "status": current_job.status.value,
+        "progress_percentage": current_job.progress_percentage,
+        "completed_files": current_job.completed_files,
+        "failed_files": current_job.failed_files,
+        "total_files": current_job.total_files,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+def _build_progress_data(job_id: str, current_job, request: Request) -> Dict[str, Any]:
+    """Build progress data for SSE stream."""
+    progress_data = {
+        "job_id": job_id,
+        "status": current_job.status.value,
+        "progress_percentage": current_job.progress_percentage,
+        "completed_files": current_job.completed_files,
+        "failed_files": current_job.failed_files,
+        "processing_files": current_job.processing_files,
+        "pending_files": current_job.pending_files,
+        "total_files": current_job.total_files,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+    # Add download URL if completed
+    if current_job.status == BatchStatus.COMPLETED:
+        base_url = str(request.base_url).rstrip("/")
+        progress_data["download_url"] = f"{base_url}/api/batch/{job_id}/download"
+
+    return progress_data
+
+
+def _should_send_progress_update(
+    current_job, last_progress_percentage: int, last_status
+) -> bool:
+    """Check if progress update should be sent."""
+    return (
+        current_job.progress_percentage != last_progress_percentage
+        or current_job.status != last_status
+    )
+
+
+def _build_close_data(job_id: str) -> Dict[str, Any]:
+    """Build close event data for SSE stream."""
+    return {
+        "job_id": job_id,
+        "event": "close",
+        "message": "Event stream closed",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+def _build_error_data(job_id: str, error_message: str) -> Dict[str, Any]:
+    """Build error event data for SSE stream."""
+    return {
+        "job_id": job_id,
+        "error": error_message,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+def _build_not_found_data(job_id: str) -> Dict[str, Any]:
+    """Build not found event data for SSE stream."""
+    return {
+        "job_id": job_id,
+        "status": "not_found",
+        "message": "Job no longer exists",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+async def _handle_job_status_check(job_id: str):
+    """Handle job status checking with error handling."""
+    return batch_service.get_job(job_id)
+
+
+def _is_terminal_state(status) -> bool:
+    """Check if job status is in terminal state."""
+    return status in [
+        BatchStatus.COMPLETED,
+        BatchStatus.FAILED,
+        BatchStatus.CANCELLED,
+    ]
+
+
 @router.get("/{job_id}/results")
 async def get_batch_results(job_id: str, request: Request) -> BatchResult:
-    """Get batch job results with enhanced error handling.
-
-    Args:
-        job_id: Batch job ID
-        request: FastAPI request object
-
-    Returns:
-        BatchResult with processing summary
-    """
+    """Get batch job results with enhanced error handling."""
     try:
         # Import here to avoid circular dependency
         from app.core.batch.models import BatchResult
@@ -659,49 +792,10 @@ async def get_batch_results(job_id: str, request: Request) -> BatchResult:
                 "Batch job not found", request, details={"job_id": job_id}
             )
 
-        # Check if job is completed
-        if batch_job.status not in [
-            BatchStatus.COMPLETED,
-            BatchStatus.FAILED,
-            BatchStatus.CANCELLED,
-        ]:
-            raise batch_results_error_handler.validation_error(
-                f"Results not available for job in {batch_job.status.value} status",
-                request,
-                details={
-                    "current_status": batch_job.status.value,
-                    "required_statuses": ["completed", "failed", "cancelled"],
-                },
-            )
-
-        # Build result
-        successful_files = []
-        failed_files = []
-
-        for idx, item in enumerate(batch_job.items):
-            if item.status == BatchItemStatus.COMPLETED:
-                successful_files.append(
-                    {
-                        "filename": item.filename,
-                        "index": idx,
-                        "output_size": 0,  # Not tracked in memory
-                    }
-                )
-            elif item.status == BatchItemStatus.FAILED:
-                failed_files.append(
-                    {
-                        "filename": item.filename,
-                        "index": idx,
-                        "error": item.error or "Unknown error",
-                    }
-                )
-
-        # Calculate processing time
-        processing_time = 0.0
-        if batch_job.created_at and batch_job.completed_at:
-            processing_time = (
-                batch_job.completed_at - batch_job.created_at
-            ).total_seconds()
+        # Use helper functions to reduce complexity
+        _validate_job_status_for_results(batch_job, request)
+        successful_files, failed_files = _build_file_results(batch_job)
+        processing_time = _calculate_processing_time(batch_job)
 
         return BatchResult(
             job_id=job_id,
@@ -819,6 +913,75 @@ async def create_websocket_token(job_id: str, request: Request) -> Dict[str, str
         )
 
 
+async def _create_event_generator(
+    job_id: str, request: Request
+) -> AsyncGenerator[str, None]:
+    """Generate SSE events for batch progress - simplified version."""
+    try:
+        last_progress_percentage = -1
+        last_status = None
+        check_interval = 1.0
+
+        # Send initial status
+        current_job = batch_service.get_job(job_id)
+        if current_job:
+            initial_data = _initialize_sse_stream_data(job_id, current_job)
+            yield f"data: {json.dumps(initial_data)}\n\n"
+            last_progress_percentage = current_job.progress_percentage
+            last_status = current_job.status
+
+        # Monitor job progress
+        while True:
+            try:
+                # Check if client disconnected
+                if await request.is_disconnected():
+                    logger.info(f"Client disconnected from SSE stream: {job_id}")
+                    break
+
+                # Check job status
+                current_job = await _handle_job_status_check(job_id)
+                if current_job is None:
+                    final_data = _build_not_found_data(job_id)
+                    yield f"data: {json.dumps(final_data)}\n\n"
+                    break
+
+                # Send progress update if changed
+                if _should_send_progress_update(
+                    current_job, last_progress_percentage, last_status
+                ):
+                    progress_data = _build_progress_data(job_id, current_job, request)
+                    yield f"data: {json.dumps(progress_data)}\n\n"
+                    last_progress_percentage = current_job.progress_percentage
+                    last_status = current_job.status
+
+                # Check for terminal state
+                if _is_terminal_state(current_job.status):
+                    logger.info(
+                        f"Job reached terminal state: {current_job.status.value}"
+                    )
+                    break
+
+                await asyncio.sleep(check_interval)
+
+            except asyncio.CancelledError:
+                logger.info(f"SSE stream cancelled for job: {job_id}")
+                break
+            except Exception as e:
+                logger.warning(f"Error in SSE event generation: {e}")
+                error_data = _build_error_data(job_id, "Stream error occurred")
+                yield f"data: {json.dumps(error_data)}\n\n"
+                break
+
+        # Send final close event
+        close_data = _build_close_data(job_id)
+        yield f"data: {json.dumps(close_data)}\n\n"
+
+    except Exception as e:
+        logger.exception(f"Fatal error in SSE event generator: {e}")
+        error_data = _build_error_data(job_id, "Fatal stream error")
+        yield f"data: {json.dumps(error_data)}\n\n"
+
+
 @router.get("/{job_id}/events")
 async def batch_events_stream(
     job_id: str,
@@ -844,130 +1007,9 @@ async def batch_events_stream(
                 "Batch job not found", request, details={"job_id": job_id}
             )
 
-        async def event_generator() -> AsyncGenerator[str, None]:
-            """Generate Server-Sent Events for batch progress."""
-            try:
-                last_progress_percentage = -1
-                last_status = None
-                check_interval = 1.0  # Check every second
-
-                # Send initial status
-                current_job = batch_service.get_job(job_id)
-                if current_job:
-                    initial_data = {
-                        "job_id": job_id,
-                        "status": current_job.status.value,
-                        "progress_percentage": current_job.progress_percentage,
-                        "completed_files": current_job.completed_files,
-                        "failed_files": current_job.failed_files,
-                        "total_files": current_job.total_files,
-                        "timestamp": datetime.utcnow().isoformat(),
-                    }
-                    yield f"data: {json.dumps(initial_data)}\n\n"
-                    last_progress_percentage = current_job.progress_percentage
-                    last_status = current_job.status
-
-                # Monitor job progress
-                while True:
-                    try:
-                        # Check if client disconnected
-                        if await request.is_disconnected():
-                            logger.info(
-                                f"Client disconnected from SSE stream: {job_id}"
-                            )
-                            break
-
-                        # Get current job status
-                        current_job = batch_service.get_job(job_id)
-                        if not current_job:
-                            # Job no longer exists, send final event and close
-                            final_data = {
-                                "job_id": job_id,
-                                "status": "not_found",
-                                "message": "Job no longer exists",
-                                "timestamp": datetime.utcnow().isoformat(),
-                            }
-                            yield f"data: {json.dumps(final_data)}\n\n"
-                            break
-
-                        # Check if progress or status changed
-                        if (
-                            current_job.progress_percentage != last_progress_percentage
-                            or current_job.status != last_status
-                        ):
-
-                            progress_data = {
-                                "job_id": job_id,
-                                "status": current_job.status.value,
-                                "progress_percentage": current_job.progress_percentage,
-                                "completed_files": current_job.completed_files,
-                                "failed_files": current_job.failed_files,
-                                "processing_files": current_job.processing_files,
-                                "pending_files": current_job.pending_files,
-                                "total_files": current_job.total_files,
-                                "timestamp": datetime.utcnow().isoformat(),
-                            }
-
-                            # Add download URL if completed
-                            if current_job.status == BatchStatus.COMPLETED:
-                                base_url = str(request.base_url).rstrip("/")
-                                progress_data["download_url"] = (
-                                    f"{base_url}/api/batch/{job_id}/download"
-                                )
-
-                            yield f"data: {json.dumps(progress_data)}\n\n"
-
-                            last_progress_percentage = current_job.progress_percentage
-                            last_status = current_job.status
-
-                        # Check if job is in terminal state
-                        if current_job.status in [
-                            BatchStatus.COMPLETED,
-                            BatchStatus.FAILED,
-                            BatchStatus.CANCELLED,
-                        ]:
-                            logger.info(
-                                f"Job reached terminal state: {current_job.status.value}"
-                            )
-                            break
-
-                        # Wait before next check
-                        await asyncio.sleep(check_interval)
-
-                    except asyncio.CancelledError:
-                        logger.info(f"SSE stream cancelled for job: {job_id}")
-                        break
-                    except Exception as e:
-                        logger.warning(f"Error in SSE event generation: {e}")
-                        error_data = {
-                            "job_id": job_id,
-                            "error": "Stream error occurred",
-                            "timestamp": datetime.utcnow().isoformat(),
-                        }
-                        yield f"data: {json.dumps(error_data)}\n\n"
-                        break
-
-                # Send final close event
-                close_data = {
-                    "job_id": job_id,
-                    "event": "close",
-                    "message": "Event stream closed",
-                    "timestamp": datetime.utcnow().isoformat(),
-                }
-                yield f"data: {json.dumps(close_data)}\n\n"
-
-            except Exception as e:
-                logger.exception(f"Fatal error in SSE event generator: {e}")
-                error_data = {
-                    "job_id": job_id,
-                    "error": "Fatal stream error",
-                    "timestamp": datetime.utcnow().isoformat(),
-                }
-                yield f"data: {json.dumps(error_data)}\n\n"
-
-        # Return EventSourceResponse
+        # Return EventSourceResponse with simplified generator
         return EventSourceResponse(
-            event_generator(),
+            _create_event_generator(job_id, request),
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",

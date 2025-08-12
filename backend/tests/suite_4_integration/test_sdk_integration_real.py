@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
@@ -85,7 +86,7 @@ try:
         strip_metadata=True
     )
     
-    print(f"Success: {{result.success}}")
+    print(f"Success: {{result.status == 'completed'}}")
     print(f"Output size: {{len(output_data)}}")
     print(f"Format: {{result.output_format}}")
     
@@ -103,7 +104,10 @@ finally:
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=10
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
             # Check output
@@ -184,7 +188,10 @@ asyncio.run(main())
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=10
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
             # Should complete all formats
@@ -244,7 +251,7 @@ async function main() {{
             quality: 90
         }});
         
-        console.log('Success:', result.success);
+        console.log('Success:', result.status === 'completed');
         console.log('Output format:', result.outputFormat);
         console.log('Output size:', result.outputData.length);
         
@@ -456,7 +463,10 @@ print(f"Errors caught: {{len(errors_caught)}}")
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=10
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
             # Should catch errors gracefully
@@ -515,7 +525,7 @@ try:
     print(f"Batch size: {{len(results)}}")
     
     for i, (output_data, result) in enumerate(results):
-        print(f"Image {{i}}: Success={{result.success}}, Size={{len(output_data)}}")
+        print(f"Image {{i}}: Success={{result.status == 'completed'}}, Size={{len(output_data)}}")
         
 finally:
     # Cleanup
@@ -532,7 +542,10 @@ finally:
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=15
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=15,
             )
 
             # Check batch processing
@@ -622,7 +635,10 @@ finally:
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=20
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=20,
             )
 
             # Check streaming or fallback
@@ -694,7 +710,10 @@ print(f"Auth methods tested: {{len(auth_tests)}}")
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=10
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
             # Should support multiple auth methods
@@ -756,7 +775,10 @@ except Exception as e:
 
         try:
             result = subprocess.run(
-                ["python", script_path], capture_output=True, text=True, timeout=10
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
             # Localhost should be allowed

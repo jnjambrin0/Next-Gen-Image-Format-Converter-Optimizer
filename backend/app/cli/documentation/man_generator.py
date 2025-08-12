@@ -343,7 +343,7 @@ JPEG     | Yes   | No       | No    | No        | 65535x65535""",
                         shutil.copy2(temp_path, dest)
 
                         # Update man database
-                        subprocess.run(["mandb"], capture_output=True)
+                        subprocess.run(["mandb"], capture_output=True, check=False)
 
                         self.console.print(
                             f"[green]✓[/green] Installed man page to {dest}"

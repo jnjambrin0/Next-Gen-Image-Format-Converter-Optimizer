@@ -3,9 +3,9 @@ API endpoints for privacy-focused monitoring and statistics.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.config import settings
 from app.core.monitoring.errors import ErrorReporter
@@ -21,8 +21,6 @@ import os
 # Import for system info
 import platform
 
-import psutil
-
 # Global stats collector instance
 stats_collector = StatsCollector(
     persist_to_db=settings.env == "production",
@@ -36,8 +34,8 @@ os.makedirs("./data", exist_ok=True)
 
 # Global error reporter instance
 error_reporter = ErrorReporter(
-    db_path="./data/errors.db"  # Always use file-based DB for now
-)
+    db_path="./data/errors.db"
+)  # Always use file-based DB for now
 
 # Global security event tracker instance
 security_tracker = SecurityEventTracker(
@@ -430,9 +428,6 @@ async def get_system_info():
             pass
 
         # Get network isolation status from app state
-        from fastapi import Request
-        from starlette.requests import Request as StarletteRequest
-
         # We need the request context to access app state
         # This is a limitation - we'll document it
         system_info["network_isolation"] = {

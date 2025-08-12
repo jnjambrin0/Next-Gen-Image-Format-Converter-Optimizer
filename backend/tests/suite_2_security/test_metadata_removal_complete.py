@@ -19,7 +19,7 @@ except ImportError:
     piexif = None
 
 from app.core.security.engine import SecurityEngine
-from app.models.conversion import ConversionRequest
+from app.models.conversion import ConversionRequest, ConversionStatus
 from app.services.conversion_service import conversion_service
 
 
@@ -239,7 +239,7 @@ class TestMetadataRemovalComplete:
             image_data=image_data, request=request
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         # Load processed image
         processed_img = Image.open(io.BytesIO(processed_data))
@@ -290,7 +290,7 @@ class TestMetadataRemovalComplete:
             image_data=image_data, request=request
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         # Check XMP removal
         assert b"xmpmeta" not in processed_data
@@ -359,7 +359,7 @@ class TestMetadataRemovalComplete:
             image_data=image_data, request=request
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         # Check for PII in processed image
         pii_strings = [
@@ -410,7 +410,7 @@ class TestMetadataRemovalComplete:
                 image_data=jpeg_with_metadata, request=request
             )
 
-            assert result.success
+            assert result.status == ConversionStatus.COMPLETED
 
             # Check for metadata markers in any format
             metadata_markers = [
@@ -511,7 +511,7 @@ class TestMetadataRemovalComplete:
 
             processing_time = time.perf_counter() - start_time
 
-            assert result.success
+            assert result.status == ConversionStatus.COMPLETED
 
             # Performance assertions
             if width * height <= 2048 * 1536:

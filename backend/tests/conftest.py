@@ -25,6 +25,55 @@ os.environ["IMAGE_CONVERTER_SANDBOX_STRICTNESS"] = "standard"
 # If this happens, consider mocking heavy services in individual test files
 
 
+# Ensure proper event loop handling for async tests
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+# Initialize services fixture for tests
+@pytest.fixture
+def initialized_services():
+    """Mock services for testing."""
+    from app.services.conversion_service import conversion_service
+
+    return {
+        "conversion_service": conversion_service,
+        "intelligence_service": MagicMock(),
+        "batch_service": MagicMock(),
+    }
+
+
+# Mock format handler dependencies that may not be available in CI
+@pytest.fixture(autouse=True)
+def mock_format_dependencies():
+    """Mock optional format handler dependencies for consistent testing."""
+    with patch.dict(
+        "sys.modules",
+        {
+            "pillow_avif": MagicMock(),
+            "pillow_heif": MagicMock(),
+            "jxl": MagicMock(),
+            "jxllib": MagicMock(),
+            "opencv-python": MagicMock(),
+            "cv2": MagicMock(),
+        },
+    ):
+        # Mock AVIF availability
+        with patch("app.core.conversion.formats.avif_handler.AVIF_AVAILABLE", True):
+            with patch("app.core.conversion.formats.heif_handler.HEIF_AVAILABLE", True):
+                with patch(
+                    "app.core.conversion.formats.jxl_handler.JXL_AVAILABLE", True
+                ):
+                    yield
+
+
 @pytest.fixture
 def test_images_dir():
     """Path to test images directory."""
@@ -375,49 +424,92 @@ def realistic_image_generator():
     ) -> bytes:
         # Create realistic content based on type
         if content_type == "photo":
-            # Simulate photo with gradient and noise
-            img = Image.new("RGB", (width, height))
-            pixels = img.load()
-            for i in range(width):
-                for j in range(height):
-                    # Natural gradient with noise
-                    r = min(255, int(i * 255 / width + np.random.randint(-20, 20)))
-                    g = min(255, int(j * 255 / height + np.random.randint(-20, 20)))
-                    b = min(
-                        255,
-                        int(
-                            (i + j) * 128 / (width + height)
-                            + np.random.randint(-20, 20)
-                        ),
-                    )
-                    pixels[i, j] = (max(0, r), max(0, g), max(0, b))
+            # Simulate photo with gradient and noise (vectorized for performance)
+            # Generate noise arrays once instead of per-pixel
+            noise_r = np.random.randint(-20, 21, (height, width))
+            noise_g = np.random.randint(-20, 21, (height, width))
+            noise_b = np.random.randint(-20, 21, (height, width))
+
+            # Generate gradient arrays
+            x_gradient = np.linspace(0, 255, width).astype(int)
+            y_gradient = np.linspace(0, 255, height).astype(int)
+
+            # Create RGB channels using broadcasting
+            r_channel = np.clip(x_gradient[np.newaxis, :] + noise_r, 0, 255)
+            g_channel = np.clip(y_gradient[:, np.newaxis] + noise_g, 0, 255)
+            b_channel = np.clip(
+                (
+                    (x_gradient[np.newaxis, :] + y_gradient[:, np.newaxis])
+                    * 128
+                    // (width + height)
+                )
+                + noise_b,
+                0,
+                255,
+            )
+
+            # Stack into RGB array and convert to image
+            rgb_array = np.stack([r_channel, g_channel, b_channel], axis=2).astype(
+                np.uint8
+            )
+            img = Image.fromarray(rgb_array)
 
         elif content_type == "screenshot":
-            # Simulate screenshot with UI elements
-            img = Image.new("RGB", (width, height), color=(245, 245, 245))
-            # Add toolbar
-            for i in range(width):
-                for j in range(60):
-                    img.putpixel((i, j), (230, 230, 230))
+            # Simulate screenshot with UI elements (vectorized)
+            screenshot_array = np.full(
+                (height, width, 3), 245, dtype=np.uint8
+            )  # Background
+            # Add toolbar efficiently
+            screenshot_array[:60, :] = [230, 230, 230]  # Toolbar area
+            img = Image.fromarray(screenshot_array)
 
         elif content_type == "document":
-            # Simulate document with text lines
-            img = Image.new("RGB", (width, height), color=(255, 255, 255))
-            # Add text lines
+            # Simulate document with text lines (vectorized)
+            doc_array = np.full(
+                (height, width, 3), 255, dtype=np.uint8
+            )  # White background
+            # Add text lines efficiently
             for y in range(100, height - 100, 30):
-                for x in range(100, width - 100, 1):
-                    if x % 15 < 10:  # Simulate text
-                        img.putpixel((x, y), (0, 0, 0))
+                # Create text pattern: 10 black pixels, 5 white pixels
+                text_pattern = np.tile([0] * 10 + [255] * 5, (width - 200) // 15 + 1)[
+                    : width - 200
+                ]
+                doc_array[y : y + 2, 100 : 100 + len(text_pattern)] = text_pattern[
+                    :, np.newaxis
+                ]
+            img = Image.fromarray(doc_array)
 
         else:  # illustration
-            # Geometric patterns
-            img = Image.new("RGBA", (width, height), color=(255, 255, 255, 0))
-            for i in range(0, width, 50):
-                for j in range(0, height, 50):
-                    color = ((i * 255 // width), (j * 255 // height), 128, 200)
-                    for x in range(i, min(i + 40, width)):
-                        for y in range(j, min(j + 40, height)):
-                            img.putpixel((x, y), color)
+            # Geometric patterns (vectorized)
+            # Create base RGBA array
+            illus_array = np.full(
+                (height, width, 4), [255, 255, 255, 0], dtype=np.uint8
+            )
+
+            # Generate geometric pattern using meshgrid
+            y_coords, x_coords = np.meshgrid(
+                np.arange(height), np.arange(width), indexing="ij"
+            )
+
+            # Create checkerboard pattern
+            block_size = 50
+            x_blocks = x_coords // block_size
+            y_blocks = y_coords // block_size
+            mask = (
+                ((x_blocks + y_blocks) % 2 == 0)
+                & (x_coords % block_size < 40)
+                & (y_coords % block_size < 40)
+            )
+
+            # Apply colors where mask is True
+            illus_array[mask, 0] = (x_coords[mask] * 255 // width).astype(np.uint8)  # R
+            illus_array[mask, 1] = (y_coords[mask] * 255 // height).astype(
+                np.uint8
+            )  # G
+            illus_array[mask, 2] = 128  # B
+            illus_array[mask, 3] = 200  # A
+
+            img = Image.fromarray(illus_array, "RGBA")
 
         # Add metadata if requested
         buffer = io.BytesIO()

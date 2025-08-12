@@ -97,7 +97,7 @@ class OutputFormatter:
     def format_json(data: Any, pretty: bool = True, indent: int = 2) -> str:
         """Format as JSON"""
 
-        def json_serializer(obj):
+        def json_serializer(obj: Any) -> Any:
             """Custom JSON serializer for non-serializable types"""
             if isinstance(obj, datetime):
                 return obj.isoformat()
@@ -121,7 +121,7 @@ class OutputFormatter:
     def format_json_jq(data: Any) -> str:
         """Format as jq-friendly JSON (one object per line for arrays)"""
 
-        def json_serializer(obj):
+        def json_serializer(obj: Any) -> Any:
             if isinstance(obj, datetime):
                 return obj.isoformat()
             elif isinstance(obj, Path):
@@ -367,8 +367,9 @@ class OutputFormatter:
     @staticmethod
     def format_xml(data: Any, root_name: str = "data") -> str:
         """Format as XML"""
-        import defusedxml.ElementTree as ET
         from xml.dom import minidom
+
+        import defusedxml.ElementTree as ET
 
         def dict_to_xml(tag, d):
             """Convert dictionary to XML element"""
@@ -528,7 +529,9 @@ class OutputFormatter:
             return OutputFormatter.format(error_data, format)
 
     @staticmethod
-    def stream_format(data_generator, format: OutputFormat, output_buffer):
+    def stream_format(
+        data_generator: Any, format: OutputFormat, output_buffer: Any
+    ) -> None:
         """Format streaming data"""
         # Collect all data first for JSON formatting
         all_data = list(data_generator)

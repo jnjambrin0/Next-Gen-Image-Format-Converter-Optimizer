@@ -3,15 +3,14 @@
 import asyncio
 import time
 from collections import defaultdict, deque
-from typing import Dict, Optional, Set
+from typing import Dict, Optional
 
 import structlog
-from fastapi import HTTPException, Request, Response
+from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.core.security.rate_limiter import api_rate_limiter
-from app.services.api_key_service import api_key_service
 
 logger = structlog.get_logger()
 
@@ -374,7 +373,7 @@ async def validation_middleware(request: Request, call_next):
 
         return response
 
-    except Exception as e:
+    except Exception:
         # Check if request timed out
         if hasattr(request.state, "start_time"):
             elapsed = time.time() - request.state.start_time

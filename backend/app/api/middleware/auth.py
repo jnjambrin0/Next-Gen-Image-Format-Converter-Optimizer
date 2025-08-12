@@ -1,12 +1,10 @@
 """Authentication middleware for optional API key support."""
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from fastapi import HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 
-from app.config import settings
 from app.models.database import ApiKey
 from app.services.api_key_service import api_key_service
 from app.utils.logging import get_logger
@@ -307,7 +305,7 @@ async def auth_middleware(request: Request, call_next):
     """
     # Run optional authentication
     try:
-        api_key = await optional_api_key_auth(request)
+        await optional_api_key_auth(request)
         # API key info is already stored in request.state by the auth dependency
     except Exception as e:
         logger.warning(

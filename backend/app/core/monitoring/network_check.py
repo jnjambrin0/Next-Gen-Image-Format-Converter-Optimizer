@@ -59,11 +59,21 @@ class NetworkIsolationChecker:
 
             findings["api_binding"] = settings.api_host
 
-            if settings.api_host == "0.0.0.0" and settings.env == "production":
+            # Check for any non-localhost binding in production
+            if settings.env == "production" and settings.api_host not in [
+                "127.0.0.1",
+                "localhost",
+            ]:
                 findings["warnings"].append(
-                    "API bound to 0.0.0.0 in production - should bind to localhost only"
+                    f"API bound to {settings.api_host} in production - should bind to localhost only"
                 )
                 findings["isolated"] = False
+            elif settings.api_host == "0.0.0.0":
+                findings["warnings"].append(
+                    "API bound to 0.0.0.0 - accessible from all network interfaces"
+                )
+                if settings.env == "production":
+                    findings["isolated"] = False
         except ImportError:
             findings["warnings"].append(
                 "Could not import settings to check API binding"

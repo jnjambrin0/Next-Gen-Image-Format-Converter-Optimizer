@@ -32,14 +32,56 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      sourcemap: mode === 'development',
+      minify: 'terser',
+      target: 'es2020',
+      reportCompressedSize: false, // Speeds up build
+      chunkSizeWarningLimit: 1000, // KB
       rollupOptions: {
         output: {
-          manualChunks: {
-            lucide: ['lucide'],
+          // Optimize chunk splitting - only create chunks if they'll be substantial
+          manualChunks(id) {
+            // Only chunk vendor dependencies that are substantial
+            if (id.includes('node_modules')) {
+              // Group all vendor dependencies together for now
+              return 'vendor'
+            }
           },
+          // Optimize asset names for caching
+          chunkFileNames: mode === 'production' ? 'assets/[name]-[hash].js' : 'assets/[name].js',
+          entryFileNames: mode === 'production' ? 'assets/[name]-[hash].js' : 'assets/[name].js',
+          assetFileNames: mode === 'production' ? 'assets/[name]-[hash].[ext]' : 'assets/[name].[ext]',
+        },
+        treeshake: {
+          moduleSideEffects: false,
+          propertyReadSideEffects: false,
+          tryCatchDeoptimization: false,
         },
       },
+    },
+    optimizeDeps: {
+      // Pre-bundle dependencies for faster dev server startup
+      include: ['lucide'],
+      exclude: [],
+    },
+    // Enable CSS code splitting
+    css: {
+      devSourcemap: mode === 'development',
+      preprocessorOptions: {
+        css: {
+          charset: false, // Avoid charset issues
+        },
+      },
+    },
+    // Performance optimizations
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
+      legalComments: 'none',
+    },
+    // Environment optimization
+    define: {
+      __DEV__: mode === 'development',
+      __PROD__: mode === 'production',
     },
   }
 })

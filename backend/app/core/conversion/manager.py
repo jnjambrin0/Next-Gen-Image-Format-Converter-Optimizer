@@ -127,7 +127,9 @@ class ConversionManager:
         # JPEG 2000 handler - Disabled due to low usage and complexity
         # JPEG 2000 format handler
         try:
-            self.register_handler("jp2", Jpeg2000Handler)  # Also registers jpeg2000, j2k, etc via aliases
+            self.register_handler(
+                "jp2", Jpeg2000Handler
+            )  # Also registers jpeg2000, j2k, etc via aliases
         except Exception as e:
             logger.warning("JPEG 2000 support not available", error=str(e))
 
@@ -270,6 +272,12 @@ class ConversionManager:
 
         # Initialize memory manager with estimated requirements
         self._initialize_memory_manager(estimated_memory_mb)
+
+        # Handle None input format case
+        if input_format is None:
+            raise InvalidImageError(
+                "Input format cannot be None - format detection may have failed"
+            )
 
         # Initialize result
         result = ConversionResult(

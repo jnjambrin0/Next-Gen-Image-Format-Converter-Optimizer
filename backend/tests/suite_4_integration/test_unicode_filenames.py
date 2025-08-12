@@ -14,7 +14,7 @@ from typing import List, Tuple
 import pytest
 
 from app.core.security.filename_sanitizer import sanitize_filename
-from app.models.conversion import ConversionRequest
+from app.models.conversion import ConversionRequest, ConversionStatus
 from app.services.batch_service import batch_service
 from app.services.conversion_service import conversion_service
 
@@ -178,10 +178,11 @@ class TestUnicodeFilenames:
             result, output_data = await conversion_service.convert(
                 image_data=image_data,
                 request=request,
-                source_filename=original_filename,
             )
 
-            assert result.success, f"Failed to convert {original_filename}"
+            assert (
+                result.status == ConversionStatus.COMPLETED
+            ), f"Failed to convert {original_filename}"
             assert output_data is not None
 
             # Check sanitized output filename

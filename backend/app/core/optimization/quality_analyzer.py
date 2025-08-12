@@ -269,6 +269,89 @@ class QualityAnalyzer:
         reduction = ((original_size - optimized_size) / original_size) * 100
         return max(0.0, min(100.0, reduction))
 
+    def calculate_ssim(self, img1: Image.Image, img2: Image.Image) -> float:
+        """Calculate SSIM from PIL images directly.
+
+        Args:
+            img1: First PIL image
+            img2: Second PIL image
+
+        Returns:
+            SSIM score between 0 and 1
+        """
+        # Convert to RGB if needed
+        if img1.mode != "RGB":
+            img1 = img1.convert("RGB")
+        if img2.mode != "RGB":
+            img2 = img2.convert("RGB")
+
+        # Resize if dimensions don't match
+        if img1.size != img2.size:
+            img2 = img2.resize(img1.size, Image.Resampling.LANCZOS)
+
+        # Convert to numpy arrays
+        array1 = np.array(img1, dtype=np.float64)
+        array2 = np.array(img2, dtype=np.float64)
+
+        # Calculate SSIM using more sensitive constants for JPEG artifacts
+        if len(array1.shape) == 3:
+            ssims = []
+            for i in range(array1.shape[2]):
+                channel_ssim = self._ssim_channel_sensitive(
+                    array1[:, :, i], array2[:, :, i]
+                )
+                ssims.append(channel_ssim)
+            return float(np.mean(ssims))
+        else:
+            return float(self._ssim_channel_sensitive(array1, array2))
+
+    def _ssim_channel_sensitive(self, img1: np.ndarray, img2: np.ndarray) -> float:
+        """Calculate SSIM for a single channel with better sensitivity to compression."""
+        # Use smaller window for better sensitivity to JPEG artifacts
+        window_size = 7
+        window = np.ones((window_size, window_size)) / (window_size**2)
+
+        # More sensitive constants for detecting compression artifacts
+        K1, K2 = 0.01, 0.03
+        L = 255
+        C1 = (K1 * L) ** 2
+        C2 = (K2 * L) ** 2
+
+        # Calculate local means
+        mu1 = self._convolve2d_small(img1, window)
+        mu2 = self._convolve2d_small(img2, window)
+
+        # Calculate local variances and covariance
+        mu1_sq = mu1**2
+        mu2_sq = mu2**2
+        mu1_mu2 = mu1 * mu2
+
+        sigma1_sq = self._convolve2d_small(img1**2, window) - mu1_sq
+        sigma2_sq = self._convolve2d_small(img2**2, window) - mu2_sq
+        sigma12 = self._convolve2d_small(img1 * img2, window) - mu1_mu2
+
+        # Calculate SSIM with enhanced sensitivity
+        numerator = (2 * mu1_mu2 + C1) * (2 * sigma12 + C2)
+        denominator = (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
+
+        # Add a small penalty for MSE differences to detect subtle compression
+        mse = np.mean((img1 - img2) ** 2)
+        mse_penalty = 1.0 - (mse / (255**2)) * 0.1  # Small penalty for MSE
+
+        ssim_map = numerator / denominator
+        return float(np.mean(ssim_map) * mse_penalty)
+
+    def _convolve2d_small(self, img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+        """Optimized convolution for smaller kernels."""
+        from scipy import ndimage
+
+        # Use scipy if available for better performance
+        try:
+            return ndimage.convolve(img, kernel, mode="nearest")
+        except ImportError:
+            # Fallback to manual convolution
+            return self._convolve2d(img, kernel)
+
     def get_visual_quality_rating(self, ssim_score: float) -> str:
         """Get visual quality rating based on SSIM score.
 

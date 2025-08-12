@@ -4,15 +4,15 @@ Stub implementation for testing.
 """
 
 import gc
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 
 class MemoryManager:
     """Manages secure memory operations and clearing."""
 
-    def __init__(self):
-        self.secure_allocations = []
-        self.locked_regions = []
+    def __init__(self) -> None:
+        self.secure_allocations: List[bytearray] = []
+        self.locked_regions: List[Any] = []
 
     def secure_allocate(self, size: int) -> bytearray:
         """Allocate secure memory region."""

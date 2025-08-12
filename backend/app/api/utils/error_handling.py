@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 
 import structlog
 from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse
 
 from app.models.responses import ErrorResponse
 

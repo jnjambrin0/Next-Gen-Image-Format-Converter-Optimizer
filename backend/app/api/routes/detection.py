@@ -2,11 +2,9 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 import structlog
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.api.utils.validation import (
@@ -21,7 +19,6 @@ from app.core.constants import (
     SUPPORTED_INPUT_FORMATS,
     SUPPORTED_OUTPUT_FORMATS,
 )
-from app.core.exceptions import SecurityError, ValidationError
 from app.models.responses import (
     ErrorResponse,
     FormatCompatibilityMatrix,
@@ -117,7 +114,8 @@ async def detect_format(
 
             if not detected_format:
                 raise detect_error_handler.unprocessable_entity_error(
-                    "Unable to detect image format. The file may be corrupted or in an unsupported format.",
+                    "Unable to detect image format. "
+                    "The file may be corrupted or in an unsupported format.",
                     request,
                 )
 
@@ -350,7 +348,8 @@ async def recommend_format(
     },
     summary="Get format compatibility matrix",
     description="""
-    Returns a comprehensive matrix showing which input formats can be converted to which output formats.
+    Returns a comprehensive matrix showing which input formats can be converted 
+    to which output formats.
     
     This endpoint provides:
     - Complete compatibility matrix for all supported formats

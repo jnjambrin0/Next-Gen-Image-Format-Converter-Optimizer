@@ -37,6 +37,7 @@ class TestSandboxEscapeAttempts:
 
     @pytest.mark.security
     @pytest.mark.critical
+    @pytest.mark.asyncio
     async def test_network_escape_via_socket(self, sandbox):
         """
         Test that sandbox blocks all network socket creation attempts.
@@ -105,7 +106,7 @@ print("ATTEMPTS:", attempts)
         try:
             # Attempt to execute in sandbox
             with pytest.raises(SecurityError) as exc_info:
-                await sandbox.execute_sandboxed(
+                await sandbox.execute_sandboxed_async(
                     command=[os.sys.executable, malicious_script], timeout=5
                 )
 
@@ -129,6 +130,7 @@ print("ATTEMPTS:", attempts)
         assert len(external_connections) == 0, "Network escape detected!"
 
     @pytest.mark.security
+    @pytest.mark.asyncio
     async def test_filesystem_escape_via_path_traversal(self, sandbox):
         """
         Test that sandbox blocks filesystem escape via path traversal.
@@ -157,6 +159,7 @@ print("ATTEMPTS:", attempts)
             )
 
     @pytest.mark.security
+    @pytest.mark.asyncio
     async def test_subprocess_escape_via_shell_injection(self, sandbox):
         """
         Test that sandbox blocks shell injection attempts.
@@ -203,7 +206,7 @@ print("ATTEMPTS:", attempts)
 
             # Sandbox should handle safely without crashing
             try:
-                result = await sandbox.execute_sandboxed(
+                result = await sandbox.execute_sandboxed_async(
                     command=[sys.executable, "-c", "print('test')"],
                     input_data=malicious_image[:1000],  # Limit size for test
                     timeout=2,
@@ -218,6 +221,7 @@ print("ATTEMPTS:", attempts)
                 pass
 
     @pytest.mark.security
+    @pytest.mark.asyncio
     async def test_escape_via_symlink_attack(self, sandbox):
         """
         Test that sandbox prevents symlink-based escapes.
@@ -244,6 +248,7 @@ print("ATTEMPTS:", attempts)
                 pass
 
     @pytest.mark.security
+    @pytest.mark.asyncio
     async def test_escape_via_environment_manipulation(self, sandbox):
         """
         Test that sandbox sanitizes environment variables.
@@ -274,6 +279,7 @@ print("ATTEMPTS:", attempts)
 
     @pytest.mark.security
     @pytest.mark.slow
+    @pytest.mark.asyncio
     async def test_escape_via_resource_exhaustion(self, sandbox):
         """
         Test that sandbox prevents resource exhaustion attacks.
@@ -294,7 +300,7 @@ while True:
         try:
             # Should be killed by resource limits
             with pytest.raises((SecurityError, OSError, subprocess.TimeoutExpired)):
-                await sandbox.execute_sandboxed(
+                await sandbox.execute_sandboxed_async(
                     command=[os.sys.executable, fork_bomb_script], timeout=2
                 )
         finally:
@@ -314,7 +320,7 @@ while True:
         try:
             # Should be killed by memory limit
             with pytest.raises((SecurityError, MemoryError, subprocess.TimeoutExpired)):
-                await sandbox.execute_sandboxed(
+                await sandbox.execute_sandboxed_async(
                     command=[os.sys.executable, memory_bomb_script], timeout=2
                 )
         finally:
@@ -333,7 +339,7 @@ while True:
         try:
             # Should be killed by timeout
             with pytest.raises((SecurityError, subprocess.TimeoutExpired)):
-                await sandbox.execute_sandboxed(
+                await sandbox.execute_sandboxed_async(
                     command=[os.sys.executable, cpu_spin_script], timeout=1
                 )
         finally:
@@ -373,7 +379,7 @@ except:
 
         try:
             # Should handle signal manipulation safely
-            result = await sandbox.execute_sandboxed(
+            result = await sandbox.execute_sandboxed_async(
                 command=[os.sys.executable, signal_script], timeout=2
             )
 
@@ -387,6 +393,7 @@ except:
             os.unlink(signal_script)
 
     @pytest.mark.security
+    @pytest.mark.asyncio
     async def test_escape_via_file_descriptor_leak(self, sandbox):
         """
         Test that sandbox prevents file descriptor leaks.
@@ -413,7 +420,7 @@ except:
 
             try:
                 # Sandbox should close inherited file descriptors
-                result = await sandbox.execute_sandboxed(
+                result = await sandbox.execute_sandboxed_async(
                     command=[os.sys.executable, fd_script], timeout=2
                 )
 
@@ -428,6 +435,7 @@ except:
 
     @pytest.mark.security
     @pytest.mark.critical
+    @pytest.mark.asyncio
     async def test_escape_via_python_introspection(self, sandbox):
         """
         Test that sandbox prevents Python introspection escapes.
@@ -472,7 +480,7 @@ print("INTROSPECTION_ATTEMPTS:", attempts)
 
         try:
             # Execute in sandbox
-            result = await sandbox.execute_sandboxed(
+            result = await sandbox.execute_sandboxed_async(
                 command=[os.sys.executable, introspection_script], timeout=2
             )
 

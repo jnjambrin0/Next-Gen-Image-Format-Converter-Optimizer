@@ -3,11 +3,10 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from app.core.exceptions import SecurityError, ValidationError
-from app.models.database import ApiKey
+from app.core.exceptions import ValidationError
 from app.services.api_key_service import api_key_service
 from app.utils.logging import get_logger
 

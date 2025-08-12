@@ -67,7 +67,7 @@ class TestPresetSystemComplete:
         """
         # Initialize preset service to ensure built-in presets are created
         await preset_service.initialize()
-        
+
         # Get all presets
         all_presets = await preset_service.get_all_presets()
 
@@ -112,24 +112,27 @@ class TestPresetSystemComplete:
         )
 
         # Create preset
-        created = await preset_service.create_preset(
-            preset_id="ecommerce_product",
+        from app.models.schemas import PresetCreate
+
+        preset_data = PresetCreate(
+            name="E-commerce Product",
+            description="High quality product images for e-commerce",
             settings=ecommerce_preset,
-            user_id="test_user",
         )
+        created = await preset_service.create_preset(preset_data)
 
         assert created is not None
-        assert created.id == "ecommerce_product"
+        assert created.id is not None  # Service generates UUID
         assert created.is_custom is True
         assert created.settings.quality == 92
 
         # Verify it's retrievable
-        retrieved = await preset_service.get_preset("ecommerce_product")
+        retrieved = await preset_service.get_preset(created.id)
         assert retrieved is not None
-        assert retrieved.settings.name == "E-commerce Product"
+        assert retrieved.name == "E-commerce Product"
 
         # Clean up
-        await preset_service.delete_preset("ecommerce_product")
+        await preset_service.delete_preset(created.id)
 
     async def test_preset_cascading_override(self, realistic_image_generator):
         """
@@ -188,9 +191,12 @@ class TestPresetSystemComplete:
             optimization_mode="balanced",
         )
 
-        await preset_service.create_preset(
-            preset_id="company_base", settings=base_preset, user_id="admin"
+        base_preset_data = PresetCreate(
+            name="Company Base",
+            description="Base company preset",
+            settings=base_preset,
         )
+        base_created = await preset_service.create_preset(base_preset_data)
 
         # Create derived preset that extends base
         product_preset = PresetSettings(
@@ -201,12 +207,15 @@ class TestPresetSystemComplete:
             quality=90,  # Override quality
         )
 
-        await preset_service.create_preset(
-            preset_id="company_product", settings=product_preset, user_id="admin"
+        product_preset_data = PresetCreate(
+            name="Company Product",
+            description="Product-specific preset",
+            settings=product_preset,
         )
+        product_created = await preset_service.create_preset(product_preset_data)
 
         # Verify inheritance
-        product = await preset_service.get_preset("company_product")
+        product = await preset_service.get_preset(product_created.id)
 
         # Should inherit from base
         assert product.settings.strip_metadata is True  # From base
@@ -217,8 +226,8 @@ class TestPresetSystemComplete:
         assert product.settings.resize is not None  # Added
 
         # Clean up
-        await preset_service.delete_preset("company_product")
-        await preset_service.delete_preset("company_base")
+        await preset_service.delete_preset(product_created.id)
+        await preset_service.delete_preset(base_created.id)
 
     @pytest.mark.critical
     async def test_preset_import_export(self):
@@ -239,9 +248,12 @@ class TestPresetSystemComplete:
                 strip_metadata=True,
             )
 
-            created = await preset_service.create_preset(
-                preset_id=f"export_test_{i}", settings=preset, user_id="test_user"
+            preset_data = PresetCreate(
+                name=f"Export Test {i}",
+                description=f"Test preset {i}",
+                settings=preset,
             )
+            created = await preset_service.create_preset(preset_data)
             presets_to_export.append(created)
 
         # Export presets
@@ -368,11 +380,12 @@ class TestPresetSystemComplete:
         for i, invalid_preset in enumerate(invalid_presets):
             # Should either sanitize or reject
             try:
-                created = await preset_service.create_preset(
-                    preset_id=f"invalid_test_{i}",
+                preset_data = PresetCreate(
+                    name=f"Invalid Test {i}",
+                    description="Test preset with invalid settings",
                     settings=invalid_preset,
-                    user_id="test_user",
                 )
+                created = await preset_service.create_preset(preset_data)
 
                 if created:
                     # If created, values should be sanitized
@@ -401,12 +414,15 @@ class TestPresetSystemComplete:
             name="Usage Tracking Test", output_format="webp", quality=80
         )
 
-        await preset_service.create_preset(
-            preset_id="usage_tracking", settings=tracking_preset, user_id="test_user"
+        tracking_preset_data = PresetCreate(
+            name="Usage Tracking",
+            description="Preset for usage tracking test",
+            settings=tracking_preset,
         )
+        tracking_created = await preset_service.create_preset(tracking_preset_data)
 
         # Get initial usage stats
-        initial_stats = await preset_service.get_preset_usage_stats("usage_tracking")
+        initial_stats = await preset_service.get_preset_usage_stats(tracking_created.id)
         initial_count = initial_stats.get("usage_count", 0) if initial_stats else 0
 
         # Use preset multiple times
@@ -415,7 +431,7 @@ class TestPresetSystemComplete:
         for _ in range(5):
             try:
                 request = ConversionRequest(
-                    output_format="jpeg", preset_id="usage_tracking"
+                    output_format="jpeg", preset_id=tracking_created.id
                 )
 
                 # Attempt conversion (may fail with fake data, but usage should be tracked)
@@ -424,7 +440,7 @@ class TestPresetSystemComplete:
                 pass  # Ignore conversion errors for this test
 
         # Check updated usage stats
-        updated_stats = await preset_service.get_preset_usage_stats("usage_tracking")
+        updated_stats = await preset_service.get_preset_usage_stats(tracking_created.id)
 
         if updated_stats:
             updated_count = updated_stats.get("usage_count", 0)
@@ -432,7 +448,7 @@ class TestPresetSystemComplete:
             assert updated_count >= initial_count
 
         # Clean up
-        await preset_service.delete_preset("usage_tracking")
+        await preset_service.delete_preset(tracking_created.id)
 
     async def test_preset_batch_application(self, realistic_image_generator):
         """

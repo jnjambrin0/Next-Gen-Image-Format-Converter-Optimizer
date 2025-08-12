@@ -4,7 +4,7 @@ Token bucket rate limiter for security events and API requests.
 
 import time
 from threading import Lock
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple, Union
 
 from app.core.constants import (
     RATE_LIMIT_BURST_SIZE,
@@ -67,7 +67,7 @@ class TokenBucket:
 class SecurityEventRateLimiter:
     """Rate limiter for security events."""
 
-    def __init__(self, config: Optional[RateLimitConfig] = None):
+    def __init__(self, config: Optional[Union[RateLimitConfig, Dict[str, Any]]] = None):
         """
         Initialize rate limiter.
 
@@ -101,7 +101,7 @@ class SecurityEventRateLimiter:
 
         # Track rate limit violations
         self.violations_count = 0
-        self.last_violation_time = None
+        self.last_violation_time: Optional[float] = None
         self.lock = Lock()
 
     def should_allow_event(self, event_type: Optional[str] = None) -> bool:
@@ -179,7 +179,7 @@ class SecurityEventRateLimiter:
 class ApiRateLimiter:
     """Rate limiter for API requests with per-key support."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize API rate limiter."""
         self.limiters: Dict[str, SecurityEventRateLimiter] = {}
         self.default_limiter = SecurityEventRateLimiter()
@@ -234,7 +234,9 @@ class ApiRateLimiter:
 
         return allowed, headers
 
-    def get_stats(self, api_key_id: Optional[str] = None) -> Dict:
+    def get_stats(
+        self, api_key_id: Optional[str] = None
+    ) -> Dict[str, Union[str, int, Dict[str, Any]]]:
         """Get rate limiter statistics.
 
         Args:
@@ -260,7 +262,7 @@ class ApiRateLimiter:
                     "config": {},
                 }
 
-    def cleanup_unused_limiters(self, active_key_ids: set) -> int:
+    def cleanup_unused_limiters(self, active_key_ids: Set[str]) -> int:
         """Clean up rate limiters for unused API keys.
 
         Args:

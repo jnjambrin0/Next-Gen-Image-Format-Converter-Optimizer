@@ -35,39 +35,40 @@ Next-Gen Image Format Converter & Optimizer - A privacy-focused, local-only imag
 
 ## Testing Guidelines
 
-**IMPORTANT**: The test images in `images_sample/` may have incorrect extensions to test format detection robustness. Always verify actual format through content detection, not file extension.
-
-### Test Suite Execution Requirements
-
-**CRITICAL**: The test suite has specific requirements for successful execution:
-
-1. **Environment Variables for Tests**:
+### Test Suite Execution
 
 ```bash
-# MUST set these for tests to run properly
-export IMAGE_CONVERTER_ENABLE_SANDBOXING=false  # Sandboxing blocks test execution
-export TESTING=true  # Enables test mode
+# Required environment variables
+export IMAGE_CONVERTER_ENABLE_SANDBOXING=false
+export TESTING=true
+export IMAGE_CONVERTER_SECRET_KEY=test-secret-key-for-testing-only-32chars
+
+# MUST run from backend/ directory
+cd backend
+pytest
 ```
 
-2. **Test Collection Issues**:
+### Critical Test Patterns
 
-- Tests expect `app/models/intelligence.py` to exist with ContentClassification model
-- Function `check_network_isolation()` must exist in `app/core/security/parsers.py`
-- Tests MUST be run from `backend/` directory for imports to work
+1. **Test expectations use actual model fields**:
+```python
+# CORRECT
+assert result.status == ConversionStatus.COMPLETED
+assert result.error_message is None
 
-3. **Architectural Test Limitations**:
+# WRONG - Don't add properties that don't exist
+assert result.success  # ConversionResult has no 'success' property
+```
 
-- **Coverage Ceiling**: ~43% is architectural limit, not a testing problem
-- **Root Cause**: Services initialize at import time (singleton anti-pattern)
-- **File Descriptor Exhaustion**: BatchManager creates 10 workers on import
-- **Circular Dependencies**: Services have interdependencies that make isolated testing difficult
-- **DO NOT** attempt to fix coverage by adding more tests - it requires architectural refactoring
+2. **Test fixture `initialized_services` returns dict**:
+```python
+@pytest.fixture
+def initialized_services():
+    from app.services.conversion_service import conversion_service
+    return {"conversion_service": conversion_service}
+```
 
-4. **Known Test Issues**:
-
-- Event loop corruption: `ValueError: Invalid file descriptor: -1`
-- Service initialization timeouts due to import-time initialization
-- Network blocking from sandbox affects even unit tests
+3. **Coverage limit ~43%** is architectural, not a testing issue (singleton anti-pattern)
 
 ## Development Commands
 
@@ -314,15 +315,24 @@ logger.error(f"Invalid file: {filename}")  # Contains PII!
 **CRITICAL**: These model classes MUST exist for the application to function:
 
 - `app/models/intelligence.py`:
-
-  - ContentClassification
+  - ContentClassification (has `content_type` attribute)
   - ContentType (enum)
   - BoundingBox
   - OptimizationRecommendation
   - IntelligenceCapabilities
 
+- `app/models/conversion.py`:
+  - ContentClassification (has `primary_type` attribute, NOT `content_type`)
+  - ConversionResult (has `status`, NOT `success` attribute)
+  - ConversionStatus (enum with COMPLETED, FAILED, etc.)
+
 - `app/cli/productivity/shell_integration.py`:
   - ShellType (enum)
+
+**⚠️ CRITICAL MODEL CONFLICTS**: There are TWO different ContentClassification models:
+1. `app/models/intelligence.py` - Uses `content_type` attribute
+2. `app/models/conversion.py` - Uses `primary_type` attribute
+The IntelligenceService returns the one from conversion.py.
 
 ## Critical Architectural Patterns
 
@@ -528,6 +538,18 @@ if filename.endswith('.jpg'):
 - Automatic downsampling for large images (>2048px)
 
 ### 9. Critical Security Patterns (MUST KNOW)
+
+#### Sandbox Method Usage
+
+**CRITICAL**: SecuritySandbox has both sync and async execution methods:
+
+```python
+# SYNC method (for regular code)
+result = sandbox.execute_sandboxed(command, timeout=5)
+
+# ASYNC method (for async code) - USE THIS IN ASYNC TESTS
+result = await sandbox.execute_sandboxed_async(command, timeout=5)
+```
 
 #### Sandbox Path Validation
 
@@ -783,98 +805,8 @@ When working on tasks or solving problems, if you discover important information
 
 This ensures that future Claude Code instances always have the most accurate and up-to-date information about the project.
 
-## Critical Intelligence Engine Security Requirements
 
-### Input Validation (MANDATORY)
-
-**CRITICAL**: ALL image processing MUST validate inputs to prevent DoS:
-
-```python
-# Required in ANY image processing function:
-if not isinstance(image_data, bytes):
-    raise create_file_error("invalid_input_type")
-if len(image_data) == 0:
-    raise create_file_error("empty_input")
-if len(image_data) > 100 * 1024 * 1024:  # 100MB absolute max
-    raise create_file_error("input_too_large")
-
-# For PIL Images:
-if image.width <= 0 or image.height <= 0:
-    raise create_file_error("invalid_dimensions")
-if image.width > 50000 or image.height > 50000:
-    raise create_file_error("dimensions_too_large")
-```
-
-### Concurrency Protection (MANDATORY)
-
-**CRITICAL**: Prevent resource exhaustion with semaphores:
-
-```python
-# Required for any resource-intensive operation:
-MAX_CONCURRENT = 10
-_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
-
-async with _semaphore:
-    # Perform operation
-```
-
-### Cache Security Pattern
-
-**CRITICAL**: NEVER return direct cache references:
-
-```python
-# CORRECT: Deep copy prevents cache poisoning
-import copy
-result_copy = copy.deepcopy(cached_result)
-return result_copy
-
-# WRONG: Allows external modification
-return cached_result  # SECURITY VULNERABILITY!
-```
-
-### Performance Requirements
-
-All image processing MUST meet:
-
-- P99 latency < 500ms
-- Memory stable (< 50MB growth per 1000 ops)
-- Support 10+ concurrent requests
-- Graceful degradation under load
-
-### ContentClassification Model Attributes
-
-**CRITICAL**: The ContentClassification model uses plural attribute names:
-
-```python
-# CORRECT: Use plural attributes
-classification.face_regions  # List[BoundingBox] - face detection results
-classification.text_regions  # List[BoundingBox] - text detection results
-
-# WRONG: Singular names no longer exist
-classification.faces  # AttributeError
-classification.text   # AttributeError
-```
-
-**Integration Example**:
-
-```python
-# In region optimizer or any detection consumer:
-if classification.face_regions:
-    for face in classification.face_regions:
-        bbox = (face.x, face.y, face.x + face.width, face.y + face.height)
-```
-
-## Non-Maximum Suppression Pattern
-
-For detection algorithms, use distance-based grouping in addition to IoU:
-
-```python
-# Group if overlapping OR centers are close
-if iou > 0.1 or center_dist < max_size * 2.0:
-    # Merge detections using weighted average by confidence
-```
-
-### 10. Service Return Value Patterns
+### Service Return Value Patterns
 
 **CRITICAL**: The conversion_service.convert() method MUST return a tuple (result, output_data):
 
@@ -1084,77 +1016,8 @@ updateSetting(key, value) {
 }
 ```
 
-### 18. Batch Processing Simplified UI Pattern
 
-**CRITICAL**: Batch processing uses automatic flow without modals:
-
-- **NO BatchSummaryModal**: Removed intentionally for simplicity
-- **Auto-download**: Files download automatically upon completion
-- **Simple messages**: Only success/error messages, no complex popups
-
-```python
-# Frontend: Simplified flow in app.js
-async function autoDownloadBatchResults() {
-    const blob = await downloadBatchResults(currentBatchJobId)
-    // Automatic download without user interaction
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `batch_${currentBatchJobId.substring(0, 8)}_results.zip`
-    a.click()
-}
-
-# Backend: On-demand compilation in batch_service.py
-async def get_download_zip(self, job_id: str):
-    result = self._results_storage.get(job_id)
-    if not result:
-        # Automatically compile if not cached
-        result = await self.get_results(job_id)
-        if not result:
-            return None
-```
-
-**Why**: User requirement: "debe ser simple, le das a convertir y luego se descargan solos" (must be simple, click convert and files download automatically)
-
-**Important**: When modifying batch UI, maintain this simplicity principle - no unnecessary modals or user interactions
-
-### 19. CLI Productivity Module Security Patterns
-
-**CRITICAL**: When implementing CLI productivity features, these security patterns are MANDATORY:
-
-#### Privacy-First Data Storage
-
-```python
-# NEVER store filenames, paths, or PII in autocomplete/history
-class PrivacySanitizer:
-    PATH_PATTERNS = [
-        r'[/\\][\w\-\.]+(?:[/\\][\w\-\.]+)*',  # File paths
-        r'[\w\.\-]+@[\w\.\-]+',  # Email addresses
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP addresses
-    ]
-
-    def sanitize(self, text: str) -> str:
-        for pattern in self.PATH_PATTERNS:
-            text = re.sub(pattern, '<REDACTED>', text)
-        return text
-```
-
-#### Resource Limits for Watch Mode
-
-- **Max Files**: 100 files per watch session
-- **Concurrency**: Max 5 concurrent conversions
-- **Memory**: 512MB RAM limit enforced
-- **Rate Limiting**: 10 events/second with 500ms debouncing
-- **Auto-shutdown**: On 3 consecutive resource violations
-
-#### Macro Security Requirements
-
-1. **Command Validation**: Block dangerous commands (rm, format, curl, etc.)
-2. **Signature Verification**: HMAC-SHA256 for integrity
-3. **Approval System**: User must approve before first execution
-4. **Sandboxing**: Execute in restricted environment
-5. **File Permissions**: Store with 0o600 (user read/write only)
-
-### 20. Secure Temporary File Pattern
+### Secure Temporary File Pattern
 
 **CRITICAL**: Never use hardcoded `/tmp` paths - always use Python's tempfile module:
 
@@ -1179,7 +1042,7 @@ temp_dir = tempfile.mkdtemp(mode=0o700)  # Only owner can read/write/execute
 
 **Why**: Hardcoded `/tmp` paths are vulnerable to symlink attacks and race conditions. The tempfile module creates secure temporary files with proper permissions.
 
-### 21. Test Execution Critical Pattern
+### Test Execution Critical Pattern
 
 **CRITICAL**: Tests MUST be run from backend/ directory for imports to work:
 
@@ -1218,141 +1081,67 @@ def mock_network_for_tests():
 
 **Why**: The sandbox's network blocking is applied globally during imports, preventing test execution even for unit tests that don't use network.
 
-### 21. Performance Monitoring Implementation Details
 
-**CRITICAL**: When implementing performance monitoring features:
 
-#### PerformanceMonitor Peak Memory Pattern
+### CRITICAL: Anti-Overengineering Principle
 
-The PerformanceMonitor must update peak memory in the `stop()` method to capture final state:
+**Every line of code must answer: "¿Qué problema real resuelve esto?"**
 
+Common overengineering patterns in this project:
+- Type errors: Use `# type: ignore[specific-error]` instead of complex conversions
+- Test failures: Fix the actual expectation, not add new properties to models
+- Security "improvements": Bandit LOW severity issues are usually false positives
+- Defensive coding: Don't add defaults/fallbacks unless there's a proven need
+
+**CI/CD Quick Fixes**:
 ```python
-# In PerformanceMonitor.stop():
-current_memory = self._process.memory_info().rss
+# Type checking: Just ignore, don't convert
+NETWORK_VIOLATION_THRESHOLD = NETWORK_CONFIG["violation_threshold"]  # type: ignore[index]
 
-# Update peak one last time in case it increased after last sample
-if current_memory > self._peak_memory:
-    self._peak_memory = current_memory
+# Test models: Use existing fields
+assert result.status == ConversionStatus.COMPLETED  # NOT result.success
 ```
 
-**Why**: Memory may spike between the last sample and stop() call. Without this, peak memory tracking is incomplete.
+### Format Handler Dependencies
 
-#### VipsOperations Required Methods
+**CRITICAL**: Image format support depends on specific Python packages that may not be available or may fail compilation:
 
-VipsOperations class must implement these auxiliary methods for full functionality:
-
+#### JPEG XL Support
 ```python
-def estimate_memory_usage(self, width: int, height: int, channels: int = 4) -> float:
-    """Estimates memory usage in MB for given image dimensions."""
-    bytes_per_pixel = channels  # 8-bit per channel
-    base_memory = width * height * bytes_per_pixel
-    base_memory_mb = base_memory / (1024 * 1024)
-    return base_memory_mb * 1.2  # Add 20% overhead
+# Required dependency for JPEG XL format
+pip install pillow-jxl-plugin==1.3.4
 
-def monitor_memory(self, operation_name: str) -> Dict[str, Any]:
-    """Returns current memory statistics for monitoring."""
-    current_memory = self._get_memory_usage()
-    delta = current_memory - self._initial_memory
-    usage_percent = (delta / MAX_MEMORY_MB) * 100 if MAX_MEMORY_MB > 0 else 0
+# Alternative jxlpy may fail compilation on some systems:
+# ERROR: Failed building wheel for jxlpy
+# fatal error: 'jxl/types.h' file not found
 
-    return {
-        "operation": operation_name,
-        "current_mb": round(current_memory, 2),
-        "initial_mb": round(self._initial_memory, 2),
-        "delta_mb": round(delta, 2),
-        "limit_mb": MAX_MEMORY_MB,
-        "usage_percent": round(usage_percent, 2)
-    }
-
-def should_use_streaming(self, file_path: str = None, file_size: int = None) -> bool:
-    """Returns True if file size exceeds streaming threshold (100MB)."""
-    # Note: Returns based on size regardless of vips availability
-    # Actual streaming requires vips, but this indicates if it WOULD be appropriate
+# Solution: Use pillow-jxl-plugin instead of jxlpy
+try:
+    import pillow_jxl
+    # Test actual availability, not just import
+    def _test_jxl_support():
+        try:
+            test_img = Image.new("RGB", (1, 1))
+            test_buffer = BytesIO()
+            test_img.save(test_buffer, format="JXL")
+            return True
+        except Exception:
+            return False
+    JXL_AVAILABLE = _test_jxl_support()
+except ImportError:
+    JXL_AVAILABLE = False
 ```
 
-#### Test Mocking for Large Files
-
-When testing large file operations without actual large files:
-
+#### Format Dependencies Map
 ```python
-# Mock PIL Image operations to avoid processing fake data
-with patch('app.core.processing.vips_ops.Image') as mock_image:
-    mock_img = MagicMock()
-    mock_image.open.return_value = mock_img
+# Known working dependencies:
+AVIF: pillow-avif-plugin==1.5.2     # ✅ Works reliably
+HEIF: pillow_heif==1.0.0             # ✅ Works reliably  
+JXL:  pillow-jxl-plugin==1.3.4       # ✅ Recommended over jxlpy
+JP2:  Built into Pillow with OpenJPEG # ✅ Usually available
 
-    # Mock BytesIO for buffer operations
-    with patch('app.core.processing.vips_ops.io.BytesIO') as mock_io:
-        mock_buffer = MagicMock()
-        mock_io.return_value = mock_buffer
-        mock_buffer.getvalue.return_value = b'processed_data'
-
-        # Now safe to process fake data
-        result = vips_ops.process_in_chunks(fake_data, 'webp', 85)
+# Problematic dependencies:
+jxlpy: Requires system libjxl libraries  # ❌ Compilation issues
 ```
 
-**Why**: Testing with fake image data requires proper mocking to avoid PIL errors with invalid image formats.
-
-### 22. CLI Documentation Sandbox Security Pattern
-
-**CRITICAL**: When implementing CLI tutorials, examples, or any interactive command execution, these security measures are MANDATORY:
-
-#### Command Validation
-
-```python
-# Validate img subcommand structure, not just prefix
-valid_subcommands = [
-    'convert', 'batch', 'optimize', 'analyze', 'formats',
-    'presets', 'watch', 'chain', 'docs', 'tutorial', 'help',
-    'config', 'version', '--help', '-h'
-]
-if not command.startswith('img '):
-    raise ValueError("Only img commands allowed")
-
-# Validate subcommand structure
-img_parts = command[4:].strip().split()
-if not img_parts:
-    raise ValueError("Missing subcommand")
-subcommand = img_parts[0].lower()
-if subcommand not in valid_subcommands:
-    raise ValueError(f"Invalid subcommand: {subcommand}")
-```
-
-#### Environment Isolation
-
-```python
-# MANDATORY environment for CLI sandbox execution
-safe_env = {
-    'PATH': '/usr/local/bin:/usr/bin:/bin',
-    'HOME': str(sandbox_dir),
-    'TMPDIR': str(sandbox_dir / 'tmp'),
-    'IMAGE_CONVERTER_ENABLE_SANDBOXING': 'true',
-    'IMAGE_CONVERTER_SANDBOX_STRICTNESS': 'paranoid',
-    # Block all network access
-    'http_proxy': 'http://127.0.0.1:1',
-    'https_proxy': 'http://127.0.0.1:1',
-    'no_proxy': '*',
-}
-
-# Execute with resource limits
-result = subprocess.run(
-    command,
-    shell=True,
-    cwd=sandbox_dir,
-    env=safe_env,  # Use restricted environment
-    timeout=10,    # 10 second timeout
-    capture_output=True
-)
-```
-
-#### Blocked Commands List (70+)
-
-The sandbox MUST block these command categories:
-
-- **Shells**: bash, sh, zsh, fish, ksh, csh, tcsh, powershell, cmd
-- **Languages**: python, python3, perl, ruby, php, node, nodejs
-- **Network**: curl, wget, nc, netcat, telnet, ssh, ftp, sftp, scp, rsync
-- **System**: sudo, su, chmod, chown, kill, pkill, systemctl, mount
-- **Dangerous**: rm, dd, format, fdisk, mkfs, shred, wipe
-- **Editors**: vi, vim, nano, emacs (can escape sandbox)
-
-**Why**: CLI documentation features that execute commands pose significant security risks. These patterns ensure complete isolation and prevent command injection, network access, and system manipulation.
+**Why**: Format handlers should gracefully handle missing dependencies and provide clear error messages during development vs testing.

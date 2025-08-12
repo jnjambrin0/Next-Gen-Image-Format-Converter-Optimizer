@@ -27,7 +27,7 @@ class TerminalDetector:
     # Cache TTL in seconds (5 minutes)
     _CACHE_TTL = 300
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache: Dict[str, Any] = {}
         self._cache_timestamps: Dict[str, float] = {}
         self._cache_lock = threading.Lock()
@@ -45,7 +45,7 @@ class TerminalDetector:
 
         return TerminalCapability.STANDARD
 
-    def _get_cached(self, key: str) -> Optional[Any]:
+    def _get_cached(self, key: str) -> Any:
         """Get cached value if still valid"""
         with self._cache_lock:
             if key in self._cache and key in self._cache_timestamps:
@@ -280,7 +280,7 @@ class TerminalDetector:
 
         return self._set_cached("supports_hyperlinks", False)
 
-    def get_environment_info(self) -> Dict[str, any]:
+    def get_environment_info(self) -> Dict[str, Any]:
         """Get comprehensive terminal environment information"""
         return {
             "capability_level": self.get_capability_level().value,

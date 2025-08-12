@@ -26,7 +26,7 @@ class RecoveryService:
             Tuple of (recovered_data, recovery_info)
         """
         self.recovery_attempts += 1
-        recovery_info = {
+        recovery_info: Dict[str, Any] = {
             "attempted": True,
             "success": False,
             "method": None,

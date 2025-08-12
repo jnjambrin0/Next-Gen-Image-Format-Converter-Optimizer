@@ -37,6 +37,7 @@ class BatchService:
         output_format: str,
         settings: Optional[Dict[str, Any]] = None,
         user_ip: Optional[str] = None,
+        preset_id: Optional[str] = None,
     ) -> BatchJob:
         """Create a new batch conversion job."""
         # Create the batch job
@@ -72,10 +73,14 @@ class BatchService:
             items.append(item)
 
         # Create batch job
+        job_settings = {"output_format": output_format, **(settings or {})}
+        if preset_id:
+            job_settings["preset_id"] = preset_id
+
         job = BatchJob(
             job_id=job_id,
             total_files=len(files),
-            settings={"output_format": output_format, **(settings or {})},
+            settings=job_settings,
             items=items,
             created_at=datetime.utcnow(),
             user_ip=user_ip,

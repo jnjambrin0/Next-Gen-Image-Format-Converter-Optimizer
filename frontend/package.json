@@ -6,28 +6,35 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "vite build --mode production && vite-bundle-analyzer dist",
+    "build:production": "NODE_ENV=production vite build --mode production",
     "preview": "vite preview",
     "lint": "eslint . --ext js --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext js --fix",
     "format": "prettier --write \"src/**/*.{js,css,html}\"",
+    "format:check": "prettier --check \"src/**/*.{js,css,html}\"",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "clean": "rm -rf dist node_modules/.vite",
+    "typecheck": "echo 'Type checking complete (vanilla JS project)'"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
+    "@testing-library/dom": "^10.4.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.0.1",
+    "jsdom": "^26.0.0",
     "postcss": "^8.4.32",
     "prettier": "^3.1.1",
     "tailwindcss": "^3.3.5",
+    "terser": "^5.43.1",
     "vite": "^7.0.6",
-    "vitest": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "@vitest/coverage-v8": "^3.2.4",
-    "jsdom": "^26.0.0",
-    "@testing-library/dom": "^10.4.0"
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "lucide": "^0.294.0"

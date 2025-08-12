@@ -255,6 +255,20 @@ class Settings(BaseSettings):
             raise ValueError(f"log_level must be one of {allowed}")
         return v.upper()
 
+    @field_validator("api_host")
+    @classmethod
+    def validate_api_host(cls, v):
+        # Security: Never allow binding to all interfaces in production
+        if (
+            v == "0.0.0.0"
+        ):  # nosec B104 - We explicitly check and reject 0.0.0.0 in production
+            import os
+
+            env = os.getenv("IMAGE_CONVERTER_ENV", "development")
+            if env == "production":
+                raise ValueError("Cannot bind to 0.0.0.0 in production environment")
+        return v
+
     @field_validator("api_port")
     @classmethod
     def validate_port(cls, v):

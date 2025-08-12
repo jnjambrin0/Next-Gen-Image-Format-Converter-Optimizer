@@ -4,7 +4,7 @@ Manage different configuration profiles for various use cases
 """
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -19,17 +19,13 @@ class Profile:
     name: str
     description: str
     parent: Optional[str] = None
-    settings: Dict[str, Any] = None
-    overrides: Dict[str, Dict[str, Any]] = None
-    created_at: str = None
-    updated_at: str = None
+    settings: Dict[str, Any] = field(default_factory=dict)
+    overrides: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
     is_builtin: bool = False
 
-    def __post_init__(self):
-        if self.settings is None:
-            self.settings = {}
-        if self.overrides is None:
-            self.overrides = {}
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.now().isoformat()
         if self.updated_at is None:
@@ -204,7 +200,7 @@ class ProfileManager:
 
         return profiles
 
-    def _save_user_profile(self, profile: Profile):
+    def _save_user_profile(self, profile: Profile) -> None:
         """Save user profile to disk"""
         profile_file = self.profiles_dir / f"{profile.name}.json"
         profile.updated_at = datetime.now().isoformat()

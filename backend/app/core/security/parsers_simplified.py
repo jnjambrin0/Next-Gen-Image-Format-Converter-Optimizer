@@ -11,7 +11,7 @@ import structlog
 
 logger = structlog.get_logger()
 
-# Patterns that indicate network activity
+# Patterns that indicate external network activity (excluding localhost)
 NETWORK_ACTIVITY_PATTERNS = [
     "ESTABLISHED",
     "LISTEN",
@@ -22,8 +22,16 @@ NETWORK_ACTIVITY_PATTERNS = [
     ":80",
     ":443",
     ":8000",
+    # Only flag 0.0.0.0 binding, not localhost
     "0.0.0.0",
     ":::",
+]
+
+# Patterns that are allowed for localhost-only operation
+LOCALHOST_PATTERNS = [
+    "127.0.0.1",
+    "localhost",
+    "::1",
 ]
 
 

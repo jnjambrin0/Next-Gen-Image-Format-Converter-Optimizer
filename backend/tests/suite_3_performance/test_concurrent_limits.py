@@ -15,7 +15,7 @@ import psutil
 import pytest
 
 from app.core.constants import MAX_BATCH_WORKERS
-from app.models.conversion import ConversionRequest
+from app.models.conversion import ConversionRequest, ConversionStatus
 from app.services.batch_service import batch_service
 from app.services.conversion_service import conversion_service
 
@@ -82,7 +82,7 @@ class TestConcurrentLimits:
                     image_data=image_data, request=request
                 )
 
-                return result.success
+                return result.status == ConversionStatus.COMPLETED
             finally:
                 async with lock:
                     concurrent_count -= 1
@@ -124,7 +124,7 @@ class TestConcurrentLimits:
                 result, output = await conversion_service.convert(
                     image_data=image_data, request=request
                 )
-                return result.success
+                return result.status == ConversionStatus.COMPLETED
             except MemoryError:
                 return False
             finally:
@@ -195,7 +195,9 @@ class TestConcurrentLimits:
             format_name = formats[format_idx]
 
             if not isinstance(result, Exception):
-                format_results[format_name].append(result[0].success)
+                format_results[format_name].append(
+                    result[0].status == ConversionStatus.COMPLETED
+                )
 
         # All formats should have successful conversions
         for fmt, successes in format_results.items():
@@ -416,7 +418,7 @@ class TestConcurrentLimits:
                             image_data=img, request=request
                         )
 
-                        if result.success:
+                        if result.status == ConversionStatus.COMPLETED:
                             total_processed += 1
                         else:
                             total_errors += 1
@@ -477,7 +479,10 @@ class TestConcurrentLimits:
 
             # Calculate metrics
             successful = sum(
-                1 for r in results if not isinstance(r, Exception) and r[0].success
+                1
+                for r in results
+                if not isinstance(r, Exception)
+                and r[0].status == ConversionStatus.COMPLETED
             )
 
             stage_metrics.append(

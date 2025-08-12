@@ -18,7 +18,7 @@ import pytest
 
 from app.core.security.engine import SecurityEngine
 from app.core.security.memory_manager import MemoryManager
-from app.models.conversion import ConversionRequest
+from app.models.conversion import ConversionRequest, ConversionStatus
 from app.services.conversion_service import conversion_service
 
 
@@ -256,7 +256,7 @@ class TestMemoryClearingForensic:
             image_data=test_image_with_marker, request=request
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         # Force garbage collection
         gc.collect()

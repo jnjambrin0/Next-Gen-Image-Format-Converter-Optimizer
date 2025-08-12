@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from typing import Dict, Optional, Set
 
-from fastapi import Query, WebSocket, WebSocketDisconnect, WebSocketException, status
+from fastapi import Query, WebSocket, WebSocketDisconnect, status
 from fastapi.routing import APIRouter
 
 from app.config import settings

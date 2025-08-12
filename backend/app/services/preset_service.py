@@ -176,7 +176,7 @@ class PresetService:
 
     async def get_all_presets(self) -> List[PresetResponse]:
         """Get all presets (built-in and user-created).
-        
+
         Returns:
             List of all presets
         """

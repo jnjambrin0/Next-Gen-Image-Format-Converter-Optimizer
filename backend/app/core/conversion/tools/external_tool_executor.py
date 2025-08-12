@@ -4,6 +4,7 @@ import asyncio
 import os
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -28,10 +29,9 @@ class ExternalToolExecutor:
     """Secure executor for external image processing tools."""
 
     # Default restricted environment for subprocess execution
+    # Note: HOME and TMPDIR will be set to secure temp directories at runtime
     DEFAULT_RESTRICTED_ENV = {
         "PATH": "/usr/bin:/bin:/usr/local/bin",  # Minimal PATH
-        "HOME": "/tmp",  # Restrict home directory
-        "TMPDIR": "/tmp",  # Restrict temp directory
         "LC_ALL": "C",  # Consistent locale
     }
 
@@ -57,8 +57,15 @@ class ExternalToolExecutor:
         self.tool_variants = tool_variants or [tool_name]
         self.tool_path = self._find_tool()
 
+        # Create secure temporary directory for this executor instance
+        self._temp_dir = tempfile.mkdtemp(prefix=f"img_conv_{tool_name}_", mode=0o700)
+
         # Merge custom environment with defaults
         self.restricted_env = self.DEFAULT_RESTRICTED_ENV.copy()
+        # Set secure temporary directories
+        self.restricted_env["HOME"] = self._temp_dir
+        self.restricted_env["TMPDIR"] = self._temp_dir
+
         if custom_env:
             self.restricted_env.update(custom_env)
 
@@ -126,7 +133,7 @@ class ExternalToolExecutor:
         args: List[str],
         input_data: Optional[bytes] = None,
         timeout: Optional[int] = None,
-        cwd: str = "/tmp",
+        cwd: Optional[str] = None,
         nice_value: Optional[int] = None,
     ) -> ExecutionResult:
         """
@@ -136,7 +143,7 @@ class ExternalToolExecutor:
             args: Command line arguments for the tool
             input_data: Optional input data to pipe to stdin
             timeout: Execution timeout in seconds
-            cwd: Working directory (default: /tmp)
+            cwd: Working directory (default: secure temp directory)
             nice_value: Process nice value for priority
 
         Returns:
@@ -171,6 +178,9 @@ class ExternalToolExecutor:
         start_time = asyncio.get_event_loop().time()
 
         try:
+            # Use secure temp directory if no specific cwd provided
+            working_dir = cwd or self._temp_dir
+
             # Run subprocess asynchronously
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -178,7 +188,7 @@ class ExternalToolExecutor:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 env=self.restricted_env,
-                cwd=cwd,
+                cwd=working_dir,
                 preexec_fn=lambda: os.nice(nice_value) if os.name != "nt" else None,
             )
 
@@ -217,7 +227,7 @@ class ExternalToolExecutor:
         args: List[str],
         input_data: Optional[bytes] = None,
         timeout: Optional[int] = None,
-        cwd: str = "/tmp",
+        cwd: Optional[str] = None,
         nice_value: Optional[int] = None,
     ) -> ExecutionResult:
         """
@@ -227,7 +237,7 @@ class ExternalToolExecutor:
             args: Command line arguments for the tool
             input_data: Optional input data to pipe to stdin
             timeout: Execution timeout in seconds
-            cwd: Working directory (default: /tmp)
+            cwd: Working directory (default: secure temp directory)
             nice_value: Process nice value for priority
 
         Returns:
@@ -264,6 +274,9 @@ class ExternalToolExecutor:
         start_time = time.time()
 
         try:
+            # Use secure temp directory if no specific cwd provided
+            working_dir = cwd or self._temp_dir
+
             # Use restricted environment
             env = self.restricted_env
 
@@ -273,7 +286,7 @@ class ExternalToolExecutor:
                 capture_output=True,
                 timeout=timeout,
                 env=env,
-                cwd=cwd,
+                cwd=working_dir,
                 preexec_fn=lambda: os.nice(nice_value) if os.name != "nt" else None,
             )
 
@@ -325,6 +338,36 @@ class ExternalToolExecutor:
             return False
 
         return True
+
+    def cleanup(self) -> None:
+        """Clean up temporary directory."""
+        if hasattr(self, "_temp_dir") and os.path.exists(self._temp_dir):
+            try:
+                shutil.rmtree(self._temp_dir)
+                logger.debug(
+                    "Cleaned up temporary directory",
+                    tool_name=self.tool_name,
+                    temp_dir=self._temp_dir,
+                )
+            except Exception as e:
+                logger.warning(
+                    "Failed to clean up temporary directory",
+                    tool_name=self.tool_name,
+                    temp_dir=self._temp_dir,
+                    error=str(e),
+                )
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with cleanup."""
+        self.cleanup()
+
+    def __del__(self):
+        """Destructor with cleanup."""
+        self.cleanup()
 
     def __repr__(self) -> str:
         """String representation."""

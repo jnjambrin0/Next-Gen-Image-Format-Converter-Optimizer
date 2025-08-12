@@ -172,13 +172,13 @@ class TestMLClassificationRealistic:
         photo_data = self.create_photo_with_faces()
 
         # Classify
-        result = await intelligence_service.classify_content(photo_data)
+        result = await intelligence_service.analyze_image(photo_data)
 
         # Validate classification
         assert result is not None, "Classification returned None"
         assert (
-            result.content_type == ContentType.PHOTOGRAPH
-        ), f"Expected PHOTOGRAPH, got {result.content_type}"
+            result.primary_type == ContentType.PHOTO
+        ), f"Expected PHOTO, got {result.primary_type}"
         assert result.confidence > 0.7, f"Low confidence: {result.confidence}"
 
         # Check face detection
@@ -196,11 +196,11 @@ class TestMLClassificationRealistic:
         """Test classification of UI screenshots."""
         screenshot_data = self.create_screenshot_with_ui()
 
-        result = await intelligence_service.classify_content(screenshot_data)
+        result = await intelligence_service.analyze_image(screenshot_data)
 
         assert (
-            result.content_type == ContentType.SCREENSHOT
-        ), f"Expected SCREENSHOT, got {result.content_type}"
+            result.primary_type == ContentType.SCREENSHOT
+        ), f"Expected SCREENSHOT, got {result.primary_type}"
         assert (
             result.confidence > 0.75
         ), f"Low confidence for clear screenshot: {result.confidence}"
@@ -219,11 +219,11 @@ class TestMLClassificationRealistic:
         """Test classification of document scans."""
         document_data = self.create_document_with_text()
 
-        result = await intelligence_service.classify_content(document_data)
+        result = await intelligence_service.analyze_image(document_data)
 
         assert (
-            result.content_type == ContentType.DOCUMENT
-        ), f"Expected DOCUMENT, got {result.content_type}"
+            result.primary_type == ContentType.DOCUMENT
+        ), f"Expected DOCUMENT, got {result.primary_type}"
         assert (
             result.confidence > 0.8
         ), f"Low confidence for clear document: {result.confidence}"
@@ -239,11 +239,11 @@ class TestMLClassificationRealistic:
         """Test classification of vector illustrations."""
         illustration_data = self.create_illustration_with_vectors()
 
-        result = await intelligence_service.classify_content(illustration_data)
+        result = await intelligence_service.analyze_image(illustration_data)
 
         assert (
-            result.content_type == ContentType.ILLUSTRATION
-        ), f"Expected ILLUSTRATION, got {result.content_type}"
+            result.primary_type == ContentType.ILLUSTRATION
+        ), f"Expected ILLUSTRATION, got {result.primary_type}"
         assert result.confidence > 0.6, f"Low confidence: {result.confidence}"
 
         # Check optimization hints for illustrations
@@ -273,8 +273,7 @@ class TestMLClassificationRealistic:
         start_time = time.perf_counter()
 
         tasks = [
-            intelligence_service.classify_content(img_data)
-            for _, img_data in test_images
+            intelligence_service.analyze_image(img_data) for _, img_data in test_images
         ]
 
         results = await asyncio.gather(*tasks)
@@ -290,24 +289,21 @@ class TestMLClassificationRealistic:
         correct = 0
         for (name, _), result in zip(test_images, results):
             expected_type = name.split("1")[0].split("2")[0]  # Extract type from name
-            if (
-                expected_type == "photo"
-                and result.content_type == ContentType.PHOTOGRAPH
-            ):
+            if expected_type == "photo" and result.primary_type == ContentType.PHOTO:
                 correct += 1
             elif (
                 expected_type == "screenshot"
-                and result.content_type == ContentType.SCREENSHOT
+                and result.primary_type == ContentType.SCREENSHOT
             ):
                 correct += 1
             elif (
                 expected_type == "document"
-                and result.content_type == ContentType.DOCUMENT
+                and result.primary_type == ContentType.DOCUMENT
             ):
                 correct += 1
             elif (
                 expected_type == "illustration"
-                and result.content_type == ContentType.ILLUSTRATION
+                and result.primary_type == ContentType.ILLUSTRATION
             ):
                 correct += 1
 
@@ -352,16 +348,16 @@ class TestMLClassificationRealistic:
         ambiguous_data = buffer.getvalue()
 
         # Classify ambiguous content
-        result = await intelligence_service.classify_content(ambiguous_data)
+        result = await intelligence_service.analyze_image(ambiguous_data)
 
         # Should classify as either photo or document with moderate confidence
-        assert result.content_type in [ContentType.PHOTOGRAPH, ContentType.DOCUMENT]
+        assert result.primary_type in [ContentType.PHOTO, ContentType.DOCUMENT]
         assert (
             0.4 < result.confidence < 0.8
         ), "Confidence should be moderate for ambiguous content"
 
         # Check if text regions are detected
-        if result.content_type == ContentType.DOCUMENT:
+        if result.primary_type == ContentType.DOCUMENT:
             assert result.text_regions is not None
 
     @pytest.mark.ml
@@ -375,7 +371,7 @@ class TestMLClassificationRealistic:
 
         # Classify same image 50 times
         for i in range(50):
-            result = await intelligence_service.classify_content(test_image)
+            result = await intelligence_service.analyze_image(test_image)
             assert result is not None
 
             # Sample memory every 10 classifications
@@ -401,11 +397,11 @@ class TestMLClassificationRealistic:
 
         try:
             # Should fallback to basic classification
-            result = await intelligence_service.classify_content(test_image)
+            result = await intelligence_service.analyze_image(test_image)
 
             # Should still return a result, just with lower confidence
             assert result is not None
-            assert result.content_type is not None
+            assert result.primary_type is not None
             assert result.confidence < 0.5, "Fallback should have low confidence"
 
         finally:

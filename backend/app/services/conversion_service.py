@@ -53,6 +53,45 @@ class ConversionService:
         """Set the preset service instance to avoid circular imports."""
         self.preset_service = preset_service
 
+    def _guess_format_from_filename(self, filename: str) -> str:
+        """
+        Guess image format from filename extension as last resort.
+
+        Args:
+            filename: The filename to analyze
+
+        Returns:
+            Guessed format or 'jpeg' as ultimate fallback
+        """
+        if not filename:
+            return "jpeg"  # Default fallback
+
+        # Extract extension
+        filename_lower = filename.lower()
+        if "." in filename_lower:
+            ext = filename_lower.split(".")[-1]
+
+            # Map common extensions to formats
+            ext_to_format = {
+                "jpg": "jpeg",
+                "jpeg": "jpeg",
+                "png": "png",
+                "webp": "webp",
+                "gif": "gif",
+                "bmp": "bmp",
+                "tiff": "tiff",
+                "tif": "tiff",
+                "heic": "heif",
+                "heif": "heif",
+                "avif": "avif",
+                "jxl": "jxl",
+                "jp2": "jp2",
+            }
+
+            return ext_to_format.get(ext, "jpeg")
+
+        return "jpeg"  # Ultimate fallback
+
     async def convert(
         self,
         image_data: bytes,
@@ -93,12 +132,14 @@ class ConversionService:
                 actual_input_format = detected_format
 
                 # Log if there's a mismatch (but don't fail)
-                if detected_format != request.input_format.lower():
+                if (
+                    request.input_format
+                    and detected_format != request.input_format.lower()
+                ):
                     logger.warning(
                         "Format mismatch detected",
                         detected_format=detected_format,
                         claimed_format=request.input_format,
-                        filename=request.filename,
                     )
 
             except Exception as e:
@@ -109,6 +150,9 @@ class ConversionService:
                 )
                 # Fall back to claimed format if detection fails
                 actual_input_format = request.input_format
+
+                if not actual_input_format:
+                    raise ValueError("Unable to determine input format")
 
             # Apply preset if specified
             conversion_settings = request.settings

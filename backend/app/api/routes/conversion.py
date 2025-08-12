@@ -7,21 +7,19 @@ from typing import Optional
 
 import structlog
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
-from fastapi.responses import StreamingResponse
 
 from app.api.utils.error_handling import EndpointErrorHandler
 from app.api.utils.validation import secure_memory_clear, validate_content_type
 from app.config import settings
 from app.core.constants import FORMAT_TO_CONTENT_TYPE
 from app.core.exceptions import (
-    ConversionError,
     ConversionFailedError,
     InvalidImageError,
     UnsupportedFormatError,
 )
-from app.models.conversion import ConversionSettings, OptimizationSettings, OutputFormat
+from app.models.conversion import ConversionSettings, OutputFormat
 from app.models.requests import ConversionApiRequest
-from app.models.responses import ConversionApiResponse, ErrorResponse
+from app.models.responses import ErrorResponse
 from app.services.conversion_service import conversion_service
 
 logger = structlog.get_logger()
@@ -78,6 +76,166 @@ def sanitize_filename(filename: str) -> str:
     return filename
 
 
+def _validate_conversion_file(file: UploadFile, request: Request) -> bytes:
+    """Validate uploaded file and return contents."""
+    # Validate content type
+    if not validate_content_type(file):
+        raise error_handler.unsupported_media_type_error(
+            "Unsupported file type. Please upload an image file "
+            "(JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, or AVIF).",
+            request,
+        )
+
+    # Validate filename
+    if not file.filename:
+        raise error_handler.validation_error(
+            "A filename is required. Please ensure your file has a valid name before uploading.",
+            request,
+        )
+
+    return file
+
+
+async def _read_and_validate_file_contents(file: UploadFile, request: Request) -> bytes:
+    """Read and validate file contents."""
+    contents = await file.read()
+    file_size = len(contents)
+
+    if file_size == 0:
+        raise error_handler.validation_error(
+            "The uploaded file is empty. Please select a valid image file to convert.",
+            request,
+        )
+
+    if file_size > settings.max_file_size:
+        raise error_handler.payload_too_large_error(
+            f"File size exceeds maximum allowed size of {settings.max_file_size / 1024 / 1024}MB",
+            request,
+            details={
+                "file_size": file_size,
+                "max_size": settings.max_file_size,
+            },
+        )
+
+    return contents
+
+
+async def _detect_input_format(contents: bytes, filename: str, request: Request) -> str:
+    """Detect input format from file contents and filename."""
+    safe_filename = sanitize_filename(filename)
+    file_ext = Path(safe_filename).suffix.lower().lstrip(".")
+
+    # Try to detect format from content (more reliable than extension)
+    detected_format = None
+    try:
+        from app.services.format_detection_service import format_detection_service
+
+        detected_format, confident = await format_detection_service.detect_format(
+            contents
+        )
+        logger.info(
+            "Format detected from content",
+            detected_format=detected_format,
+            file_extension=file_ext,
+            confident=confident,
+            correlation_id=request.state.correlation_id,
+        )
+    except Exception as e:
+        logger.warning(
+            "Format detection failed, falling back to extension",
+            error=str(e),
+            file_extension=file_ext,
+            correlation_id=request.state.correlation_id,
+        )
+
+    # Use detected format if available, otherwise fall back to extension
+    input_format = detected_format or file_ext
+
+    if not input_format:
+        raise error_handler.validation_error(
+            "Unable to determine the image format. The file may be corrupted or "
+            "in an unsupported format. Supported formats: JPEG, PNG, WebP, GIF, "
+            "BMP, TIFF, HEIF/HEIC, AVIF.",
+            request,
+        )
+
+    return input_format
+
+
+def _build_conversion_request(
+    filename: str,
+    input_format: str,
+    output_format: OutputFormat,
+    quality: Optional[int],
+    strip_metadata: Optional[bool],
+    preserve_metadata: Optional[bool],
+    preserve_gps: Optional[bool],
+    preset_id: Optional[str],
+) -> ConversionApiRequest:
+    """Build conversion request object."""
+    safe_filename = sanitize_filename(filename)
+
+    return ConversionApiRequest(
+        filename=safe_filename,
+        input_format=input_format,
+        output_format=output_format,
+        settings=ConversionSettings(
+            quality=quality,
+            strip_metadata=strip_metadata,
+            preserve_metadata=preserve_metadata,
+            preserve_gps=preserve_gps,
+            optimize=True,
+        ),
+        preset_id=preset_id,
+    )
+
+
+def _build_conversion_response(
+    result,
+    output_data: bytes,
+    filename: str,
+    input_format: str,
+    quality: Optional[int],
+    file_size: int,
+) -> Response:
+    """Build HTTP response for successful conversion."""
+    # Determine content type using actual output format from result
+    actual_output_format = (
+        result.output_format.lower()
+        if hasattr(result.output_format, "lower")
+        else str(result.output_format).lower()
+    )
+    content_type = FORMAT_TO_CONTENT_TYPE.get(
+        actual_output_format, "application/octet-stream"
+    )
+
+    # Generate output filename with actual format
+    safe_filename = sanitize_filename(filename)
+    base_name = Path(safe_filename).stem
+    output_filename = f"{base_name}.{actual_output_format}"
+
+    return Response(
+        content=output_data,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{output_filename}"',
+            "X-Conversion-Id": result.id,
+            "X-Processing-Time": str(result.processing_time),
+            "X-Compression-Ratio": str(result.compression_ratio),
+            "X-Metadata-Removed": str(result.metadata_removed),
+            "X-Input-Format": input_format,
+            "X-Output-Format": actual_output_format,
+            "X-Input-Size": str(file_size),
+            "X-Output-Size": str(len(output_data)),
+            "X-Quality-Used": str(quality),
+            "X-API-Version": "v1",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 @router.post(
     "/convert",
     response_model=None,
@@ -100,17 +258,18 @@ def sanitize_filename(filename: str) -> str:
     },
     summary="Convert an image to a different format",
     description="""
-    Convert an uploaded image to a different format with comprehensive optimization and metadata control.
-    
+    Convert an uploaded image to a different format with comprehensive optimization
+    and metadata control.
+
     ## Request Parameters
-    
+
     ### Required
     - **file**: Image file to convert (multipart/form-data)
       - Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, AVIF
       - Max size: 100MB per file
       - Content-based format detection (ignores file extension)
     - **output_format**: Target format (webp, avif, jpeg, png, heif, jxl, webp2)
-    
+
     ### Optional Settings
     - **quality**: Quality setting (1-100, default: 85)
       - Higher values = better quality, larger file size
@@ -124,9 +283,9 @@ def sanitize_filename(filename: str) -> str:
     - **preset_id**: UUID of conversion preset to apply
       - Preset settings override individual parameters
       - Use `/api/v1/presets` to list available presets
-    
+
     ## Response
-    
+
     ### Success (200)
     - Binary image data in requested format
     - Enhanced response headers with conversion metadata:
@@ -139,27 +298,27 @@ def sanitize_filename(filename: str) -> str:
       - `X-Output-Size`: Converted file size in bytes
       - `X-Quality-Used`: Quality setting applied
       - `X-Metadata-Removed`: Whether metadata was stripped
-    
+
     ### Error Responses
     - **400**: Invalid request (empty file, missing filename, unknown format)
     - **413**: File too large (exceeds size limits)
     - **415**: Unsupported file format
     - **422**: Invalid image data or corrupted file
     - **503**: Service temporarily unavailable (too many concurrent requests)
-    
+
     ## Privacy & Security
     - All processing happens locally (no data sent to external services)
     - Metadata (including GPS) removed by default
     - Files processed in sandboxed environment
     - Memory securely cleared after conversion
-    
+
     ## Performance
     - Concurrent request limiting prevents overload
     - Automatic format detection more reliable than file extensions
     - Optimized for files up to 50MB (larger files may be slower)
-    
+
     ## Examples
-    
+
     ### Basic Conversion
     ```bash
     curl -X POST "/api/v1/convert" \\
@@ -167,7 +326,7 @@ def sanitize_filename(filename: str) -> str:
          -F "output_format=webp" \\
          -F "quality=90"
     ```
-    
+
     ### Using Presets
     ```bash
     curl -X POST "/api/v1/convert" \\
@@ -206,12 +365,8 @@ async def convert_image(
         )
 
     try:
-        # Validate content type
-        if not validate_content_type(file):
-            raise error_handler.unsupported_media_type_error(
-                "Unsupported file type. Please upload an image file (JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, or AVIF).",
-                request,
-            )
+        # Validate file and read contents using helper functions
+        _validate_conversion_file(file, request)
 
         # Log conversion request
         logger.info(
@@ -223,83 +378,23 @@ async def convert_image(
             correlation_id=request.state.correlation_id,
         )
 
-        # Validate file size
-        file_size = 0
-        contents = await file.read()
+        # Read and validate file contents
+        contents = await _read_and_validate_file_contents(file, request)
         file_size = len(contents)
 
-        if file_size == 0:
-            raise error_handler.validation_error(
-                "The uploaded file is empty. Please select a valid image file to convert.",
-                request,
-            )
+        # Detect input format using helper function
+        input_format = await _detect_input_format(contents, file.filename, request)
 
-        if file_size > settings.max_file_size:
-            raise error_handler.payload_too_large_error(
-                f"File size exceeds maximum allowed size of {settings.max_file_size / 1024 / 1024}MB",
-                request,
-                details={
-                    "file_size": file_size,
-                    "max_size": settings.max_file_size,
-                },
-            )
-
-        # Extract file format from filename
-        if not file.filename:
-            raise error_handler.validation_error(
-                "A filename is required. Please ensure your file has a valid name before uploading.",
-                request,
-            )
-
-        # Sanitize filename to prevent path traversal
-        safe_filename = sanitize_filename(file.filename)
-        file_ext = Path(safe_filename).suffix.lower().lstrip(".")
-
-        # Try to detect format from content (more reliable than extension)
-        detected_format = None
-        try:
-            from app.services.format_detection_service import format_detection_service
-
-            detected_format, confident = await format_detection_service.detect_format(
-                contents
-            )
-            logger.info(
-                "Format detected from content",
-                detected_format=detected_format,
-                file_extension=file_ext,
-                confident=confident,
-                correlation_id=request.state.correlation_id,
-            )
-        except Exception as e:
-            logger.warning(
-                "Format detection failed, falling back to extension",
-                error=str(e),
-                file_extension=file_ext,
-                correlation_id=request.state.correlation_id,
-            )
-
-        # Use detected format if available, otherwise fall back to extension
-        input_format = detected_format or file_ext
-
-        if not input_format:
-            raise error_handler.validation_error(
-                "Unable to determine the image format. The file may be corrupted or in an unsupported format. Supported formats: JPEG, PNG, WebP, GIF, BMP, TIFF, HEIF/HEIC, AVIF.",
-                request,
-            )
-
-        # Create conversion request
-        conversion_request = ConversionApiRequest(
-            filename=safe_filename,
-            input_format=input_format,
-            output_format=output_format,
-            settings=ConversionSettings(
-                quality=quality,
-                strip_metadata=strip_metadata,
-                preserve_metadata=preserve_metadata,
-                preserve_gps=preserve_gps,
-                optimize=True,
-            ),
-            preset_id=preset_id,
+        # Create conversion request using helper function
+        conversion_request = _build_conversion_request(
+            file.filename,
+            input_format,
+            output_format,
+            quality,
+            strip_metadata,
+            preserve_metadata,
+            preserve_gps,
+            preset_id,
         )
 
         # Perform conversion
@@ -309,24 +404,11 @@ async def convert_image(
 
         if not output_data:
             raise error_handler.internal_server_error(
-                "The conversion process completed but did not produce any output. This may indicate an issue with the selected output format or image content. Please try a different output format.",
+                "The conversion process completed but did not produce any output. "
+                "This may indicate an issue with the selected output format or image content. "
+                "Please try a different output format.",
                 request,
             )
-
-        # Determine content type - use actual output format from result
-        # Use the actual output format from the conversion result
-        actual_output_format = (
-            result.output_format.lower()
-            if hasattr(result.output_format, "lower")
-            else str(result.output_format).lower()
-        )
-        content_type = FORMAT_TO_CONTENT_TYPE.get(
-            actual_output_format, "application/octet-stream"
-        )
-
-        # Generate output filename with actual format
-        base_name = Path(safe_filename).stem
-        output_filename = f"{base_name}.{actual_output_format}"
 
         # Log successful conversion
         logger.info(
@@ -339,26 +421,9 @@ async def convert_image(
             correlation_id=request.state.correlation_id,
         )
 
-        # Return binary response with enhanced headers
-        return Response(
-            content=output_data,
-            media_type=content_type,
-            headers={
-                "Content-Disposition": f'attachment; filename="{output_filename}"',
-                "X-Conversion-Id": result.id,
-                "X-Processing-Time": str(result.processing_time),
-                "X-Compression-Ratio": str(result.compression_ratio),
-                "X-Metadata-Removed": str(result.metadata_removed),
-                "X-Input-Format": input_format,
-                "X-Output-Format": actual_output_format,
-                "X-Input-Size": str(file_size),
-                "X-Output-Size": str(len(output_data)),
-                "X-Quality-Used": str(quality),
-                "X-API-Version": "v1",
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-            },
+        # Build and return response using helper function
+        return _build_conversion_response(
+            result, output_data, file.filename, input_format, quality, file_size
         )
 
     except asyncio.TimeoutError:
@@ -406,7 +471,9 @@ async def convert_image(
             correlation_id=request.state.correlation_id,
         )
         raise error_handler.internal_server_error(
-            "An unexpected error occurred during image conversion. Please verify your image file is valid and try again. If the problem persists, try converting to a different format.",
+            "An unexpected error occurred during image conversion. "
+            "Please verify your image file is valid and try again. "
+            "If the problem persists, try converting to a different format.",
             request,
         )
     finally:

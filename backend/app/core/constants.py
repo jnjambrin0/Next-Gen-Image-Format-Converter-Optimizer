@@ -1,6 +1,6 @@
 """Constants and configuration values for the image converter."""
 
-from typing import Any, Dict
+from typing import Dict, Union
 
 # Security and Processing Limits
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -271,7 +271,7 @@ METRICS_ENABLED = True
 HEALTH_CHECK_TIMEOUT = 5.0
 
 # Network Security Configuration
-NETWORK_CONFIG: Dict[str, Any] = {
+NETWORK_CONFIG: Dict[str, Union[str, int, float, Dict[str, str]]] = {
     "violation_threshold": 3,
     "termination_grace_period": 2,
     "monitoring_interval": 5,

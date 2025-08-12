@@ -14,7 +14,7 @@ import pytest
 from PIL import Image
 
 from app.core.exceptions import ConversionFailedError, ValidationError
-from app.models.conversion import ConversionRequest
+from app.models.conversion import ConversionRequest, ConversionStatus
 from app.services.conversion_service import conversion_service
 
 
@@ -86,10 +86,12 @@ class TestExtremeDimensions:
 
         # Should handle gracefully
         result, output_data = await conversion_service.convert(
-            image_data=tiny_image, request=request, source_filename="tiny_1x1.png"
+            image_data=tiny_image, request=request
         )
 
-        assert result.success, f"Failed to convert 1x1 image: {result.error}"
+        assert (
+            result.status == ConversionStatus.COMPLETED
+        ), f"Failed to convert 1x1 image: {result.error_message}"
         assert output_data is not None
 
         # Verify output is still 1x1
@@ -109,10 +111,12 @@ class TestExtremeDimensions:
         request = ConversionRequest(output_format="webp", quality=85)
 
         result, output_data = await conversion_service.convert(
-            image_data=line_image, request=request, source_filename="vertical_line.png"
+            image_data=line_image, request=request
         )
 
-        assert result.success, f"Failed to convert line image: {result.error}"
+        assert (
+            result.status == ConversionStatus.COMPLETED
+        ), f"Failed to convert line image: {result.error_message}"
 
         # Check dimensions preserved
         output_img = Image.open(io.BytesIO(output_data))
@@ -133,10 +137,9 @@ class TestExtremeDimensions:
         result, output_data = await conversion_service.convert(
             image_data=line_image,
             request=request,
-            source_filename="horizontal_line.png",
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         output_img = Image.open(io.BytesIO(output_data))
         assert output_img.width == 10000
@@ -164,10 +167,9 @@ class TestExtremeDimensions:
             result, output_data = await conversion_service.convert(
                 image_data=large_image,
                 request=request,
-                source_filename="large_image.png",
             )
 
-            if result.success:
+            if result.status == ConversionStatus.COMPLETED:
                 assert output_data is not None
                 # Should achieve good compression
                 compression_ratio = len(output_data) / len(large_image)
@@ -175,7 +177,8 @@ class TestExtremeDimensions:
             else:
                 # Acceptable to fail with clear error
                 assert (
-                    "size" in result.error.lower() or "memory" in result.error.lower()
+                    "size" in result.error_message.lower()
+                    or "memory" in result.error_message.lower()
                 )
         except (MemoryError, ValidationError) as e:
             # Expected for very large images
@@ -195,9 +198,7 @@ class TestExtremeDimensions:
 
         # Should reject as too large
         with pytest.raises((ValidationError, ConversionFailedError, MemoryError)):
-            await conversion_service.convert(
-                image_data=max_png, request=request, source_filename="max_png.png"
-            )
+            await conversion_service.convert(image_data=max_png, request=request)
 
     async def test_prime_number_dimensions(self):
         """
@@ -220,7 +221,9 @@ class TestExtremeDimensions:
                 image_data=img_data, request=request
             )
 
-            assert result.success, f"Failed for {width}x{height}"
+            assert (
+                result.status == ConversionStatus.COMPLETED
+            ), f"Failed for {width}x{height}"
 
             # Verify dimensions preserved exactly
             output_img = Image.open(io.BytesIO(output_data))
@@ -266,10 +269,9 @@ class TestExtremeDimensions:
         result, output_data = await conversion_service.convert(
             image_data=large_image,
             request=request,
-            source_filename="large_to_thumb.jpg",
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         # Verify thumbnail size
         output_img = Image.open(io.BytesIO(output_data))
@@ -300,10 +302,10 @@ class TestExtremeDimensions:
         )
 
         result, output_data = await conversion_service.convert(
-            image_data=tiny_image, request=request, source_filename="tiny_to_large.png"
+            image_data=tiny_image, request=request
         )
 
-        assert result.success
+        assert result.status == ConversionStatus.COMPLETED
 
         # Verify upscaled size
         output_img = Image.open(io.BytesIO(output_data))
@@ -345,7 +347,9 @@ class TestExtremeDimensions:
                 image_data=img_data, request=request
             )
 
-            assert result.success, f"Failed for device dimension {width}x{height}"
+            assert (
+                result.status == ConversionStatus.COMPLETED
+            ), f"Failed for device dimension {width}x{height}"
 
             # Verify exact dimensions preserved
             output_img = Image.open(io.BytesIO(output_data))
@@ -378,7 +382,7 @@ class TestExtremeDimensions:
                 image_data=img_data, request=request
             )
 
-            assert result.success
+            assert result.status == ConversionStatus.COMPLETED
 
             # Sample memory
             current_memory = memory_monitor.sample()
@@ -417,7 +421,9 @@ class TestExtremeDimensions:
                 image_data=img_data, request=request
             )
 
-            assert result.success, f"Failed for aspect ratio {width}:{height}"
+            assert (
+                result.status == ConversionStatus.COMPLETED
+            ), f"Failed for aspect ratio {width}:{height}"
 
             # Verify aspect ratio preserved
             output_img = Image.open(io.BytesIO(output_data))
