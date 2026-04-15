@@ -194,7 +194,7 @@ async def get_format_recommendations(
     use_case: Optional[UseCaseType] = Body(None, description="Intended use case"),
     prioritize: Optional[str] = Body(
         None,
-        regex="^(size|quality|compatibility)$",
+        pattern="^(size|quality|compatibility)$",
         description="What to prioritize: size/quality/compatibility",
     ),
     exclude_formats: Optional[List[OutputFormat]] = Body(
