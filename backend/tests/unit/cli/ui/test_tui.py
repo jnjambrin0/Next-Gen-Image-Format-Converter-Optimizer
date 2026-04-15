@@ -245,13 +245,13 @@ class TestImageConverterTUI:
         app = ImageConverterTUI()
 
         async with app.run_test() as pilot:
-            initial_dark = app.dark
+            initial_theme = app.theme
 
             # Toggle dark mode
             app.action_toggle_dark()
 
             # Check it toggled
-            assert app.dark != initial_dark
+            assert app.theme != initial_theme
 
     @pytest.mark.asyncio
     async def test_quit_during_conversion(self, mock_config):
@@ -291,7 +291,8 @@ class TestTUIIntegration:
 
                 # Simulate user interactions
                 # 1. Select files tab
-                tabs = pilot.app.query_one("Tabs")
+                from textual.widgets import TabbedContent
+                tabs = pilot.app.query_one(TabbedContent)
                 tabs.active = "files_tab"
 
                 # 2. Switch to settings tab

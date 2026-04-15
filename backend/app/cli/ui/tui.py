@@ -34,8 +34,8 @@ from textual.widgets import (
     Select,
     Static,
     Switch,
-    Tab,
-    Tabs,
+    TabbedContent,
+    TabPane,
 )
 
 from app.cli.config import get_config
@@ -439,10 +439,10 @@ class ImageConverterTUI(App):
         with Horizontal():
             # Left sidebar with file browser and settings
             with Vertical(id="sidebar"):
-                with Tabs():
-                    with Tab("Files", id="files_tab"):
+                with TabbedContent():
+                    with TabPane("Files", id="files_tab"):
                         yield FileBrowser()
-                    with Tab("Settings", id="settings_tab"):
+                    with TabPane("Settings", id="settings_tab"):
                         yield ConversionSettings()
 
             # Main content area
@@ -714,7 +714,7 @@ class ImageConverterTUI(App):
 
     def action_settings(self) -> None:
         """Show settings tab"""
-        tabs = self.query_one(Tabs)
+        tabs = self.query_one(TabbedContent)
         tabs.active = "settings_tab"
 
     def action_help(self) -> None:
@@ -728,9 +728,10 @@ class ImageConverterTUI(App):
 
     def action_toggle_dark(self) -> None:
         """Toggle dark mode"""
-        self.dark = not self.dark
+        is_dark = "dark" in (self.theme or "")
+        self.theme = "textual-light" if is_dark else "textual-dark"
         self._log_message(
-            f"Dark mode: {'enabled' if self.dark else 'disabled'}", "info"
+            f"Dark mode: {'disabled' if is_dark else 'enabled'}", "info"
         )
 
     def action_quit(self) -> None:
